@@ -207,10 +207,17 @@ def cli():
 
 @cli.command()
 @click.option(
+    "--all",
+    "-a",
+    "run_all",
+    is_flag=True,
+    help="Run all available benchmarks",
+)
+@click.option(
     "--benchmark",
     "-b",
-    required=True,
-    help="Name of the benchmark to run",
+    "benchmark_name",
+    help="Name of the benchmark to run (cannot be used with --all)",
 )
 @click.option(
     "--model",
@@ -231,42 +238,96 @@ def cli():
     is_flag=True,
     help="Print detailed per-fixture results",
 )
-def run(benchmark: str, model: str, output: str | None, verbose: bool):
-    """Run a benchmark against the specified model."""
+def run(run_all: bool, benchmark_name: str | None, model: str, output: str | None, verbose: bool):
+    """Run one or all benchmarks against the specified model."""
+    if run_all and benchmark_name:
+        raise click.ClickException("Cannot use --benchmark with --all. Choose one or the other.")
+
+    if not run_all and not benchmark_name:
+        raise click.ClickException("Must specify either --benchmark <name> or --all.")
+
     # Check git availability on startup
     if not check_git_availability():
         click.echo("Error: Git CLI is required but not found in PATH", err=True)
         sys.exit(1)
 
-    logger.info(f"Starting benchmark: {benchmark} with model: {model}")
-    click.echo(f"Running benchmark '{benchmark}' with model '{model}'...", err=True)
+    logger.info(f"Starting benchmark(s) with model: {model}")
 
     try:
         model_client = get_model_client(model)
-        result = run_benchmark(benchmark, model_client, verbose)
 
-        # Output results
-        output_dict = result.to_dict()
+        if run_all:
+            click.echo("Running all benchmarks...", err=True)
+            results_list: list[dict] = []
 
-        if verbose:
-            click.echo("\nPer-fixture results:")
-            for score in result.scores:
-                click.echo(f"  {score.fixture_id}: passed={score.passed}, similarity={score.similarity}")
-                if score.error:
-                    click.echo(f"    Error: {score.error}")
-                if score.model_output:
-                    output_preview = score.model_output[:100] + "..." if len(score.model_output) > 100 else score.model_output
-                    click.echo(f"    Output: {output_preview}")
+            global _benchmark_registry
+            if not _benchmark_registry:
+                _benchmark_registry = discover_benchmarks()
 
-        output_json = json.dumps(output_dict, indent=2)
+            for name, benchmark_class in _benchmark_registry.items():
+                click.echo(f"  Running '{name}'...", err=True)
+                try:
+                    result = run_benchmark(name, model_client, verbose)
+                    results_list.append(result.to_dict())
+                except Exception as e:
+                    logger.error(f"Benchmark '{name}' failed: {e}")
+                    click.echo(f"  Error running '{name}': {e}", err=True)
+                    results_list.append({
+                        "benchmark": name,
+                        "error": str(e),
+                    })
 
-        if output:
-            Path(output).write_text(output_json)
-            click.echo(f"\nResults written to: {output}", err=True)
+            total_benchmarks = len(results_list)
+            total_fixtures = sum(r.get("total", 0) for r in results_list)
+            total_passed = sum(r.get("passed", 0) for r in results_list)
+            overall_pass_at_k = round(total_passed / total_fixtures, 4) if total_fixtures > 0 else 0.0
+
+            combined = {
+                "summary": {
+                    "total_benchmarks": total_benchmarks,
+                    "total_fixtures": total_fixtures,
+                    "total_passed": total_passed,
+                    "overall_pass_at_k": overall_pass_at_k,
+                },
+                "results": results_list,
+            }
+
+            output_json = json.dumps(combined, indent=2)
+
+            if output:
+                Path(output).write_text(output_json)
+                click.echo(f"\nResults written to: {output}", err=True)
+            else:
+                click.echo(output_json)
+
+            logger.info(f"All benchmarks completed: {total_passed}/{total_fixtures} fixtures passed")
+
         else:
-            click.echo(output_json)
+            click.echo(f"Running benchmark '{benchmark_name}' with model '{model}'...", err=True)
+            result = run_benchmark(benchmark_name, model_client, verbose)
 
-        logger.info(f"Benchmark completed: {result.passed}/{result.total} passed")
+            # Output results
+            output_dict = result.to_dict()
+
+            if verbose:
+                click.echo("\nPer-fixture results:")
+                for score in result.scores:
+                    click.echo(f"  {score.fixture_id}: passed={score.passed}, similarity={score.similarity}")
+                    if score.error:
+                        click.echo(f"    Error: {score.error}")
+                    if score.model_output:
+                        output_preview = score.model_output[:100] + "..." if len(score.model_output) > 100 else score.model_output
+                        click.echo(f"    Output: {output_preview}")
+
+            output_json = json.dumps(output_dict, indent=2)
+
+            if output:
+                Path(output).write_text(output_json)
+                click.echo(f"\nResults written to: {output}", err=True)
+            else:
+                click.echo(output_json)
+
+            logger.info(f"Benchmark completed: {result.passed}/{result.total} passed")
 
     except Exception as e:
         logger.error(f"Benchmark failed: {e}")

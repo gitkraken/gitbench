@@ -1,8 +1,6 @@
 # GitBench
 
-A benchmark harness for evaluating LLM-generated git commit messages.
-
-GitBench runs fixtures — each fixture sets up a git repository with staged changes, asks a model to generate a commit message, and scores the model's response against an expected message using text similarity.
+A benchmark suite for evaluating language models' Git competency. GitBench runs synthetic Git scenarios against models and scores their responses against known-good solutions.
 
 ## Requirements
 
@@ -31,14 +29,18 @@ gitbench list
 python -m gitbench.cli list
 ```
 
-### Run the commit message benchmark
+### Run all benchmarks at once
 
-With the mock model (no API key needed):
+```bash
+gitbench run --all --model mock
+# or
+python -m gitbench.cli run --all --model mock
+```
+
+### Run a specific benchmark
 
 ```bash
 gitbench run --benchmark commit_messages --model mock
-# or
-python -m gitbench.cli run --benchmark commit_messages --model mock
 ```
 
 With a real model (requires `OPENAI_API_KEY` environment variable):
@@ -52,18 +54,34 @@ OPENAI_API_KEY=sk-... gitbench run --benchmark commit_messages --model openai
 Add `--verbose` (or `-v`) to see per-fixture results including pass/fail and similarity scores:
 
 ```bash
-gitbench run --benchmark commit_messages --model mock --verbose
+gitbench run --all --model mock --verbose
 ```
 
 ### Output to a file
 
 ```bash
-gitbench run --benchmark commit_messages --model mock --output results.json
+gitbench run --all --model mock --output results.json
 ```
+
+## Benchmarks
+
+GitBench includes 5 benchmark categories:
+
+| Benchmark | Description | Fixtures |
+|-----------|-------------|-----------|
+| `commit_messages` | Given a diff, generate a meaningful commit message | 12 |
+| `git_bisect` | Identify the commit that introduced a bug via automated bisect | 12 |
+| `merge_conflicts` | Resolve merge conflicts producing the correct final tree | 12 |
+| `rebase` | Clean up commit history before PR (squash, reorder, amend) | 12 |
+| `reflog` | Restore lost commits or fix detached HEAD state | 12 |
+
+Each benchmark has 12 fixtures — 60 total — enough for meaningful pass@1 scoring.
 
 ## Output Format
 
-The CLI outputs JSON to stdout (or writes to a file with `--output`). The format is:
+### Single benchmark
+
+When running `--benchmark <name>`, output is a single benchmark result:
 
 ```json
 {
@@ -84,6 +102,32 @@ The CLI outputs JSON to stdout (or writes to a file with `--output`). The format
 }
 ```
 
+### All benchmarks combined
+
+When running `--all`, output is a combined JSON with a summary and per-benchmark results:
+
+```json
+{
+  "summary": {
+    "total_benchmarks": 5,
+    "total_fixtures": 60,
+    "total_passed": 15,
+    "overall_pass_at_k": 0.25
+  },
+  "results": [
+    {
+      "benchmark": "commit_messages",
+      "total": 12,
+      "passed": 3,
+      "pass_at_k": 0.25,
+      "scores": [...],
+      "errors": 0
+    },
+    ...
+  ]
+}
+```
+
 | Field | Type | Description |
 |-------|------|-------------|
 | `benchmark` | `string` | Benchmark name |
@@ -100,12 +144,12 @@ Each score object contains:
 | `fixture_id` | `string` | Fixture identifier |
 | `passed` | `boolean` | Whether the model output passed the threshold |
 | `similarity` | `float` | Text similarity score (0.0 – 1.0) |
-| `model_output` | `string` | The model's generated commit message |
+| `model_output` | `string` | The model's generated output |
 | `error` | `string \| null` | Error message if processing failed |
 
 ## Adding New Fixtures
 
-Fixtures live in `fixtures/commit_messages/`. Each is a YAML file with this structure:
+Fixtures live in `fixtures/<benchmark>/`. Each is a YAML file with this structure:
 
 ```yaml
 id: "f013"                        # Unique identifier
@@ -148,7 +192,7 @@ scoring:
 
 1. **Unique IDs**: Use sequential IDs (`f013`, `f014`, ...) to avoid collisions.
 2. **Diverse scenarios**: Cover different git operations (add, rename, delete, modify, chmod, etc.).
-3. **Realistic prompts**: Keep prompts concise and focused on the commit message task.
+3. **Realistic prompts**: Keep prompts concise and focused on the task.
 4. **Realistic expected messages**: Use conventional commit format when appropriate (e.g., `feat:`, `fix:`, `docs:`).
 5. **Set an appropriate threshold**: The default threshold is `0.5`, which is suitable for most cases. Lower it to make scoring more lenient, raise it to require near-exact matches.
 
@@ -183,18 +227,26 @@ gitbench/
 │   └── scorer.py          # Scorer: similarity scoring and pass@k computation
 ├── benchmarks/
 │   ├── __init__.py       # Benchmark abstract base class
-│   └── commit_messages.py # CommitMessagesBenchmark implementation
+│   ├── commit_messages.py # Commit message generation benchmark
+│   ├── git_bisect.py     # Git bisect benchmark
+│   ├── merge_conflicts.py # Merge conflict resolution benchmark
+│   ├── rebase.py         # Interactive rebase benchmark
+│   └── reflog.py         # Reflog/detached HEAD recovery benchmark
 └── utils/
     └── git.py            # GitExecutor: sandboxed git repo management
 fixtures/
-└── commit_messages/     # YAML fixtures for commit message benchmark
+├── commit_messages/      # 12 YAML fixtures for commit message benchmark
+├── git_bisect/           # 12 YAML fixtures for git bisect benchmark
+├── merge_conflicts/      # 12 YAML fixtures for merge conflict benchmark
+├── rebase/              # 12 YAML fixtures for rebase benchmark
+└── reflog/              # 12 YAML fixtures for reflog benchmark
 tests/                    # Unit and integration tests
 ```
 
 ## Architecture
 
-- **Benchmark ABC** (`gitbench/benchmarks/__init__.py`): Abstract base class enforcing `load_fixtures()` and `score()` interface.
-- **Model adapters** (`gitbench/harness/model.py`): `ModelInterface` ABC with `OpenAIAdapter` and `MockModelClient` implementations.
+- **Benchmark ABC** (`gitbench/benchmarks/__init__.py`): Abstract base class enforcing `load_fixtures()` and `score()` interface. Drop a new Python module in `benchmarks/` to add a new benchmark category.
+- **Model adapters** (`gitbench/harness/model.py`): `ModelInterface` ABC with `OpenAIAdapter` and `MockModelClient` implementations. Add a new adapter for model-specific needs.
 - **Fixture loader** (`gitbench/harness/loader.py`): Parses and validates YAML fixtures.
 - **Scorer** (`gitbench/harness/scorer.py`): Computes text similarity via `difflib.SequenceMatcher` and `pass_at_k` across fixtures.
 - **Git executor** (`gitbench/utils/git.py`): Manages sandboxed temporary git repositories for fixture isolation.
