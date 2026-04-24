@@ -65,17 +65,20 @@ gitbench run --all --model mock --output results.json
 
 ## Benchmarks
 
-GitBench includes 5 benchmark categories:
+GitBench includes 8 benchmark categories:
 
 | Benchmark | Description | Fixtures |
-|-----------|-------------|-----------|
+|-----------|-------------|----------|
+| `cherry_pick` | Apply specific commits from one branch to another, resolving conflicts | 12 |
 | `commit_messages` | Given a diff, generate a meaningful commit message | 12 |
+| `commit_squash` | Squash multiple commits into a single coherent commit | 12 |
 | `git_bisect` | Identify the commit that introduced a bug via automated bisect | 12 |
 | `merge_conflicts` | Resolve merge conflicts producing the correct final tree | 12 |
 | `rebase` | Clean up commit history before PR (squash, reorder, amend) | 12 |
 | `reflog` | Restore lost commits or fix detached HEAD state | 12 |
+| `stash_recovery` | Recover stashed changes or resolve stash pop conflicts | 12 |
 
-Each benchmark has 12 fixtures — 60 total — enough for meaningful pass@1 scoring.
+Each benchmark has 12 fixtures — 96 total — enough for meaningful pass@1 scoring.
 
 ## Output Format
 
@@ -109,8 +112,8 @@ When running `--all`, output is a combined JSON with a summary and per-benchmark
 ```json
 {
   "summary": {
-    "total_benchmarks": 5,
-    "total_fixtures": 60,
+    "total_benchmarks": 8,
+    "total_fixtures": 96,
     "total_passed": 15,
     "overall_pass_at_k": 0.25
   },
@@ -210,19 +213,25 @@ gitbench/
 │   └── scorer.py          # Scorer: similarity scoring and pass@k computation
 ├── benchmarks/
 │   ├── __init__.py       # Benchmark abstract base class
+│   ├── cherry_pick.py    # Cherry-pick benchmark
 │   ├── commit_messages.py # Commit message generation benchmark
+│   ├── commit_squash.py  # Commit squash benchmark
 │   ├── git_bisect.py     # Git bisect benchmark
 │   ├── merge_conflicts.py # Merge conflict resolution benchmark
 │   ├── rebase.py         # Interactive rebase benchmark
-│   └── reflog.py         # Reflog/detached HEAD recovery benchmark
+│   ├── reflog.py         # Reflog/detached HEAD recovery benchmark
+│   └── stash_recovery.py # Stash recovery benchmark
 └── utils/
     └── git.py            # GitExecutor: sandboxed git repo management
 fixtures/
-├── commit_messages/      # 12 YAML fixtures for commit message benchmark
-├── git_bisect/           # 12 YAML fixtures for git bisect benchmark
-├── merge_conflicts/      # 12 YAML fixtures for merge conflict benchmark
+├── cherry_pick/         # 12 YAML fixtures for cherry-pick benchmark
+├── commit_messages/     # 12 YAML fixtures for commit message benchmark
+├── commit_squash/       # 12 YAML fixtures for commit squash benchmark
+├── git_bisect/          # 12 YAML fixtures for git bisect benchmark
+├── merge_conflicts/     # 12 YAML fixtures for merge conflict benchmark
 ├── rebase/              # 12 YAML fixtures for rebase benchmark
-└── reflog/              # 12 YAML fixtures for reflog benchmark
+├── reflog/              # 12 YAML fixtures for reflog benchmark
+└── stash_recovery/      # 12 YAML fixtures for stash recovery benchmark
 tests/                    # Unit and integration tests
 ```
 
