@@ -1,0 +1,26 @@
+id: f004
+description: "Multi-line hunk: address block conflict"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf 'Name: John Doe\nEmail: john@example.com\nPhone: 555-1234' > contact.txt"
+  - "git add contact.txt"
+  - "git commit -m 'Initial contact'"
+  - "git checkout -b work"
+  - "printf 'Name: John Doe\nEmail: john@company.com\nPhone: 555-1234' > contact.txt"
+  - "git add contact.txt"
+  - "git commit -m 'Use work email'"
+  - "git checkout main"
+  - "printf 'Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876' > contact.txt"
+  - "git add contact.txt"
+  - "git commit -m 'Update contact info'"
+  - "git cherry-pick work"
+prompt: "Resolve the cherry-pick conflict in contact.txt. The cherry-picked commit (work) changed the email to john@company.com while keeping the phone as 555-1234. However, main (the current HEAD) updated both the email to johndoe@personal.com and the phone to 555-9876. Take the email from the incoming cherry-picked commit (work branch). Provide ONLY the resolved file content."
+expected: |
+  Name: John Doe
+  Email: john@company.com
+  Phone: 555-9876
+scoring:
+  type: similarity
+  threshold: 0.5

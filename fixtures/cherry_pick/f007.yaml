@@ -1,0 +1,23 @@
+id: f007
+description: "Cherry-pick of same-line addition conflicts with main's different addition"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'Hello' > greeting.txt"
+  - "git add greeting.txt"
+  - "git commit -m 'Initial greeting'"
+  - "git checkout -b feature"
+  - "echo 'Hello World!!!' > greeting.txt"
+  - "git add greeting.txt"
+  - "git commit -m 'Add exclamation and world'"
+  - "git checkout main"
+  - "echo 'Hello Planet!' > greeting.txt"
+  - "git add greeting.txt"
+  - "git commit -m 'Change to planet'"
+  - "git cherry-pick feature"
+prompt: "Resolve the cherry-pick conflict in greeting.txt. The cherry-picked commit (feature) changed 'Hello' to 'Hello World!!!'. However, main (the current HEAD) has already changed it to 'Hello Planet!'. The feature branch added exclamation marks. Prefer the exclamation version. Provide ONLY the resolved file content."
+expected: "Hello World!!!"
+scoring:
+  type: similarity
+  threshold: 0.5

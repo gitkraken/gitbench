@@ -7,6 +7,7 @@ import pytest
 from gitbench.benchmarks import Benchmark
 from gitbench.benchmarks.commit_messages import CommitMessagesBenchmark
 from gitbench.benchmarks.merge_conflicts import MergeConflictsBenchmark
+from gitbench.benchmarks.cherry_pick import CherryPickBenchmark
 from gitbench.benchmarks.git_bisect import GitBisectBenchmark
 from gitbench.benchmarks.rebase import RebaseBenchmark
 from gitbench.benchmarks.reflog import ReflogBenchmark
@@ -203,6 +204,122 @@ class TestMergeConflictsBenchmark:
         assert isinstance(result, Score)
         assert result.fixture_id == fixture.id
         assert result.similarity > 0.8  # Should be very similar
+
+
+class TestCherryPickBenchmark:
+    """Test the cherry_pick benchmark implementation."""
+
+    def test_benchmark_inherits_from_benchmark_abc(self):
+        """Test that CherryPickBenchmark is a subclass of Benchmark."""
+        assert issubclass(CherryPickBenchmark, Benchmark)
+
+    def test_benchmark_has_name(self):
+        """Test that the benchmark has the expected name."""
+        assert CherryPickBenchmark.name == "cherry_pick"
+
+    def test_benchmark_has_description(self):
+        """Test that the benchmark has a description."""
+        assert isinstance(CherryPickBenchmark.description, str)
+        assert len(CherryPickBenchmark.description) > 0
+
+    def test_benchmark_can_be_instantiated(self):
+        """Test that CherryPickBenchmark can be instantiated."""
+        benchmark = CherryPickBenchmark()
+        assert benchmark is not None
+
+    def test_load_fixtures_returns_list(self):
+        """Test that load_fixtures returns a list of fixtures."""
+        benchmark = CherryPickBenchmark()
+        fixtures = benchmark.load_fixtures()
+        assert isinstance(fixtures, list)
+
+    def test_fixture_count_at_least_10(self):
+        """Test that at least 10 fixtures are loaded."""
+        benchmark = CherryPickBenchmark()
+        fixtures = benchmark.load_fixtures()
+        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
+
+    def test_fixtures_have_required_fields(self):
+        """Test that all fixtures have required fields."""
+        benchmark = CherryPickBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        for fixture in fixtures:
+            assert hasattr(fixture, "id")
+            assert hasattr(fixture, "description")
+            assert hasattr(fixture, "setup")
+            assert hasattr(fixture, "prompt")
+            assert hasattr(fixture, "expected")
+            assert hasattr(fixture, "scoring")
+
+            assert isinstance(fixture.id, str)
+            assert isinstance(fixture.setup, list)
+            assert isinstance(fixture.prompt, str)
+            assert isinstance(fixture.expected, str)
+            assert isinstance(fixture.scoring, dict)
+
+    def test_fixture_ids_are_unique(self):
+        """Test that all fixture IDs are unique."""
+        benchmark = CherryPickBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        ids = [f.id for f in fixtures]
+        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
+
+    def test_score_method_works(self):
+        """Test that the score method works correctly."""
+        from gitbench.harness.types import Score
+
+        benchmark = CherryPickBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        # Score with an identical expected value should score high
+        fixture = fixtures[0]
+        result = benchmark.score(fixture, fixture.expected)
+
+        assert isinstance(result, Score)
+        assert result.fixture_id == fixture.id
+        assert result.similarity > 0.8  # Should be very similar
+
+    def test_setup_fixture_produces_conflict(self):
+        """Test that setup_fixture produces a conflicted repo for each fixture."""
+        import tempfile
+        from gitbench.utils.git import GitExecutor
+
+        benchmark = CherryPickBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        # Test first fixture only to keep test fast
+        fixture = fixtures[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        # Verify cherry-pick left the repo in a conflicted state
+        import subprocess
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "--diff-filter=U"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+        conflicted_files = [f for f in result.stdout.strip().split("\n") if f]
+        assert len(conflicted_files) > 0, "Expected conflicted files after cherry-pick"
+
+        executor.cleanup()
+
+    def test_get_diff_contains_conflict_markers(self):
+        """Test that get_diff returns content with conflict markers."""
+        benchmark = CherryPickBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        fixture = fixtures[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+        diff = benchmark.get_diff(repo_path)
+
+        assert "<<<<<<<" in diff, "Expected conflict markers in diff"
+        assert "=======" in diff, "Expected conflict markers in diff"
+        assert ">>>>>>>" in diff, "Expected conflict markers in diff"
+
+        executor.cleanup()
 
 
 class TestGitBisectBenchmark:

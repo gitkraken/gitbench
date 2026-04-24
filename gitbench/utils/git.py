@@ -57,9 +57,13 @@ class GitExecutor:
         self._repo_path = str(repo_dir)
 
         for command in commands:
-            # git merge returns exit code 1 when there are conflicts, which is
-            # the expected outcome for merge conflict fixtures. Allow it to pass.
-            if command.startswith("git merge") or command.startswith("git rebase"):
+            # git merge, rebase, and cherry-pick return exit code 1 when there are
+            # conflicts, which is the expected outcome for conflict fixtures.
+            if (
+                command.startswith("git merge")
+                or command.startswith("git rebase")
+                or command.startswith("git cherry-pick")
+            ):
                 self._run_command_permissive(command)
             else:
                 self._run_command(command)
@@ -115,7 +119,7 @@ class GitExecutor:
             text=True,
         )
 
-        # git merge returns 1 when there are conflicts (expected)
+        # git merge, rebase, and cherry-pick return 1 when there are conflicts (expected)
         if result.returncode not in (0, 1):
             logger.error(
                 f"Command failed: {command}\n"

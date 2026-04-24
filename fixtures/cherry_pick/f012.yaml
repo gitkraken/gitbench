@@ -1,0 +1,28 @@
+id: f012
+description: "Multi-file: conflicts in app.py and requirements.txt simultaneously"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf 'app = Flask(__name__)\napp.run(port=5000)' > app.py"
+  - "printf 'flask==2.0.0\nrequests==2.25.0' > requirements.txt"
+  - "git add app.py requirements.txt"
+  - "git commit -m 'Initial app'"
+  - "git checkout -b security"
+  - "printf 'app = Flask(__name__)\napp.run(port=5000, debug=False)' > app.py"
+  - "printf 'flask==2.0.0\nrequests==2.28.0' > requirements.txt"
+  - "git add app.py requirements.txt"
+  - "git commit -m 'Security: disable debug and update requests'"
+  - "git checkout main"
+  - "printf 'app = Flask(__name__)\napp.run(port=8080)' > app.py"
+  - "printf 'flask==3.0.0\nrequests==2.25.0' > requirements.txt"
+  - "git add app.py requirements.txt"
+  - "git commit -m 'Upgrade to Flask 3 and change port'"
+  - "git cherry-pick security"
+prompt: "Resolve the cherry-pick conflicts in app.py and requirements.txt. For app.py: the cherry-picked commit (security) disabled debug while keeping port 5000, but main changed port to 8080. Take the debug=False from the cherry-pick, keep the port from main. For requirements.txt: the cherry-picked commit updated requests to 2.28.0 keeping flask 2.0.0, but main upgraded flask to 3.0.0 keeping requests 2.25.0. Take the requests update from the cherry-pick, keep flask from main. Provide ONLY the resolved app.py content (this is the primary conflict to resolve)."
+expected: |
+  app = Flask(__name__)
+  app.run(port=8080, debug=False)
+scoring:
+  type: similarity
+  threshold: 0.5

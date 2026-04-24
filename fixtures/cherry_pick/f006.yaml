@@ -1,0 +1,26 @@
+id: f006
+description: "Multi-line hunk: config block conflict"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf 'server:\n  port: 8080\n  host: localhost' > config.yaml"
+  - "git add config.yaml"
+  - "git commit -m 'Initial config'"
+  - "git checkout -b prod"
+  - "printf 'server:\n  port: 443\n  host: localhost' > config.yaml"
+  - "git add config.yaml"
+  - "git commit -m 'Use HTTPS port'"
+  - "git checkout main"
+  - "printf 'server:\n  port: 8080\n  host: 0.0.0.0' > config.yaml"
+  - "git add config.yaml"
+  - "git commit -m 'Listen on all interfaces'"
+  - "git cherry-pick prod"
+prompt: "Resolve the cherry-pick conflict in config.yaml. The cherry-picked commit (prod) changed port from 8080 to 443 (HTTPS) while keeping host as localhost. However, main (the current HEAD) changed host to 0.0.0.0 while keeping port 8080. Keep the port change from the cherry-picked commit. Provide ONLY the resolved file content."
+expected: |
+  server:
+    port: 443
+    host: 0.0.0.0
+scoring:
+  type: similarity
+  threshold: 0.5

@@ -147,54 +147,37 @@ Each score object contains:
 | `model_output` | `string` | The model's generated output |
 | `error` | `string \| null` | Error message if processing failed |
 
-## Adding New Fixtures
+### Adding New Fixtures
 
-Fixtures live in `fixtures/<benchmark>/`. Each is a YAML file with this structure:
+Fixtures live in `fixtures/<benchmark>/`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full fixture authoring guide, including YAML gotchas, setup command tips, and validation.
+
+Quick start:
 
 ```yaml
-id: "f013"                        # Unique identifier
-description: "Merge conflict resolution"  # Human-readable description
-setup:                             # Git commands to set up the repo state
+id: "f013"
+description: "My scenario"
+setup:
   - "git init"
   - "git config user.email 'test@test.com'"
   - "git config user.name 'Test User'"
-  - "echo 'resolved' > conflict.txt"
-  - "git add conflict.txt"
-prompt: "Generate a concise commit message (max 50 characters)..."
-expected: "Resolve merge conflict"  # Expected model output for scoring
+  - "echo 'content' > file.txt"
+  - "git add file.txt"
+prompt: "Your instruction to the model"
+expected: "The correct output"
 scoring:
-  type: "similarity"              # Scoring algorithm
-  threshold: 0.5                  # Minimum similarity to pass (0.0 – 1.0)
+  type: "similarity"
+  threshold: 0.5
 ```
 
-### Setup command tips
+**YAML gotcha:** values containing colons (e.g., `"Fix: login"`) must use single quotes, or PyYAML will parse them as mapping keys.
 
-- Use absolute paths with `printf` for multi-line content:
-  ```yaml
-  setup:
-    - "git init"
-    - "git config user.email 'test@test.com'"
-    - "git config user.name 'Test User'"
-    - "printf 'line1\\nline2\\nline3' > file.txt"
-    - "git add file.txt"
-  ```
-- All commands run in a sandboxed temporary git repository.
-- The last setup command should leave changes staged (`git add`) so that `git diff --staged` produces the diff for the prompt.
-- Use `chmod +x` for permission change tests:
-  ```yaml
-  setup:
-    - "touch script.sh"
-    - "chmod +x script.sh"
-    - "git add script.sh"
-  ```
+### Adding a New Benchmark Category
 
-### Fixture guidelines
+See [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-new-benchmark) for the step-by-step guide. The short version: drop a Python module inheriting from `Benchmark` in `gitbench/benchmarks/`. No registration or harness changes needed — auto-discovered via `importlib`.
 
-1. **Unique IDs**: Use sequential IDs (`f013`, `f014`, ...) to avoid collisions.
-2. **Diverse scenarios**: Cover different git operations (add, rename, delete, modify, chmod, etc.).
-3. **Realistic prompts**: Keep prompts concise and focused on the task.
-4. **Realistic expected messages**: Use conventional commit format when appropriate (e.g., `feat:`, `fix:`, `docs:`).
-5. **Set an appropriate threshold**: The default threshold is `0.5`, which is suitable for most cases. Lower it to make scoring more lenient, raise it to require near-exact matches.
+**Important gotcha — rebase vs merge conflict polarity:** In merge conflicts, HEAD's changes appear above `=======`. In rebase conflicts, the polarity is reversed — upstream's changes appear *below* `=======`. When writing rebase fixtures, describe the correct branch context in the prompt.
+
+**Important gotcha — GitExecutor exit codes:** `git merge` and `git rebase` exit with code 1 on conflicts. `GitExecutor.setup_repo()` handles this automatically — do not call `_run_command()` directly for merge/rebase commands in fixtures.
 
 ## Running Tests
 
@@ -245,8 +228,8 @@ tests/                    # Unit and integration tests
 
 ## Architecture
 
-- **Benchmark ABC** (`gitbench/benchmarks/__init__.py`): Abstract base class enforcing `load_fixtures()` and `score()` interface. Drop a new Python module in `benchmarks/` to add a new benchmark category.
+- **Benchmark ABC** (`gitbench/benchmarks/__init__.py`): Abstract base class enforcing `load_fixtures()` and `score()` interface. Drop a new Python module in `benchmarks/` to add a new benchmark category. See [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-new-benchmark) for the full guide.
 - **Model adapters** (`gitbench/harness/model.py`): `ModelInterface` ABC with `OpenAIAdapter` and `MockModelClient` implementations. Add a new adapter for model-specific needs.
-- **Fixture loader** (`gitbench/harness/loader.py`): Parses and validates YAML fixtures.
+- **Fixture loader** (`gitbench/harness/loader.py`): Parses and validates YAML fixtures. Supports single fixture per file (dict) or multiple (list).
 - **Scorer** (`gitbench/harness/scorer.py`): Computes text similarity via `difflib.SequenceMatcher` and `pass_at_k` across fixtures.
-- **Git executor** (`gitbench/utils/git.py`): Manages sandboxed temporary git repositories for fixture isolation.
+- **Git executor** (`gitbench/utils/git.py`): Manages sandboxed temporary git repositories for fixture isolation. Uses `_run_command_permissive` internally for `git merge` and `git rebase` which intentionally exit code 1 on conflicts.
