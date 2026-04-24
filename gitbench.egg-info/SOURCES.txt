@@ -12,6 +12,8 @@ gitbench/benchmarks/__init__.py
 gitbench/benchmarks/commit_messages.py
 gitbench/benchmarks/git_bisect.py
 gitbench/benchmarks/merge_conflicts.py
+gitbench/benchmarks/rebase.py
+gitbench/benchmarks/reflog.py
 gitbench/harness/loader.py
 gitbench/harness/model.py
 gitbench/harness/scorer.py
