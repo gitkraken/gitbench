@@ -1,0 +1,28 @@
+id: f011
+description: "Multi-file: conflict in settings.json only"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf '{\n  \"name\": \"app\",\n  \"version\": \"1.0.0\"\n}' > settings.json"
+  - "printf 'DB_HOST=localhost\nDB_PORT=5432' > database.ini"
+  - "git add settings.json database.ini"
+  - "git commit -m 'Initial config'"
+  - "git checkout -b v2"
+  - "printf '{\n  \"name\": \"app\",\n  \"version\": \"2.0.0\"\n}' > settings.json"
+  - "git add settings.json"
+  - "git commit -m 'Bump version to 2.0.0'"
+  - "git checkout main"
+  - "printf '{\n  \"name\": \"MyApp\",\n  \"version\": \"1.0.0\"\n}' > settings.json"
+  - "git add settings.json"
+  - "git commit -m 'Rename app to MyApp'"
+  - "git rebase v2"
+prompt: "Resolve the rebase conflict in settings.json. The base had name: app, version: 1.0.0. Branch being rebased (v2) kept name: app but bumped version to 2.0.0. Main branch renamed name to MyApp but kept version 1.0.0. Provide ONLY the resolved settings.json content as valid JSON."
+expected: |
+  {
+    "name": "MyApp",
+    "version": "2.0.0"
+  }
+scoring:
+  type: similarity
+  threshold: 0.5

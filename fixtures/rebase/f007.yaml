@@ -1,0 +1,28 @@
+id: f007
+description: "Three-way: conflicting port and protocol settings in same line range"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf 'PORT=8080\nPROTOCOL=http' > config.txt"
+  - "git add config.txt"
+  - "git commit -m 'Initial config'"
+  - "git checkout -b branch-a"
+  - "printf 'PORT=8443\nPROTOCOL=https' > config.txt"
+  - "git add config.txt"
+  - "git commit -m 'Use HTTPS port'"
+  - "git checkout main"
+  - "git checkout -b branch-b"
+  - "printf 'PORT=9090\nPROTOCOL=http' > config.txt"
+  - "git add config.txt"
+  - "git commit -m 'Change to non-standard port'"
+  - "git checkout main"
+  - "git merge branch-a"
+  - "git rebase branch-b"
+prompt: "Resolve the rebase conflict in config.txt. Three different configurations were attempted: base PORT=8080/PROTOCOL=http, branch being rebased PORT=9090/PROTOCOL=http, main's version PORT=8443/PROTOCOL=https (from branch-a merge). Prefer the HTTPS configuration when there is a conflict. Provide ONLY the resolved config.txt content."
+expected: |
+  PORT=8443
+  PROTOCOL=https
+scoring:
+  type: similarity
+  threshold: 0.5
