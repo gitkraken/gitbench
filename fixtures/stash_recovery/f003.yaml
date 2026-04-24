@@ -1,0 +1,22 @@
+id: f003
+description: Stash with branch reference
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'Initial content' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Initial commit'"
+  - "git checkout -b feature-branch"
+  - "echo 'Feature work' > file.txt"
+  - "git add file.txt"
+  - "git stash -m 'feature-work'"
+  - "git checkout main"
+  - "echo 'Main work' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Main work'"
+prompt: "You stashed work on 'feature-branch' with message 'feature-work'. Which stash entry contains this stashed work? Provide the stash reference."
+expected: "stash@{0}"
+scoring:
+  type: similarity
+  threshold: 0.5

@@ -1,0 +1,24 @@
+id: f004
+description: Stash after merge conflict
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'Base' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Base'"
+  - "git branch feature"
+  - "echo 'Feature change' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Feature change'"
+  - "git checkout main"
+  - "echo 'Main change' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Main change'"
+  - "git stash push -m 'main-changes'"
+  - "git merge feature"
+prompt: "You stashed 'Main change' before merging feature into main. The merge created conflicts. Which stash entry contains your 'main-changes'? Provide the stash reference."
+expected: "stash@{0}"
+scoring:
+  type: similarity
+  threshold: 0.5

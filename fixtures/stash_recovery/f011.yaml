@@ -1,0 +1,20 @@
+id: f011
+description: Stash after rebase
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'Base' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Base'"
+  - "echo 'Stashed' > file.txt"
+  - "git stash"
+  - "echo 'New base' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'New base'"
+  - "git rebase HEAD"
+prompt: "You stashed 'Stashed' then rebased. Which stash entry contains your stashed work? Provide the stash reference."
+expected: "stash@{0}"
+scoring:
+  type: similarity
+  threshold: 0.5

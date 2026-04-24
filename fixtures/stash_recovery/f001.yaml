@@ -1,0 +1,19 @@
+id: f001
+description: Single stash - identify stash@{0}
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'Initial content' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Initial commit'"
+  - "echo 'Unfinished work' > file.txt"
+  - "git stash"
+  - "echo 'New feature' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Complete feature'"
+prompt: "You have one stash entry with your unfinished work. Which stash entry contains your 'Unfinished work' changes? Provide the stash reference (e.g., stash@{0})."
+expected: "stash@{0}"
+scoring:
+  type: similarity
+  threshold: 0.5

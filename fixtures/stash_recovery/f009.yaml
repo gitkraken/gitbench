@@ -1,0 +1,18 @@
+id: f009
+description: Stash apply vs pop distinction
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'Initial' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Initial'"
+  - "echo 'Work to keep' > file.txt"
+  - "git stash push -m 'keep-this'"
+  - "echo 'Another work' > file.txt"
+  - "git stash push -m 'another'"
+prompt: "You stashed 'Work to keep' with message 'keep-this', then stashed another work. You want to apply 'keep-this' but not remove it from the stash list. Which stash entry contains 'keep-this'? Provide the stash reference."
+expected: "stash@{0}"
+scoring:
+  type: similarity
+  threshold: 0.5
