@@ -1,5 +1,7 @@
 """CLI for GitBench."""
 
+import importlib
+import inspect
 import json
 import logging
 import shutil
@@ -8,6 +10,7 @@ from pathlib import Path
 
 import click
 
+from gitbench.benchmarks import Benchmark
 from gitbench.harness.model import MockModelClient, OpenAIAdapter
 from gitbench.harness.types import BenchmarkResult, ModelMessage, Score
 
@@ -18,6 +21,52 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+
+# Global registry for discovered benchmarks
+_benchmark_registry: dict[str, type[Benchmark]] = {}
+
+
+def discover_benchmarks() -> dict[str, type[Benchmark]]:
+    """Auto-discover all Benchmark subclasses from the benchmarks package.
+
+    Returns:
+        Dictionary mapping benchmark names to their classes.
+    """
+    benchmarks_dir = Path(__file__).parent / "benchmarks"
+
+    if not benchmarks_dir.exists():
+        logger.warning(f"Benchmarks directory not found: {benchmarks_dir}")
+        return {}
+
+    discovered: dict[str, type[Benchmark]] = {}
+
+    for file_path in benchmarks_dir.glob("*.py"):
+        if file_path.name.startswith("_") or file_path.name == "__init__.py":
+            continue
+
+        module_name = f"gitbench.benchmarks.{file_path.stem}"
+
+        try:
+            module = importlib.import_module(module_name)
+
+            for name, obj in inspect.getmembers(module, inspect.isclass):
+                if (
+                    issubclass(obj, Benchmark)
+                    and obj is not Benchmark
+                    and obj is not None
+                ):
+                    if hasattr(obj, "name") and obj.name:
+                        discovered[obj.name] = obj
+                        logger.debug(f"Discovered benchmark: {obj.name} from {module_name}")
+                    else:
+                        logger.warning(
+                            f"Benchmark class {name} in {module_name} has no name attribute"
+                        )
+
+        except Exception as e:
+            logger.error(f"Failed to load benchmarks from {module_name}: {e}")
+
+    return discovered
 
 
 def check_git_availability() -> bool:
@@ -55,6 +104,99 @@ def get_model_client(model_type: str) -> OpenAIAdapter | MockModelClient:
         raise click.ClickException(
             f"Unknown model type: {model_type}. Use 'openai' or 'mock'."
         )
+
+
+def run_benchmark(benchmark_name: str, model_client, verbose: bool = False) -> BenchmarkResult:
+    """Run a specific benchmark with the given model client.
+
+    Args:
+        benchmark_name: Name of the benchmark to run.
+        model_client: The model client to use for generating outputs.
+        verbose: Whether to print verbose output.
+
+    Returns:
+        The benchmark result.
+
+    Raises:
+        ValueError: If the benchmark is not found.
+    """
+    global _benchmark_registry
+
+    if not _benchmark_registry:
+        _benchmark_registry = discover_benchmarks()
+
+    if benchmark_name not in _benchmark_registry:
+        available = list(_benchmark_registry.keys())
+        raise ValueError(
+            f"Unknown benchmark: {benchmark_name}. Available: {available}"
+        )
+
+    benchmark_class = _benchmark_registry[benchmark_name]
+    benchmark = benchmark_class()
+
+    logger.info(f"Loading fixtures for {benchmark_name}...")
+    fixtures = benchmark.load_fixtures()
+    logger.info(f"Loaded {len(fixtures)} fixtures")
+
+    scores: list[Score] = []
+    errors = 0
+
+    for fixture in fixtures:
+        logger.info(f"Processing fixture {fixture.id}...")
+
+        try:
+            executor, repo_path = benchmark.setup_fixture(fixture)
+            diff = benchmark.get_diff(repo_path)
+            prompt = benchmark.format_prompt(fixture, diff)
+
+            messages = [ModelMessage(role="user", content=prompt)]
+            response = model_client.generate(messages)
+
+            # Extract text from response (handle both string and dict responses)
+            if isinstance(response, dict):
+                model_output = response.get("text", response.get("content", ""))
+            else:
+                model_output = str(response)
+
+            score = benchmark.score(fixture, model_output)
+            scores.append(score)
+
+            if verbose:
+                click.echo(
+                    f"  {fixture.id}: passed={score.passed}, "
+                    f"similarity={score.similarity:.4f}"
+                )
+
+        except Exception as e:
+            logger.error(f"Error processing fixture {fixture.id}: {e}")
+            scores.append(
+                Score(
+                    fixture_id=fixture.id,
+                    passed=False,
+                    similarity=0.0,
+                    model_output="",
+                    error=str(e),
+                )
+            )
+            errors += 1
+
+        finally:
+            # Clean up the temporary repo
+            if "executor" in locals():
+                executor.cleanup()
+
+    total = len(fixtures)
+    passed = sum(1 for s in scores if s.passed)
+    pass_at_k = passed / total if total > 0 else 0.0
+
+    return BenchmarkResult(
+        benchmark=benchmark_name,
+        total=total,
+        passed=passed,
+        pass_at_k=round(pass_at_k, 4),
+        scores=scores,
+        errors=errors,
+    )
 
 
 @click.group()
@@ -101,27 +243,7 @@ def run(benchmark: str, model: str, output: str | None, verbose: bool):
 
     try:
         model_client = get_model_client(model)
-
-        # For now, create a simple mock result structure
-        # TODO: Integrate with actual benchmark runner
-        scores = [
-            Score(
-                fixture_id="test_001",
-                passed=False,
-                similarity=0.0,
-                model_output="",
-                error="Benchmark runner not yet implemented",
-            )
-        ]
-
-        result = BenchmarkResult(
-            benchmark=benchmark,
-            total=1,
-            passed=0,
-            pass_at_k=0.0,
-            scores=scores,
-            errors=1,
-        )
+        result = run_benchmark(benchmark, model_client, verbose)
 
         # Output results
         output_dict = result.to_dict()
@@ -133,7 +255,8 @@ def run(benchmark: str, model: str, output: str | None, verbose: bool):
                 if score.error:
                     click.echo(f"    Error: {score.error}")
                 if score.model_output:
-                    click.echo(f"    Output: {score.model_output[:100]}...")
+                    output_preview = score.model_output[:100] + "..." if len(score.model_output) > 100 else score.model_output
+                    click.echo(f"    Output: {output_preview}")
 
         output_json = json.dumps(output_dict, indent=2)
 
@@ -158,11 +281,17 @@ def list_benchmarks():
     if not check_git_availability():
         click.echo("Warning: Git CLI not found - some benchmarks may not work", err=True)
 
-    available = ["commit_messages"]
+    # Discover and list benchmarks
+    benchmarks = discover_benchmarks()
+
+    if not benchmarks:
+        click.echo("No benchmarks found.")
+        return
 
     click.echo("Available benchmarks:")
-    for benchmark in available:
-        click.echo(f"  - {benchmark}")
+    for name, benchmark_class in benchmarks.items():
+        desc = getattr(benchmark_class, "description", "")
+        click.echo(f"  - {name}: {desc}")
 
 
 if __name__ == "__main__":

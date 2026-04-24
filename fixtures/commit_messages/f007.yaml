@@ -1,0 +1,15 @@
+id: f007
+description: "Subdirectory changes"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "mkdir -p src/components"
+  - "echo 'component1' > src/components/Component1.jsx"
+  - "echo 'component2' > src/components/Component2.jsx"
+  - "git add src/"
+prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update')."
+expected: "Add React components to src"
+scoring:
+  type: similarity
+  threshold: 0.5

@@ -1,0 +1,17 @@
+id: f006
+description: "Add and delete in same commit"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "touch placeholder"
+  - "git add placeholder"
+  - "git commit -m 'Initial'"
+  - "rm placeholder"
+  - "echo 'new content' > modern.txt"
+  - "git add placeholder modern.txt"
+prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Refactor')."
+expected: "Replace placeholder with modern.txt"
+scoring:
+  type: similarity
+  threshold: 0.5

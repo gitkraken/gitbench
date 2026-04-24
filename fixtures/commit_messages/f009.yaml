@@ -1,0 +1,16 @@
+id: f009
+description: "Fix bug in function"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf 'def add(a, b):\\n    return a + b\\n' > calculator.py"
+  - "git add calculator.py"
+  - "git commit -m 'Add calculator'"
+  - "printf 'def add(a, b):\\n    return int(a) + int(b)\\n' > calculator.py"
+  - "git add calculator.py"
+prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update')."
+expected: "Fix add function to handle string inputs"
+scoring:
+  type: similarity
+  threshold: 0.5
