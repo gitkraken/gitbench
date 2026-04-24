@@ -1,0 +1,25 @@
+id: f004
+description: Linear history with bad commit near beginning - model identifies early commit
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo '#!/bin/bash' > test.sh"
+  - "echo 'grep \"TODO\" README.md' >> test.sh"
+  - "chmod +x test.sh"
+  - "git add test.sh"
+  - "git commit -m 'Initial commit - bad commit'"
+  - "echo '# Project' > README.md"
+  - "git add README.md"
+  - "git commit -m 'add README header'"
+  - "echo '## Features' >> README.md"
+  - "git add README.md"
+  - "git commit -m 'add features section'"
+  - "echo '## Installation' >> README.md"
+  - "git add README.md"
+  - "git commit -m 'add installation section'"
+prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
+expected: "Initial commit - bad commit"
+scoring:
+  type: similarity
+  threshold: 0.5

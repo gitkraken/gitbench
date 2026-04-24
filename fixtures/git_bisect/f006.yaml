@@ -1,0 +1,28 @@
+id: f006
+description: Linear history with bad commit third from beginning - model identifies third commit
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo '#!/bin/bash' > test.sh"
+  - "echo 'grep \"port: 8080\" config/*.yaml' >> test.sh"
+  - "chmod +x test.sh"
+  - "git add test.sh"
+  - "git commit -m 'Initial commit'"
+  - "mkdir -p config && echo 'server:\n  port: 3000' > config/default.yaml"
+  - "git add config/default.yaml"
+  - "git commit -m 'add default config'"
+  - "echo 'server:\n  port: 8080' > config/default.yaml"
+  - "git add config/default.yaml"
+  - "git commit -m 'change port - bad commit'"
+  - "echo 'server:\n  port: 3000' > config/default.yaml"
+  - "git add config/default.yaml"
+  - "git commit -m 'revert port change'"
+  - "mkdir -p src && echo 'const PORT = 3000;' > src/index.js"
+  - "git add src/index.js"
+  - "git commit -m 'add port constant'"
+prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
+expected: "change port - bad commit"
+scoring:
+  type: similarity
+  threshold: 0.5
