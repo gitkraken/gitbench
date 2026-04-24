@@ -239,7 +239,7 @@ def run(benchmark: str, model: str, output: str | None, verbose: bool):
         sys.exit(1)
 
     logger.info(f"Starting benchmark: {benchmark} with model: {model}")
-    click.echo(f"Running benchmark '{benchmark}' with model '{model}'...")
+    click.echo(f"Running benchmark '{benchmark}' with model '{model}'...", err=True)
 
     try:
         model_client = get_model_client(model)
@@ -262,7 +262,7 @@ def run(benchmark: str, model: str, output: str | None, verbose: bool):
 
         if output:
             Path(output).write_text(output_json)
-            click.echo(f"\nResults written to: {output}")
+            click.echo(f"\nResults written to: {output}", err=True)
         else:
             click.echo(output_json)
 
