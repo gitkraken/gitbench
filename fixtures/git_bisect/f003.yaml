@@ -7,19 +7,20 @@ setup:
   - "echo '#!/bin/bash' > test.sh"
   - "echo 'grep \"ENABLED = true\" app.py' >> test.sh"
   - "chmod +x test.sh"
-  - "git add test.sh"
-  - "git commit -m 'Initial commit'"
   - "echo 'ENABLED = true' > app.py"
+  - "git add test.sh app.py"
+  - "git commit -m 'Initial commit'"
+  - "echo '# feature enabled by default' >> app.py"
   - "git add app.py"
   - "git commit -m 'enable feature'"
   - "echo 'ENABLED = false' > app.py"
   - "git add app.py"
-  - "git commit -m 'disable feature - bad commit'"
-  - "echo 'ENABLED = true' > app.py"
+  - "git commit -m 'disable feature'"
+  - "echo '# add telemetry' >> app.py"
   - "git add app.py"
-  - "git commit -m 're-enable feature'"
+  - "git commit -m 'add feature telemetry'"
 prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "disable feature - bad commit"
+expected: "disable feature"
 scoring:
-  type: similarity
+  type: bisect_regression
   threshold: 0.5

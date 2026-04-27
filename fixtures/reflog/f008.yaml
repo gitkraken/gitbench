@@ -22,5 +22,5 @@ setup:
 prompt: "You rebased your main branch onto 'fix-branch' but the result is incorrect. You want to go back to the original 'Custom config' commit on main. Use git reflog to find the original main branch HEAD commit hash."
 expected: "Custom config"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

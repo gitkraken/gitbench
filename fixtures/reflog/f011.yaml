@@ -20,5 +20,5 @@ setup:
 prompt: "After merging and deleting 'feature-x', you need to recover the commit 'Add env export B - enables feature X' which was the last commit on that branch. Use git reflog to identify what git command to run."
 expected: "Add env export B - enables feature X"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

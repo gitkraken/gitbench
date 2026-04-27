@@ -1,6 +1,7 @@
 """Git bisect benchmark for GitBench."""
 
 import logging
+import re
 import subprocess
 from pathlib import Path
 
@@ -11,6 +12,8 @@ from gitbench.harness.types import Fixture, Score
 from gitbench.utils.git import GitExecutor
 
 logger = logging.getLogger(__name__)
+
+_HASH_RE = re.compile(r"\b[0-9a-f]{7,40}\b", re.IGNORECASE)
 
 
 class GitBisectBenchmark(Benchmark):
@@ -56,7 +59,92 @@ class GitBisectBenchmark(Benchmark):
         Returns:
             A Score object with passed/failed status and similarity value.
         """
+        if fixture.scoring.get("type") == "bisect_regression":
+            return self._score_bisect_regression(fixture, model_output, repo_path)
         return self._scorer.score(fixture, model_output, repo_path=repo_path)
+
+    def _score_bisect_regression(
+        self, fixture: Fixture, model_output: str, repo_path: str | None = None
+    ) -> Score:
+        """Score bisect answers against the live target commit.
+
+        Fixture commit hashes are dynamic because real commits are created
+        during setup. The fixture's expected value is the stable target subject;
+        at score time we resolve it to the generated hash and accept either the
+        subject or the generated hash/prefix.
+        """
+        if repo_path is None:
+            return self._scorer.score(
+                Fixture(
+                    id=fixture.id,
+                    description=fixture.description,
+                    setup=fixture.setup,
+                    prompt=fixture.prompt,
+                    expected=fixture.expected,
+                    scoring={
+                        "type": "similarity",
+                        "threshold": fixture.scoring.get("threshold", 0.5),
+                    },
+                ),
+                model_output,
+            )
+
+        commits = self._commits(repo_path)
+        target_hashes = {
+            full_hash.lower()
+            for full_hash, _, subject in commits
+            if subject == fixture.expected
+        }
+
+        if not target_hashes:
+            return Score(
+                fixture_id=fixture.id,
+                passed=False,
+                similarity=0.0,
+                model_output=model_output,
+                error=f"Could not find target commit subject '{fixture.expected}'",
+            )
+
+        mentioned_hashes = [
+            match.group(0).lower() for match in _HASH_RE.finditer(model_output)
+        ]
+        hash_match = any(
+            target_hash.startswith(mentioned_hash)
+            for target_hash in target_hashes
+            for mentioned_hash in mentioned_hashes
+        )
+        subject_match = fixture.expected.lower() in model_output.lower()
+
+        passed = hash_match or subject_match
+        return Score(
+            fixture_id=fixture.id,
+            passed=passed,
+            similarity=1.0 if passed else 0.0,
+            model_output=model_output,
+            error=None
+            if passed
+            else f"Expected target hash/prefix or subject '{fixture.expected}'",
+        )
+
+    def _commits(self, repo_path: str) -> list[tuple[str, str, str]]:
+        """Return commits as (full_hash, short_hash, subject), newest first."""
+        result = subprocess.run(
+            ["git", "log", "--format=%H%x00%h%x00%s"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            logger.error(f"git log failed: {result.stderr}")
+            return []
+
+        commits: list[tuple[str, str, str]] = []
+        for line in result.stdout.splitlines():
+            parts = line.split("\x00", maxsplit=2)
+            if len(parts) == 3:
+                commits.append((parts[0], parts[1], parts[2]))
+        return commits
 
     def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
         """Set up a git repository with a known bad commit in history.
@@ -90,41 +178,81 @@ class GitBisectBenchmark(Benchmark):
         """
         parts = []
 
-        # Get commit log (last 10 commits, newest first)
-        log_result = subprocess.run(
-            ["git", "log", "--oneline", "-10"],
+        commits = self._commits(repo_path)
+        if not commits:
+            return ""
+
+        parts.append("Git commit history (newest first):")
+        parts.extend(f"{short_hash} {subject}" for _, short_hash, subject in commits)
+
+        test_script = Path(repo_path) / "test.sh"
+        if test_script.exists():
+            original_ref = self._current_ref(repo_path)
+            parts.append("\nTest results by commit (oldest first):")
+
+            try:
+                for full_hash, short_hash, subject in reversed(commits):
+                    checkout_result = subprocess.run(
+                        [
+                            "git",
+                            "-c",
+                            "advice.detachedHead=false",
+                            "checkout",
+                            "--quiet",
+                            full_hash,
+                        ],
+                        cwd=repo_path,
+                        capture_output=True,
+                        text=True,
+                    )
+                    if checkout_result.returncode != 0:
+                        parts.append(
+                            f"{short_hash} {subject}: ERROR checking out commit"
+                        )
+                        continue
+
+                    test_result = subprocess.run(
+                        ["bash", "test.sh"],
+                        cwd=repo_path,
+                        capture_output=True,
+                        text=True,
+                    )
+                    status = "PASS" if test_result.returncode == 0 else "FAIL"
+                    parts.append(
+                        f"{short_hash} {subject}: {status} "
+                        f"(exit code {test_result.returncode})"
+                    )
+            finally:
+                subprocess.run(
+                    ["git", "checkout", "--quiet", original_ref],
+                    cwd=repo_path,
+                    capture_output=True,
+                    text=True,
+                )
+
+        return "\n".join(parts)
+
+    def _current_ref(self, repo_path: str) -> str:
+        """Return the current branch name when available, otherwise HEAD hash."""
+        branch_result = subprocess.run(
+            ["git", "symbolic-ref", "--short", "-q", "HEAD"],
             cwd=repo_path,
             capture_output=True,
             text=True,
         )
+        if branch_result.returncode == 0 and branch_result.stdout.strip():
+            return branch_result.stdout.strip()
 
-        if log_result.returncode != 0:
-            logger.error(f"git log failed: {log_result.stderr}")
-            return ""
+        hash_result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+        if hash_result.returncode == 0 and hash_result.stdout.strip():
+            return hash_result.stdout.strip()
 
-        parts.append("Git commit history (newest first):")
-        parts.append(log_result.stdout)
-
-        # Get the test script path (fixture stores test_script as part of setup metadata)
-        # We look for a test script in the repo root
-        test_script = Path(repo_path) / "test.sh"
-        if test_script.exists():
-            parts.append("\nTest script output by commit:")
-            # Run test script at current HEAD
-            test_result = subprocess.run(
-                ["bash", str(test_script)],
-                cwd=repo_path,
-                capture_output=True,
-                text=True,
-            )
-            status = "PASS" if test_result.returncode == 0 else "FAIL"
-            parts.append(f"Current HEAD: {status} (exit code {test_result.returncode})")
-            if test_result.stdout:
-                parts.append(f"  stdout: {test_result.stdout.strip()}")
-            if test_result.stderr:
-                parts.append(f"  stderr: {test_result.stderr.strip()}")
-
-        return "\n".join(parts)
+        return "HEAD"
 
     def format_prompt(self, fixture: Fixture, diff: str) -> str:
         """Format the prompt with the fixture prompt and git log/test output.

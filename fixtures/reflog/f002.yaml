@@ -17,5 +17,5 @@ setup:
 prompt: "You accidentally ran 'git reset --hard HEAD~1' and lost the last commit. Looking at git reflog, what is the commit hash you need to recover to get back to 'Third note - contains bug fix'?"
 expected: "Third note - contains bug fix"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

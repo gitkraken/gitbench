@@ -5,13 +5,13 @@ setup:
   - "git config user.email 'test@test.com'"
   - "git config user.name 'Test User'"
   - "echo '#!/bin/bash' > test.sh"
-  - "echo 'grep \"import.*pytest\" tests/test_*.py' >> test.sh"
+  - "echo '! grep -q \"import.*pytest\" tests/test_*.py 2>/dev/null' >> test.sh"
   - "chmod +x test.sh"
   - "git add test.sh"
   - "git commit -m 'Initial commit'"
   - "mkdir -p tests && echo 'import pytest' > tests/test_core.py"
   - "git add tests/test_core.py"
-  - "git commit -m 'setup pytest - bad commit'"
+  - "git commit -m 'setup pytest'"
   - "echo 'def test_one(): pass' >> tests/test_core.py"
   - "git add tests/test_core.py"
   - "git commit -m 'add test_one'"
@@ -19,7 +19,7 @@ setup:
   - "git add tests/test_core.py"
   - "git commit -m 'add test_two'"
 prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "setup pytest - bad commit"
+expected: "setup pytest"
 scoring:
-  type: similarity
+  type: bisect_regression
   threshold: 0.5

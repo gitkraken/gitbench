@@ -20,5 +20,5 @@ setup:
 prompt: "You ran 'git reset --hard HEAD~2' which moved HEAD back two commits. You now want to recover the most recent commit that was lost, which had 'hotfix for login' in its message. Use git reflog to find the full commit hash you need."
 expected: "Commit C - hotfix for login"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

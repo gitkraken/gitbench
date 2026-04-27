@@ -485,6 +485,75 @@ class TestGitBisectBenchmark:
         assert result.fixture_id == fixture.id
         assert result.similarity > 0.8  # Should be very similar
 
+    def test_get_diff_includes_test_results_by_commit(self):
+        """Test that bisect context includes per-commit PASS/FAIL results."""
+        benchmark = GitBisectBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            diff = benchmark.get_diff(repo_path)
+
+            assert "Test results by commit (oldest first):" in diff
+            assert ": PASS" in diff
+            assert f"{fixture.expected}: FAIL" in diff
+        finally:
+            executor.cleanup()
+
+    def test_bisect_scores_dynamic_commit_hash(self):
+        """Test that bisect scoring accepts the generated target hash."""
+        benchmark = GitBisectBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            target_hash = next(
+                full_hash
+                for full_hash, _, subject in benchmark._commits(repo_path)
+                if subject == fixture.expected
+            )
+
+            result = benchmark.score(fixture, target_hash[:7], repo_path=repo_path)
+
+            assert result.passed is True
+            assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
+
+    def test_bisect_scores_target_subject(self):
+        """Test that bisect scoring accepts the target subject line."""
+        benchmark = GitBisectBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(fixture, fixture.expected, repo_path=repo_path)
+
+            assert result.passed is True
+            assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
+
+    def test_bisect_rejects_wrong_commit(self):
+        """Test that bisect scoring rejects a non-target commit."""
+        benchmark = GitBisectBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            wrong_hash = next(
+                full_hash
+                for full_hash, _, subject in benchmark._commits(repo_path)
+                if subject != fixture.expected
+            )
+
+            result = benchmark.score(fixture, wrong_hash[:7], repo_path=repo_path)
+
+            assert result.passed is False
+            assert result.similarity == 0.0
+        finally:
+            executor.cleanup()
+
 
 class TestRebaseBenchmark:
     """Test the rebase benchmark implementation."""
@@ -636,6 +705,72 @@ class TestReflogBenchmark:
         assert isinstance(result, Score)
         assert result.fixture_id == fixture.id
         assert result.similarity > 0.8  # Should be very similar
+
+    def test_reflog_scores_dynamic_commit_hash(self):
+        """Test that reflog scoring accepts the live hash for the target commit."""
+        benchmark = ReflogBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            target_hash = next(
+                line.split()[0]
+                for line in benchmark.get_diff(repo_path).splitlines()
+                if fixture.expected in line
+            )
+
+            result = benchmark.score(fixture, target_hash, repo_path=repo_path)
+
+            assert result.passed is True
+            assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
+
+    def test_reflog_scores_matching_head_selector(self):
+        """Test that reflog scoring accepts a selector resolving to the target commit."""
+        benchmark = ReflogBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(
+                fixture,
+                "git reset --hard HEAD@{1}",
+                repo_path=repo_path,
+            )
+
+            assert result.passed is True
+            assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
+
+    def test_reflog_does_not_accept_message_when_hash_requested(self):
+        """Test that hash-command fixtures require identifying the reflog commit."""
+        benchmark = ReflogBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(fixture, fixture.expected, repo_path=repo_path)
+
+            assert result.passed is False
+            assert result.similarity == 0.0
+        finally:
+            executor.cleanup()
+
+    def test_reflog_accepts_message_for_message_fixture(self):
+        """Test the one reflog fixture that asks for the commit message."""
+        benchmark = ReflogBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f010")
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(fixture, fixture.expected, repo_path=repo_path)
+
+            assert result.passed is True
+            assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
 
 
 class TestBenchmarkDiscovery:

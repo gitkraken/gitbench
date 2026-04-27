@@ -17,5 +17,5 @@ setup:
 prompt: "You are in detached HEAD state at HEAD~1. You made some experimental changes and committed them in a detached HEAD state. The commit 'Third commit - WIP experimental' was made on a detached HEAD. Use git reflog to find the commit hash of that experimental commit so you can return to it."
 expected: "Third commit - WIP experimental"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

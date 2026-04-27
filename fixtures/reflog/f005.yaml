@@ -19,5 +19,5 @@ setup:
 prompt: "After rebasing 'develop' onto 'main', you lost the intermediate commits 'Add feature A' and 'Add feature B - user dashboard'. They were squashed. Use git reflog to find the original commit hash of the commit with 'user dashboard' in the message."
 expected: "Add feature B - user dashboard"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

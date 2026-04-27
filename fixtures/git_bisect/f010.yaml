@@ -7,15 +7,16 @@ setup:
   - "echo '#!/bin/bash' > test.sh"
   - "echo 'grep -q \"DEBUG = False\" app.py && grep -q \"DEBUG = False\" config.py' >> test.sh"
   - "chmod +x test.sh"
-  - "git add test.sh && git commit -m 'Initial commit'"
-  - "echo 'DEBUG = False' > app.py && echo 'debug = False' > config.py"
+  - "echo 'DEBUG = False' > app.py && echo 'DEBUG = False' > config.py"
+  - "git add test.sh app.py config.py && git commit -m 'Initial commit'"
+  - "echo '# debug defaults' >> config.py"
   - "git add app.py config.py && git commit -m 'set debug off'"
-  - "echo 'DEBUG = True' > app.py && echo 'debug = True' > config.py"
-  - "git add app.py config.py && git commit -m 'enable debug mode - bad commit'"
-  - "echo 'DEBUG = False' > app.py && echo 'debug = False' > config.py"
-  - "git add app.py config.py && git commit -m 'disable debug mode'"
+  - "echo 'DEBUG = True' > app.py && echo 'DEBUG = True' > config.py"
+  - "git add app.py config.py && git commit -m 'enable debug mode'"
+  - "echo '# verbose startup logs' >> app.py"
+  - "git add app.py && git commit -m 'add startup logging'"
 prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "enable debug mode - bad commit"
+expected: "enable debug mode"
 scoring:
-  type: similarity
+  type: bisect_regression
   threshold: 0.5

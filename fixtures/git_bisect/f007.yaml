@@ -7,18 +7,20 @@ setup:
   - "echo '#!/bin/bash' > test.sh"
   - "echo 'grep -v \"DEBUG\" src/app.js | grep -q \"production\"' >> test.sh"
   - "chmod +x test.sh"
-  - "git add test.sh && git commit -m 'Initial commit'"
   - "mkdir -p src && echo 'const ENV = \"production\";' > src/app.js"
+  - "git add test.sh src/app.js && git commit -m 'Initial commit'"
+  - "echo '// production defaults' >> src/app.js"
   - "git add src/app.js && git commit -m 'setup production env'"
   - "echo 'const ENV = \"development\";' > src/app.js"
-  - "git add src/app.js && git commit -m 'switch to dev - bad commit'"
+  - "git add src/app.js && git commit -m 'switch to dev'"
   - "git checkout -b feature"
-  - "echo 'const ENV = \"production\";' > src/app.js"
-  - "git add src/app.js && git commit -m 'restore production'"
+  - "echo 'const ENV = \"development\";' > src/app.js"
+  - "echo 'const DEBUG = true;' >> src/app.js"
+  - "git add src/app.js && git commit -m 'add diagnostics'"
   - "git checkout main"
   - "git merge feature"
 prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "switch to dev - bad commit"
+expected: "switch to dev"
 scoring:
-  type: similarity
+  type: bisect_regression
   threshold: 0.5

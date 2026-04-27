@@ -20,5 +20,6 @@ setup:
 prompt: "You ran 'git reset --mixed HEAD~1', then made a new commit. The original 'Add Controller class - completes MVC' commit is now orphaned. Use git reflog to find the commit message you need to recover."
 expected: "Add Controller class - completes MVC"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5
+  accept_message: true

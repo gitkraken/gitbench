@@ -7,11 +7,12 @@ setup:
   - "echo '#!/bin/bash' > test.sh"
   - "echo 'grep \"TODO\" README.md' >> test.sh"
   - "chmod +x test.sh"
-  - "git add test.sh"
-  - "git commit -m 'Initial commit - bad commit'"
+  - "echo '# Project\n\nTODO: document setup' > README.md"
+  - "git add test.sh README.md"
+  - "git commit -m 'Initial commit'"
   - "echo '# Project' > README.md"
   - "git add README.md"
-  - "git commit -m 'add README header'"
+  - "git commit -m 'remove setup todo'"
   - "echo '## Features' >> README.md"
   - "git add README.md"
   - "git commit -m 'add features section'"
@@ -19,7 +20,7 @@ setup:
   - "git add README.md"
   - "git commit -m 'add installation section'"
 prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "Initial commit - bad commit"
+expected: "remove setup todo"
 scoring:
-  type: similarity
+  type: bisect_regression
   threshold: 0.5

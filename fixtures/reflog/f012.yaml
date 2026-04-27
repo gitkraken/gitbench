@@ -19,5 +19,5 @@ setup:
 prompt: "You reset main back to 'Local database config' and lost the 'Production database config - critical' commit. You then switched to 'backup' branch. Use git reflog on the main branch to find and recover the critical production config commit."
 expected: "Production database config - critical"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

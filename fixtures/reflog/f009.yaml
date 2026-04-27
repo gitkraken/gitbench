@@ -17,5 +17,5 @@ setup:
 prompt: "You cherry-picked a commit from 'bugfix' branch but then accidentally reset it away. The commit message was 'Implement login feature - urgent'. Use git reflog to recover this commit and provide the command needed."
 expected: "Implement login feature - urgent"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

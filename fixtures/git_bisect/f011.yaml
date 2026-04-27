@@ -5,17 +5,18 @@ setup:
   - "git config user.email 'test@test.com'"
   - "git config user.name 'Test User'"
   - "echo '#!/bin/bash' > test.sh"
-  - "echo 'grep -q \"color: blue\" styles.css && grep -q \"element.style\" index.js' >> test.sh"
+  - "echo 'grep -q \"color: blue\" styles.css && grep -q \"blue\" index.js' >> test.sh"
   - "chmod +x test.sh"
-  - "git add test.sh && git commit -m 'Initial commit'"
   - "echo 'body { color: blue; }' > styles.css && echo 'document.body.style.color = \"blue\";' > index.js"
+  - "git add test.sh styles.css index.js && git commit -m 'Initial commit'"
+  - "echo 'body { background: white; }' >> styles.css"
   - "git add styles.css index.js && git commit -m 'add blue styling'"
   - "echo 'body { color: red; }' > styles.css && echo 'document.body.style.color = \"red\";' > index.js"
-  - "git add styles.css index.js && git commit -m 'change to red - bad commit'"
-  - "echo 'body { color: blue; }' > styles.css && echo 'document.body.style.color = \"blue\";' > index.js"
-  - "git add styles.css index.js && git commit -m 'revert to blue'"
+  - "git add styles.css index.js && git commit -m 'change to red'"
+  - "echo 'document.title = \"Theme\";' >> index.js"
+  - "git add index.js && git commit -m 'add theme title'"
 prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "change to red - bad commit"
+expected: "change to red"
 scoring:
-  type: similarity
+  type: bisect_regression
   threshold: 0.5

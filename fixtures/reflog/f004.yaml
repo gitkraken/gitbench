@@ -20,5 +20,5 @@ setup:
 prompt: "You merged and deleted a feature branch 'feature-login' but need to recover the last commit that was added on that branch. The last feature commit message contained 'critical feature'. Use git reflog to identify what you need to run to recover that commit."
 expected: "Add login function - critical feature"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

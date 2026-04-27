@@ -17,5 +17,5 @@ setup:
 prompt: "You ran 'git reset --soft HEAD~1' which moved HEAD back one commit but kept the changes staged. Using git reflog, identify the full commit hash of the commit you just reset away. Provide ONLY the 40-character commit hash."
 expected: "Add third version - important changes"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5

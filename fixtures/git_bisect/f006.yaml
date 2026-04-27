@@ -5,7 +5,7 @@ setup:
   - "git config user.email 'test@test.com'"
   - "git config user.name 'Test User'"
   - "echo '#!/bin/bash' > test.sh"
-  - "echo 'grep \"port: 8080\" config/*.yaml' >> test.sh"
+  - "echo '! grep -q \"port: 8080\" config/*.yaml 2>/dev/null' >> test.sh"
   - "chmod +x test.sh"
   - "git add test.sh"
   - "git commit -m 'Initial commit'"
@@ -14,15 +14,15 @@ setup:
   - "git commit -m 'add default config'"
   - "echo 'server:\n  port: 8080' > config/default.yaml"
   - "git add config/default.yaml"
-  - "git commit -m 'change port - bad commit'"
-  - "echo 'server:\n  port: 3000' > config/default.yaml"
+  - "git commit -m 'change port'"
+  - "echo 'server:\n  port: 8080\n  feature: true' > config/default.yaml"
   - "git add config/default.yaml"
-  - "git commit -m 'revert port change'"
+  - "git commit -m 'add feature flag'"
   - "mkdir -p src && echo 'const PORT = 3000;' > src/index.js"
   - "git add src/index.js"
   - "git commit -m 'add port constant'"
 prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "change port - bad commit"
+expected: "change port"
 scoring:
-  type: similarity
+  type: bisect_regression
   threshold: 0.5

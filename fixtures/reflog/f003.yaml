@@ -14,5 +14,5 @@ setup:
 prompt: "You amended a commit with 'git commit --amend' and need to find the original commit hash before the amendment. The commit message was changed from 'Update hello function v2' to 'Update hello function - revised'. Use git reflog to find the old commit hash."
 expected: "Update hello function v2"
 scoring:
-  type: similarity
+  type: reflog_recovery
   threshold: 0.5
