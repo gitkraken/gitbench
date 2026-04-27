@@ -13,6 +13,47 @@ from .types import ModelMessage
 logger = logging.getLogger(__name__)
 
 
+class ModelResponseError(RuntimeError):
+    """Raised when a provider response cannot be parsed as model text."""
+
+
+def _format_provider_error(error_obj: Any) -> str:
+    """Extract a useful message from provider-specific error payloads."""
+    if isinstance(error_obj, dict):
+        message = error_obj.get("message") or error_obj.get("error")
+        if message:
+            return str(message)
+    message = getattr(error_obj, "message", None)
+    if message:
+        return str(message)
+    return str(error_obj)
+
+
+def _extract_openai_content(response: Any) -> str:
+    """Extract assistant content from an OpenAI-compatible chat response."""
+    provider_error = getattr(response, "error", None)
+    if provider_error:
+        raise ModelResponseError(
+            f"OpenAI-compatible response contained provider error: "
+            f"{_format_provider_error(provider_error)}"
+        )
+
+    choices = getattr(response, "choices", None)
+    if not choices:
+        raise ModelResponseError(
+            "OpenAI-compatible response missing choices; no model output was returned"
+        )
+
+    first_choice = choices[0]
+    message = getattr(first_choice, "message", None)
+    if message is None:
+        raise ModelResponseError(
+            "OpenAI-compatible response choice missing message; no model output was returned"
+        )
+
+    return getattr(message, "content", None) or ""
+
+
 class ModelInterface(ABC):
     """Abstract base class for model adapters."""
 
@@ -69,7 +110,11 @@ class OpenAIAdapter(ModelInterface):
                     "OpenAI API key not found. Set OPENAI_API_KEY environment variable "
                     "or pass api_key parameter."
                 )
-            client_kwargs: dict[str, Any] = {"api_key": api_key}
+            client_kwargs: dict[str, Any] = {
+                "api_key": api_key,
+                "timeout": self.timeout,
+                "max_retries": 0,
+            }
             if self._base_url:
                 client_kwargs["base_url"] = self._base_url
             self._client = openai.OpenAI(**client_kwargs)
@@ -106,7 +151,7 @@ class OpenAIAdapter(ModelInterface):
                             messages=model_messages,
                             **kwargs,
                         )
-                        result.append(response.choices[0].message.content or "")
+                        result.append(_extract_openai_content(response))
                     except Exception as e:
                         error.append(e)
 
@@ -147,6 +192,7 @@ class OpenAIAdapter(ModelInterface):
                 openai.APITimeoutError,
                 openai.APIConnectionError,
                 openai.InternalServerError,
+                ModelResponseError,
             ) as e:
                 last_error = e
                 if attempt < self.retry_count:

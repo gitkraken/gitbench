@@ -1,11 +1,18 @@
 """Tests for GitBench model interface."""
 
 import json
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from gitbench.harness.model import MockModelClient, ModelInterface, OllamaAdapter, OpenAIAdapter
+from gitbench.harness.model import (
+    MockModelClient,
+    ModelInterface,
+    ModelResponseError,
+    OllamaAdapter,
+    OpenAIAdapter,
+)
 from gitbench.harness.types import ModelMessage
 
 
@@ -234,6 +241,7 @@ class TestOpenAIAdapter:
         # Setup mock
         mock_client = MagicMock()
         mock_response = MagicMock()
+        mock_response.error = None
         mock_response.choices[0].message.content = "Generated output"
         mock_client.chat.completions.create.return_value = mock_response
         mock_openai_class.return_value = mock_client
@@ -260,6 +268,7 @@ class TestOpenAIAdapter:
         """Test that generate passes extra kwargs to the API."""
         mock_client = MagicMock()
         mock_response = MagicMock()
+        mock_response.error = None
         mock_response.choices[0].message.content = "Output"
         mock_client.chat.completions.create.return_value = mock_response
         mock_openai_class.return_value = mock_client
@@ -287,10 +296,42 @@ class TestOpenAIAdapter:
         assert adapter._client is client  # Subsequent access returns same instance
 
     @patch("openai.OpenAI")
+    def test_client_uses_adapter_timeout_and_disables_sdk_retries(self, mock_openai_class):
+        """Test SDK timeout/retry policy is configured by the adapter."""
+        adapter = OpenAIAdapter(api_key="test-key", timeout=45)
+
+        _ = adapter.client
+
+        mock_openai_class.assert_called_once_with(
+            api_key="test-key",
+            timeout=45,
+            max_retries=0,
+        )
+
+    @patch("openai.OpenAI")
+    def test_client_keeps_base_url_with_timeout_options(self, mock_openai_class):
+        """Test custom base URL is preserved with SDK timeout configuration."""
+        adapter = OpenAIAdapter(
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+            timeout=120,
+        )
+
+        _ = adapter.client
+
+        mock_openai_class.assert_called_once_with(
+            api_key="test-key",
+            timeout=120,
+            max_retries=0,
+            base_url="https://openrouter.ai/api/v1",
+        )
+
+    @patch("openai.OpenAI")
     def test_empty_response_handling(self, mock_openai_class):
         """Test handling of empty response content."""
         mock_client = MagicMock()
         mock_response = MagicMock()
+        mock_response.error = None
         mock_response.choices[0].message.content = ""
         mock_client.chat.completions.create.return_value = mock_response
         mock_openai_class.return_value = mock_client
@@ -301,3 +342,63 @@ class TestOpenAIAdapter:
         messages = [ModelMessage(role="user", content="Test")]
         result = adapter.generate(messages)
         assert result == ""
+
+    @patch("openai.OpenAI")
+    def test_missing_choices_raises_clear_response_error(self, mock_openai_class):
+        """Test malformed provider responses fail with a useful error."""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            choices=None
+        )
+        mock_openai_class.return_value = mock_client
+
+        adapter = OpenAIAdapter(api_key="test-key", retry_count=1)
+        adapter._client = mock_client
+
+        messages = [ModelMessage(role="user", content="Test")]
+        with pytest.raises(ModelResponseError, match="missing choices"):
+            adapter.generate(messages)
+
+    @patch("openai.OpenAI")
+    def test_missing_choices_is_retryable(self, mock_openai_class):
+        """Test transient malformed provider responses are retried."""
+        mock_client = MagicMock()
+        malformed_response = SimpleNamespace(choices=None)
+        good_response = SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(content="Recovered output")
+                )
+            ]
+        )
+        mock_client.chat.completions.create.side_effect = [
+            malformed_response,
+            good_response,
+        ]
+        mock_openai_class.return_value = mock_client
+
+        adapter = OpenAIAdapter(api_key="test-key", retry_count=2)
+        adapter._client = mock_client
+
+        messages = [ModelMessage(role="user", content="Test")]
+        result = adapter.generate(messages)
+
+        assert result == "Recovered output"
+        assert mock_client.chat.completions.create.call_count == 2
+
+    @patch("openai.OpenAI")
+    def test_provider_error_response_is_preserved(self, mock_openai_class):
+        """Test provider error payloads are surfaced in adapter errors."""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            choices=None,
+            error={"message": "upstream provider overloaded"},
+        )
+        mock_openai_class.return_value = mock_client
+
+        adapter = OpenAIAdapter(api_key="test-key", retry_count=1)
+        adapter._client = mock_client
+
+        messages = [ModelMessage(role="user", content="Test")]
+        with pytest.raises(ModelResponseError, match="upstream provider overloaded"):
+            adapter.generate(messages)
