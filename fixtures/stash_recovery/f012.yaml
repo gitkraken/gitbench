@@ -16,5 +16,5 @@ setup:
 prompt: "You were on 'my-feature-branch' and stashed 'Feature work' with message 'feature-on-my-feature-branch'. Which stash entry contains this work? Provide the stash reference."
 expected: "stash@{0}"
 scoring:
-  type: similarity
+  type: stash_recovery
   threshold: 0.5

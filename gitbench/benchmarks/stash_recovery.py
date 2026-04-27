@@ -1,6 +1,7 @@
 """Git stash recovery benchmark for GitBench."""
 
 import logging
+import re
 import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -11,6 +12,8 @@ from gitbench.harness.types import Fixture, Score
 from gitbench.utils.git import GitExecutor
 
 logger = logging.getLogger(__name__)
+
+_STASH_REF_RE = re.compile(r"stash@\{\d+\}")
 
 
 class Benchmark(ABC):
@@ -71,7 +74,29 @@ class StashRecoveryBenchmark(Benchmark):
         Returns:
             A Score object with passed/failed status and similarity value.
         """
+        if fixture.scoring.get("type") == "stash_recovery":
+            return self._score_stash_recovery(fixture, model_output)
         return self._scorer.score(fixture, model_output, repo_path=repo_path)
+
+    def _score_stash_recovery(self, fixture: Fixture, model_output: str) -> Score:
+        """Score stash recovery answers by exact stash reference.
+
+        Similarity scoring is too permissive for stash refs: stash@{0} and
+        stash@{1} differ by one character but identify different entries.
+        Accept a correct reference anywhere in a command, such as
+        `git stash apply stash@{1}`.
+        """
+        expected = fixture.expected.strip()
+        refs = _STASH_REF_RE.findall(model_output)
+        passed = expected in refs or model_output.strip() == expected
+
+        return Score(
+            fixture_id=fixture.id,
+            passed=passed,
+            similarity=1.0 if passed else 0.0,
+            model_output=model_output,
+            error=None if passed else f"Expected stash reference '{expected}'",
+        )
 
     def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
         """Set up a git repository for a stash recovery scenario.
@@ -103,18 +128,45 @@ class StashRecoveryBenchmark(Benchmark):
         Returns:
             Git stash list output showing all stash entries.
         """
-        result = subprocess.run(
+        list_result = subprocess.run(
             ["git", "stash", "list"],
             cwd=repo_path,
             capture_output=True,
             text=True,
         )
 
-        if result.returncode != 0:
-            logger.error(f"git stash list failed: {result.stderr}")
+        if list_result.returncode != 0:
+            logger.error(f"git stash list failed: {list_result.stderr}")
             return ""
 
-        return result.stdout
+        parts = [list_result.stdout.rstrip()]
+        refs = _STASH_REF_RE.findall(list_result.stdout)
+
+        if refs:
+            parts.append("\nStash details:")
+
+        for ref in refs:
+            show_result = subprocess.run(
+                ["git", "stash", "show", "--patch", "--include-untracked", ref],
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+            )
+            if show_result.returncode != 0:
+                show_result = subprocess.run(
+                    ["git", "stash", "show", "--patch", ref],
+                    cwd=repo_path,
+                    capture_output=True,
+                    text=True,
+                )
+
+            parts.append(f"\n{ref}:")
+            if show_result.returncode == 0 and show_result.stdout.strip():
+                parts.append(show_result.stdout.rstrip())
+            else:
+                parts.append("(no patch details available)")
+
+        return "\n".join(parts).strip() + "\n"
 
     def format_prompt(self, fixture: Fixture, diff: str) -> str:
         """Format the prompt with the fixture prompt and git stash list output.

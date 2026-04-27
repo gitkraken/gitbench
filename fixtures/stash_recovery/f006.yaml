@@ -18,5 +18,5 @@ setup:
 prompt: "You stashed 'important-work' containing changes to file1.txt and file2.txt. Which stash entry contains this work? Provide the stash reference."
 expected: "stash@{0}"
 scoring:
-  type: similarity
+  type: stash_recovery
   threshold: 0.5

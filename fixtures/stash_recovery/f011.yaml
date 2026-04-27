@@ -16,5 +16,5 @@ setup:
 prompt: "You stashed 'Stashed' then rebased. Which stash entry contains your stashed work? Provide the stash reference."
 expected: "stash@{0}"
 scoring:
-  type: similarity
+  type: stash_recovery
   threshold: 0.5

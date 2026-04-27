@@ -12,7 +12,7 @@ setup:
   - "echo 'Another work' > file.txt"
   - "git stash push -m 'another'"
 prompt: "You stashed 'Work to keep' with message 'keep-this', then stashed another work. You want to apply 'keep-this' but not remove it from the stash list. Which stash entry contains 'keep-this'? Provide the stash reference."
-expected: "stash@{0}"
+expected: "stash@{1}"
 scoring:
-  type: similarity
+  type: stash_recovery
   threshold: 0.5

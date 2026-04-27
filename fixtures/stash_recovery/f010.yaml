@@ -13,5 +13,5 @@ setup:
 prompt: "You stashed work in a subdirectory with message 'subdir-work'. Which stash entry contains this work? Provide the stash reference."
 expected: "stash@{0}"
 scoring:
-  type: similarity
+  type: stash_recovery
   threshold: 0.5

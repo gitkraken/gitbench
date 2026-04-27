@@ -14,5 +14,5 @@ setup:
 prompt: "You stashed both tracked and untracked files with message 'all-my-changes'. Which stash entry contains this work? Provide the stash reference."
 expected: "stash@{0}"
 scoring:
-  type: similarity
+  type: stash_recovery
   threshold: 0.5

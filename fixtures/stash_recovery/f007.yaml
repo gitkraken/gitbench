@@ -14,5 +14,5 @@ setup:
 prompt: "You have two stashes: one with 'Other work' (newer) and one with 'Stashed' (older). Which stash contains 'Stashed'? Provide the stash reference."
 expected: "stash@{1}"
 scoring:
-  type: similarity
+  type: stash_recovery
   threshold: 0.5

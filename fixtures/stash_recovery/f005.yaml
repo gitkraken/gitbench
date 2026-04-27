@@ -15,5 +15,5 @@ setup:
 prompt: "You stashed 'Stashed content' but git stash pop failed due to conflicting changes. Which stash entry contains 'Stashed content'? Provide the stash reference."
 expected: "stash@{0}"
 scoring:
-  type: similarity
+  type: stash_recovery
   threshold: 0.5

@@ -12,6 +12,7 @@ from gitbench.benchmarks.cherry_pick import CherryPickBenchmark
 from gitbench.benchmarks.git_bisect import GitBisectBenchmark
 from gitbench.benchmarks.rebase import RebaseBenchmark
 from gitbench.benchmarks.reflog import ReflogBenchmark
+from gitbench.benchmarks.stash_recovery import StashRecoveryBenchmark
 
 
 class TestBenchmarkABC:
@@ -769,6 +770,79 @@ class TestReflogBenchmark:
 
             assert result.passed is True
             assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
+
+
+class TestStashRecoveryBenchmark:
+    """Test the stash_recovery benchmark implementation."""
+
+    def test_benchmark_inherits_from_benchmark_abc(self):
+        """Test that StashRecoveryBenchmark is a subclass of Benchmark."""
+        assert issubclass(StashRecoveryBenchmark, Benchmark)
+
+    def test_benchmark_has_name(self):
+        """Test that the benchmark has the expected name."""
+        assert StashRecoveryBenchmark.name == "stash_recovery"
+
+    def test_benchmark_can_be_instantiated(self):
+        """Test that StashRecoveryBenchmark can be instantiated."""
+        benchmark = StashRecoveryBenchmark()
+        assert benchmark is not None
+
+    def test_load_fixtures_returns_list(self):
+        """Test that load_fixtures returns a list of fixtures."""
+        benchmark = StashRecoveryBenchmark()
+        fixtures = benchmark.load_fixtures()
+        assert isinstance(fixtures, list)
+        assert len(fixtures) >= 10
+
+    def test_get_diff_includes_stash_details(self):
+        """Test that stash context includes patch details for generic WIP entries."""
+        benchmark = StashRecoveryBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f002")
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            diff = benchmark.get_diff(repo_path)
+
+            assert "Stash details:" in diff
+            assert "stash@{2}:" in diff
+            assert "+Work A" in diff
+        finally:
+            executor.cleanup()
+
+    def test_stash_recovery_scores_reference_inside_command(self):
+        """Test that stash scoring accepts the expected reference in a command."""
+        benchmark = StashRecoveryBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f002")
+
+        result = benchmark.score(fixture, "git stash apply stash@{2}")
+
+        assert result.passed is True
+        assert result.similarity == 1.0
+
+    def test_stash_recovery_rejects_wrong_reference(self):
+        """Test that adjacent stash refs do not pass by string similarity."""
+        benchmark = StashRecoveryBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f002")
+
+        result = benchmark.score(fixture, "stash@{0}")
+
+        assert result.passed is False
+        assert result.similarity == 0.0
+
+    def test_stash_recovery_fixture_f009_targets_older_stash(self):
+        """Test that keep-this points to the older stash entry."""
+        benchmark = StashRecoveryBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f009")
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            diff = benchmark.get_diff(repo_path)
+
+            assert fixture.expected == "stash@{1}"
+            assert "stash@{1}: On main: keep-this" in diff
         finally:
             executor.cleanup()
 
