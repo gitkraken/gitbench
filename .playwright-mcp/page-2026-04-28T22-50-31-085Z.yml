@@ -1,0 +1,636 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: // benchmark report
+      - heading "GitBench" [level=1] [ref=e6]
+      - generic [ref=e7]:
+        - generic [ref=e8]: Generated 2026-04-28 22:50 UTC
+        - generic [ref=e10]: 11 run(s)
+        - generic [ref=e11]: 11 model(s)
+        - generic [ref=e12]: 12 benchmark(s)
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e16]: Model Summary
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]: anthropic/claude-opus-4.7
+          - generic [ref=e20]: 86.8%
+          - generic [ref=e21]: 125 / 144 fixtures
+        - generic [ref=e22]:
+          - generic [ref=e23]: deepseek/deepseek-v4-flash
+          - generic [ref=e24]: 91.7%
+          - generic [ref=e25]: 132 / 144 fixtures
+        - generic [ref=e26]:
+          - generic [ref=e27]: deepseek/deepseek-v4-pro
+          - generic [ref=e28]: 94.4%
+          - generic [ref=e29]: 136 / 144 fixtures
+        - generic [ref=e30]:
+          - generic [ref=e31]: google/gemini-3-flash-preview
+          - generic [ref=e32]: 93.1%
+          - generic [ref=e33]: 134 / 144 fixtures
+        - generic [ref=e34]:
+          - generic [ref=e35]: google/gemini-3.1-flash-lite-preview
+          - generic [ref=e36]: 92.4%
+          - generic [ref=e37]: 133 / 144 fixtures
+        - generic [ref=e38]:
+          - generic [ref=e39]: google/gemini-3.1-pro-preview
+          - generic [ref=e40]: 92.4%
+          - generic [ref=e41]: 133 / 144 fixtures
+        - generic [ref=e42]:
+          - generic [ref=e43]: minimax/minimax-m2.5
+          - generic [ref=e44]: 92.4%
+          - generic [ref=e45]: 133 / 144 fixtures
+        - generic [ref=e46]:
+          - generic [ref=e47]: minimax/minimax-m2.7
+          - generic [ref=e48]: 92.4%
+          - generic [ref=e49]: 133 / 144 fixtures
+        - generic [ref=e50]:
+          - generic [ref=e51]: openai/gpt-5.5
+          - generic [ref=e52]: 94.4%
+          - generic [ref=e53]: 136 / 144 fixtures
+        - generic [ref=e54]:
+          - generic [ref=e55]: openai/gpt-oss-120b
+          - generic [ref=e56]: 88.9%
+          - generic [ref=e57]: 128 / 144 fixtures
+        - generic [ref=e58]:
+          - generic [ref=e59]: openai/gpt-oss-20b
+          - generic [ref=e60]: 89.6%
+          - generic [ref=e61]: 129 / 144 fixtures
+    - generic [ref=e62]:
+      - generic [ref=e64]: Performance Charts
+      - generic [ref=e67]: Per-Benchmark Comparison
+    - generic [ref=e69]:
+      - generic [ref=e71]: Results Matrix
+      - table [ref=e74]:
+        - rowgroup [ref=e75]:
+          - row "Benchmark anthropic/claude-opus-4.7 deepseek/deepseek-v4-flash deepseek/deepseek-v4-pro google/gemini-3-flash-preview google/gemini-3.1-flash-lite-preview google/gemini-3.1-pro-preview minimax/minimax-m2.5 minimax/minimax-m2.7 openai/gpt-5.5 openai/gpt-oss-120b openai/gpt-oss-20b" [ref=e76]:
+            - columnheader "Benchmark" [ref=e77]
+            - columnheader "anthropic/claude-opus-4.7" [ref=e78]
+            - columnheader "deepseek/deepseek-v4-flash" [ref=e79]
+            - columnheader "deepseek/deepseek-v4-pro" [ref=e80]
+            - columnheader "google/gemini-3-flash-preview" [ref=e81]
+            - columnheader "google/gemini-3.1-flash-lite-preview" [ref=e82]
+            - columnheader "google/gemini-3.1-pro-preview" [ref=e83]
+            - columnheader "minimax/minimax-m2.5" [ref=e84]
+            - columnheader "minimax/minimax-m2.7" [ref=e85]
+            - columnheader "openai/gpt-5.5" [ref=e86]
+            - columnheader "openai/gpt-oss-120b" [ref=e87]
+            - columnheader "openai/gpt-oss-20b" [ref=e88]
+        - rowgroup [ref=e89]:
+          - row "blame_forensics 91.7% 11/12 83.3% 10/12 91.7% 11/12 100.0% 12/12 75.0% 9/12 83.3% 10/12 91.7% 11/12 100.0% 12/12 91.7% 11/12 83.3% 10/12 91.7% 11/12" [ref=e90]:
+            - cell "blame_forensics" [ref=e91]
+            - cell "91.7% 11/12" [ref=e92]:
+              - generic [ref=e93]: 91.7%
+              - text: 11/12
+            - cell "83.3% 10/12" [ref=e94]:
+              - generic [ref=e95]: 83.3%
+              - text: 10/12
+            - cell "91.7% 11/12" [ref=e96]:
+              - generic [ref=e97]: 91.7%
+              - text: 11/12
+            - cell "100.0% 12/12" [ref=e98]:
+              - generic [ref=e99]: 100.0%
+              - text: 12/12
+            - cell "75.0% 9/12" [ref=e100]:
+              - generic [ref=e101]: 75.0%
+              - text: 9/12
+            - cell "83.3% 10/12" [ref=e102]:
+              - generic [ref=e103]: 83.3%
+              - text: 10/12
+            - cell "91.7% 11/12" [ref=e104]:
+              - generic [ref=e105]: 91.7%
+              - text: 11/12
+            - cell "100.0% 12/12" [ref=e106]:
+              - generic [ref=e107]: 100.0%
+              - text: 12/12
+            - cell "91.7% 11/12" [ref=e108]:
+              - generic [ref=e109]: 91.7%
+              - text: 11/12
+            - cell "83.3% 10/12" [ref=e110]:
+              - generic [ref=e111]: 83.3%
+              - text: 10/12
+            - cell "91.7% 11/12" [ref=e112]:
+              - generic [ref=e113]: 91.7%
+              - text: 11/12
+          - row "branch_cleanup 75.0% 9/12 50.0% 6/12 58.3% 7/12 50.0% 6/12 66.7% 8/12 58.3% 7/12 58.3% 7/12 50.0% 6/12 66.7% 8/12 58.3% 7/12 50.0% 6/12" [ref=e114]:
+            - cell "branch_cleanup" [ref=e115]
+            - cell "75.0% 9/12" [ref=e116]:
+              - generic [ref=e117]: 75.0%
+              - text: 9/12
+            - cell "50.0% 6/12" [ref=e118]:
+              - generic [ref=e119]: 50.0%
+              - text: 6/12
+            - cell "58.3% 7/12" [ref=e120]:
+              - generic [ref=e121]: 58.3%
+              - text: 7/12
+            - cell "50.0% 6/12" [ref=e122]:
+              - generic [ref=e123]: 50.0%
+              - text: 6/12
+            - cell "66.7% 8/12" [ref=e124]:
+              - generic [ref=e125]: 66.7%
+              - text: 8/12
+            - cell "58.3% 7/12" [ref=e126]:
+              - generic [ref=e127]: 58.3%
+              - text: 7/12
+            - cell "58.3% 7/12" [ref=e128]:
+              - generic [ref=e129]: 58.3%
+              - text: 7/12
+            - cell "50.0% 6/12" [ref=e130]:
+              - generic [ref=e131]: 50.0%
+              - text: 6/12
+            - cell "66.7% 8/12" [ref=e132]:
+              - generic [ref=e133]: 66.7%
+              - text: 8/12
+            - cell "58.3% 7/12" [ref=e134]:
+              - generic [ref=e135]: 58.3%
+              - text: 7/12
+            - cell "50.0% 6/12" [ref=e136]:
+              - generic [ref=e137]: 50.0%
+              - text: 6/12
+          - row "cherry_pick 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12" [ref=e138]:
+            - cell "cherry_pick" [ref=e139]
+            - cell "100.0% 12/12" [ref=e140]:
+              - generic [ref=e141]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e142]:
+              - generic [ref=e143]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e144]:
+              - generic [ref=e145]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e146]:
+              - generic [ref=e147]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e148]:
+              - generic [ref=e149]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e150]:
+              - generic [ref=e151]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e152]:
+              - generic [ref=e153]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e154]:
+              - generic [ref=e155]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e156]:
+              - generic [ref=e157]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e158]:
+              - generic [ref=e159]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e160]:
+              - generic [ref=e161]: 100.0%
+              - text: 12/12
+          - row "commit_messages 83.3% 10/12 83.3% 10/12 91.7% 11/12 83.3% 10/12 83.3% 10/12 75.0% 9/12 83.3% 10/12 91.7% 11/12 83.3% 10/12 58.3% 7/12 75.0% 9/12" [ref=e162]:
+            - cell "commit_messages" [ref=e163]
+            - cell "83.3% 10/12" [ref=e164]:
+              - generic [ref=e165]: 83.3%
+              - text: 10/12
+            - cell "83.3% 10/12" [ref=e166]:
+              - generic [ref=e167]: 83.3%
+              - text: 10/12
+            - cell "91.7% 11/12" [ref=e168]:
+              - generic [ref=e169]: 91.7%
+              - text: 11/12
+            - cell "83.3% 10/12" [ref=e170]:
+              - generic [ref=e171]: 83.3%
+              - text: 10/12
+            - cell "83.3% 10/12" [ref=e172]:
+              - generic [ref=e173]: 83.3%
+              - text: 10/12
+            - cell "75.0% 9/12" [ref=e174]:
+              - generic [ref=e175]: 75.0%
+              - text: 9/12
+            - cell "83.3% 10/12" [ref=e176]:
+              - generic [ref=e177]: 83.3%
+              - text: 10/12
+            - cell "91.7% 11/12" [ref=e178]:
+              - generic [ref=e179]: 91.7%
+              - text: 11/12
+            - cell "83.3% 10/12" [ref=e180]:
+              - generic [ref=e181]: 83.3%
+              - text: 10/12
+            - cell "58.3% 7/12" [ref=e182]:
+              - generic [ref=e183]: 58.3%
+              - text: 7/12
+            - cell "75.0% 9/12" [ref=e184]:
+              - generic [ref=e185]: 75.0%
+              - text: 9/12
+          - row "commit_squash 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12" [ref=e186]:
+            - cell "commit_squash" [ref=e187]
+            - cell "100.0% 12/12" [ref=e188]:
+              - generic [ref=e189]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e190]:
+              - generic [ref=e191]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e192]:
+              - generic [ref=e193]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e194]:
+              - generic [ref=e195]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e196]:
+              - generic [ref=e197]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e198]:
+              - generic [ref=e199]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e200]:
+              - generic [ref=e201]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e202]:
+              - generic [ref=e203]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e204]:
+              - generic [ref=e205]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e206]:
+              - generic [ref=e207]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e208]:
+              - generic [ref=e209]: 100.0%
+              - text: 12/12
+          - row "git_bisect 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 91.7% 11/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12" [ref=e210]:
+            - cell "git_bisect" [ref=e211]
+            - cell "100.0% 12/12" [ref=e212]:
+              - generic [ref=e213]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e214]:
+              - generic [ref=e215]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e216]:
+              - generic [ref=e217]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e218]:
+              - generic [ref=e219]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e220]:
+              - generic [ref=e221]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e222]:
+              - generic [ref=e223]: 100.0%
+              - text: 12/12
+            - cell "91.7% 11/12" [ref=e224]:
+              - generic [ref=e225]: 91.7%
+              - text: 11/12
+            - cell "100.0% 12/12" [ref=e226]:
+              - generic [ref=e227]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e228]:
+              - generic [ref=e229]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e230]:
+              - generic [ref=e231]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e232]:
+              - generic [ref=e233]: 100.0%
+              - text: 12/12
+          - row "merge_conflicts 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12" [ref=e234]:
+            - cell "merge_conflicts" [ref=e235]
+            - cell "100.0% 12/12" [ref=e236]:
+              - generic [ref=e237]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e238]:
+              - generic [ref=e239]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e240]:
+              - generic [ref=e241]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e242]:
+              - generic [ref=e243]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e244]:
+              - generic [ref=e245]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e246]:
+              - generic [ref=e247]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e248]:
+              - generic [ref=e249]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e250]:
+              - generic [ref=e251]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e252]:
+              - generic [ref=e253]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e254]:
+              - generic [ref=e255]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e256]:
+              - generic [ref=e257]: 100.0%
+              - text: 12/12
+          - row "rebase 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 91.7% 11/12 100.0% 12/12" [ref=e258]:
+            - cell "rebase" [ref=e259]
+            - cell "100.0% 12/12" [ref=e260]:
+              - generic [ref=e261]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e262]:
+              - generic [ref=e263]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e264]:
+              - generic [ref=e265]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e266]:
+              - generic [ref=e267]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e268]:
+              - generic [ref=e269]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e270]:
+              - generic [ref=e271]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e272]:
+              - generic [ref=e273]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e274]:
+              - generic [ref=e275]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e276]:
+              - generic [ref=e277]: 100.0%
+              - text: 12/12
+            - cell "91.7% 11/12" [ref=e278]:
+              - generic [ref=e279]: 91.7%
+              - text: 11/12
+            - cell "100.0% 12/12" [ref=e280]:
+              - generic [ref=e281]: 100.0%
+              - text: 12/12
+          - row "reflog 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12" [ref=e282]:
+            - cell "reflog" [ref=e283]
+            - cell "100.0% 12/12" [ref=e284]:
+              - generic [ref=e285]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e286]:
+              - generic [ref=e287]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e288]:
+              - generic [ref=e289]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e290]:
+              - generic [ref=e291]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e292]:
+              - generic [ref=e293]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e294]:
+              - generic [ref=e295]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e296]:
+              - generic [ref=e297]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e298]:
+              - generic [ref=e299]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e300]:
+              - generic [ref=e301]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e302]:
+              - generic [ref=e303]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e304]:
+              - generic [ref=e305]: 100.0%
+              - text: 12/12
+          - row "stash_recovery 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 91.7% 11/12 100.0% 12/12" [ref=e306]:
+            - cell "stash_recovery" [ref=e307]
+            - cell "100.0% 12/12" [ref=e308]:
+              - generic [ref=e309]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e310]:
+              - generic [ref=e311]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e312]:
+              - generic [ref=e313]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e314]:
+              - generic [ref=e315]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e316]:
+              - generic [ref=e317]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e318]:
+              - generic [ref=e319]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e320]:
+              - generic [ref=e321]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e322]:
+              - generic [ref=e323]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e324]:
+              - generic [ref=e325]: 100.0%
+              - text: 12/12
+            - cell "91.7% 11/12" [ref=e326]:
+              - generic [ref=e327]: 91.7%
+              - text: 11/12
+            - cell "100.0% 12/12" [ref=e328]:
+              - generic [ref=e329]: 100.0%
+              - text: 12/12
+          - row "submodule_usage 41.7% 5/12 91.7% 11/12 100.0% 12/12 83.3% 10/12 83.3% 10/12 91.7% 11/12 83.3% 10/12 75.0% 9/12 91.7% 11/12 91.7% 11/12 83.3% 10/12" [ref=e330]:
+            - cell "submodule_usage" [ref=e331]
+            - cell "41.7% 5/12" [ref=e332]:
+              - generic [ref=e333]: 41.7%
+              - text: 5/12
+            - cell "91.7% 11/12" [ref=e334]:
+              - generic [ref=e335]: 91.7%
+              - text: 11/12
+            - cell "100.0% 12/12" [ref=e336]:
+              - generic [ref=e337]: 100.0%
+              - text: 12/12
+            - cell "83.3% 10/12" [ref=e338]:
+              - generic [ref=e339]: 83.3%
+              - text: 10/12
+            - cell "83.3% 10/12" [ref=e340]:
+              - generic [ref=e341]: 83.3%
+              - text: 10/12
+            - cell "91.7% 11/12" [ref=e342]:
+              - generic [ref=e343]: 91.7%
+              - text: 11/12
+            - cell "83.3% 10/12" [ref=e344]:
+              - generic [ref=e345]: 83.3%
+              - text: 10/12
+            - cell "75.0% 9/12" [ref=e346]:
+              - generic [ref=e347]: 75.0%
+              - text: 9/12
+            - cell "91.7% 11/12" [ref=e348]:
+              - generic [ref=e349]: 91.7%
+              - text: 11/12
+            - cell "91.7% 11/12" [ref=e350]:
+              - generic [ref=e351]: 91.7%
+              - text: 11/12
+            - cell "83.3% 10/12" [ref=e352]:
+              - generic [ref=e353]: 83.3%
+              - text: 10/12
+          - row "worktree_usage 50.0% 6/12 91.7% 11/12 91.7% 11/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 100.0% 12/12 91.7% 11/12 100.0% 12/12 91.7% 11/12 75.0% 9/12" [ref=e354]:
+            - cell "worktree_usage" [ref=e355]
+            - cell "50.0% 6/12" [ref=e356]:
+              - generic [ref=e357]: 50.0%
+              - text: 6/12
+            - cell "91.7% 11/12" [ref=e358]:
+              - generic [ref=e359]: 91.7%
+              - text: 11/12
+            - cell "91.7% 11/12" [ref=e360]:
+              - generic [ref=e361]: 91.7%
+              - text: 11/12
+            - cell "100.0% 12/12" [ref=e362]:
+              - generic [ref=e363]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e364]:
+              - generic [ref=e365]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e366]:
+              - generic [ref=e367]: 100.0%
+              - text: 12/12
+            - cell "100.0% 12/12" [ref=e368]:
+              - generic [ref=e369]: 100.0%
+              - text: 12/12
+            - cell "91.7% 11/12" [ref=e370]:
+              - generic [ref=e371]: 91.7%
+              - text: 11/12
+            - cell "100.0% 12/12" [ref=e372]:
+              - generic [ref=e373]: 100.0%
+              - text: 12/12
+            - cell "91.7% 11/12" [ref=e374]:
+              - generic [ref=e375]: 91.7%
+              - text: 11/12
+            - cell "75.0% 9/12" [ref=e376]:
+              - generic [ref=e377]: 75.0%
+              - text: 9/12
+    - generic [ref=e378]:
+      - generic [ref=e380]: Fixture Details
+      - generic [ref=e381]:
+        - group [ref=e382]:
+          - generic "anthropic/claude-opus-4.7 86.8% +" [ref=e383] [cursor=pointer]:
+            - generic [ref=e384]: anthropic/claude-opus-4.7
+            - generic [ref=e385]:
+              - generic [ref=e386]: 86.8%
+              - generic [ref=e387]: +
+        - group [ref=e388]:
+          - generic "deepseek/deepseek-v4-flash 91.7% +" [ref=e389] [cursor=pointer]:
+            - generic [ref=e390]: deepseek/deepseek-v4-flash
+            - generic [ref=e391]:
+              - generic [ref=e392]: 91.7%
+              - generic [ref=e393]: +
+        - group [ref=e394]:
+          - generic "deepseek/deepseek-v4-pro 94.4% +" [ref=e395] [cursor=pointer]:
+            - generic [ref=e396]: deepseek/deepseek-v4-pro
+            - generic [ref=e397]:
+              - generic [ref=e398]: 94.4%
+              - generic [ref=e399]: +
+        - group [ref=e400]:
+          - generic "google/gemini-3-flash-preview 93.1% +" [ref=e401] [cursor=pointer]:
+            - generic [ref=e402]: google/gemini-3-flash-preview
+            - generic [ref=e403]:
+              - generic [ref=e404]: 93.1%
+              - generic [ref=e405]: +
+        - group [ref=e406]:
+          - generic "google/gemini-3.1-flash-lite-preview 92.4% +" [ref=e407] [cursor=pointer]:
+            - generic [ref=e408]: google/gemini-3.1-flash-lite-preview
+            - generic [ref=e409]:
+              - generic [ref=e410]: 92.4%
+              - generic [ref=e411]: +
+        - group [ref=e412]:
+          - generic "google/gemini-3.1-pro-preview 92.4% +" [ref=e413] [cursor=pointer]:
+            - generic [ref=e414]: google/gemini-3.1-pro-preview
+            - generic [ref=e415]:
+              - generic [ref=e416]: 92.4%
+              - generic [ref=e417]: +
+        - group [ref=e418]:
+          - generic "minimax/minimax-m2.5 92.4% +" [ref=e419] [cursor=pointer]:
+            - generic [ref=e420]: minimax/minimax-m2.5
+            - generic [ref=e421]:
+              - generic [ref=e422]: 92.4%
+              - generic [ref=e423]: +
+        - group [ref=e424]:
+          - generic "minimax/minimax-m2.7 92.4% +" [ref=e425] [cursor=pointer]:
+            - generic [ref=e426]: minimax/minimax-m2.7
+            - generic [ref=e427]:
+              - generic [ref=e428]: 92.4%
+              - generic [ref=e429]: +
+        - group [ref=e430]:
+          - generic "openai/gpt-5.5 94.4% +" [ref=e431] [cursor=pointer]:
+            - generic [ref=e432]: openai/gpt-5.5
+            - generic [ref=e433]:
+              - generic [ref=e434]: 94.4%
+              - generic [ref=e435]: +
+        - group [ref=e436]:
+          - generic "openai/gpt-oss-120b 88.9% +" [ref=e437] [cursor=pointer]:
+            - generic [ref=e438]: openai/gpt-oss-120b
+            - generic [ref=e439]:
+              - generic [ref=e440]: 88.9%
+              - generic [ref=e441]: +
+        - group [ref=e442]:
+          - generic "openai/gpt-oss-20b 89.6% +" [ref=e443] [cursor=pointer]:
+            - generic [ref=e444]: openai/gpt-oss-20b
+            - generic [ref=e445]:
+              - generic [ref=e446]: 89.6%
+              - generic [ref=e447]: +
+    - generic [ref=e448]:
+      - generic [ref=e450]: Run History
+      - table [ref=e452]:
+        - rowgroup [ref=e453]:
+          - row "Timestamp Model Profile Git SHA" [ref=e454]:
+            - columnheader "Timestamp" [ref=e455]
+            - columnheader "Model" [ref=e456]
+            - columnheader "Profile" [ref=e457]
+            - columnheader "Git SHA" [ref=e458]
+        - rowgroup [ref=e459]:
+          - row "4/28/2026, 1:13:41 PM openai/gpt-oss-20b openrouter 5beb4d65" [ref=e460]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e461]
+            - cell "openai/gpt-oss-20b" [ref=e462]
+            - cell "openrouter" [ref=e463]
+            - cell "5beb4d65" [ref=e464]
+          - row "4/28/2026, 1:13:41 PM openai/gpt-oss-120b openrouter 5beb4d65" [ref=e465]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e466]
+            - cell "openai/gpt-oss-120b" [ref=e467]
+            - cell "openrouter" [ref=e468]
+            - cell "5beb4d65" [ref=e469]
+          - row "4/28/2026, 1:13:41 PM minimax/minimax-m2.5 openrouter 5beb4d65" [ref=e470]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e471]
+            - cell "minimax/minimax-m2.5" [ref=e472]
+            - cell "openrouter" [ref=e473]
+            - cell "5beb4d65" [ref=e474]
+          - row "4/28/2026, 1:13:41 PM minimax/minimax-m2.7 openrouter 5beb4d65" [ref=e475]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e476]
+            - cell "minimax/minimax-m2.7" [ref=e477]
+            - cell "openrouter" [ref=e478]
+            - cell "5beb4d65" [ref=e479]
+          - row "4/28/2026, 1:13:41 PM deepseek/deepseek-v4-flash openrouter 5beb4d65" [ref=e480]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e481]
+            - cell "deepseek/deepseek-v4-flash" [ref=e482]
+            - cell "openrouter" [ref=e483]
+            - cell "5beb4d65" [ref=e484]
+          - row "4/28/2026, 1:13:41 PM deepseek/deepseek-v4-pro openrouter 5beb4d65" [ref=e485]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e486]
+            - cell "deepseek/deepseek-v4-pro" [ref=e487]
+            - cell "openrouter" [ref=e488]
+            - cell "5beb4d65" [ref=e489]
+          - row "4/28/2026, 1:13:41 PM anthropic/claude-opus-4.7 openrouter 5beb4d65" [ref=e490]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e491]
+            - cell "anthropic/claude-opus-4.7" [ref=e492]
+            - cell "openrouter" [ref=e493]
+            - cell "5beb4d65" [ref=e494]
+          - row "4/28/2026, 1:13:41 PM google/gemini-3.1-flash-lite-preview openrouter 5beb4d65" [ref=e495]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e496]
+            - cell "google/gemini-3.1-flash-lite-preview" [ref=e497]
+            - cell "openrouter" [ref=e498]
+            - cell "5beb4d65" [ref=e499]
+          - row "4/28/2026, 1:13:41 PM google/gemini-3-flash-preview openrouter 5beb4d65" [ref=e500]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e501]
+            - cell "google/gemini-3-flash-preview" [ref=e502]
+            - cell "openrouter" [ref=e503]
+            - cell "5beb4d65" [ref=e504]
+          - row "4/28/2026, 1:13:41 PM openai/gpt-5.5 openrouter 5beb4d65" [ref=e505]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e506]
+            - cell "openai/gpt-5.5" [ref=e507]
+            - cell "openrouter" [ref=e508]
+            - cell "5beb4d65" [ref=e509]
+          - row "4/28/2026, 1:13:41 PM google/gemini-3.1-pro-preview openrouter 5beb4d65" [ref=e510]:
+            - cell "4/28/2026, 1:13:41 PM" [ref=e511]
+            - cell "google/gemini-3.1-pro-preview" [ref=e512]
+            - cell "openrouter" [ref=e513]
+            - cell "5beb4d65" [ref=e514]
+  - contentinfo [ref=e515]:
+    - generic [ref=e516]: GitBench — Automated Git Task Benchmark
+    - generic [ref=e517]: 2026-04-28 22:50 UTC

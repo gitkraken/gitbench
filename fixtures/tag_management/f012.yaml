@@ -1,0 +1,31 @@
+id: f012
+description: "List tags sorted by version"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'v1' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'v1'"
+  - "git tag v1.0"
+  - "echo 'v2' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'v2'"
+  - "git tag v10.0"
+  - "echo 'v3' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'v3'"
+  - "git tag v2.0"
+  - "echo 'v4' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'v4'"
+  - "git tag v1.10"
+prompt: "List all tags sorted by version number in ascending order. Output ONLY the git command, nothing else."
+expected: "git tag -l --sort=version:refname"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: git_output
+        command: "git tag -l --sort=version:refname"
+        contains: "v1.0"

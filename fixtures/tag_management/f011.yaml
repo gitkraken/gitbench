@@ -1,0 +1,31 @@
+id: f011
+description: "Fetch tags from a bare remote"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'App' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'Initial release'"
+  - "git tag v1.0"
+  - "echo 'New' > new.txt"
+  - "git add new.txt"
+  - "git commit -m 'Second release'"
+  - "git tag v2.0"
+  - "mkdir -p ../remote-bare && cd ../remote-bare && git init --bare"
+  - "git remote add origin ../remote-bare"
+  - "git push origin main --tags"
+  - "git tag -d v1.0"
+  - "git tag -d v2.0"
+prompt: "Fetch all tags from the remote 'origin'. Output ONLY the git command, nothing else."
+expected: "git fetch --tags origin"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: git_output
+        command: "git tag -l"
+        contains: "v1.0"
+      - type: git_output
+        command: "git tag -l"
+        contains: "v2.0"

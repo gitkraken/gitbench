@@ -1,0 +1,22 @@
+id: f010
+description: "Push a tag to a bare remote"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'App' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'Initial release'"
+  - "git tag v1.0"
+  - "mkdir -p ../remote-bare && cd ../remote-bare && git init --bare"
+  - "git remote add origin ../remote-bare"
+  - "git push origin main"
+prompt: "Push the tag 'v1.0' to the remote 'origin'. Output ONLY the git command, nothing else."
+expected: "git push origin v1.0"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: git_output
+        command: "git ls-remote --tags origin"
+        contains: "v1.0"

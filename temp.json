@@ -1,0 +1,7 @@
+{
+  "local-ollama": {
+    "model": "gemma4:26b",
+    "base_url": "http://localhost:11434/v1",
+    "provider": "ollama"
+  }
+}

@@ -1,0 +1,27 @@
+id: f006
+description: "Tag an older commit"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'v1' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'First commit'"
+  - "echo 'v2' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'Second commit'"
+  - "echo 'v3' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'Third commit'"
+prompt: "Tag the commit with message 'First commit' as 'v0.1'. Output ONLY the git command, nothing else."
+expected: "git tag v0.1 HEAD~2"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: git_output
+        command: "git tag -l"
+        contains: "v0.1"
+      - type: git_output
+        command: "git log v0.1 --oneline -1"
+        contains: "First commit"

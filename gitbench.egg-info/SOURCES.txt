@@ -11,6 +11,8 @@ gitbench.egg-info/entry_points.txt
 gitbench.egg-info/requires.txt
 gitbench.egg-info/top_level.txt
 gitbench/benchmarks/__init__.py
+gitbench/benchmarks/blame_forensics.py
+gitbench/benchmarks/branch_cleanup.py
 gitbench/benchmarks/cherry_pick.py
 gitbench/benchmarks/commit_messages.py
 gitbench/benchmarks/commit_squash.py
@@ -19,6 +21,8 @@ gitbench/benchmarks/merge_conflicts.py
 gitbench/benchmarks/rebase.py
 gitbench/benchmarks/reflog.py
 gitbench/benchmarks/stash_recovery.py
+gitbench/benchmarks/submodule_usage.py
+gitbench/benchmarks/worktree_usage.py
 gitbench/harness/loader.py
 gitbench/harness/model.py
 gitbench/harness/scorer.py

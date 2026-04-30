@@ -1,0 +1,24 @@
+id: f002
+description: "Create an annotated tag with a message"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'App' > app.txt"
+  - "git add app.txt"
+  - "git commit -m 'Initial release'"
+prompt: "Create an annotated git tag named 'v1.0.0' on HEAD with the message 'First stable release'. Output ONLY the git command, nothing else."
+expected: "git tag -a v1.0.0 -m 'First stable release'"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: git_output
+        command: "git tag -l"
+        contains: "v1.0.0"
+      - type: git_output
+        command: "git tag -n1 v1.0.0"
+        contains: "First stable release"
+      - type: git_output
+        command: "git cat-file -t v1.0.0"
+        contains: "tag"

@@ -1,0 +1,24 @@
+id: f001
+description: "Create a lightweight tag on HEAD"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'Hello' > hello.txt"
+  - "git add hello.txt"
+  - "git commit -m 'Initial commit'"
+  - "echo 'World' > world.txt"
+  - "git add world.txt"
+  - "git commit -m 'Add world'"
+prompt: "Create a lightweight git tag named 'v1.0' pointing at the current HEAD. Output ONLY the git command, nothing else."
+expected: "git tag v1.0"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: git_output
+        command: "git tag -l"
+        contains: "v1.0"
+      - type: git_output
+        command: "git log v1.0 --oneline -1"
+        contains: "Add world"
