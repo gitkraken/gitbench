@@ -29,3 +29,5 @@ scoring:
       - type: git_output
         command: "git tag -l --sort=version:refname"
         contains: "v1.0"
+      - type: model_output
+        contains: "git tag"

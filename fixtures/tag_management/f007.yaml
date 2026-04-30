@@ -20,3 +20,5 @@ scoring:
       - type: git_output
         command: "git cat-file -t v1.0.0-rc1"
         contains: "tag"
+      - type: model_output
+        contains: "git show"

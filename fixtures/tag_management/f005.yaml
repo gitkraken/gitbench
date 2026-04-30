@@ -38,3 +38,5 @@ scoring:
       - type: git_output
         command: "git tag -l v*"
         not_contains: "rc-1"
+      - type: model_output
+        contains: "git tag"

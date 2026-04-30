@@ -11,12 +11,13 @@ from gitbench.harness.types import Fixture, Score
 logger = logging.getLogger(__name__)
 
 
-def _check_assertion(assertion: dict[str, Any], repo_path: str) -> bool:
+def _check_assertion(assertion: dict[str, Any], repo_path: str, model_output: str = "") -> bool:
     """Check a single state assertion against the repo.
 
     Args:
         assertion: Dict with 'type' and assertion-specific params.
         repo_path: Path to the git repository.
+        model_output: The model's command output (used for model_output assertions).
 
     Returns:
         True if the assertion passes, False otherwise.
@@ -104,6 +105,13 @@ def _check_assertion(assertion: dict[str, Any], repo_path: str) -> bool:
             return assertion["not_contains"] not in output
         return result.returncode == 0
 
+    elif assertion_type == "model_output":
+        if "contains" in assertion:
+            return assertion["contains"] in model_output
+        if "exact" in assertion:
+            return model_output.strip() == assertion["exact"]
+        return len(model_output.strip()) > 0
+
     else:
         logger.warning(f"Unknown assertion type: {assertion_type}")
         return False
@@ -165,7 +173,7 @@ class StateAssertionScorer:
         results = []
         for assertion in assertions:
             try:
-                passed = _check_assertion(assertion, repo_path)
+                passed = _check_assertion(assertion, repo_path, model_output)
                 results.append((assertion, passed))
             except Exception as e:
                 logger.error(f"Assertion error for {assertion}: {e}")

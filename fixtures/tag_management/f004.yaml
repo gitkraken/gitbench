@@ -31,3 +31,5 @@ scoring:
       - type: git_output
         command: "git tag -l"
         contains: "v3.0"
+      - type: model_output
+        contains: "git tag"

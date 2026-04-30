@@ -14,6 +14,7 @@ from gitbench.benchmarks.rebase import RebaseBenchmark
 from gitbench.benchmarks.reflog import ReflogBenchmark
 from gitbench.benchmarks.stash_recovery import StashRecoveryBenchmark
 from gitbench.benchmarks.submodule_usage import SubmoduleUsageBenchmark
+from gitbench.benchmarks.tag_management import TagManagementBenchmark
 from gitbench.benchmarks.worktree_usage import WorktreeUsageBenchmark
 
 
@@ -936,6 +937,45 @@ class TestWorktreeUsageBenchmark:
     @pytest.mark.parametrize("fixture_id", [f"f{i:03d}" for i in range(1, 13)])
     def test_noop_answer_fails_fixture_state_checks(self, fixture_id):
         benchmark = WorktreeUsageBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == fixture_id)
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(fixture, "git status", repo_path=repo_path)
+
+            assert result.passed is False
+        finally:
+            executor.cleanup()
+
+
+class TestTagManagementBenchmark:
+    """Test the tag_management benchmark against its real fixtures."""
+
+    def test_load_fixtures_returns_stateful_tag_fixtures(self):
+        benchmark = TagManagementBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        assert len(fixtures) == 12
+        assert {fixture.id for fixture in fixtures} == {f"f{i:03d}" for i in range(1, 13)}
+        assert all(fixture.scoring["type"] in {"state_assertions", "exact_match"} for fixture in fixtures)
+
+    @pytest.mark.parametrize("fixture_id", [f"f{i:03d}" for i in range(1, 13)])
+    def test_expected_answer_passes_fixture_state_checks(self, fixture_id):
+        benchmark = TagManagementBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == fixture_id)
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(fixture, fixture.expected, repo_path=repo_path)
+
+            assert result.passed is True, result.error
+            assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
+
+    @pytest.mark.parametrize("fixture_id", [f"f{i:03d}" for i in range(1, 13)])
+    def test_noop_answer_fails_fixture_state_checks(self, fixture_id):
+        benchmark = TagManagementBenchmark()
         fixture = next(f for f in benchmark.load_fixtures() if f.id == fixture_id)
         executor, repo_path = benchmark.setup_fixture(fixture)
 
