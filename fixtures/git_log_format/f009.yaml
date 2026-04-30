@@ -1,0 +1,22 @@
+id: f009
+description: "Identify merge commit"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'base' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'Initial commit'"
+  - "git checkout -b feature-branch"
+  - "echo 'feature' > feature.txt"
+  - "git add feature.txt"
+  - "git commit -m 'Add new feature'"
+  - "git checkout master || git checkout main"
+  - "echo 'hotfix' > hotfix.txt"
+  - "git add hotfix.txt"
+  - "git commit -m 'Apply hotfix'"
+  - "git merge feature-branch -m 'Merge feature-branch into main'"
+prompt: "How many merge commits are in this repository? Use git log --merges to find out. Output ONLY the number, nothing else."
+expected: "1"
+scoring:
+  type: exact_match

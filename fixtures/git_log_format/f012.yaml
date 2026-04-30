@@ -1,0 +1,17 @@
+id: f012
+description: "Count total lines changed in a commit from stat output"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'start' > readme.txt"
+  - "git add readme.txt"
+  - "git commit -m 'Add readme'"
+  - "printf 'line1\nline2\nline3\n' > code.py"
+  - "printf 'a\nb\nc\nd\ne\n' > docs.md"
+  - "git add code.py docs.md"
+  - "git commit -m 'Add code and docs'"
+prompt: "In the commit with message 'Add code and docs', how many total insertions were made according to git log --stat? Output ONLY the number, nothing else."
+expected: "8"
+scoring:
+  type: exact_match

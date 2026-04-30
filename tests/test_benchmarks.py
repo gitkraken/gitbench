@@ -16,6 +16,7 @@ from gitbench.benchmarks.stash_recovery import StashRecoveryBenchmark
 from gitbench.benchmarks.submodule_usage import SubmoduleUsageBenchmark
 from gitbench.benchmarks.tag_management import TagManagementBenchmark
 from gitbench.benchmarks.worktree_usage import WorktreeUsageBenchmark
+from gitbench.benchmarks.git_log_format import GitLogFormatBenchmark
 
 
 class TestBenchmarkABC:
@@ -985,6 +986,93 @@ class TestTagManagementBenchmark:
             assert result.passed is False
         finally:
             executor.cleanup()
+
+
+class TestGitLogFormatBenchmark:
+    """Test the git_log_format benchmark implementation."""
+
+    def test_benchmark_inherits_from_benchmark_abc(self):
+        """Test that GitLogFormatBenchmark is a subclass of Benchmark."""
+        assert issubclass(GitLogFormatBenchmark, Benchmark)
+
+    def test_benchmark_has_name(self):
+        """Test that the benchmark has the expected name."""
+        assert GitLogFormatBenchmark.name == "git_log_format"
+
+    def test_benchmark_has_description(self):
+        """Test that the benchmark has a description."""
+        assert isinstance(GitLogFormatBenchmark.description, str)
+        assert len(GitLogFormatBenchmark.description) > 0
+
+    def test_benchmark_can_be_instantiated(self):
+        """Test that GitLogFormatBenchmark can be instantiated."""
+        benchmark = GitLogFormatBenchmark()
+        assert benchmark is not None
+
+    def test_load_fixtures_returns_list(self):
+        """Test that load_fixtures returns a list of fixtures."""
+        benchmark = GitLogFormatBenchmark()
+        fixtures = benchmark.load_fixtures()
+        assert isinstance(fixtures, list)
+
+    def test_fixture_count_at_least_10(self):
+        """Test that at least 10 fixtures are loaded."""
+        benchmark = GitLogFormatBenchmark()
+        fixtures = benchmark.load_fixtures()
+        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
+
+    @pytest.mark.parametrize("fixture", GitLogFormatBenchmark().load_fixtures(), ids=lambda f: f.id)
+    def test_fixtures_have_required_fields(self, fixture):
+        """Test that all fixtures have required fields."""
+        assert hasattr(fixture, "id")
+        assert hasattr(fixture, "description")
+        assert hasattr(fixture, "setup")
+        assert hasattr(fixture, "prompt")
+        assert hasattr(fixture, "expected")
+        assert hasattr(fixture, "scoring")
+
+        assert isinstance(fixture.id, str)
+        assert isinstance(fixture.setup, list)
+        assert isinstance(fixture.prompt, str)
+        assert isinstance(fixture.expected, str)
+        assert isinstance(fixture.scoring, dict)
+
+    def test_fixture_ids_are_unique(self):
+        """Test that all fixture IDs are unique."""
+        benchmark = GitLogFormatBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        ids = [f.id for f in fixtures]
+        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
+
+    def test_score_method_works(self):
+        """Test that the score method works correctly."""
+        from gitbench.harness.types import Score
+
+        benchmark = GitLogFormatBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        # Score with an identical expected value should score high
+        fixture = fixtures[0]
+        result = benchmark.score(fixture, fixture.expected)
+
+        assert isinstance(result, Score)
+        assert result.fixture_id == fixture.id
+        assert result.similarity > 0.8  # Should be very similar
+
+    def test_score_method_handles_different_output(self):
+        """Test that the score method handles different outputs correctly."""
+        from gitbench.harness.types import Score
+
+        benchmark = GitLogFormatBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        fixture = fixtures[0]
+        # Score with a completely different message should score low
+        result = benchmark.score(fixture, "completely unrelated text that has nothing to do with the expected answer")
+
+        assert isinstance(result, Score)
+        assert result.similarity < 0.4  # Should be fairly different
 
 
 class TestBenchmarkDiscovery:

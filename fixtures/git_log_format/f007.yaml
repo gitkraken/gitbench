@@ -1,0 +1,25 @@
+id: f007
+description: "Identify specific commit from oneline output"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'v1' > app.py"
+  - "git add app.py"
+  - "git commit -m 'Initial application setup'"
+  - "echo 'v2' > app.py"
+  - "git add app.py"
+  - "git commit -m 'Add error handling'"
+  - "echo 'v3' > app.py"
+  - "git add app.py"
+  - "git commit -m 'Fix null pointer bug'"
+  - "echo 'v4' > app.py"
+  - "git add app.py"
+  - "git commit -m 'Refactor module structure'"
+  - "echo 'v5' > app.py"
+  - "git add app.py"
+  - "git commit -m 'Add unit tests'"
+prompt: "Using git log --oneline, what is the short hash of the commit with message 'Fix null pointer bug'? Output ONLY the short hash, nothing else."
+expected: "Fix null pointer bug"
+scoring:
+  type: exact_match
