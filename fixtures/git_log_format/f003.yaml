@@ -1,0 +1,28 @@
+id: f003
+description: "Identify commits by a specific author"
+setup:
+  - "git init"
+  - "git config user.email 'alice@example.com'"
+  - "git config user.name 'Alice'"
+  - "echo 'v1' > code.py"
+  - "git add code.py"
+  - "git commit -m 'Initial code by Alice'"
+  - "git config user.email 'bob@example.com'"
+  - "git config user.name 'Bob'"
+  - "echo 'v2' > code.py"
+  - "git add code.py"
+  - "git commit -m 'Refactor by Bob'"
+  - "git config user.email 'alice@example.com'"
+  - "git config user.name 'Alice'"
+  - "echo 'v3' > code.py"
+  - "git add code.py"
+  - "git commit -m 'Bugfix by Alice'"
+  - "git config user.email 'bob@example.com'"
+  - "git config user.name 'Bob'"
+  - "echo 'v4' > code.py"
+  - "git add code.py"
+  - "git commit -m 'Feature by Bob'"
+prompt: "Which commits were authored by Alice? Output ONLY the commit messages, one per line, nothing else."
+expected: "Initial code by Alice\nBugfix by Alice"
+scoring:
+  type: exact_match

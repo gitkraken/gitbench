@@ -1,0 +1,14 @@
+id: f005
+description: "List commits in a date range"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "GIT_AUTHOR_DATE='2025-01-01T12:00:00' GIT_COMMITTER_DATE='2025-01-01T12:00:00' bash -c 'echo a > f.txt && git add f.txt && git commit -m \"January commit\"'"
+  - "GIT_AUTHOR_DATE='2025-02-01T12:00:00' GIT_COMMITTER_DATE='2025-02-01T12:00:00' bash -c 'echo b > f.txt && git add f.txt && git commit -m \"February commit\"'"
+  - "GIT_AUTHOR_DATE='2025-03-01T12:00:00' GIT_COMMITTER_DATE='2025-03-01T12:00:00' bash -c 'echo c > f.txt && git add f.txt && git commit -m \"March commit\"'"
+  - "GIT_AUTHOR_DATE='2025-04-01T12:00:00' GIT_COMMITTER_DATE='2025-04-01T12:00:00' bash -c 'echo d > f.txt && git add f.txt && git commit -m \"April commit\"'"
+prompt: "List all commits made between 2025-02-01 and 2025-03-31 (inclusive). Output ONLY the commit messages, one per line, nothing else."
+expected: "February commit\nMarch commit"
+scoring:
+  type: exact_match
