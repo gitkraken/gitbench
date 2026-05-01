@@ -11,7 +11,7 @@ setup:
   - "echo 'version = 2.0' > version.txt"
   - "git add version.txt"
   - "git commit -m 'Bump to version 2.0'"
-  - "git checkout master"
+  - "git checkout main"
   - "echo 'git grep version feature/v2' > .grep_command"
   - "git add .grep_command"
   - "git commit -m 'Add grep sentinel'"
