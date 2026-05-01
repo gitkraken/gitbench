@@ -1,0 +1,25 @@
+id: f002
+description: "Search commit messages using git log --grep"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "echo 'alpha' > alpha.txt"
+  - "git add alpha.txt"
+  - "git commit -m 'Add alpha module'"
+  - "echo 'beta' > beta.txt"
+  - "git add beta.txt"
+  - "git commit -m 'Fix beta parsing bug'"
+  - "echo 'gamma' > gamma.txt"
+  - "git add gamma.txt"
+  - "git commit -m 'Add gamma feature'"
+  - "echo 'updated alpha' > alpha.txt"
+  - "git add alpha.txt"
+  - "git commit -m 'Fix alpha edge case'"
+  - "echo 'git log --oneline --grep=Fix' > .grep_command"
+  - "git add .grep_command"
+  - "git commit -m 'Add grep sentinel'"
+prompt: "Here is the output of a git log --grep command run on this repository. How many commits contain the word 'Fix' in their message? Output ONLY the number, nothing else."
+expected: "2"
+scoring:
+  type: exact_match

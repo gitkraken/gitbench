@@ -1,0 +1,20 @@
+id: f008
+description: "Path-limited search restricting to a subdirectory"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "mkdir -p src tests"
+  - "echo 'def connect(): return True' > src/db.py"
+  - "echo 'def test_connect(): assert connect()' > tests/test_db.py"
+  - "echo 'def helper(): pass' > src/utils.py"
+  - "echo 'def test_helper(): assert helper()' > tests/test_utils.py"
+  - "git add ."
+  - "git commit -m 'Add source and test files'"
+  - "echo 'git grep def -- src/' > .grep_command"
+  - "git add .grep_command"
+  - "git commit -m 'Add grep sentinel'"
+prompt: "Here is the output of a git grep command limited to the src/ directory. How many function definitions appear in the output? Output ONLY the number, nothing else."
+expected: "2"
+scoring:
+  type: exact_match

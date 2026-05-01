@@ -1,0 +1,17 @@
+id: f011
+description: "Multiple patterns with git grep -e"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "mkdir -p src"
+  - "echo 'import requests\nimport json\nimport os\n\nAPI_URL = \"https://api.example.com\"\n\ndef fetch_data(endpoint):\n    resp = requests.get(f\"{API_URL}/{endpoint}\")\n    return json.loads(resp.text)\n\ndef save_to_file(data, path):\n    with open(path, \"w\") as f:\n        json.dump(data, f)\n\ndef load_from_file(path):\n    with open(path) as f:\n        return json.load(f)\n' > src/io.py"
+  - "git add ."
+  - "git commit -m 'Add IO module'"
+  - "echo 'git grep -e json -e requests' > .grep_command"
+  - "git add .grep_command"
+  - "git commit -m 'Add grep sentinel'"
+prompt: "Here is the output of a git grep -e command that searches for multiple patterns ('json' and 'requests'). How many total matching lines appear? Output ONLY the number, nothing else."
+expected: "7"
+scoring:
+  type: exact_match

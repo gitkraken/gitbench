@@ -1,0 +1,17 @@
+id: f004
+description: "Search with line numbers using git grep -n"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "mkdir -p src"
+  - "printf 'import os\nimport sys\nimport logging\n\nlogger = logging.getLogger(__name__)\n\ndef main():\n    logger.info(\"Starting\")\n    os.environ[\"MODE\"] = \"prod\"\n    sys.exit(0)\n\nif __name__ == \"__main__\":\n    main()\n' > src/app.py"
+  - "git add ."
+  - "git commit -m 'Add application entry point'"
+  - "echo 'git grep -n import' > .grep_command"
+  - "git add .grep_command"
+  - "git commit -m 'Add grep sentinel'"
+prompt: "Here is the output of a git grep -n command showing line numbers. On which line numbers does 'import' appear in src/app.py? Output ONLY the line numbers separated by commas, nothing else."
+expected: "1, 2, 3"
+scoring:
+  type: exact_match

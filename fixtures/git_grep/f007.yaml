@@ -1,0 +1,16 @@
+id: f007
+description: "Context lines with git grep -C"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf 'import sys\nimport os\n\nCONFIG = {\n    \"host\": \"localhost\",\n    \"port\": 8080,\n    \"debug\": True,\n    \"workers\": 4,\n}\n\ndef start_server():\n    host = CONFIG[\"host\"]\n    port = CONFIG[\"port\"]\n    print(f\"Starting on {host}:{port}\")\n' > server.py"
+  - "git add ."
+  - "git commit -m 'Add server config'"
+  - "echo 'git grep -C 2 port' > .grep_command"
+  - "git add .grep_command"
+  - "git commit -m 'Add grep sentinel'"
+prompt: "Here is the output of a git grep -C 2 command showing 2 lines of context around matches for 'port'. How many total lines (including context) appear in the output? Output ONLY the number, nothing else."
+expected: "10"
+scoring:
+  type: exact_match

@@ -1,0 +1,20 @@
+id: f001
+description: "Basic keyword search across tracked files"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "mkdir -p src"
+  - "echo 'def authenticate(user, password):\n    if not user:\n        raise ValueError(\"user required\")\n    return check_credentials(user, password)' > src/auth.py"
+  - "echo 'def render_page(user):\n    template = load_template(\"home.html\")\n    return template.render(user=user)' > src/views.py"
+  - "echo 'import logging\nlogger = logging.getLogger(__name__)\n\ndef check_credentials(user, password):\n    logger.info(f\"Auth attempt for {user}\")\n    return db.lookup(user, password)' > src/db.py"
+  - "git add ."
+  - "git commit -m 'Add project files'"
+  - "echo 'git grep authenticate' > .grep_command"
+  - "git add .grep_command"
+  - "git commit -m 'Add grep sentinel'"
+prompt: "Here is the output of a git grep command run on this repository. Which files contain the word 'authenticate'? Output ONLY the filenames, one per line, nothing else."
+expected: "src/auth.py"
+scoring:
+  type: similarity
+  threshold: 0.8

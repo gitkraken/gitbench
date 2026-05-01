@@ -1,0 +1,17 @@
+id: f005
+description: "Combined flags: case-insensitive with line numbers"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "mkdir -p docs"
+  - "printf '# README\n\nThis project uses Python.\n\n## Setup\n\nInstall PYTHON 3.10 or higher.\nThe python interpreter must be in your PATH.\n\n## Usage\n\nRun the main script with python main.py.\n' > docs/README.md"
+  - "git add ."
+  - "git commit -m 'Add readme'"
+  - "echo 'git grep -n -i python' > .grep_command"
+  - "git add .grep_command"
+  - "git commit -m 'Add grep sentinel'"
+prompt: "Here is the output of a git grep -n -i command that searches case-insensitively with line numbers. How many lines contain 'python' in any capitalization? Output ONLY the number, nothing else."
+expected: "3"
+scoring:
+  type: exact_match

@@ -1,0 +1,21 @@
+id: f003
+description: "Regex search using git grep -E"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "mkdir -p src"
+  - "echo 'def get_user(id): return db.find(id)' > src/api.py"
+  - "echo 'def get_post(id): return posts.find(id)' > src/api.py"
+  - "echo 'def get_comment(id): return comments.find(id)' > src/api.py"
+  - "echo 'def list_users(): return db.all()' > src/api.py"
+  - "echo 'def delete_post(id): posts.remove(id)' > src/api.py"
+  - "git add ."
+  - "git commit -m 'Add API functions'"
+  - "echo 'git grep -E \"def get_\"' > .grep_command"
+  - "git add .grep_command"
+  - "git commit -m 'Add grep sentinel'"
+prompt: "Here is the output of a git grep -E command that searches for function definitions matching 'def get_'. How many matching lines are there? Output ONLY the number, nothing else."
+expected: "3"
+scoring:
+  type: exact_match
