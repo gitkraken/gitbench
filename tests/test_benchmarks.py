@@ -18,6 +18,7 @@ from gitbench.benchmarks.tag_management import TagManagementBenchmark
 from gitbench.benchmarks.worktree_usage import WorktreeUsageBenchmark
 from gitbench.benchmarks.git_log_format import GitLogFormatBenchmark
 from gitbench.benchmarks.git_show import GitShowBenchmark
+from gitbench.benchmarks.git_clean import GitCleanBenchmark
 
 
 class TestBenchmarkABC:
@@ -1218,3 +1219,45 @@ class TestGitShowBenchmark:
 
         assert result.passed is False
         assert result.similarity == 0.0
+
+
+class TestGitCleanBenchmark:
+    """Test the git_clean benchmark against its real fixtures."""
+
+    def test_load_fixtures_returns_stateful_git_clean_fixtures(self):
+        benchmark = GitCleanBenchmark()
+        fixtures = benchmark.load_fixtures()
+
+        assert len(fixtures) == 12
+        assert {fixture.id for fixture in fixtures} == {f"f{i:03d}" for i in range(1, 13)}
+        assert all(fixture.scoring["type"] in {"state_assertions", "exact_match"} for fixture in fixtures)
+
+    @pytest.mark.parametrize("fixture_id", [f"f{i:03d}" for i in range(1, 13)])
+    def test_expected_answer_passes_fixture_state_checks(self, fixture_id):
+        benchmark = GitCleanBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == fixture_id)
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(fixture, fixture.expected, repo_path=repo_path)
+
+            assert result.passed is True, result.error
+            assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
+
+    @pytest.mark.parametrize("fixture_id", [f"f{i:03d}" for i in range(1, 13)])
+    def test_noop_answer_fails_fixture_state_checks(self, fixture_id):
+        benchmark = GitCleanBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == fixture_id)
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            # Dry-run fixtures assert files SHOULD exist; git clean -f removes them.
+            # All other fixtures assert files should NOT exist; git stash keeps them.
+            noop_command = "git clean -f" if fixture_id in ("f002", "f010") else "git stash"
+            result = benchmark.score(fixture, noop_command, repo_path=repo_path)
+
+            assert result.passed is False
+        finally:
+            executor.cleanup()
