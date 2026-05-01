@@ -1,0 +1,27 @@
+id: f006
+description: "Remove untracked files in a specific directory"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "mkdir -p src test"
+  - "echo 'main' > src/main.py"
+  - "git add src test"
+  - "git commit -m 'Initial commit'"
+  - "echo 'temp' > src/temp.py"
+  - "echo 'fixture' > test/temp.py"
+  - "echo 'root' > root.txt"
+prompt: "Remove untracked files only inside the 'src' directory, leaving other untracked files alone. Output ONLY the git command, nothing else."
+expected: "git clean -f src/"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: file_not_exists
+        path: "src/temp.py"
+      - type: file_exists
+        path: "test/temp.py"
+      - type: file_exists
+        path: "root.txt"
+      - type: file_exists
+        path: "src/main.py"

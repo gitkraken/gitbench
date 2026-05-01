@@ -1,0 +1,25 @@
+id: f004
+description: "Remove ignored files only"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf '*.log\nnode_modules/\n' > .gitignore"
+  - "git add .gitignore"
+  - "git commit -m 'Add gitignore'"
+  - "echo 'data' > app.log"
+  - "mkdir -p node_modules/pkg"
+  - "echo '{}' > node_modules/pkg/index.js"
+  - "echo 'untracked' > untracked.txt"
+prompt: "Remove only ignored files and directories while keeping untracked files. Output ONLY the git command, nothing else."
+expected: "git clean -f -X -d"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: file_exists
+        path: "untracked.txt"
+      - type: file_not_exists
+        path: "app.log"
+      - type: dir_not_exists
+        path: "node_modules"

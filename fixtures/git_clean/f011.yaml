@@ -1,0 +1,32 @@
+id: f011
+description: "Remove ignored build artifacts with nested directories"
+setup:
+  - "git init"
+  - "git config user.email 'test@test.com'"
+  - "git config user.name 'Test User'"
+  - "printf '*.o\n*.pyc\n__pycache__/\nbuild/\n' > .gitignore"
+  - "echo 'src' > main.py"
+  - "git add .gitignore main.py"
+  - "git commit -m 'Initial commit'"
+  - "echo 'obj' > module.o"
+  - "mkdir -p __pycache__"
+  - "echo 'cache' > __pycache__/main.pyc"
+  - "mkdir -p build/dist"
+  - "echo 'binary' > build/dist/app"
+  - "echo 'untracked' > notes.md"
+prompt: "Remove all ignored files and directories while preserving untracked files. Output ONLY the git command, nothing else."
+expected: "git clean -f -X -d"
+scoring:
+  type: state_assertions
+  expected_state:
+    assertions:
+      - type: file_not_exists
+        path: "module.o"
+      - type: dir_not_exists
+        path: "__pycache__"
+      - type: dir_not_exists
+        path: "build"
+      - type: file_exists
+        path: "notes.md"
+      - type: file_exists
+        path: "main.py"
