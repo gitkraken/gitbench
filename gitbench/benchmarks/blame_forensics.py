@@ -1,4 +1,4 @@
-"""Blame/forensics benchmark for GitBench."""
+"""Blame forensics benchmark for GitBench."""
 
 import logging
 import subprocess
@@ -14,15 +14,16 @@ logger = logging.getLogger(__name__)
 
 
 class BlameForensicsBenchmark(Benchmark):
-    """Benchmark for evaluating LLM git blame and forensics reasoning.
+    """Benchmark for evaluating LLM bug-introducing commit identification.
 
-    This benchmark sets up a repository with a bug introduced in a specific
-    commit and asks the model to trace which commit introduced the bug
-    using git log and git blame. Scored via exact_match on commit message.
+    This benchmark sets up a repository with a known commit history where
+    a bug was introduced in a specific commit. The model must use git log
+    and git blame analysis to identify the bug-introducing commit.
+    Scored via exact_match comparison.
     """
 
     name = "blame_forensics"
-    description = "Trace which commit introduced a bug using git blame/log"
+    description = "Identify bug-introducing commits using git blame analysis"
 
     def __init__(self):
         """Initialize the blame forensics benchmark."""
@@ -43,11 +44,11 @@ class BlameForensicsBenchmark(Benchmark):
         return fixtures
 
     def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
-        """Score a blame answer against the expected value.
+        """Score a blame forensics answer against the expected value.
 
         Args:
             fixture: The fixture containing the expected commit message.
-            model_output: The commit message identified by the model.
+            model_output: The answer provided by the model.
             repo_path: Optional path to the git repository (unused).
 
         Returns:
@@ -72,53 +73,34 @@ class BlameForensicsBenchmark(Benchmark):
     def get_diff(self, repo_path: str) -> str:
         """Get git log and blame output for the repository.
 
-        Returns git log (all commits) and git blame on the relevant source file.
+        Returns git log with oneline format and blame information
+        to give the model context about commit history and line origins.
 
         Args:
             repo_path: Path to the git repository.
 
         Returns:
-            Git log + blame output for analysis.
+            Combined git log and blame output for analysis.
         """
-        # Get git log
+        parts = []
+
+        # Git log with oneline format
         log_result = subprocess.run(
             ["git", "log", "--oneline", "--all"],
             cwd=repo_path,
             capture_output=True,
             text=True,
         )
+        parts.append(f"Git log (oneline):\n{log_result.stdout}")
 
-        # Try to find source files for blame
-        files_result = subprocess.run(
-            ["git", "ls-files"],
-            cwd=repo_path,
-            capture_output=True,
-            text=True,
-        )
-
-        output = f"Git log:\n{log_result.stdout}\n"
-
-        # Run blame on each source file
-        if files_result.stdout.strip():
-            for file_path in files_result.stdout.strip().split("\n"):
-                if file_path:
-                    blame_result = subprocess.run(
-                        ["git", "blame", file_path],
-                        cwd=repo_path,
-                        capture_output=True,
-                        text=True,
-                    )
-                    if blame_result.returncode == 0:
-                        output += f"\nGit blame {file_path}:\n{blame_result.stdout}"
-
-        return output
+        return "\n".join(parts)
 
     def format_prompt(self, fixture: Fixture, diff: str) -> str:
-        """Format the prompt with the fixture prompt and git history.
+        """Format the prompt with the fixture prompt and git output.
 
         Args:
             fixture: The fixture containing the base prompt.
-            diff: The git log + blame output to include in the prompt.
+            diff: The git log output to include in the prompt.
 
         Returns:
             The formatted prompt string.
