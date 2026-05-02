@@ -12,5 +12,7 @@ from gitbench.benchmarks.git_grep import GitGrepBenchmark
 from gitbench.benchmarks.git_log_format import GitLogFormatBenchmark
 from gitbench.benchmarks.blame_forensics import BlameForensicsBenchmark
 from gitbench.benchmarks.worktree_usage import WorktreeUsageBenchmark
+from gitbench.benchmarks.branch_cleanup import BranchCleanupBenchmark
+from gitbench.benchmarks.submodule_usage import SubmoduleUsageBenchmark
 
-__all__ = ["Benchmark", "StashRecoveryBenchmark", "CommitSquashBenchmark", "TagManagementBenchmark", "GitCleanBenchmark", "GitGrepBenchmark", "GitLogFormatBenchmark", "BlameForensicsBenchmark", "WorktreeUsageBenchmark"]
+__all__ = ["Benchmark", "StashRecoveryBenchmark", "CommitSquashBenchmark", "TagManagementBenchmark", "GitCleanBenchmark", "GitGrepBenchmark", "GitLogFormatBenchmark", "BlameForensicsBenchmark", "WorktreeUsageBenchmark", "BranchCleanupBenchmark", "SubmoduleUsageBenchmark"]
