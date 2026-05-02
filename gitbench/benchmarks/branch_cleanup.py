@@ -48,12 +48,65 @@ class BranchCleanupBenchmark(Benchmark):
         Args:
             fixture: The fixture containing the expected branch names.
             model_output: The branch names identified by the model.
-            repo_path: Optional path to the git repository (unused).
+            repo_path: Optional path to the git repository (unused for selection scoring).
 
         Returns:
             A Score object with passed/failed status and similarity value.
         """
+        if fixture.scoring.get("type") == "exact_match":
+            return self._score_branch_selection(fixture, model_output, repo_path)
+
         return self._scorer.score(fixture, model_output, repo_path=repo_path)
+
+    def _score_branch_selection(
+        self,
+        fixture: Fixture,
+        model_output: str,
+        repo_path: str | None = None,
+    ) -> Score:
+        """Score branch selection using set-based exact match.
+
+        Parses both expected and model_output as newline-separated branch names,
+        computes similarity as the fraction of expected branches found in model output,
+        and returns detailed error listing missing and extra branches.
+
+        Args:
+            fixture: The fixture containing the expected branch names.
+            model_output: The branch names identified by the model.
+            repo_path: Optional path to the git repository (unused).
+
+        Returns:
+            A Score object with passed/failed status and set-based similarity.
+        """
+        expected_set = {
+            line.strip() for line in fixture.expected.split("\n") if line.strip()
+        }
+        model_set = {
+            line.strip() for line in model_output.split("\n") if line.strip()
+        }
+
+        matches = expected_set & model_set
+        similarity = len(matches) / len(expected_set) if expected_set else 0.0
+        threshold = fixture.scoring.get("threshold", 1.0)
+        passed = similarity >= threshold
+
+        missing = expected_set - model_set
+        extra = model_set - expected_set
+
+        error_parts = []
+        if missing:
+            error_parts.append(f"Missing: {sorted(missing)}")
+        if extra:
+            error_parts.append(f"Extra: {sorted(extra)}")
+        error = "\n".join(error_parts) if error_parts else None
+
+        return Score(
+            fixture_id=fixture.id,
+            passed=passed,
+            similarity=round(similarity, 4),
+            model_output=model_output,
+            error=error,
+        )
 
     def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
         """Set up a git repository for a branch cleanup scenario.
@@ -76,8 +129,11 @@ class BranchCleanupBenchmark(Benchmark):
             repo_path: Path to the git repository.
 
         Returns:
-            Git branch output showing all branches with merge status.
+            Git branch output showing all branches with merge status,
+            followed by branches merged into main.
         """
+        lines = []
+
         # Show all branches with merge status
         result = subprocess.run(
             ["git", "branch", "-v"],
@@ -85,12 +141,21 @@ class BranchCleanupBenchmark(Benchmark):
             capture_output=True,
             text=True,
         )
+        if result.returncode == 0:
+            lines.append(result.stdout)
 
-        if result.returncode != 0:
-            logger.error(f"git branch -v failed: {result.stderr}")
-            return ""
+        # Show branches merged into main (explicit merge status context)
+        merged_result = subprocess.run(
+            ["git", "branch", "--merged", "main"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+        )
+        if merged_result.returncode == 0 and merged_result.stdout.strip():
+            lines.append("\nMerged into main:\n")
+            lines.append(merged_result.stdout)
 
-        return result.stdout
+        return "".join(lines)
 
     def format_prompt(self, fixture: Fixture, diff: str) -> str:
         """Format the prompt with the fixture prompt and branch list.
