@@ -21,6 +21,7 @@ from gitbench.benchmarks import Benchmark
 from gitbench.config import find_profile_for_model, load_config, resolve_profile
 from gitbench.harness.model import MockModelClient, OllamaAdapter, OpenAIAdapter
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
+from gitbench.render import render_html_from_envelope
 
 # Configure structured logging
 logging.basicConfig(
@@ -850,7 +851,7 @@ def cli():
     "--output",
     "-o",
     type=click.Path(),
-    help="Output file path (writes JSON, defaults to stdout)",
+    help="Output file path. When path ends with .html, writes a self-contained HTML report. Otherwise writes JSON (defaults to stdout).",
 )
 @click.option(
     "--output-dir",
@@ -1270,11 +1271,48 @@ def run(run_all: bool, all_benchmarks_flag: bool, benchmark_name: str | None, pr
 
         output_json = json.dumps(combined, indent=2)
 
-        if output:
-            Path(output).write_text(output_json)
-            click.echo(f"\nResults written to: {output}", err=True)
+        # Resolve effective profile name for the envelope (last single-profile result)
+        if len(runs) == 1:
+            _profile_name_for_env = runs[0][0]
+        elif all_profile_results:
+            # Multi-profile case: use "(multi-profile)" as label
+            _profile_name_for_env = "(multi-profile)"
         else:
-            click.echo(output_json)
+            _profile_name_for_env = "(unknown)"
+
+        is_html_output = output and output.lower().endswith(".html")
+
+        if is_html_output:
+            # Build the run envelope for HTML rendering
+            _envelope = build_run_envelope(
+                model=all_model_results[0]["model"] if all_model_results else "unknown",
+                profile=_profile_name_for_env,
+                results=[
+                    r
+                    for mr in all_model_results
+                    for r in mr.get("results", [])
+                ],
+            )
+            try:
+                html = render_html_from_envelope(_envelope, title="GitBench Report")
+                if html:
+                    Path(output).write_text(html)
+                    click.echo(f"HTML report written to: {output}", err=True)
+                else:
+                    # render_html_from_envelope returned empty string — fall back to JSON
+                    Path(output).write_text(output_json)
+                    click.echo(f"Results written to: {output}", err=True)
+            except Exception as _html_exc:
+                logger.warning("HTML generation failed (%s), falling back to JSON: %s", type(_html_exc).__name__, _html_exc)
+                click.echo(f"Warning: HTML generation failed, writing JSON instead: {_html_exc}", err=True)
+                Path(output).write_text(output_json)
+                click.echo(f"Results written to: {output}", err=True)
+        else:
+            if output:
+                Path(output).write_text(output_json)
+                click.echo(f"\nResults written to: {output}", err=True)
+            else:
+                click.echo(output_json)
 
     except Exception as e:
         logger.error(f"Benchmark failed: {e}")
