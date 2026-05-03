@@ -537,14 +537,13 @@ class TestShouldUseColors:
         assert result is False
 
     def test_result_is_cached(self):
-        """Result should be cached after first call."""
+        """Result should be cached after first call when no stream is provided."""
         import gitbench.cli as cli_module
 
         cli_module._use_colors = None
-        stream = TtyStringIO()
-
-        first = should_use_colors(stream)
-        second = should_use_colors(stream)
+        # Call without stream argument — uses sys.stdout, which should be non-TTY in tests
+        first = should_use_colors()
+        second = should_use_colors()
 
         assert first == second
         assert cli_module._use_colors is not None

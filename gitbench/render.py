@@ -1,9 +1,12 @@
 """HTML report renderer for GitBench results."""
 
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def load_runs_from_dir(directory: str) -> list[dict]:
@@ -974,3 +977,21 @@ runsMeta.forEach(r => {{
 
 </body>
 </html>"""
+
+
+def render_html_from_envelope(envelope: dict, title: str = "GitBench Report") -> str:
+    """Render a single run envelope as an HTML report.
+
+    Args:
+        envelope: Run envelope dict with keys: version, model, profile, results, timestamp.
+        title: HTML page title.
+
+    Returns:
+        Complete HTML string, or empty string on failure.
+    """
+    try:
+        aggregated = aggregate_runs([envelope])
+        return render_html(aggregated, title)
+    except Exception as exc:
+        logger.error("HTML generation failed: %s", exc)
+        return ""

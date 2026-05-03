@@ -634,7 +634,7 @@ def should_use_colors(stream=None) -> bool:
     - TERM environment variable set to 'dumb'
     - Whether the stream is a TTY
 
-    Result is cached after first call for performance.
+    Result is cached after first call for performance when no stream argument is provided.
 
     Args:
         stream: Stream to check TTY status against. Defaults to sys.stdout.
@@ -644,24 +644,42 @@ def should_use_colors(stream=None) -> bool:
     """
     global _use_colors
 
+    # Always check NO_COLOR and TERM=dumb first (no caching — these are env-based).
+    if os.environ.get("NO_COLOR") or os.environ.get("TERM") == "dumb":
+        _use_colors = False
+        return False
+
+    # If a specific stream was provided, check it directly (no caching).
+    # Caching is only used for the default sys.stdout check.
+    if stream is not None:
+        return bool(getattr(stream, "isatty", lambda: False)())
+
     if _use_colors is not None:
         return _use_colors
-
-    # Respect NO_COLOR env var
-    if os.environ.get("NO_COLOR"):
-        _use_colors = False
-        return False
-
-    # Respect TERM=dumb
-    if os.environ.get("TERM") == "dumb":
-        _use_colors = False
-        return False
 
     # Check if stream is a TTY
     check_stream = stream or sys.stdout
     is_tty = getattr(check_stream, "isatty", lambda: False)()
     _use_colors = bool(is_tty)
     return _use_colors
+
+
+def is_output_suppressed(stream=None) -> bool:
+    """Determine whether TTY-only output should be suppressed.
+
+    TTY-only output (e.g. summary table) should only print when stdout is a
+    real terminal, not when piped or redirected. This differs from color
+    detection in that we never suppress just because of NO_COLOR or TERM=dumb
+    — those only disable colors, not the output itself.
+
+    Args:
+        stream: Stream to check TTY status against. Defaults to sys.stdout.
+
+    Returns:
+        True if TTY-only output should be suppressed, False if it should print.
+    """
+    check_stream = stream or sys.stdout
+    return not bool(getattr(check_stream, "isatty", lambda: False)())
 
 
 class SummaryTable:
@@ -681,17 +699,20 @@ class SummaryTable:
         """
         self.stream = stream or sys.stdout
         self.results = results
-        self.enabled = should_use_colors(self.stream)
+        # Only render when stdout is a TTY. NO_COLOR/TERM=dumb only disable colors, not the table.
+        self.enabled = not is_output_suppressed(self.stream)
+        # Colors are disabled if NO_COLOR/TERM=dumb even in a TTY.
+        self._color_enabled = should_use_colors(self.stream)
 
     def _color(self, text: str, color: str) -> str:
         """Wrap text in ANSI color codes if colors are enabled."""
-        if self.enabled:
+        if self._color_enabled:
             return f"{color}{text}{RESET}"
         return text
 
     def _bold(self, text: str) -> str:
         """Wrap text in ANSI bold code if colors are enabled."""
-        if self.enabled:
+        if self._color_enabled:
             return f"{BOLD}{text}{RESET}"
         return text
 
