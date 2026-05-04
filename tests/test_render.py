@@ -255,6 +255,21 @@ class TestRenderCommand:
         assert result.exit_code == 0
         assert output.exists()
 
+    def test_render_creates_nested_output_parent_dirs(self, runner, tmp_path):
+        """Test that render --output creates parent directories."""
+        jsonl = tmp_path / "results.jsonl"
+        jsonl.write_text(json.dumps(_make_envelope()))
+        output = tmp_path / "nested" / "reports" / "report.html"
+
+        result = runner.invoke(cli, [
+            "render", "--input", str(jsonl),
+            "--output", str(output),
+        ])
+
+        assert result.exit_code == 0
+        assert output.exists()
+        assert output.read_text().startswith("<!DOCTYPE html>")
+
     def test_render_requires_input(self, runner):
         """Test that render fails without input."""
         result = runner.invoke(cli, ["render"])

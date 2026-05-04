@@ -202,6 +202,86 @@ class TestRunCommand:
             data = json.loads(content)
             assert "benchmark" in data
 
+    def test_run_with_nested_json_output_file(self, runner, tmp_path):
+        """Test that --output creates parent directories for JSON output."""
+        output_path = tmp_path / "nested" / "reports" / "results.json"
+
+        with patch("gitbench.cli.check_git_availability", return_value=True):
+            result = runner.invoke(
+                cli,
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output", str(output_path)],
+            )
+
+        assert result.exit_code == 0
+        data = json.loads(output_path.read_text())
+        assert data["benchmark"] == "commit_messages"
+
+    def test_run_with_nested_html_output_file(self, runner, tmp_path):
+        """Test that --output creates parent directories for HTML output."""
+        output_path = tmp_path / "nested" / "reports" / "results.html"
+
+        with patch("gitbench.cli.check_git_availability", return_value=True):
+            result = runner.invoke(
+                cli,
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output", str(output_path)],
+            )
+
+        assert result.exit_code == 0
+        assert output_path.exists()
+        assert output_path.read_text().startswith("<!DOCTYPE html>")
+
+    def test_run_with_nested_export_path(self, runner, tmp_path):
+        """Test that --export-path creates parent directories."""
+        export_path = tmp_path / "nested" / "exports" / "results.csv"
+
+        with patch("gitbench.cli.check_git_availability", return_value=True):
+            result = runner.invoke(
+                cli,
+                [
+                    "run",
+                    "--benchmark",
+                    "commit_messages",
+                    "--model",
+                    "mock",
+                    "--export",
+                    "csv",
+                    "--export-path",
+                    str(export_path),
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert export_path.exists()
+        assert export_path.read_text().startswith("benchmark,fixture_id,model")
+
+    def test_run_export_does_not_change_output_json_shape(self, runner, tmp_path):
+        """Test that --export does not mutate the main --output JSON payload."""
+        export_path = tmp_path / "exports" / "results.csv"
+        output_path = tmp_path / "results.json"
+
+        with patch("gitbench.cli.check_git_availability", return_value=True):
+            result = runner.invoke(
+                cli,
+                [
+                    "run",
+                    "--benchmark",
+                    "commit_messages",
+                    "--model",
+                    "mock",
+                    "--export",
+                    "csv",
+                    "--export-path",
+                    str(export_path),
+                    "--output",
+                    str(output_path),
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert export_path.exists()
+        data = json.loads(output_path.read_text())
+        assert data["benchmark"] == "commit_messages"
+
     def test_run_with_verbose_flag(self, runner):
         """Test that verbose flag shows per-fixture results."""
         with patch("gitbench.cli.check_git_availability", return_value=True):

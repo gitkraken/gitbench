@@ -234,6 +234,14 @@ def write_jsonl(envelope: dict, jsonl_path: str) -> Path:
     return file_path
 
 
+def write_text_file(path: str, content: str) -> Path:
+    """Write text to a file, creating parent directories if needed."""
+    file_path = Path(path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(content)
+    return file_path
+
+
 def _progress_model_names(models: list[str]) -> list[str]:
     """Return stable display names for progress rows, disambiguating duplicates."""
     total_counts: dict[str, int] = {}
@@ -1217,7 +1225,7 @@ def run(run_all: bool, all_benchmarks_flag: bool, benchmark_name: str | None, pr
                     if run_all_benchmarks:
                         # --all-benchmarks: summary + results wrapper
                         if len(all_model_results) == 1:
-                            combined = all_model_results[0]
+                            combined = dict(all_model_results[0])
                             if "model" in combined:
                                 combined.pop("model")
                         else:
@@ -1270,6 +1278,21 @@ def run(run_all: bool, all_benchmarks_flag: bool, benchmark_name: str | None, pr
                 written = write_jsonl(envelope, jsonl_path)
                 click.echo(f"  Appended: {written}", err=True)
 
+        if len(runs) > 1:
+            grand_fixtures = sum(p["summary"]["total_fixtures"] for p in all_profile_results)
+            grand_passed = sum(p["summary"]["total_passed"] for p in all_profile_results)
+            grand_models = sum(p["summary"]["total_models"] for p in all_profile_results)
+            combined = {
+                "summary": {
+                    "total_profiles": len(all_profile_results),
+                    "total_models": grand_models,
+                    "total_fixtures": grand_fixtures,
+                    "total_passed": grand_passed,
+                    "overall_pass_at_k": round(grand_passed / grand_fixtures, 4) if grand_fixtures > 0 else 0.0,
+                },
+                "profiles": all_profile_results,
+            }
+
         # ── Build run envelope (shared by exports + HTML) ──────────────────────────
         # Compute profile name before building envelope
         if len(runs) == 1:
@@ -1311,7 +1334,7 @@ def run(run_all: bool, all_benchmarks_flag: bool, benchmark_name: str | None, pr
                         ext = export_file_format  # csv → .csv, json → .json
                         target_path = f"gitbench_export_{safe_model}_{ts}.{ext}"
                     content = export_func(_envelope)
-                    Path(target_path).write_text(content)
+                    write_text_file(target_path, content)
                     click.echo(f"  Exported: {target_path}", err=True)
                 except KeyError:
                     available = get_available_formats()
@@ -1321,23 +1344,6 @@ def run(run_all: bool, all_benchmarks_flag: bool, benchmark_name: str | None, pr
                         err=True,
                     )
                     sys.exit(1)
-
-            grand_fixtures = sum(p["summary"]["total_fixtures"] for p in all_profile_results)
-            grand_passed = sum(p["summary"]["total_passed"] for p in all_profile_results)
-            grand_models = sum(p["summary"]["total_models"] for p in all_profile_results)
-            combined = {
-                "summary": {
-                    "total_profiles": len(all_profile_results),
-                    "total_models": grand_models,
-                    "total_fixtures": grand_fixtures,
-                    "total_passed": grand_passed,
-                    "overall_pass_at_k": round(grand_passed / grand_fixtures, 4) if grand_fixtures > 0 else 0.0,
-                },
-                "profiles": all_profile_results,
-            }
-        else:
-            # Single profile: combined was built inside the run loop
-            pass
 
         output_json = json.dumps(combined, indent=2)
 
@@ -1355,20 +1361,20 @@ def run(run_all: bool, all_benchmarks_flag: bool, benchmark_name: str | None, pr
             try:
                 html = render_html_from_envelope(_envelope, title="GitBench Report")
                 if html:
-                    Path(output).write_text(html)
+                    write_text_file(output, html)
                     click.echo(f"HTML report written to: {output}", err=True)
                 else:
                     # render_html_from_envelope returned empty string — fall back to JSON
-                    Path(output).write_text(output_json)
+                    write_text_file(output, output_json)
                     click.echo(f"Results written to: {output}", err=True)
             except Exception as _html_exc:
                 logger.warning("HTML generation failed (%s), falling back to JSON: %s", type(_html_exc).__name__, _html_exc)
                 click.echo(f"Warning: HTML generation failed, writing JSON instead: {_html_exc}", err=True)
-                Path(output).write_text(output_json)
+                write_text_file(output, output_json)
                 click.echo(f"Results written to: {output}", err=True)
         else:
             if output:
-                Path(output).write_text(output_json)
+                write_text_file(output, output_json)
                 click.echo(f"\nResults written to: {output}", err=True)
             else:
                 click.echo(output_json)
@@ -1538,7 +1544,7 @@ def render(input_dir: str | None, input_file: str | None, output_path: str, titl
     data = aggregate_runs(runs)
     html = render_html(data, title=title)
 
-    Path(output_path).write_text(html)
+    write_text_file(output_path, html)
     click.echo(f"Report written to: {output_path}", err=True)
 
     if open_browser:
