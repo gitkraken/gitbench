@@ -7,9 +7,17 @@ from click.testing import CliRunner
 
 from gitbench.cli import cli
 from gitbench.render import aggregate_runs, load_runs_from_dir, load_runs_from_jsonl, render_html
+from gitbench.version import BENCHMARK_SUITE_VERSION
 
 
-def _make_envelope(model="mock", bench="commit_messages", total=12, passed=10, timestamp="2026-04-25T13:00:00+00:00"):
+def _make_envelope(
+    model="mock",
+    bench="commit_messages",
+    total=12,
+    passed=10,
+    timestamp="2026-04-25T13:00:00+00:00",
+    suite_version=BENCHMARK_SUITE_VERSION,
+):
     """Build a minimal run envelope for testing."""
     scores = [
         {
@@ -23,6 +31,7 @@ def _make_envelope(model="mock", bench="commit_messages", total=12, passed=10, t
     ]
     return {
         "version": 1,
+        "benchmark_suite_version": suite_version,
         "timestamp": timestamp,
         "git_sha": "abc123",
         "model": model,
@@ -78,14 +87,20 @@ class TestLoadRunsFromDir:
         with pytest.raises(FileNotFoundError):
             load_runs_from_dir("/nonexistent/path")
 
-    def test_sorted_by_timestamp(self, tmp_path):
-        """Test that runs are sorted by timestamp."""
+    def test_sorted_by_version_then_timestamp(self, tmp_path):
+        """Test that runs are sorted by suite version before timestamp."""
         r1 = _make_envelope(timestamp="2026-04-25T15:00:00+00:00")
         r2 = _make_envelope(timestamp="2026-04-25T13:00:00+00:00")
+        r3 = _make_envelope(
+            timestamp="2026-04-25T12:00:00+00:00",
+            suite_version="0.2.0",
+        )
         (tmp_path / "later.json").write_text(json.dumps(r1))
         (tmp_path / "earlier.json").write_text(json.dumps(r2))
+        (tmp_path / "newer-version.json").write_text(json.dumps(r3))
 
         runs = load_runs_from_dir(str(tmp_path))
+        assert [r["benchmark_suite_version"] for r in runs] == ["0.1.0", "0.1.0", "0.2.0"]
         assert runs[0]["timestamp"] < runs[1]["timestamp"]
 
 
@@ -176,6 +191,7 @@ class TestAggregateRuns:
         assert len(data["runs_meta"]) == 1
         assert data["runs_meta"][0]["model"] == "llama3.1:8b"
         assert data["runs_meta"][0]["git_sha"] == "abc123"
+        assert data["runs_meta"][0]["benchmark_suite_version"] == BENCHMARK_SUITE_VERSION
 
 
 class TestRenderHtml:

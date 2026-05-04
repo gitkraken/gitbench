@@ -23,6 +23,7 @@ from gitbench.cli import (
     resolve_run_output_paths,
     should_use_colors,
 )
+from gitbench.version import BENCHMARK_SUITE_VERSION
 
 
 @pytest.fixture
@@ -220,8 +221,8 @@ class TestRunCommand:
             run_dirs = list((cwd / "gitbench-results").iterdir())
             assert len(run_dirs) == 1
             assert run_dirs[0].name.endswith("Z")
-            json_path = run_dirs[0] / "results.json"
-            html_path = run_dirs[0] / "report.html"
+            json_path = run_dirs[0] / f"results-v{BENCHMARK_SUITE_VERSION}.json"
+            html_path = run_dirs[0] / f"report-v{BENCHMARK_SUITE_VERSION}.html"
             assert json_path.exists()
             assert html_path.exists()
             assert json.loads(json_path.read_text())["benchmark"] == "commit_messages"
@@ -274,7 +275,7 @@ class TestRunCommand:
 
             assert result.exit_code == 0
             assert json.loads(output_path.read_text())["benchmark"] == "commit_messages"
-            html_reports = list((cwd / "gitbench-results").glob("*/report.html"))
+            html_reports = list((cwd / "gitbench-results").glob(f"*/report-v{BENCHMARK_SUITE_VERSION}.html"))
             assert len(html_reports) == 1
             assert html_reports[0].read_text().startswith("<!DOCTYPE html>")
 
@@ -300,7 +301,7 @@ class TestRunCommand:
 
             assert result.exit_code == 0
             assert output_path.read_text().startswith("<!DOCTYPE html>")
-            json_results = list((cwd / "gitbench-results").glob("*/results.json"))
+            json_results = list((cwd / "gitbench-results").glob(f"*/results-v{BENCHMARK_SUITE_VERSION}.json"))
             assert len(json_results) == 1
             assert json.loads(json_results[0].read_text())["benchmark"] == "commit_messages"
 
@@ -447,6 +448,8 @@ class TestRunCommand:
             # File should contain envelope with metadata
             data = json.loads(files[0].read_text())
             assert data["version"] == 1
+            assert data["schema_version"] == 1
+            assert data["benchmark_suite_version"] == BENCHMARK_SUITE_VERSION
             assert "timestamp" in data
             assert data["model"] == "mock"
             assert "summary" in data
@@ -481,6 +484,7 @@ class TestRunCommand:
             for line in lines:
                 data = json.loads(line)
                 assert data["version"] == 1
+                assert data["benchmark_suite_version"] == BENCHMARK_SUITE_VERSION
                 assert "timestamp" in data
                 assert data["model"] == "mock"
                 assert "results" in data
@@ -726,10 +730,11 @@ class TestShouldUseColors:
     def test_tty_stream_enables_colors(self):
         """TTY stream should enable colors."""
         stream = TtyStringIO()
-        import gitbench.cli as cli_module
+        with patch.dict("os.environ", {"TERM": "xterm-256color"}, clear=True):
+            import gitbench.cli as cli_module
 
-        cli_module._use_colors = None
-        result = should_use_colors(stream)
+            cli_module._use_colors = None
+            result = should_use_colors(stream)
         assert result is True
 
     def test_non_tty_stream_disables_colors(self):
@@ -826,29 +831,30 @@ class TestSummaryTable:
 
     def test_color_coding_thresholds(self):
         """Color should be green >= 0.8, yellow >= 0.5, red < 0.5."""
-        stream = TtyStringIO()
+        with patch.dict("os.environ", {"TERM": "xterm-256color"}, clear=True):
+            stream = TtyStringIO()
 
-        # Green (>= 0.8)
-        results_green = [{"benchmark": "green", "total": 10, "passed": 9, "pass_at_k": 0.9}]
-        table_green = SummaryTable(results_green, stream=stream)
-        table_green.render()
-        output_green = stream.getvalue()
-        assert "\x1b[32m" in output_green  # Green
+            # Green (>= 0.8)
+            results_green = [{"benchmark": "green", "total": 10, "passed": 9, "pass_at_k": 0.9}]
+            table_green = SummaryTable(results_green, stream=stream)
+            table_green.render()
+            output_green = stream.getvalue()
+            assert "\x1b[32m" in output_green  # Green
 
-        # Yellow (>= 0.5)
-        stream2 = TtyStringIO()
-        results_yellow = [{"benchmark": "yellow", "total": 10, "passed": 6, "pass_at_k": 0.6}]
-        table_yellow = SummaryTable(results_yellow, stream=stream2)
-        table_yellow.render()
-        output_yellow = stream2.getvalue()
-        assert "\x1b[33m" in output_yellow  # Yellow
+            # Yellow (>= 0.5)
+            stream2 = TtyStringIO()
+            results_yellow = [{"benchmark": "yellow", "total": 10, "passed": 6, "pass_at_k": 0.6}]
+            table_yellow = SummaryTable(results_yellow, stream=stream2)
+            table_yellow.render()
+            output_yellow = stream2.getvalue()
+            assert "\x1b[33m" in output_yellow  # Yellow
 
-        # Red (< 0.5)
-        stream3 = TtyStringIO()
-        results_red = [{"benchmark": "red", "total": 10, "passed": 4, "pass_at_k": 0.4}]
-        table_red = SummaryTable(results_red, stream=stream3)
-        table_red.render()
-        output_red = stream3.getvalue()
+            # Red (< 0.5)
+            stream3 = TtyStringIO()
+            results_red = [{"benchmark": "red", "total": 10, "passed": 4, "pass_at_k": 0.4}]
+            table_red = SummaryTable(results_red, stream=stream3)
+            table_red.render()
+            output_red = stream3.getvalue()
         assert "\x1b[31m" in output_red  # Red
 
     def test_passed_fail_column_format(self):
@@ -878,6 +884,8 @@ class TestBuildRunEnvelope:
         envelope = build_run_envelope(model="gpt-4o", profile="openai", results=results)
 
         assert envelope["version"] == 1
+        assert envelope["schema_version"] == 1
+        assert envelope["benchmark_suite_version"] == BENCHMARK_SUITE_VERSION
         assert "timestamp" in envelope
         assert envelope["model"] == "gpt-4o"
         assert envelope["profile"] == "openai"
@@ -986,10 +994,10 @@ class TestWriteOutputDir:
         paths = [write_output_dir(envelope, str(tmp_path)) for _ in range(4)]
         names = [p.name for p in paths]
 
-        assert names[0] == "2026-04-25T13-30-00_mock.json"
-        assert names[1] == "2026-04-25T13-30-00_mock_2.json"
-        assert names[2] == "2026-04-25T13-30-00_mock_3.json"
-        assert names[3] == "2026-04-25T13-30-00_mock_4.json"
+        assert names[0] == f"2026-04-25T13-30-00_mock_v{BENCHMARK_SUITE_VERSION}.json"
+        assert names[1] == f"2026-04-25T13-30-00_mock_v{BENCHMARK_SUITE_VERSION}_2.json"
+        assert names[2] == f"2026-04-25T13-30-00_mock_v{BENCHMARK_SUITE_VERSION}_3.json"
+        assert names[3] == f"2026-04-25T13-30-00_mock_v{BENCHMARK_SUITE_VERSION}_4.json"
 
         # All files exist
         for p in paths:
@@ -1035,8 +1043,14 @@ class TestResolveRunOutputPaths:
             html_output=None,
             default_timestamp="20260504T010203Z",
         ) == (
-            DEFAULT_JSON_OUTPUT_PATH.format(timestamp="20260504T010203Z"),
-            DEFAULT_HTML_OUTPUT_PATH.format(timestamp="20260504T010203Z"),
+            DEFAULT_JSON_OUTPUT_PATH.format(
+                timestamp="20260504T010203Z",
+                version=BENCHMARK_SUITE_VERSION,
+            ),
+            DEFAULT_HTML_OUTPUT_PATH.format(
+                timestamp="20260504T010203Z",
+                version=BENCHMARK_SUITE_VERSION,
+            ),
         )
 
     def test_config_outputs(self):

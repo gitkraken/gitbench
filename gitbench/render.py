@@ -16,7 +16,7 @@ def load_runs_from_dir(directory: str) -> list[dict]:
         directory: Path to directory containing JSON run files.
 
     Returns:
-        List of run envelope dicts, sorted by timestamp.
+        List of run envelope dicts, sorted by suite version then timestamp.
     """
     dir_path = Path(directory)
     if not dir_path.exists():
@@ -31,7 +31,7 @@ def load_runs_from_dir(directory: str) -> list[dict]:
         except (json.JSONDecodeError, KeyError):
             continue
 
-    runs.sort(key=lambda r: r.get("timestamp", ""))
+    runs.sort(key=_run_sort_key)
     return runs
 
 
@@ -42,7 +42,7 @@ def load_runs_from_jsonl(path: str) -> list[dict]:
         path: Path to JSONL file.
 
     Returns:
-        List of run envelope dicts, sorted by timestamp.
+        List of run envelope dicts, sorted by suite version then timestamp.
     """
     file_path = Path(path)
     if not file_path.exists():
@@ -59,8 +59,27 @@ def load_runs_from_jsonl(path: str) -> list[dict]:
         except (json.JSONDecodeError, KeyError):
             continue
 
-    runs.sort(key=lambda r: r.get("timestamp", ""))
+    runs.sort(key=_run_sort_key)
     return runs
+
+
+def _version_sort_key(version: str) -> tuple[int, ...]:
+    """Return a numeric-ish sort key for dotted version strings."""
+    parts = []
+    for part in version.split("."):
+        try:
+            parts.append(int(part))
+        except ValueError:
+            parts.append(0)
+    return tuple(parts)
+
+
+def _run_sort_key(run: dict) -> tuple[tuple[int, ...], str]:
+    """Sort runs by benchmark suite version first, then timestamp."""
+    return (
+        _version_sort_key(str(run.get("benchmark_suite_version", ""))),
+        run.get("timestamp", ""),
+    )
 
 
 def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
@@ -76,7 +95,7 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
         - model_summaries: {model: {total_runs, total_fixtures, total_passed, pass_at_k}}
         - matrix: {model: {benchmark: {pass_at_k, total, passed, avg_similarity}}}
         - fixtures: {model: {benchmark: [{fixture_id, passed, similarity, error}]}}
-        - runs_meta: [{timestamp, model, profile, git_sha}]
+        - runs_meta: [{timestamp, model, profile, git_sha, benchmark_suite_version}]
     """
     models_set: set[str] = set()
     benchmarks_set: set[str] = set()
@@ -170,6 +189,7 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
             "model": run.get("model", ""),
             "profile": run.get("profile", ""),
             "git_sha": run.get("git_sha", ""),
+            "benchmark_suite_version": run.get("benchmark_suite_version", ""),
         })
 
     return {
@@ -775,6 +795,7 @@ def render_html(data: dict[str, Any], title: str = "GitBench Report") -> str:
         <span class="badge">{len(data['runs_meta'])} run(s)</span>
         <span class="badge">{len(models)} model(s)</span>
         <span class="badge">{len(benchmarks)} benchmark(s)</span>
+        <span class="badge">Suite {data['runs_meta'][0].get('benchmark_suite_version', 'unknown') if data['runs_meta'] else 'unknown'}</span>
       </div>
     </div>
   </header>
@@ -824,7 +845,7 @@ def render_html(data: dict[str, Any], title: str = "GitBench Report") -> str:
         <table>
           <thead>
             <tr>
-              <th>Timestamp</th><th>Model</th><th>Profile</th><th>Git SHA</th>
+              <th>Timestamp</th><th>Model</th><th>Profile</th><th>Suite</th><th>Git SHA</th>
             </tr>
           </thead>
           <tbody id="runs-body"></tbody>
@@ -970,6 +991,7 @@ runsMeta.forEach(r => {{
     <td>${{ts}}</td>
     <td>${{r.model}}</td>
     <td>${{r.profile || '—'}}</td>
+    <td>${{r.benchmark_suite_version || '—'}}</td>
     <td class="sha-text">${{sha}}</td>
   </tr>`;
 }});

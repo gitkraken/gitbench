@@ -22,10 +22,11 @@ from gitbench.export import FORMAT_REGISTRY, get_available_formats
 from gitbench.config import find_profile_for_model, load_config, resolve_profile
 from gitbench.harness.model import MockModelClient, OllamaAdapter, OpenAIAdapter
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
-from gitbench.render import aggregate_runs, render_html, render_html_from_envelope
+from gitbench.render import aggregate_runs, render_html, render_html_from_envelope, _run_sort_key
+from gitbench.version import BENCHMARK_SUITE_VERSION, RESULT_SCHEMA_VERSION
 
-DEFAULT_JSON_OUTPUT_PATH = "gitbench-results/{timestamp}/results.json"
-DEFAULT_HTML_OUTPUT_PATH = "gitbench-results/{timestamp}/report.html"
+DEFAULT_JSON_OUTPUT_PATH = "gitbench-results/{timestamp}/results-v{version}.json"
+DEFAULT_HTML_OUTPUT_PATH = "gitbench-results/{timestamp}/report-v{version}.html"
 
 # Configure structured logging
 logging.basicConfig(
@@ -166,7 +167,9 @@ def build_run_envelope(
     total_passed = sum(r.get("passed", 0) for r in results)
 
     return {
-        "version": 1,
+        "version": RESULT_SCHEMA_VERSION,
+        "schema_version": RESULT_SCHEMA_VERSION,
+        "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
         "timestamp": now.isoformat(),
         "git_sha": _get_git_sha(),
         "model": model,
@@ -186,12 +189,17 @@ def _sanitize_filename(s: str) -> str:
     return s.replace("/", "_").replace(":", "-").replace(" ", "_")
 
 
+def _version_slug(version: str | None = None) -> str:
+    """Return a version string safe for generated filenames."""
+    return _sanitize_filename(version or BENCHMARK_SUITE_VERSION)
+
+
 def write_output_dir(envelope: dict, output_dir: str) -> Path:
     """Write a run envelope as a JSON file in the output directory.
 
-    Filename format: {YYYY-MM-DDTHH-MM-SS}_{model}.json
-    If a collision exists (same timestamp + model within the same second),
-    appends _2, _3, etc. to avoid overwriting.
+    Filename format: {YYYY-MM-DDTHH-MM-SS}_{model}_v{benchmark_suite_version}.json
+    If a collision exists (same timestamp + model + version within the same
+    second), appends _2, _3, etc. to avoid overwriting.
 
     Args:
         envelope: The run envelope dict.
@@ -205,7 +213,8 @@ def write_output_dir(envelope: dict, output_dir: str) -> Path:
 
     ts = envelope["timestamp"].replace(":", "-")[:19]  # YYYY-MM-DDTHH-MM-SS
     model = _sanitize_filename(envelope["model"])
-    base = f"{ts}_{model}"
+    version = _version_slug(envelope.get("benchmark_suite_version"))
+    base = f"{ts}_{model}_v{version}"
 
     # Non-destructive: add counter suffix on collision
     candidate = dir_path / f"{base}.json"
@@ -268,8 +277,11 @@ def _default_output_timestamp() -> str:
 
 
 def _format_default_output_path(path_template: str, timestamp: str) -> str:
-    """Format a default output path template with the run timestamp."""
-    return path_template.format(timestamp=timestamp)
+    """Format a default output path template with run metadata."""
+    return path_template.format(
+        timestamp=timestamp,
+        version=_version_slug(BENCHMARK_SUITE_VERSION),
+    )
 
 
 def resolve_run_output_paths(
@@ -335,6 +347,18 @@ def _progress_model_names_for_runs(runs: list[tuple[str, dict, list[str]]]) -> l
         labels_by_run.append(display_labels[offset : offset + len(models)])
         offset += len(models)
     return labels_by_run
+
+
+def stamp_benchmark_suite_version(payload: dict | list) -> dict | list:
+    """Add the benchmark suite version to a result payload."""
+    if isinstance(payload, dict):
+        payload.setdefault("benchmark_suite_version", BENCHMARK_SUITE_VERSION)
+        return payload
+    if isinstance(payload, list):
+        for item in payload:
+            if isinstance(item, dict):
+                item.setdefault("benchmark_suite_version", BENCHMARK_SUITE_VERSION)
+    return payload
 
 
 class RunProgress(Protocol):
@@ -539,6 +563,7 @@ def run_model_benchmarks(
 
     model_result = {
         "model": current_model,
+        "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
         "summary": {
             "total_benchmarks": total_benchmarks,
             "total_fixtures": total_fixtures,
@@ -942,7 +967,7 @@ def cli():
     "-d",
     type=click.Path(),
     default=None,
-    help="Directory to write per-run JSON files (auto-named with timestamp + model)",
+    help="Directory to write per-run JSON files (auto-named with timestamp + model + suite version)",
 )
 @click.option(
     "--jsonl",
@@ -1338,10 +1363,12 @@ def run(
                             combined = dict(all_model_results[0])
                             if "model" in combined:
                                 combined.pop("model")
+                            stamp_benchmark_suite_version(combined)
                         else:
                             grand_fixtures = sum(r["summary"]["total_fixtures"] for r in all_model_results)
                             grand_passed = sum(r["summary"]["total_passed"] for r in all_model_results)
                             combined = {
+                                "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
                                 "summary": {
                                     "total_models": len(all_model_results),
                                     "total_fixtures": grand_fixtures,
@@ -1362,6 +1389,7 @@ def run(
                                 for r in mr["results"]:
                                     single_results.append({"model": mr["model"], **r})
                             combined = single_results if len(single_results) > 1 else single_results[0]
+                        combined = stamp_benchmark_suite_version(combined)
                 else:
                     # Multiple profiles: nest under profile name
                     append_profile_result(profile_name, all_model_results)
@@ -1393,6 +1421,7 @@ def run(
             grand_passed = sum(p["summary"]["total_passed"] for p in all_profile_results)
             grand_models = sum(p["summary"]["total_models"] for p in all_profile_results)
             combined = {
+                "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
                 "summary": {
                     "total_profiles": len(all_profile_results),
                     "total_models": grand_models,
@@ -1442,7 +1471,8 @@ def run(
                         model_name = all_model_results[0]["model"] if all_model_results else "unknown"
                         safe_model = _sanitize_filename(model_name)
                         ext = export_file_format  # csv → .csv, json → .json
-                        target_path = f"gitbench_export_{safe_model}_{ts}.{ext}"
+                        version = _version_slug(BENCHMARK_SUITE_VERSION)
+                        target_path = f"gitbench_export_{safe_model}_v{version}_{ts}.{ext}"
                     content = export_func(_envelope)
                     write_text_file(target_path, content)
                     click.echo(f"  Exported: {target_path}", err=True)
@@ -1639,15 +1669,19 @@ def render(input_dir: str | None, input_file: str | None, output_path: str, titl
     if not runs:
         raise click.ClickException("No valid run data found in the provided inputs.")
 
-    # Deduplicate by timestamp + model (prefer first occurrence)
+    # Deduplicate by version + timestamp + model (prefer first occurrence)
     seen = set()
     unique_runs = []
     for r in runs:
-        key = (r.get("timestamp", ""), r.get("model", ""))
+        key = (
+            r.get("benchmark_suite_version", ""),
+            r.get("timestamp", ""),
+            r.get("model", ""),
+        )
         if key not in seen:
             seen.add(key)
             unique_runs.append(r)
-    runs = unique_runs
+    runs = sorted(unique_runs, key=_run_sort_key)
 
     click.echo(f"Rendering {len(runs)} unique run(s)...", err=True)
 

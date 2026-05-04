@@ -57,11 +57,55 @@ Add `--verbose` (or `-v`) to see per-fixture results including pass/fail and sim
 gitbench run --all --model mock --verbose
 ```
 
-### Output to a file
+### Output files
+
+```bash
+gitbench run --all --model mock
+```
+
+Each successful run writes both artifacts by default:
+
+| Artifact | Default path |
+| -------- | ------------ |
+| JSON results | `gitbench-results/<timestamp>/results-v<benchmark_suite_version>.json` |
+| HTML report | `gitbench-results/<timestamp>/report-v<benchmark_suite_version>.html` |
+
+Override either path on the CLI:
+
+```bash
+gitbench run --all --model mock --json-output results.json --html-output report.html
+```
+
+The legacy `--output` option is still supported. A `.html` path overrides the HTML report path; any other extension overrides the JSON path. The other artifact still uses its configured or default location:
 
 ```bash
 gitbench run --all --model mock --output results.json
+gitbench run --all --model mock --output report.html
 ```
+
+You can also set defaults in `gitbench.json` or `.gitbench.json`:
+
+```json
+{
+  "outputs": {
+    "json": "runs/latest.json",
+    "html": "runs/latest.html"
+  }
+}
+```
+
+### Result versioning
+
+Saved run envelopes include two version fields:
+
+| Field | Meaning |
+| ----- | ------- |
+| `schema_version` / `version` | Integer output schema version for result readers |
+| `benchmark_suite_version` | `0.x` suite version tied to benchmark and fixture coverage |
+
+During the pre-1.0 period, bump `benchmark_suite_version` whenever fixtures, benchmark definitions, prompts, expected answers, or scoring rules change in a way that affects comparability. Use `0.x` minor bumps for added or behavior-changing benchmark coverage, and patch bumps for corrections that keep the same intended coverage.
+
+Generated default artifact filenames include the benchmark suite version, and report rendering sorts accumulated runs by `benchmark_suite_version` first, then timestamp.
 
 ## Benchmarks
 

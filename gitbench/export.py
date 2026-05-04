@@ -9,7 +9,8 @@ def export_csv(envelope: dict) -> str:
     """Return a CSV string with one row per fixture result.
 
     Columns: benchmark, fixture_id, model, passed, similarity,
-             model_output, error, timestamp, git_sha, profile
+             model_output, error, timestamp, git_sha, profile,
+             benchmark_suite_version
 
     Args:
         envelope: Run envelope dict with keys: version, timestamp,
@@ -26,6 +27,7 @@ def export_csv(envelope: dict) -> str:
     fieldnames = [
         "benchmark", "fixture_id", "model", "passed", "similarity",
         "model_output", "error", "timestamp", "git_sha", "profile",
+        "benchmark_suite_version",
     ]
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=fieldnames)
@@ -48,6 +50,7 @@ def export_csv(envelope: dict) -> str:
                 "timestamp": envelope.get("timestamp", ""),
                 "git_sha": envelope.get("git_sha", ""),
                 "profile": envelope.get("profile", ""),
+                "benchmark_suite_version": envelope.get("benchmark_suite_version", ""),
             })
 
     return output.getvalue()
@@ -57,7 +60,7 @@ def export_artificialanalysis(envelope: dict) -> str:
     """Return a CSV string with one row per benchmark (benchmark-level).
 
     Columns: model, benchmark, score, total, passed, timestamp,
-             git_sha, provider, profile
+             git_sha, provider, profile, benchmark_suite_version
 
     score is pass_at_k rounded to 4 decimal places.
 
@@ -71,6 +74,7 @@ def export_artificialanalysis(envelope: dict) -> str:
     fieldnames = [
         "model", "benchmark", "score", "total", "passed",
         "timestamp", "git_sha", "provider", "profile",
+        "benchmark_suite_version",
     ]
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=fieldnames)
@@ -95,6 +99,7 @@ def export_artificialanalysis(envelope: dict) -> str:
             # provider is not in the envelope; leave blank to match the column
             "provider": "",
             "profile": envelope.get("profile", ""),
+            "benchmark_suite_version": envelope.get("benchmark_suite_version", ""),
         })
 
     return output.getvalue()

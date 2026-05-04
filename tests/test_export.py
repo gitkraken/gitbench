@@ -8,12 +8,14 @@ from gitbench.export import (
     FORMAT_REGISTRY,
     get_available_formats,
 )
+from gitbench.version import BENCHMARK_SUITE_VERSION
 
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
 ENVELOPE = {
     "version": 1,
+    "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
     "timestamp": "2026-05-03T00:00:00+00:00",
     "git_sha": "abc1234",
     "model": "mock",
@@ -70,6 +72,7 @@ def test_csv_export_valid_format():
         "timestamp",
         "git_sha",
         "profile",
+        "benchmark_suite_version",
     ]
     assert headers == expected, f"Expected {expected}, got {headers}"
 
@@ -82,6 +85,7 @@ def test_csv_export_valid_format():
     assert rows[0]["similarity"] == "0.9"
     assert rows[0]["model"] == "mock"
     assert rows[0]["git_sha"] == "abc1234"
+    assert rows[0]["benchmark_suite_version"] == BENCHMARK_SUITE_VERSION
 
 
 def test_artificialanalysis_export_fields():
@@ -99,6 +103,7 @@ def test_artificialanalysis_export_fields():
         "git_sha",
         "provider",
         "profile",
+        "benchmark_suite_version",
     ]
     assert headers == expected, f"Expected {expected}, got {headers}"
 
@@ -111,6 +116,7 @@ def test_artificialanalysis_export_fields():
     assert row["score"] == "0.5"  # pass_at_k rounded
     assert row["total"] == "2"
     assert row["passed"] == "1"
+    assert row["benchmark_suite_version"] == BENCHMARK_SUITE_VERSION
 
 
 def test_unknown_format_error():

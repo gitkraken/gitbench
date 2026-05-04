@@ -1,3 +1,5 @@
 """GitBench: A benchmark harness for evaluating LLM-generated git commit messages."""
 
-__version__ = "0.1.0"
+from gitbench.version import PACKAGE_VERSION
+
+__version__ = PACKAGE_VERSION
