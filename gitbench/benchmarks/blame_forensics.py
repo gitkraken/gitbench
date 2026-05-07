@@ -25,24 +25,6 @@ class BlameForensicsBenchmark(Benchmark):
     name = "blame_forensics"
     description = "Identify bug-introducing commits using git blame analysis"
 
-    def __init__(self):
-        """Initialize the blame forensics benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all blame forensics fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/blame_forensics directory.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "blame_forensics"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
         """Score a blame forensics answer against the expected value.
 

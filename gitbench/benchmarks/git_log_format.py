@@ -24,24 +24,6 @@ class GitLogFormatBenchmark(Benchmark):
     name = "git_log_format"
     description = "Query and interpret git log output with various formatting options"
 
-    def __init__(self):
-        """Initialize the git log format benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all git log format fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/git_log_format directory.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "git_log_format"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
         """Score a git log answer against the expected value.
 

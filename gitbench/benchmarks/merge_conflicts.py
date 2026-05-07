@@ -24,27 +24,6 @@ class MergeConflictsBenchmark(Benchmark):
     name = "merge_conflicts"
     description = "Resolve a merge conflict"
 
-    def __init__(self):
-        """Initialize the merge conflicts benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all merge conflict fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/merge_conflicts directory.
-
-        Raises:
-            FileNotFoundError: If the fixtures directory doesn't exist.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "merge_conflicts"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
         """Score a resolved file against the expected value.
 

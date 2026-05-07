@@ -28,27 +28,6 @@ class GitBisectBenchmark(Benchmark):
     name = "git_bisect"
     description = "Identify the bad commit in a git history via bisect"
 
-    def __init__(self):
-        """Initialize the git bisect benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all git bisect fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/git_bisect directory.
-
-        Raises:
-            FileNotFoundError: If the fixtures directory doesn't exist.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "git_bisect"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
         """Score the model's identified bad commit against the expected value.
 

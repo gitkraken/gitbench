@@ -25,24 +25,6 @@ class GitShowBenchmark(Benchmark):
     name = "git_show"
     description = "Inspect commit details, diffs, tags, and file state using git show"
 
-    def __init__(self):
-        """Initialize the git show benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all git show fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/git_show directory.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "git_show"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
         """Score a git show answer against the expected value.
 

@@ -27,27 +27,6 @@ class StashRecoveryBenchmark(Benchmark):
     name = "stash_recovery"
     description = "Recover stashed changes using git stash list"
 
-    def __init__(self):
-        """Initialize the stash recovery benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all git stash recovery fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/stash_recovery directory.
-
-        Raises:
-            FileNotFoundError: If the fixtures directory doesn't exist.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "stash_recovery"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
         """Score the model's recovery answer against the expected value.
 

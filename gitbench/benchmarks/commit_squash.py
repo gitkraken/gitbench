@@ -29,27 +29,6 @@ class CommitSquashBenchmark(Benchmark):
     name = "commit_squash"
     description = "Identify commits to squash into a cleaner history"
 
-    def __init__(self):
-        """Initialize the commit squash benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all commit squash fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/commit_squash directory.
-
-        Raises:
-            FileNotFoundError: If the fixtures directory doesn't exist.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "commit_squash"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
         """Score the model's identified commits to squash against the expected value.
 

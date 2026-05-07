@@ -26,24 +26,6 @@ class GitGrepBenchmark(Benchmark):
     name = "git_grep"
     description = "Search repository content using git grep"
 
-    def __init__(self):
-        """Initialize the git grep benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all git grep fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/git_grep directory.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "git_grep"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
         """Set up a git repository for a git grep scenario.
 

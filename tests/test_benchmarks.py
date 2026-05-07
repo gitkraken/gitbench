@@ -39,7 +39,6 @@ class TestBenchmarkABC:
     def test_benchmark_has_required_methods(self):
         """Test that Benchmark ABC defines the required abstract methods."""
         abstract_methods = Benchmark.__abstractmethods__
-        assert "load_fixtures" in abstract_methods
         assert "score" in abstract_methods
 
     def test_benchmark_has_class_attributes(self):

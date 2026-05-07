@@ -1,0 +1,3 @@
+# `load_fixtures` and `__init__` are provided as defaults by the Benchmark ABC
+
+Every benchmark subclass duplicated identical `__init__` (creating `FixtureLoader` and `Scorer`) and `load_fixtures` (loading YAML from `fixtures/<self.name>/`). We moved both into the ABC as concrete defaults. `load_fixtures` resolves the path from a `fixtures_root` parameter that defaults to `{repo_root}/fixtures/`, so subclass authors only supply `name` and `score()` and get fixture loading for free. We chose constructor injection of `fixtures_root` (over implicit `__file__` introspection) so the behavior is explicit and testable.

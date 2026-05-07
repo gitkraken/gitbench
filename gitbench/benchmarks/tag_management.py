@@ -26,24 +26,6 @@ class TagManagementBenchmark(Benchmark):
     name = "tag_management"
     description = "Manage git tags for release versioning"
 
-    def __init__(self):
-        """Initialize the tag management benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all tag management fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/tag_management directory.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "tag_management"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
         """Set up a git repository for a tag management scenario.
 

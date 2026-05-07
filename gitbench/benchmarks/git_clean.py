@@ -27,24 +27,6 @@ class GitCleanBenchmark(Benchmark):
     name = "git_clean"
     description = "Clean untracked and ignored files from a repository"
 
-    def __init__(self):
-        """Initialize the git clean benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all git clean fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/git_clean directory.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "git_clean"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} fixtures")
-        return fixtures
-
     def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
         """Set up a git repository for a git clean scenario.
 

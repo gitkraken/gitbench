@@ -26,24 +26,9 @@ class WorktreeUsageBenchmark(Benchmark):
     name = "worktree_usage"
     description = "Manage git worktrees for parallel development"
 
-    def __init__(self):
-        """Initialize the worktree usage benchmark."""
-        self._loader = FixtureLoader()
-        self._scorer = Scorer()
+    def __init__(self, fixtures_root=None) -> None:
+        super().__init__(fixtures_root=fixtures_root)
         self._current_executor: GitExecutor | None = None
-
-    def load_fixtures(self) -> list[Fixture]:
-        """Load all worktree usage fixtures.
-
-        Returns:
-            List of Fixture objects from the fixtures/worktree_usage directory.
-        """
-        fixtures_dir = Path(__file__).parent.parent.parent / "fixtures" / "worktree_usage"
-        logger.info(f"Loading fixtures from: {fixtures_dir}")
-
-        fixtures = self._loader.load_dir(str(fixtures_dir))
-        logger.info(f"Loaded {len(fixtures)} worktree usage fixtures")
-        return fixtures
 
     def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
         """Set up a git repository for a worktree usage scenario.
