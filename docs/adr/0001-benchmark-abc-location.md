@@ -1,0 +1,3 @@
+# Benchmark ABC lives in `gitbench/harness/benchmark.py`
+
+The `Benchmark` ABC was originally defined inside `gitbench/benchmarks/stash_recovery.py` and re-exported via `__init__.py` for all 16 other benchmarks to use. We extracted it to `gitbench/harness/benchmark.py` so the harness contract lives alongside the harness infrastructure (`types.py`, `loader.py`, `scorer.py`, `model.py`). We chose `harness/` over `benchmarks/base.py` because every benchmark already imports from `harness.types`, `harness.loader`, and `harness.scorer` — adding one more harness import keeps the dependency pattern consistent.

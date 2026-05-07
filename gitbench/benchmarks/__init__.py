@@ -4,7 +4,8 @@ from abc import ABC, abstractmethod
 
 from gitbench.harness.types import Fixture, Score
 
-from gitbench.benchmarks.stash_recovery import Benchmark, StashRecoveryBenchmark
+from gitbench.harness.benchmark import Benchmark
+from gitbench.benchmarks.stash_recovery import StashRecoveryBenchmark
 from gitbench.benchmarks.commit_squash import CommitSquashBenchmark
 from gitbench.benchmarks.tag_management import TagManagementBenchmark
 from gitbench.benchmarks.git_clean import GitCleanBenchmark

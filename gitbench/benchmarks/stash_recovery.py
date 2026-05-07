@@ -3,9 +3,9 @@
 import logging
 import re
 import subprocess
-from abc import ABC, abstractmethod
 from pathlib import Path
 
+from gitbench.harness.benchmark import Benchmark
 from gitbench.harness.loader import FixtureLoader
 from gitbench.harness.scorer import Scorer
 from gitbench.harness.types import Fixture, Score
@@ -14,21 +14,6 @@ from gitbench.utils.git import GitExecutor
 logger = logging.getLogger(__name__)
 
 _STASH_REF_RE = re.compile(r"stash@\{\d+\}")
-
-
-class Benchmark(ABC):
-    """Abstract base class for GitBench benchmarks."""
-
-    name: str = ""
-    description: str = ""
-
-    @abstractmethod
-    def load_fixtures(self) -> list[Fixture]:
-        pass
-
-    @abstractmethod
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
-        pass
 
 
 class StashRecoveryBenchmark(Benchmark):
