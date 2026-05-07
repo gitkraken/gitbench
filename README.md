@@ -76,13 +76,6 @@ Override either path on the CLI:
 gitbench run --all --model mock --json-output results.json --html-output report.html
 ```
 
-The legacy `--output` option is still supported. A `.html` path overrides the HTML report path; any other extension overrides the JSON path. The other artifact still uses its configured or default location:
-
-```bash
-gitbench run --all --model mock --output results.json
-gitbench run --all --model mock --output report.html
-```
-
 You can also set defaults in `gitbench.json` or `.gitbench.json`:
 
 ```json

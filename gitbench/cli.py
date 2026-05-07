@@ -287,29 +287,24 @@ def _format_default_output_path(path_template: str, timestamp: str) -> str:
 def resolve_run_output_paths(
     config: dict,
     *,
-    output: str | None,
     json_output: str | None,
     html_output: str | None,
     default_timestamp: str | None = None,
 ) -> tuple[str, str]:
     """Resolve run JSON/HTML output paths.
 
-    Precedence is explicit format-specific CLI option, legacy --output for its
-    matching extension, config file, then built-in default.
+    Precedence is explicit format-specific CLI option, config file, then
+    built-in default.
     """
     default_timestamp = default_timestamp or _default_output_timestamp()
-    output_json = output if output and not output.lower().endswith(".html") else None
-    output_html = output if output and output.lower().endswith(".html") else None
 
     resolved_json = (
         json_output
-        or output_json
         or _get_config_output_path(config, "json")
         or _format_default_output_path(DEFAULT_JSON_OUTPUT_PATH, default_timestamp)
     )
     resolved_html = (
         html_output
-        or output_html
         or _get_config_output_path(config, "html")
         or _format_default_output_path(DEFAULT_HTML_OUTPUT_PATH, default_timestamp)
     )
@@ -945,12 +940,6 @@ def cli():
     help="Model provider type. Overrides profile provider if set. Auto-detected from base_url if omitted.",
 )
 @click.option(
-    "--output",
-    "-o",
-    type=click.Path(),
-    help="Legacy output file path. .html overrides the HTML report path; any other extension overrides the JSON path.",
-)
-@click.option(
     "--json-output",
     type=click.Path(),
     default=None,
@@ -1038,7 +1027,6 @@ def run(
     all_profiles: bool,
     all_models: bool,
     model: str | None,
-    output: str | None,
     json_output: str | None,
     html_output: str | None,
     output_dir: str | None,
@@ -1087,13 +1075,11 @@ def run(
     config = load_config()
     resolved_json_output, resolved_html_output = resolve_run_output_paths(
         config,
-        output=output,
         json_output=json_output,
         html_output=html_output,
     )
     stdout_json_enabled = (
-        output is None
-        and json_output is None
+        json_output is None
         and html_output is None
         and _get_config_output_path(config, "json") is None
         and _get_config_output_path(config, "html") is None
