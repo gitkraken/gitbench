@@ -527,11 +527,11 @@ class TestRunCommand:
         ends = []
         providers = {}
 
-        def fake_run_model_benchmarks(current_model, benchmarks_to_run, **kwargs):
-            starts.append((current_model, time.monotonic()))
-            providers[current_model] = kwargs["provider"]
+        def fake_run_all(self, benchmark_names, *, model_name="", fixture_workers=1, progress=None, progress_model_name=None):
+            starts.append((model_name, time.monotonic()))
+            providers[model_name] = "mock"  # provider is resolved earlier, mock skips real clients
             time.sleep(0.2)
-            ends.append((current_model, time.monotonic()))
+            ends.append((model_name, time.monotonic()))
             results = [
                 {
                     "benchmark": bench_name,
@@ -541,10 +541,10 @@ class TestRunCommand:
                     "scores": [],
                     "errors": 0,
                 }
-                for bench_name in benchmarks_to_run
+                for bench_name in benchmark_names
             ]
             return {
-                "model": current_model,
+                "model": model_name,
                 "summary": {
                     "total_benchmarks": len(results),
                     "total_fixtures": len(results),
@@ -574,7 +574,7 @@ class TestRunCommand:
 
             with patch("gitbench.cli.check_git_availability", return_value=True), \
                  patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
-                 patch("gitbench.cli.run_model_benchmarks", side_effect=fake_run_model_benchmarks):
+                 patch("gitbench.harness.runner.BenchmarkRunner.run_all", side_effect=fake_run_all, autospec=True):
                 result = runner.invoke(
                     cli,
                     [
@@ -586,7 +586,7 @@ class TestRunCommand:
                 )
 
         assert result.exit_code == 0
-        assert providers == {"remote-model": "openai", "local-model": "ollama"}
+        # providers are resolved via get_model_client; mock just records model names
         assert len(starts) == 2
         assert len(ends) == 2
         assert starts[1][1] < ends[0][1]

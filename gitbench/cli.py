@@ -13,14 +13,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
 from time import monotonic
-from typing import Protocol
-
 import click
 
 from gitbench.benchmarks import Benchmark
 from gitbench.export import FORMAT_REGISTRY, get_available_formats
 from gitbench.config import find_profile_for_model, load_config, resolve_profile
 from gitbench.harness.model import MockModelClient, OllamaAdapter, OpenAIAdapter
+from gitbench.harness.runner import BenchmarkRunner, RunProgress
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
 from gitbench.render import aggregate_runs, render_html, render_html_from_envelope, _run_sort_key
 from gitbench.version import BENCHMARK_SUITE_VERSION, RESULT_SCHEMA_VERSION
@@ -356,20 +355,6 @@ def stamp_benchmark_suite_version(payload: dict | list) -> dict | list:
     return payload
 
 
-class RunProgress(Protocol):
-    """Progress sink used by benchmark runners."""
-
-    def model_started(self, model: str) -> None: ...
-
-    def benchmark_started(self, model: str, benchmark: str, total: int) -> None: ...
-
-    def fixture_finished(self, model: str, benchmark: str, passed: bool) -> None: ...
-
-    def benchmark_finished(self, model: str, benchmark: str, errors: int) -> None: ...
-
-    def model_finished(self, model: str, summary: dict) -> None: ...
-
-
 class TerminalProgressTable:
     """Render a compact, updating progress table to stderr."""
 
@@ -500,212 +485,6 @@ class TerminalProgressTable:
             return f"{minutes}m{secs:02d}s"
         return f"{secs}s"
 
-
-def run_model_benchmarks(
-    current_model: str,
-    benchmarks_to_run: list[str],
-    *,
-    timeout: int,
-    retry_count: int,
-    base_url: str | None,
-    api_key: str | None,
-    provider: str | None,
-    verbose: bool = False,
-    progress: RunProgress | None = None,
-    progress_model_name: str | None = None,
-    fixture_workers: int = 1,
-) -> dict:
-    """Run all selected benchmarks for one model."""
-    progress_model = progress_model_name or current_model
-    if progress:
-        progress.model_started(progress_model)
-
-    model_client = get_model_client(
-        current_model,
-        timeout=timeout,
-        retry_count=retry_count,
-        base_url=base_url,
-        api_key=api_key,
-        provider=provider,
-    )
-
-    results_list: list[dict] = []
-
-    for bench_name in benchmarks_to_run:
-        if bench_name not in _benchmark_registry:
-            results_list.append({
-                "benchmark": bench_name,
-                "error": f"Unknown benchmark '{bench_name}'",
-            })
-            continue
-
-        try:
-            result = run_benchmark(bench_name, model_client, verbose, progress, progress_model, fixture_workers)
-            results_list.append(result.to_dict())
-        except Exception as e:
-            logger.error(f"Benchmark '{bench_name}' failed for model '{current_model}': {e}")
-            if progress:
-                progress.benchmark_finished(progress_model, bench_name, errors=1)
-            results_list.append({
-                "benchmark": bench_name,
-                "error": str(e),
-            })
-
-    total_benchmarks = len(results_list)
-    total_fixtures = sum(r.get("total", 0) for r in results_list)
-    total_passed = sum(r.get("passed", 0) for r in results_list)
-    overall_pass_at_k = round(total_passed / total_fixtures, 4) if total_fixtures > 0 else 0.0
-
-    model_result = {
-        "model": current_model,
-        "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
-        "summary": {
-            "total_benchmarks": total_benchmarks,
-            "total_fixtures": total_fixtures,
-            "total_passed": total_passed,
-            "overall_pass_at_k": overall_pass_at_k,
-        },
-        "results": results_list,
-    }
-
-    if progress:
-        progress.model_finished(progress_model, model_result["summary"])
-
-    return model_result
-
-
-def run_benchmark(
-    benchmark_name: str,
-    model_client,
-    verbose: bool = False,
-    progress: RunProgress | None = None,
-    model_name: str | None = None,
-    fixture_workers: int = 1,
-) -> BenchmarkResult:
-    """Run a specific benchmark with the given model client.
-
-    Args:
-        benchmark_name: Name of the benchmark to run.
-        model_client: The model client to use for generating outputs.
-        verbose: Whether to print verbose output.
-        progress: Progress callback.
-        model_name: Name to use in progress callbacks.
-        fixture_workers: Number of worker threads for parallel fixture execution.
-
-    Returns:
-        The benchmark result.
-
-    Raises:
-        ValueError: If the benchmark is not found.
-    """
-    global _benchmark_registry
-
-    if not _benchmark_registry:
-        _benchmark_registry = discover_benchmarks()
-
-    if benchmark_name not in _benchmark_registry:
-        available = list(_benchmark_registry.keys())
-        raise ValueError(
-            f"Unknown benchmark: {benchmark_name}. Available: {available}"
-        )
-
-    benchmark_class = _benchmark_registry[benchmark_name]
-    benchmark = benchmark_class()
-
-    logger.debug(f"Loading fixtures for {benchmark_name}...")
-    fixtures = benchmark.load_fixtures()
-    logger.debug(f"Loaded {len(fixtures)} fixtures")
-
-    if progress and model_name:
-        progress.benchmark_started(model_name, benchmark_name, len(fixtures))
-
-    # Worker function: runs inside a thread, manages its own executor lifecycle
-    def _run_fixture(fixture: Fixture) -> tuple[int, Score]:
-        executor = None
-        try:
-            executor, repo_path = benchmark.setup_fixture(fixture)
-            diff = benchmark.get_diff(repo_path)
-            prompt = benchmark.format_prompt(fixture, diff)
-
-            messages = [ModelMessage(role="user", content=prompt)]
-            response = model_client.generate(messages)
-
-            # Extract text from response (handle both string and dict responses)
-            if isinstance(response, dict):
-                model_output = response.get("text", response.get("content", ""))
-            else:
-                model_output = str(response)
-
-            score = benchmark.score(fixture, model_output, repo_path=repo_path)
-            return fixture.id, score
-        except Exception as e:
-            logger.error(f"Error processing fixture {fixture.id}: {e}")
-            return fixture.id, Score(
-                fixture_id=fixture.id,
-                passed=False,
-                similarity=0.0,
-                model_output="",
-                error=str(e),
-            )
-        finally:
-            if executor is not None:
-                executor.cleanup()
-
-    if fixture_workers > 1 and len(fixtures) > 1:
-        # Parallel execution: collect results, sort back into fixture order
-        ordered_scores: list[Score | None] = [None] * len(fixtures)
-        ordered_ids: list[str] = [f.id for f in fixtures]
-
-        with ThreadPoolExecutor(max_workers=fixture_workers) as executor:
-            futures = {executor.submit(_run_fixture, f): i for i, f in enumerate(fixtures)}
-            for future in as_completed(futures):
-                idx = futures[future]
-                fixture_id, score = future.result()
-                ordered_scores[idx] = score
-                if progress and model_name:
-                    progress.fixture_finished(model_name, benchmark_name, score.passed)
-                if verbose:
-                    click.echo(
-                        f"  {fixture_id}: passed={score.passed}, "
-                        f"similarity={score.similarity:.4f}"
-                    )
-
-        # Sort scores back into fixture order (order matters for deterministic output)
-        fixture_index = {fid: i for i, fid in enumerate(ordered_ids)}
-        scores = [ordered_scores[fixture_index[s.fixture_id]] for s in ordered_scores if s is not None]
-    else:
-        # Sequential fallback
-        scores: list[Score] = []
-        errors = 0
-
-        for fixture in fixtures:
-            logger.debug(f"Processing fixture {fixture.id}...")
-            _, score = _run_fixture(fixture)
-            scores.append(score)
-            if progress and model_name:
-                progress.fixture_finished(model_name, benchmark_name, score.passed)
-            if verbose:
-                click.echo(
-                    f"  {fixture.id}: passed={score.passed}, "
-                    f"similarity={score.similarity:.4f}"
-                )
-        errors = sum(1 for s in scores if s.error)
-
-    total = len(fixtures)
-    passed = sum(1 for s in scores if s.passed)
-    pass_at_k = passed / total if total > 0 else 0.0
-
-    if progress and model_name:
-        progress.benchmark_finished(model_name, benchmark_name, sum(1 for s in scores if s.error))
-
-    return BenchmarkResult(
-        benchmark=benchmark_name,
-        total=total,
-        passed=passed,
-        pass_at_k=round(pass_at_k, 4),
-        scores=scores,
-        errors=sum(1 for s in scores if s.error),
-    )
 
 
 # ANSI color codes
@@ -1236,19 +1015,22 @@ def run(
 
                     profile_label = f"profile '{profile_name}'" if len(runs) > 1 else ""
                     announce_model(profile_label, models_to_run, current_model)
-                    future = executor.submit(
-                        run_model_benchmarks,
+                    model_client = get_model_client(
                         current_model,
-                        benchmarks_to_run,
                         timeout=timeout,
                         retry_count=retry_count,
                         base_url=p_base_url,
                         api_key=p_api_key,
                         provider=p_provider,
-                        verbose=verbose,
+                    )
+                    runner = BenchmarkRunner(_benchmark_registry, model_client)
+                    future = executor.submit(
+                        runner.run_all,
+                        benchmarks_to_run,
+                        model_name=current_model,
+                        fixture_workers=fixture_workers,
                         progress=progress_table,
                         progress_model_name=progress_model_names_by_run[run_index][0],
-                        fixture_workers=fixture_workers,
                     )
                     future_to_run_index[future] = run_index
 
@@ -1294,19 +1076,22 @@ def run(
                         future_to_index = {}
                         for index, current_model in enumerate(models_to_run):
                             announce_model(profile_label, models_to_run, current_model)
-                            future = executor.submit(
-                                run_model_benchmarks,
+                            model_client = get_model_client(
                                 current_model,
-                                benchmarks_to_run,
                                 timeout=timeout,
                                 retry_count=retry_count,
                                 base_url=p_base_url,
                                 api_key=p_api_key,
                                 provider=p_provider,
-                                verbose=verbose,
+                            )
+                            runner = BenchmarkRunner(_benchmark_registry, model_client)
+                            future = executor.submit(
+                                runner.run_all,
+                                benchmarks_to_run,
+                                model_name=current_model,
+                                fixture_workers=fixture_workers,
                                 progress=progress_table,
                                 progress_model_name=progress_model_names[index],
-                                fixture_workers=fixture_workers,
                             )
                             future_to_index[future] = index
 
@@ -1321,18 +1106,21 @@ def run(
                 else:
                     for index, current_model in enumerate(models_to_run):
                         announce_model(profile_label, models_to_run, current_model)
-                        model_result = run_model_benchmarks(
+                        model_client = get_model_client(
                             current_model,
-                            benchmarks_to_run,
                             timeout=timeout,
                             retry_count=retry_count,
                             base_url=p_base_url,
                             api_key=p_api_key,
                             provider=p_provider,
-                            verbose=verbose,
+                        )
+                        runner = BenchmarkRunner(_benchmark_registry, model_client)
+                        model_result = runner.run_all(
+                            benchmarks_to_run,
+                            model_name=current_model,
+                            fixture_workers=fixture_workers,
                             progress=progress_table,
                             progress_model_name=progress_model_names[index],
-                            fixture_workers=fixture_workers,
                         )
                         all_model_results.append(model_result)
                         finish_model_result(model_result)
