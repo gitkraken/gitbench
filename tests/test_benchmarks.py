@@ -47,65 +47,78 @@ class TestBenchmarkABC:
         assert hasattr(Benchmark, "description")
 
 
-class TestCommitMessagesBenchmark:
-    """Test the commit_messages benchmark implementation."""
+# Lazily populated — benchmarks are discovered once at module level.
+_ALL_BENCHMARKS: list[type] | None = None
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that CommitMessagesBenchmark is a subclass of Benchmark."""
-        assert issubclass(CommitMessagesBenchmark, Benchmark)
 
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert CommitMessagesBenchmark.name == "commit_messages"
+def _get_all_benchmarks() -> list[type]:
+    global _ALL_BENCHMARKS
+    if _ALL_BENCHMARKS is None:
+        from gitbench.cli import discover_benchmarks
+        _ALL_BENCHMARKS = list(discover_benchmarks().values())
+    return _ALL_BENCHMARKS
 
-    def test_benchmark_has_description(self):
-        """Test that the benchmark has a description."""
-        assert isinstance(CommitMessagesBenchmark.description, str)
-        assert len(CommitMessagesBenchmark.description) > 0
 
-    def test_benchmark_can_be_instantiated(self):
-        """Test that CommitMessagesBenchmark can be instantiated."""
-        benchmark = CommitMessagesBenchmark()
+class TestBenchmarkContract:
+    """Parametrized conformance tests — every benchmark subclass must pass."""
+
+    @pytest.mark.parametrize("benchmark_cls", _get_all_benchmarks())
+    def test_inherits_from_benchmark_abc(self, benchmark_cls):
+        assert issubclass(benchmark_cls, Benchmark)
+
+    @pytest.mark.parametrize("benchmark_cls", _get_all_benchmarks())
+    def test_has_name(self, benchmark_cls):
+        assert isinstance(benchmark_cls.name, str)
+        assert len(benchmark_cls.name) > 0
+
+    @pytest.mark.parametrize("benchmark_cls", _get_all_benchmarks())
+    def test_has_description(self, benchmark_cls):
+        assert isinstance(benchmark_cls.description, str)
+        assert len(benchmark_cls.description) > 0
+
+    @pytest.mark.parametrize("benchmark_cls", _get_all_benchmarks())
+    def test_can_be_instantiated(self, benchmark_cls):
+        benchmark = benchmark_cls()
         assert benchmark is not None
 
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = CommitMessagesBenchmark()
+    @pytest.mark.parametrize("benchmark_cls", _get_all_benchmarks())
+    def test_load_fixtures_returns_list(self, benchmark_cls):
+        benchmark = benchmark_cls()
         fixtures = benchmark.load_fixtures()
         assert isinstance(fixtures, list)
+        assert len(fixtures) >= 10, (
+            f"Expected at least 10 fixtures for {benchmark_cls.name}, "
+            f"got {len(fixtures)}"
+        )
 
-    def test_fixture_count_at_least_10(self):
-        """Test that at least 10 fixtures are loaded."""
-        benchmark = CommitMessagesBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
-
-    def test_fixtures_have_required_fields(self):
-        """Test that all fixtures have required fields."""
-        benchmark = CommitMessagesBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        for fixture in fixtures:
+    @pytest.mark.parametrize("benchmark_cls", _get_all_benchmarks())
+    def test_fixtures_have_required_fields(self, benchmark_cls):
+        benchmark = benchmark_cls()
+        for fixture in benchmark.load_fixtures():
             assert hasattr(fixture, "id")
             assert hasattr(fixture, "description")
             assert hasattr(fixture, "setup")
             assert hasattr(fixture, "prompt")
             assert hasattr(fixture, "expected")
             assert hasattr(fixture, "scoring")
-
             assert isinstance(fixture.id, str)
             assert isinstance(fixture.setup, list)
             assert isinstance(fixture.prompt, str)
             assert isinstance(fixture.expected, str)
             assert isinstance(fixture.scoring, dict)
 
-    def test_fixture_ids_are_unique(self):
-        """Test that all fixture IDs are unique."""
-        benchmark = CommitMessagesBenchmark()
-        fixtures = benchmark.load_fixtures()
+    @pytest.mark.parametrize("benchmark_cls", _get_all_benchmarks())
+    def test_fixture_ids_are_unique(self, benchmark_cls):
+        benchmark = benchmark_cls()
+        ids = [f.id for f in benchmark.load_fixtures()]
+        assert len(ids) == len(set(ids)), (
+            f"Duplicate fixture IDs in {benchmark_cls.name}: {ids}"
+        )
 
-        ids = [f.id for f in fixtures]
-        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
+
+class TestCommitMessagesBenchmark:
+    """Test the commit_messages benchmark implementation."""
+
 
     def test_score_method_works(self):
         """Test that the score method works correctly."""
@@ -140,62 +153,6 @@ class TestCommitMessagesBenchmark:
 class TestMergeConflictsBenchmark:
     """Test the merge_conflicts benchmark implementation."""
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that MergeConflictsBenchmark is a subclass of Benchmark."""
-        assert issubclass(MergeConflictsBenchmark, Benchmark)
-
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert MergeConflictsBenchmark.name == "merge_conflicts"
-
-    def test_benchmark_has_description(self):
-        """Test that the benchmark has a description."""
-        assert isinstance(MergeConflictsBenchmark.description, str)
-        assert len(MergeConflictsBenchmark.description) > 0
-
-    def test_benchmark_can_be_instantiated(self):
-        """Test that MergeConflictsBenchmark can be instantiated."""
-        benchmark = MergeConflictsBenchmark()
-        assert benchmark is not None
-
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = MergeConflictsBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert isinstance(fixtures, list)
-
-    def test_fixture_count_at_least_10(self):
-        """Test that at least 10 fixtures are loaded."""
-        benchmark = MergeConflictsBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
-
-    def test_fixtures_have_required_fields(self):
-        """Test that all fixtures have required fields."""
-        benchmark = MergeConflictsBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        for fixture in fixtures:
-            assert hasattr(fixture, "id")
-            assert hasattr(fixture, "description")
-            assert hasattr(fixture, "setup")
-            assert hasattr(fixture, "prompt")
-            assert hasattr(fixture, "expected")
-            assert hasattr(fixture, "scoring")
-
-            assert isinstance(fixture.id, str)
-            assert isinstance(fixture.setup, list)
-            assert isinstance(fixture.prompt, str)
-            assert isinstance(fixture.expected, str)
-            assert isinstance(fixture.scoring, dict)
-
-    def test_fixture_ids_are_unique(self):
-        """Test that all fixture IDs are unique."""
-        benchmark = MergeConflictsBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        ids = [f.id for f in fixtures]
-        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
 
     def test_score_method_works(self):
         """Test that the score method works correctly."""
@@ -216,9 +173,6 @@ class TestMergeConflictsBenchmark:
 class TestCommitSquashBenchmark:
     """Test the commit_squash benchmark implementation."""
 
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert CommitSquashBenchmark.name == "commit_squash"
 
     def test_load_fixtures_returns_commit_selection_fixtures(self):
         """Test that commit_squash fixtures use selection scoring."""
@@ -303,62 +257,6 @@ class TestCommitSquashBenchmark:
 class TestCherryPickBenchmark:
     """Test the cherry_pick benchmark implementation."""
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that CherryPickBenchmark is a subclass of Benchmark."""
-        assert issubclass(CherryPickBenchmark, Benchmark)
-
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert CherryPickBenchmark.name == "cherry_pick"
-
-    def test_benchmark_has_description(self):
-        """Test that the benchmark has a description."""
-        assert isinstance(CherryPickBenchmark.description, str)
-        assert len(CherryPickBenchmark.description) > 0
-
-    def test_benchmark_can_be_instantiated(self):
-        """Test that CherryPickBenchmark can be instantiated."""
-        benchmark = CherryPickBenchmark()
-        assert benchmark is not None
-
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = CherryPickBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert isinstance(fixtures, list)
-
-    def test_fixture_count_at_least_10(self):
-        """Test that at least 10 fixtures are loaded."""
-        benchmark = CherryPickBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
-
-    def test_fixtures_have_required_fields(self):
-        """Test that all fixtures have required fields."""
-        benchmark = CherryPickBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        for fixture in fixtures:
-            assert hasattr(fixture, "id")
-            assert hasattr(fixture, "description")
-            assert hasattr(fixture, "setup")
-            assert hasattr(fixture, "prompt")
-            assert hasattr(fixture, "expected")
-            assert hasattr(fixture, "scoring")
-
-            assert isinstance(fixture.id, str)
-            assert isinstance(fixture.setup, list)
-            assert isinstance(fixture.prompt, str)
-            assert isinstance(fixture.expected, str)
-            assert isinstance(fixture.scoring, dict)
-
-    def test_fixture_ids_are_unique(self):
-        """Test that all fixture IDs are unique."""
-        benchmark = CherryPickBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        ids = [f.id for f in fixtures]
-        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
 
     def test_score_method_works(self):
         """Test that the score method works correctly."""
@@ -419,62 +317,6 @@ class TestCherryPickBenchmark:
 class TestGitBisectBenchmark:
     """Test the git_bisect benchmark implementation."""
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that GitBisectBenchmark is a subclass of Benchmark."""
-        assert issubclass(GitBisectBenchmark, Benchmark)
-
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert GitBisectBenchmark.name == "git_bisect"
-
-    def test_benchmark_has_description(self):
-        """Test that the benchmark has a description."""
-        assert isinstance(GitBisectBenchmark.description, str)
-        assert len(GitBisectBenchmark.description) > 0
-
-    def test_benchmark_can_be_instantiated(self):
-        """Test that GitBisectBenchmark can be instantiated."""
-        benchmark = GitBisectBenchmark()
-        assert benchmark is not None
-
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = GitBisectBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert isinstance(fixtures, list)
-
-    def test_fixture_count_at_least_10(self):
-        """Test that at least 10 fixtures are loaded."""
-        benchmark = GitBisectBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
-
-    def test_fixtures_have_required_fields(self):
-        """Test that all fixtures have required fields."""
-        benchmark = GitBisectBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        for fixture in fixtures:
-            assert hasattr(fixture, "id")
-            assert hasattr(fixture, "description")
-            assert hasattr(fixture, "setup")
-            assert hasattr(fixture, "prompt")
-            assert hasattr(fixture, "expected")
-            assert hasattr(fixture, "scoring")
-
-            assert isinstance(fixture.id, str)
-            assert isinstance(fixture.setup, list)
-            assert isinstance(fixture.prompt, str)
-            assert isinstance(fixture.expected, str)
-            assert isinstance(fixture.scoring, dict)
-
-    def test_fixture_ids_are_unique(self):
-        """Test that all fixture IDs are unique."""
-        benchmark = GitBisectBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        ids = [f.id for f in fixtures]
-        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
 
     def test_score_method_works(self):
         """Test that the score method works correctly."""
@@ -564,62 +406,6 @@ class TestGitBisectBenchmark:
 class TestRebaseBenchmark:
     """Test the rebase benchmark implementation."""
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that RebaseBenchmark is a subclass of Benchmark."""
-        assert issubclass(RebaseBenchmark, Benchmark)
-
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert RebaseBenchmark.name == "rebase"
-
-    def test_benchmark_has_description(self):
-        """Test that the benchmark has a description."""
-        assert isinstance(RebaseBenchmark.description, str)
-        assert len(RebaseBenchmark.description) > 0
-
-    def test_benchmark_can_be_instantiated(self):
-        """Test that RebaseBenchmark can be instantiated."""
-        benchmark = RebaseBenchmark()
-        assert benchmark is not None
-
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = RebaseBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert isinstance(fixtures, list)
-
-    def test_fixture_count_at_least_10(self):
-        """Test that at least 10 fixtures are loaded."""
-        benchmark = RebaseBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
-
-    def test_fixtures_have_required_fields(self):
-        """Test that all fixtures have required fields."""
-        benchmark = RebaseBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        for fixture in fixtures:
-            assert hasattr(fixture, "id")
-            assert hasattr(fixture, "description")
-            assert hasattr(fixture, "setup")
-            assert hasattr(fixture, "prompt")
-            assert hasattr(fixture, "expected")
-            assert hasattr(fixture, "scoring")
-
-            assert isinstance(fixture.id, str)
-            assert isinstance(fixture.setup, list)
-            assert isinstance(fixture.prompt, str)
-            assert isinstance(fixture.expected, str)
-            assert isinstance(fixture.scoring, dict)
-
-    def test_fixture_ids_are_unique(self):
-        """Test that all fixture IDs are unique."""
-        benchmark = RebaseBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        ids = [f.id for f in fixtures]
-        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
 
     def test_score_method_works(self):
         """Test that the score method works correctly."""
@@ -640,62 +426,6 @@ class TestRebaseBenchmark:
 class TestReflogBenchmark:
     """Test the reflog benchmark implementation."""
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that ReflogBenchmark is a subclass of Benchmark."""
-        assert issubclass(ReflogBenchmark, Benchmark)
-
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert ReflogBenchmark.name == "reflog"
-
-    def test_benchmark_has_description(self):
-        """Test that the benchmark has a description."""
-        assert isinstance(ReflogBenchmark.description, str)
-        assert len(ReflogBenchmark.description) > 0
-
-    def test_benchmark_can_be_instantiated(self):
-        """Test that ReflogBenchmark can be instantiated."""
-        benchmark = ReflogBenchmark()
-        assert benchmark is not None
-
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = ReflogBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert isinstance(fixtures, list)
-
-    def test_fixture_count_at_least_10(self):
-        """Test that at least 10 fixtures are loaded."""
-        benchmark = ReflogBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
-
-    def test_fixtures_have_required_fields(self):
-        """Test that all fixtures have required fields."""
-        benchmark = ReflogBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        for fixture in fixtures:
-            assert hasattr(fixture, "id")
-            assert hasattr(fixture, "description")
-            assert hasattr(fixture, "setup")
-            assert hasattr(fixture, "prompt")
-            assert hasattr(fixture, "expected")
-            assert hasattr(fixture, "scoring")
-
-            assert isinstance(fixture.id, str)
-            assert isinstance(fixture.setup, list)
-            assert isinstance(fixture.prompt, str)
-            assert isinstance(fixture.expected, str)
-            assert isinstance(fixture.scoring, dict)
-
-    def test_fixture_ids_are_unique(self):
-        """Test that all fixture IDs are unique."""
-        benchmark = ReflogBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        ids = [f.id for f in fixtures]
-        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
 
     def test_score_method_works(self):
         """Test that the score method works correctly."""
@@ -782,25 +512,6 @@ class TestReflogBenchmark:
 class TestStashRecoveryBenchmark:
     """Test the stash_recovery benchmark implementation."""
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that StashRecoveryBenchmark is a subclass of Benchmark."""
-        assert issubclass(StashRecoveryBenchmark, Benchmark)
-
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert StashRecoveryBenchmark.name == "stash_recovery"
-
-    def test_benchmark_can_be_instantiated(self):
-        """Test that StashRecoveryBenchmark can be instantiated."""
-        benchmark = StashRecoveryBenchmark()
-        assert benchmark is not None
-
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = StashRecoveryBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert isinstance(fixtures, list)
-        assert len(fixtures) >= 10
 
     def test_get_diff_includes_stash_details(self):
         """Test that stash context includes patch details for generic WIP entries."""
@@ -992,59 +703,6 @@ class TestTagManagementBenchmark:
 class TestGitLogFormatBenchmark:
     """Test the git_log_format benchmark implementation."""
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that GitLogFormatBenchmark is a subclass of Benchmark."""
-        assert issubclass(GitLogFormatBenchmark, Benchmark)
-
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert GitLogFormatBenchmark.name == "git_log_format"
-
-    def test_benchmark_has_description(self):
-        """Test that the benchmark has a description."""
-        assert isinstance(GitLogFormatBenchmark.description, str)
-        assert len(GitLogFormatBenchmark.description) > 0
-
-    def test_benchmark_can_be_instantiated(self):
-        """Test that GitLogFormatBenchmark can be instantiated."""
-        benchmark = GitLogFormatBenchmark()
-        assert benchmark is not None
-
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = GitLogFormatBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert isinstance(fixtures, list)
-
-    def test_fixture_count_at_least_10(self):
-        """Test that at least 10 fixtures are loaded."""
-        benchmark = GitLogFormatBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
-
-    @pytest.mark.parametrize("fixture", GitLogFormatBenchmark().load_fixtures(), ids=lambda f: f.id)
-    def test_fixtures_have_required_fields(self, fixture):
-        """Test that all fixtures have required fields."""
-        assert hasattr(fixture, "id")
-        assert hasattr(fixture, "description")
-        assert hasattr(fixture, "setup")
-        assert hasattr(fixture, "prompt")
-        assert hasattr(fixture, "expected")
-        assert hasattr(fixture, "scoring")
-
-        assert isinstance(fixture.id, str)
-        assert isinstance(fixture.setup, list)
-        assert isinstance(fixture.prompt, str)
-        assert isinstance(fixture.expected, str)
-        assert isinstance(fixture.scoring, dict)
-
-    def test_fixture_ids_are_unique(self):
-        """Test that all fixture IDs are unique."""
-        benchmark = GitLogFormatBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        ids = [f.id for f in fixtures]
-        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
 
     def test_score_method_works(self):
         """Test that the score method works correctly."""
@@ -1144,59 +802,6 @@ class TestBenchmarkFixtureLoading:
 class TestGitShowBenchmark:
     """Test the git_show benchmark implementation."""
 
-    def test_benchmark_inherits_from_benchmark_abc(self):
-        """Test that GitShowBenchmark is a subclass of Benchmark."""
-        assert issubclass(GitShowBenchmark, Benchmark)
-
-    def test_benchmark_has_name(self):
-        """Test that the benchmark has the expected name."""
-        assert GitShowBenchmark.name == "git_show"
-
-    def test_benchmark_has_description(self):
-        """Test that the benchmark has a description."""
-        assert isinstance(GitShowBenchmark.description, str)
-        assert len(GitShowBenchmark.description) > 0
-
-    def test_benchmark_can_be_instantiated(self):
-        """Test that GitShowBenchmark can be instantiated."""
-        benchmark = GitShowBenchmark()
-        assert benchmark is not None
-
-    def test_load_fixtures_returns_list(self):
-        """Test that load_fixtures returns a list of fixtures."""
-        benchmark = GitShowBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert isinstance(fixtures, list)
-
-    def test_fixture_count_at_least_10(self):
-        """Test that at least 10 fixtures are loaded."""
-        benchmark = GitShowBenchmark()
-        fixtures = benchmark.load_fixtures()
-        assert len(fixtures) >= 10, f"Expected at least 10 fixtures, got {len(fixtures)}"
-
-    @pytest.mark.parametrize("fixture", GitShowBenchmark().load_fixtures(), ids=lambda f: f.id)
-    def test_fixtures_have_required_fields(self, fixture):
-        """Test that all fixtures have required fields."""
-        assert hasattr(fixture, "id")
-        assert hasattr(fixture, "description")
-        assert hasattr(fixture, "setup")
-        assert hasattr(fixture, "prompt")
-        assert hasattr(fixture, "expected")
-        assert hasattr(fixture, "scoring")
-
-        assert isinstance(fixture.id, str)
-        assert isinstance(fixture.setup, list)
-        assert isinstance(fixture.prompt, str)
-        assert isinstance(fixture.expected, str)
-        assert isinstance(fixture.scoring, dict)
-
-    def test_fixture_ids_are_unique(self):
-        """Test that all fixture IDs are unique."""
-        benchmark = GitShowBenchmark()
-        fixtures = benchmark.load_fixtures()
-
-        ids = [f.id for f in fixtures]
-        assert len(ids) == len(set(ids)), f"Duplicate fixture IDs found: {ids}"
 
     def test_score_exact_match_passes(self):
         """Test that an exact match scores as passed."""
