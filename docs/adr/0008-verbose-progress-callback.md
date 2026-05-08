@@ -1,0 +1,3 @@
+# `--verbose` per-fixture output flows through `RunProgress` callback
+
+When `BenchmarkRunner` was extracted from `cli.py`, per-fixture verbose output (previously driven by `click.echo`) was lost. We restored it by extending `RunProgress.fixture_finished` with optional `fixture_id` and `similarity` parameters, and adding a `verbose` flag to `TerminalProgressTable`. The runner now passes fixture metadata through the progress callback; `TerminalProgressTable` prints per-fixture details to stderr when `verbose=True`. The output moved from stdout to stderr, consistent with progress information belonging on stderr.
