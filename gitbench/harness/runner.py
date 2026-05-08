@@ -19,7 +19,7 @@ class RunProgress(Protocol):
 
     def benchmark_started(self, model: str, benchmark: str, total: int) -> None: ...
 
-    def fixture_finished(self, model: str, benchmark: str, passed: bool) -> None: ...
+    def fixture_finished(self, model: str, benchmark: str, passed: bool, *, fixture_id: str = "", similarity: float = 0.0) -> None: ...
 
     def benchmark_finished(self, model: str, benchmark: str, errors: int) -> None: ...
 
@@ -255,6 +255,8 @@ class BenchmarkRunner:
                 if progress:
                     progress.fixture_finished(
                         model_name, benchmark_name, score.passed,
+                        fixture_id=fixture_id,
+                        similarity=score.similarity,
                     )
 
         fixture_index = {fid: i for i, fid in enumerate(ordered_ids)}
@@ -281,5 +283,7 @@ class BenchmarkRunner:
             if progress:
                 progress.fixture_finished(
                     model_name, benchmark_name, score.passed,
+                    fixture_id=fixture.id,
+                    similarity=score.similarity,
                 )
         return scores

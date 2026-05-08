@@ -614,6 +614,7 @@ def run(
         progress_table = TerminalProgressTable(
             [name for names in progress_model_names_by_run for name in names],
             benchmarks_to_run,
+            verbose=verbose,
         )
 
         def announce_model(profile_label: str, models_to_run: list[str], current_model: str) -> None:

@@ -52,8 +52,11 @@ class TerminalProgressTable:
         models: list[str],
         benchmarks: list[str],
         stream=None,
+        *,
+        verbose: bool = False,
     ) -> None:
         self.stream = stream or sys.stderr
+        self.verbose = verbose
         self.enabled = bool(getattr(self.stream, "isatty", lambda: False)())
         self._lock = Lock()
         self._rendered_lines = 0
@@ -90,7 +93,7 @@ class TerminalProgressTable:
             row["fixtures_total"] += total
             self._render()
 
-    def fixture_finished(self, model: str, benchmark: str, passed: bool) -> None:
+    def fixture_finished(self, model: str, benchmark: str, passed: bool, *, fixture_id: str = "", similarity: float = 0.0) -> None:
         with self._lock:
             row = self._rows[model]
             row["current"] = benchmark
@@ -98,6 +101,13 @@ class TerminalProgressTable:
             if passed:
                 row["passed"] += 1
             self._render()
+        if self.verbose and fixture_id:
+            status = "PASS" if passed else "FAIL"
+            self.stream.write(
+                f"  {fixture_id}: passed={passed}, "
+                f"similarity={similarity:.4f} [{status}]\n"
+            )
+            self.stream.flush()
 
     def benchmark_finished(self, model: str, benchmark: str, errors: int) -> None:
         with self._lock:
