@@ -13,16 +13,18 @@ from click.testing import CliRunner
 from gitbench.cli import (
     DEFAULT_HTML_OUTPUT_PATH,
     DEFAULT_JSON_OUTPUT_PATH,
-    SummaryTable,
-    TerminalProgressTable,
-    _progress_model_names,
-    _progress_model_names_for_runs,
     check_git_availability,
     cli,
     get_model_client,
     resolve_run_output_paths,
-    should_use_colors,
 )
+from gitbench.ui.progress import (
+    TerminalProgressTable,
+    _progress_model_names,
+    _progress_model_names_for_runs,
+)
+from gitbench.ui.summary import SummaryTable
+from gitbench.ui.terminal import should_use_colors
 from gitbench.version import BENCHMARK_SUITE_VERSION
 
 
@@ -679,19 +681,19 @@ class TestShouldUseColors:
     def test_no_color_env_var_disables_colors(self):
         """NO_COLOR env var should disable colors."""
         with patch.dict("os.environ", {"NO_COLOR": "1"}, clear=False):
-            import gitbench.cli as cli_module
+            import gitbench.ui.terminal as term_module
 
             # Reset the cached value
-            cli_module._use_colors = None
+            term_module._use_colors = None
             result = should_use_colors()
             assert result is False
 
     def test_term_dumb_disables_colors(self):
         """TERM=dumb should disable colors."""
         with patch.dict("os.environ", {"TERM": "dumb"}, clear=False):
-            import gitbench.cli as cli_module
+            import gitbench.ui.terminal as term_module
 
-            cli_module._use_colors = None
+            term_module._use_colors = None
             result = should_use_colors()
             assert result is False
 
@@ -699,32 +701,32 @@ class TestShouldUseColors:
         """TTY stream should enable colors."""
         stream = TtyStringIO()
         with patch.dict("os.environ", {"TERM": "xterm-256color"}, clear=True):
-            import gitbench.cli as cli_module
+            import gitbench.ui.terminal as term_module
 
-            cli_module._use_colors = None
+            term_module._use_colors = None
             result = should_use_colors(stream)
         assert result is True
 
     def test_non_tty_stream_disables_colors(self):
         """Non-TTY stream should disable colors."""
         stream = StringIO()
-        import gitbench.cli as cli_module
+        import gitbench.ui.terminal as term_module
 
-        cli_module._use_colors = None
+        term_module._use_colors = None
         result = should_use_colors(stream)
         assert result is False
 
     def test_result_is_cached(self):
         """Result should be cached after first call when no stream is provided."""
-        import gitbench.cli as cli_module
+        import gitbench.ui.terminal as term_module
 
-        cli_module._use_colors = None
+        term_module._use_colors = None
         # Call without stream argument — uses sys.stdout, which should be non-TTY in tests
         first = should_use_colors()
         second = should_use_colors()
 
         assert first == second
-        assert cli_module._use_colors is not None
+        assert term_module._use_colors is not None
 
 
 class TestSummaryTable:
@@ -732,14 +734,14 @@ class TestSummaryTable:
 
     def setup_method(self):
         """Reset cached color state before each test."""
-        import gitbench.cli as cli_module
-        cli_module._use_colors = None
+        import gitbench.ui.terminal as term_module
+        term_module._use_colors = None
 
     def test_render_returns_none_when_disabled(self):
         """render() should return None when stdout is not a TTY."""
-        import gitbench.cli as cli_module
+        import gitbench.ui.terminal as term_module
 
-        cli_module._use_colors = None
+        term_module._use_colors = None
         stream = StringIO()
         results = [
             {"benchmark": "commit_messages", "total": 10, "passed": 8, "pass_at_k": 0.8},
