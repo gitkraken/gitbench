@@ -7,6 +7,7 @@ from pathlib import Path
 from gitbench.harness.loader import FixtureLoader
 from gitbench.harness.scorer import Scorer
 from gitbench.harness.types import Fixture, Score
+from gitbench.utils.git import GitExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +15,9 @@ logger = logging.getLogger(__name__)
 class Benchmark(ABC):
     """Abstract base class for GitBench benchmarks.
 
-    Subclasses must provide ``name``, ``description``, and ``score()``.
-    ``load_fixtures()`` has a default that loads from
-    ``<fixtures_root>/<self.name>/``.
+    Subclasses must provide ``name``, ``description``, ``score()``, and
+    ``get_diff()``.  ``load_fixtures()``, ``setup_fixture()``, and
+    ``format_prompt()`` have defaults that work for most benchmarks.
     """
 
     name: str = ""
@@ -67,3 +68,54 @@ class Benchmark(ABC):
             A Score object.
         """
         ...
+
+    def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
+        """Set up a git repository for a single fixture.
+
+        The default creates a new :class:`GitExecutor` and runs
+        ``fixture.setup`` commands inside a temp repo named
+        ``<self.name>_<fixture.id>``.
+
+        Args:
+            fixture: The fixture to set up.
+
+        Returns:
+            A tuple of (GitExecutor, repo_path).
+        """
+        executor = GitExecutor()
+        repo_path = executor.setup_repo(
+            f"{self.name}_{fixture.id}", fixture.setup
+        )
+        return executor, repo_path
+
+    @abstractmethod
+    def get_diff(self, repo_path: str) -> str:
+        """Return the git context the model needs to answer the prompt.
+
+        Args:
+            repo_path: Path to the git repository.
+
+        Returns:
+            A string with git command output (diff, log, status, etc.).
+        """
+        ...
+
+    def format_prompt(self, fixture: Fixture, diff: str) -> str:
+        """Format the full prompt sent to the model.
+
+        The default joins the fixture prompt and the git context::
+
+            {fixture.prompt}\
+\
+{diff}
+
+        Benchmarks that want a label between the two can override.
+
+        Args:
+            fixture: The fixture containing the base prompt.
+            diff: The git context string from ``get_diff()``.
+
+        Returns:
+            The formatted prompt string.
+        """
+        return f"{fixture.prompt}\n\n{diff}"
