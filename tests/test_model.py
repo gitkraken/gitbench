@@ -44,7 +44,7 @@ class TestMockModelClient:
         client = MockModelClient(response="Expected output")
         messages = [ModelMessage(role="user", content="Hello")]
         result = client.generate(messages)
-        assert result == "Expected output"
+        assert result == {"text": "Expected output", "usage": None}
 
     def test_generate_stores_messages(self):
         """Test that generate stores the messages for inspection."""
@@ -70,10 +70,10 @@ class TestMockModelClient:
         """Test updating the mock response."""
         client = MockModelClient(response="Original")
         messages = [ModelMessage(role="user", content="Test")]
-        assert client.generate(messages) == "Original"
+        assert client.generate(messages)["text"] == "Original"
 
         client.set_response("Updated")
-        assert client.generate(messages) == "Updated"
+        assert client.generate(messages)["text"] == "Updated"
 
     def test_generate_accepts_kwargs(self):
         """Test that generate accepts additional kwargs without error."""
@@ -81,7 +81,7 @@ class TestMockModelClient:
         messages = [ModelMessage(role="user", content="Test")]
         # Should not raise, kwargs are ignored
         result = client.generate(messages, temperature=0.5, max_tokens=100)
-        assert result == "Output"
+        assert result == {"text": "Output", "usage": None}
 
     def test_accepts_timeout_and_retry(self):
         """Test that MockModelClient accepts timeout and retry_count params."""
@@ -137,7 +137,7 @@ class TestOllamaAdapter:
         messages = [ModelMessage(role="user", content="Generate a commit message")]
         result = adapter.generate(messages)
 
-        assert result == "fix: resolve null pointer"
+        assert result == {"text": "fix: resolve null pointer", "usage": None}
         mock_urlopen.assert_called_once()
 
         # Verify the request was made to the correct URL
@@ -181,7 +181,8 @@ class TestOllamaAdapter:
         adapter = OllamaAdapter(model="llama3.1:8b")
         messages = [ModelMessage(role="user", content="Test")]
         result = adapter.generate(messages)
-        assert result == ""
+        assert result["text"] == ""
+        assert result["usage"] is None
 
     @patch("urllib.request.urlopen")
     def test_timeout_raises_timeout_error(self, mock_urlopen):
@@ -256,7 +257,8 @@ class TestOpenAIAdapter:
         ]
         result = adapter.generate(messages)
 
-        assert result == "Generated output"
+        assert result["text"] == "Generated output"
+        assert "usage" in result
         mock_client.chat.completions.create.assert_called_once()
 
         # Verify the call format
@@ -342,7 +344,7 @@ class TestOpenAIAdapter:
 
         messages = [ModelMessage(role="user", content="Test")]
         result = adapter.generate(messages)
-        assert result == ""
+        assert result["text"] == ""
 
     @patch("openai.OpenAI")
     def test_missing_choices_raises_clear_response_error(self, mock_openai_class):
@@ -384,7 +386,7 @@ class TestOpenAIAdapter:
         messages = [ModelMessage(role="user", content="Test")]
         result = adapter.generate(messages)
 
-        assert result == "Recovered output"
+        assert result["text"] == "Recovered output"
         assert mock_client.chat.completions.create.call_count == 2
 
     @patch("openai.OpenAI")
@@ -529,7 +531,7 @@ class TestOllamaAdapterReasoning:
         with patch("logging.Logger.debug") as mock_debug:
             result = adapter.generate(messages)
 
-        assert result == "output"
+        assert result["text"] == "output"
         request = mock_urlopen.call_args[0][0]
         body = json.loads(request.data.decode("utf-8"))
         assert body["model"] == "llama3.1"
@@ -552,5 +554,5 @@ class TestMockModelClientReasoning:
         client = MockModelClient(response="Test")
         client.reasoning_level = "high"
         result = client.generate([ModelMessage(role="user", content="Hi")])
-        assert result == "Test"
+        assert result == {"text": "Test", "usage": None}
         assert client.call_count == 1

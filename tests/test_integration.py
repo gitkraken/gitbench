@@ -220,9 +220,9 @@ class TestMockModelClient:
         from gitbench.harness.types import ModelMessage
 
         messages = [ModelMessage(role="user", content="Hello")]
-        assert client.generate(messages) == "First"
+        assert client.generate(messages)["text"] == "First"
         client.set_response("Second")
-        assert client.generate(messages) == "Second"
+        assert client.generate(messages)["text"] == "Second"
 
 
 class TestScorer:

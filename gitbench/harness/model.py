@@ -77,7 +77,7 @@ class ModelInterface(ABC):
     """Abstract base class for model adapters."""
 
     @abstractmethod
-    def generate(self, messages: list[ModelMessage], **kwargs: Any) -> str:
+    def generate(self, messages: list[ModelMessage], **kwargs: Any) -> dict:
         """Generate a response from the model.
 
         Args:
@@ -85,7 +85,9 @@ class ModelInterface(ABC):
             **kwargs: Additional model-specific parameters.
 
         Returns:
-            The model's response as a string.
+            A dict with keys ``text`` (str) and ``usage`` (dict with
+            ``input_tokens``, ``output_tokens``, ``total_tokens``
+            keys, or ``None`` if unavailable).
 
         Raises:
             Exception: If the model call fails.
@@ -143,7 +145,7 @@ class OpenAIAdapter(ModelInterface):
             self._client = openai.OpenAI(**client_kwargs)
         return self._client
 
-    def generate(self, messages: list[ModelMessage], **kwargs: Any) -> str:
+    def generate(self, messages: list[ModelMessage], **kwargs: Any) -> dict:
         """Generate a response using the OpenAI API with timeout and retry.
 
         Args:
@@ -151,7 +153,7 @@ class OpenAIAdapter(ModelInterface):
             **kwargs: Additional parameters (temperature, max_tokens, etc.).
 
         Returns:
-            The model's response text.
+            A dict with ``text`` and ``usage`` keys.
 
         Raises:
             TimeoutError: If the API call exceeds the configured timeout.
@@ -167,7 +169,7 @@ class OpenAIAdapter(ModelInterface):
 
         for attempt in range(1, self.retry_count + 1):
             try:
-                result: list[str] = []
+                result: list[dict] = []
                 error: list[Exception] = []
 
                 def call_api():
@@ -177,7 +179,19 @@ class OpenAIAdapter(ModelInterface):
                             messages=model_messages,
                             **kwargs,
                         )
-                        result.append(_extract_openai_content(response))
+                        text = _extract_openai_content(response)
+                        usage = None
+                        try:
+                            raw_usage = getattr(response, "usage", None)
+                            if raw_usage is not None:
+                                usage = {
+                                    "input_tokens": getattr(raw_usage, "prompt_tokens", None),
+                                    "output_tokens": getattr(raw_usage, "completion_tokens", None),
+                                    "total_tokens": getattr(raw_usage, "total_tokens", None),
+                                }
+                        except Exception:
+                            pass
+                        result.append({"text": text, "usage": usage})
                     except Exception as e:
                         error.append(e)
 
@@ -189,8 +203,6 @@ class OpenAIAdapter(ModelInterface):
                 timer.cancel()
 
                 if api_thread.is_alive():
-                    # API call is still running — it's a daemon thread so it will
-                    # be abandoned when we raise. Log and raise TimeoutError.
                     logger.error(
                         "Model call timed out after %ds (attempt %d/%d)",
                         self.timeout,
@@ -239,10 +251,8 @@ class OpenAIAdapter(ModelInterface):
                     )
                     raise
             except Exception:
-                # Non-retryable error — raise immediately
                 raise
 
-        # Should not reach here, but just in case
         raise last_error  # type: ignore[misc]
 
 
@@ -271,7 +281,7 @@ class OllamaAdapter(ModelInterface):
         self.timeout = timeout
         self.retry_count = retry_count
 
-    def generate(self, messages: list[ModelMessage], **kwargs: Any) -> str:
+    def generate(self, messages: list[ModelMessage], **kwargs: Any) -> dict:
         """Generate a response using the Ollama API with timeout and retry.
 
         Args:
@@ -279,7 +289,7 @@ class OllamaAdapter(ModelInterface):
             **kwargs: Additional parameters (ignored — Ollama options go in the request body).
 
         Returns:
-            The model's response text.
+            A dict with ``text`` and ``usage`` keys.
 
         Raises:
             TimeoutError: If the API call exceeds the configured timeout.
@@ -304,7 +314,7 @@ class OllamaAdapter(ModelInterface):
 
         for attempt in range(1, self.retry_count + 1):
             try:
-                result: list[str] = []
+                result: list[dict] = []
                 error: list[Exception] = []
 
                 def call_api():
@@ -318,7 +328,35 @@ class OllamaAdapter(ModelInterface):
                         with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                             body = json.loads(resp.read().decode("utf-8"))
                             content = body.get("message", {}).get("content", "")
-                            result.append(content)
+                            usage = None
+                            try:
+                                prompt_eval = body.get("prompt_eval_count")
+                                eval_count = body.get("eval_count")
+                                if eval_count is not None:
+                                    output = eval_count
+                                    input_t = prompt_eval
+                                    total = (
+                                        (prompt_eval + eval_count)
+                                        if prompt_eval is not None
+                                        else None
+                                    )
+                                else:
+                                    output = None
+                                    input_t = prompt_eval
+                                    total = (
+                                        prompt_eval
+                                        if prompt_eval is not None
+                                        else None
+                                    )
+                                if input_t is not None or output is not None:
+                                    usage = {
+                                        "input_tokens": input_t,
+                                        "output_tokens": output,
+                                        "total_tokens": total,
+                                    }
+                            except Exception:
+                                pass
+                            result.append({"text": content, "usage": usage})
                     except Exception as e:
                         error.append(e)
 
@@ -392,7 +430,7 @@ class MockModelClient(ModelInterface):
         self.call_count = 0
         self.last_messages = None
 
-    def generate(self, messages: list[ModelMessage], **kwargs: Any) -> str:
+    def generate(self, messages: list[ModelMessage], **kwargs: Any) -> dict:
         """Return the configured mock response.
 
         Args:
@@ -400,11 +438,11 @@ class MockModelClient(ModelInterface):
             **kwargs: Additional parameters (ignored).
 
         Returns:
-            The configured mock response string.
+            A dict with ``text`` and ``usage`` keys (``usage`` is always ``None``).
         """
         self.call_count += 1
         self.last_messages = messages
-        return self.response
+        return {"text": self.response, "usage": None}
 
     def set_response(self, response: str) -> None:
         """Update the mock response.
