@@ -211,13 +211,19 @@ class BenchmarkRunner:
 
             if isinstance(response, dict):
                 model_output = response.get("text", response.get("content", ""))
+                usage = response.get("usage")
             else:
                 model_output = str(response)
+                usage = None
 
             score = benchmark.score(fixture, model_output, repo_path=repo_path)
             score.reasoning_level = getattr(
                 self._model_client, "reasoning_level", None
             )
+            if usage and isinstance(usage, dict):
+                score.input_tokens = usage.get("input_tokens")
+                score.output_tokens = usage.get("output_tokens")
+                score.total_tokens = usage.get("total_tokens")
             return fixture.id, score
         except Exception as exc:
             logger.error("Error processing fixture %s: %s", fixture.id, exc)
