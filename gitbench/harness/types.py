@@ -52,12 +52,18 @@ class Score:
     model_output: str
     error: str | None = None
     reasoning_level: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
+    cost_usd: float | None = None
+    provider_cost_usd: float | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         result = asdict(self)
-        if self.reasoning_level is None:
-            del result["reasoning_level"]
+        for field in ("reasoning_level", "input_tokens", "output_tokens", "total_tokens", "cost_usd", "provider_cost_usd"):
+            if result.get(field) is None:
+                del result[field]
         return result
 
     @classmethod
