@@ -19,6 +19,7 @@ from gitbench.config import find_profile_for_model, load_config, resolve_profile
 from gitbench.export import FORMAT_REGISTRY, get_available_formats
 from gitbench.harness.model import MockModelClient, OllamaAdapter, OpenAIAdapter
 from gitbench.harness.runner import BenchmarkRunner, RunProgress
+from gitbench.harness.reasoning import validate_model_list
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
 from gitbench.render import aggregate_runs, render_html, render_html_from_envelope, _run_sort_key
 from gitbench.ui.progress import TerminalProgressTable, _progress_model_names, _progress_model_names_for_runs
@@ -587,6 +588,12 @@ def run(
         logger.info(f"Starting benchmark(s) with model: {runs[0][2][0]}")
     else:
         logger.info(f"Starting benchmark(s) with {total_models} models across {len(runs)} profile(s)")
+
+    # Validate all model-reasoning combinations before any benchmarks execute
+    all_models_to_validate: list[str] = []
+    for _profile_name, _profile_conf, models_list in runs:
+        all_models_to_validate.extend(models_list)
+    validate_model_list(all_models_to_validate)
 
     # Discover benchmarks once
     global _benchmark_registry
