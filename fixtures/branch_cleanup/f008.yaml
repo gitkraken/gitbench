@@ -1,31 +1,44 @@
 id: f008
-description: "All branches merged"
+description: All branches merged
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'start' > start.txt"
-  - "git add start.txt"
-  - "git commit -m 'Start'"
-  - "git checkout -b fix-1"
-  - "echo 'fix1' > fix1.txt"
-  - "git add fix1.txt"
-  - "git commit -m 'Fix 1'"
-  - "git checkout main"
-  - "git merge fix-1"
-  - "git checkout -b fix-2"
-  - "echo 'fix2' > fix2.txt"
-  - "git add fix2.txt"
-  - "git commit -m 'Fix 2'"
-  - "git checkout main"
-  - "git merge fix-2"
-  - "git checkout -b cleanup"
-  - "echo 'cleanup' > cleanup.txt"
-  - "git add cleanup.txt"
-  - "git commit -m 'Cleanup'"
-  - "git checkout main"
-  - "git merge cleanup"
-prompt: "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'."
-expected: "cleanup\nfix-1\nfix-2"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'start' > start.txt
+- git add start.txt
+- git commit -m 'Start'
+- git checkout -b fix-1
+- echo 'fix1' > fix1.txt
+- git add fix1.txt
+- git commit -m 'Fix 1'
+- git checkout main
+- git merge fix-1
+- git checkout -b fix-2
+- echo 'fix2' > fix2.txt
+- git add fix2.txt
+- git commit -m 'Fix 2'
+- git checkout main
+- git merge fix-2
+- git checkout -b cleanup
+- echo 'cleanup' > cleanup.txt
+- git add cleanup.txt
+- git commit -m 'Cleanup'
+- git checkout main
+- git merge cleanup
+prompt: Look at the branches in this repository. Which branches should be deleted
+  because they are fully merged into main? List ONLY the branch names to delete, one
+  per line. If none, respond with 'none'.
+expected: 'cleanup
+
+  fix-1
+
+  fix-2'
 scoring:
   type: exact_match
+purpose: Tests ability to identify that all branches are merged and can be deleted.
+  Evaluates the full-cleanup scenario.
+difficulty: easy
+tags:
+- branch-management
+- all-merged
+- full-cleanup

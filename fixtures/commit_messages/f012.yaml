@@ -1,16 +1,26 @@
 id: f012
-description: "Documentation update"
+description: Documentation update
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf '# Project\\nThis is a project.\\n' > README.md"
-  - "git add README.md"
-  - "git commit -m 'Initial commit'"
-  - "printf '# Project\\nThis is a project.\\n\\n## Installation\\nRun `pip install` to install dependencies.\\n' > README.md"
-  - "git add README.md"
-prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update')."
-expected: "Add installation section to README"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- printf '# Project\nThis is a project.\n' > README.md
+- git add README.md
+- git commit -m 'Initial commit'
+- printf '# Project\nThis is a project.\n\n## Installation\nRun `pip install` to install
+  dependencies.\n' > README.md
+- git add README.md
+prompt: Generate a concise commit message (max 50 characters) describing the changes
+  in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').
+expected: Add installation section to README
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to generate a commit message for a documentation update (README).
+  Evaluates recognizing documentation-only changes.
+difficulty: easy
+tags:
+- commit-message
+- documentation
+- docs
+- readme

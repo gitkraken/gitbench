@@ -1,16 +1,25 @@
 id: f001
-description: "Show commit details including author and message"
+description: Show commit details including author and message
 setup:
-  - "git init"
-  - "git config user.email 'alice@example.com'"
-  - "git config user.name 'Alice'"
-  - "echo 'hello' > readme.txt"
-  - "git add readme.txt"
-  - "git commit -m 'Add readme file'"
-  - "echo 'line2' >> readme.txt"
-  - "git add readme.txt"
-  - "git commit -m 'Update readme with more content'"
-prompt: "Using git show, what is the author email of the latest commit? Output ONLY the email address, nothing else."
-expected: "alice@example.com"
+- git init
+- git config user.email 'alice@example.com'
+- git config user.name 'Alice'
+- echo 'hello' > readme.txt
+- git add readme.txt
+- git commit -m 'Add readme file'
+- echo 'line2' >> readme.txt
+- git add readme.txt
+- git commit -m 'Update readme with more content'
+prompt: Using git show, what is the author email of the latest commit? Output ONLY
+  the email address, nothing else.
+expected: alice@example.com
 scoring:
   type: exact_match
+purpose: Tests ability to extract author email from git show output. Evaluates basic
+  commit-inspection comprehension.
+difficulty: trivial
+tags:
+- git-show
+- author
+- email
+- basic

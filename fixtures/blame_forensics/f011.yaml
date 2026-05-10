@@ -1,20 +1,31 @@
 id: f011
-description: "Wrong comparison operator introduced"
+description: Wrong comparison operator introduced
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'if age >= 18:\n    allow_access()' > src/auth.py"
-  - "git add src/auth.py"
-  - "git commit -m 'Age verification for access'"
-  - "echo 'if age >= 18:\n    allow_access()\nlog_access(age)' > src/auth.py"
-  - "git add src/auth.py"
-  - "git commit -m 'Log access attempts'"
-  - "echo 'if age > 18:\n    allow_access()\nlog_access(age)' > src/auth.py"
-  - "git add src/auth.py"
-  - "git commit -m 'Update age threshold'"
-prompt: "There is a bug in src/auth.py where 18-year-old users are denied access. Look at git log and git blame. Which commit changed >= to >? Output ONLY the commit message of that commit, nothing else."
-expected: "Update age threshold"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- "echo 'if age >= 18:\n    allow_access()' > src/auth.py"
+- git add src/auth.py
+- git commit -m 'Age verification for access'
+- "echo 'if age >= 18:\n    allow_access()\nlog_access(age)' > src/auth.py"
+- git add src/auth.py
+- git commit -m 'Log access attempts'
+- "echo 'if age > 18:\n    allow_access()\nlog_access(age)' > src/auth.py"
+- git add src/auth.py
+- git commit -m 'Update age threshold'
+prompt: There is a bug in src/auth.py where 18-year-old users are denied access. Look
+  at git log and git blame. Which commit changed >= to >? Output ONLY the commit message
+  of that commit, nothing else.
+expected: Update age threshold
 scoring:
   type: exact_match
+purpose: Tests ability to detect a subtle comparison operator change (>= to >) that
+  alters access control logic. Evaluates precision in git diff interpretation.
+difficulty: easy
+tags:
+- comparison-operator
+- access-control
+- regression
+- git-log
+- git-blame

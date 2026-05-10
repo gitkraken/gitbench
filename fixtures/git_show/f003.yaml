@@ -1,18 +1,26 @@
 id: f003
-description: "Show lightweight tag pointing to a commit"
+description: Show lightweight tag pointing to a commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1 content' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Release version 1.0'"
-  - "git tag v1.0.0"
-  - "echo 'v2 content' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Release version 1.1'"
-  - "git tag v1.1.0"
-prompt: "Using git show, what is the commit message of the commit that the lightweight tag 'v1.0.0' points to? Output ONLY the commit message, nothing else."
-expected: "Release version 1.0"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1 content' > app.txt
+- git add app.txt
+- git commit -m 'Release version 1.0'
+- git tag v1.0.0
+- echo 'v2 content' > app.txt
+- git add app.txt
+- git commit -m 'Release version 1.1'
+- git tag v1.1.0
+prompt: Using git show, what is the commit message of the commit that the lightweight
+  tag 'v1.0.0' points to? Output ONLY the commit message, nothing else.
+expected: Release version 1.0
 scoring:
   type: exact_match
+purpose: Tests ability to inspect a lightweight tag pointing to a commit. Evaluates
+  tag-to-commit resolution.
+difficulty: easy
+tags:
+- git-show
+- lightweight-tag
+- tag

@@ -1,22 +1,31 @@
 id: f005
-description: "Create worktree with new branch"
+description: Create worktree with new branch
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > hello.txt"
-  - "git add hello.txt"
-  - "git commit -m 'Initial commit'"
-prompt: "Create a git worktree at '../new-feature' with a new branch called 'new-feature'. Output ONLY the git worktree command, nothing else."
-expected: "git worktree add -b new-feature ../new-feature main"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > hello.txt
+- git add hello.txt
+- git commit -m 'Initial commit'
+prompt: Create a git worktree at '../new-feature' with a new branch called 'new-feature'.
+  Output ONLY the git worktree command, nothing else.
+expected: git worktree add -b new-feature ../new-feature main
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: dir_exists
-        path: "../new-feature"
-      - type: branch_exists
-        name: "new-feature"
-      - type: git_output
-        command: "git -C ../new-feature branch --show-current"
-        contains: "new-feature"
+    - type: dir_exists
+      path: ../new-feature
+    - type: branch_exists
+      name: new-feature
+    - type: git_output
+      command: git -C ../new-feature branch --show-current
+      contains: new-feature
+purpose: Tests ability to create a new branch and worktree simultaneously. Evaluates
+  combined worktree-create and branch-create.
+difficulty: medium
+tags:
+- worktree
+- create
+- new-branch
+- combined

@@ -1,23 +1,32 @@
 id: f002
-description: "Dry-run preview of untracked file removal"
+description: Dry-run preview of untracked file removal
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'tracked' > tracked.txt"
-  - "git add tracked.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'untracked' > untracked.txt"
-  - "echo 'another' > another.txt"
-prompt: "Show what files would be removed by git clean without actually removing them. Output ONLY the git command, nothing else."
-expected: "git clean -f -n"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'tracked' > tracked.txt
+- git add tracked.txt
+- git commit -m 'Initial commit'
+- echo 'untracked' > untracked.txt
+- echo 'another' > another.txt
+prompt: Show what files would be removed by git clean without actually removing them.
+  Output ONLY the git command, nothing else.
+expected: git clean -f -n
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_exists
-        path: "untracked.txt"
-      - type: file_exists
-        path: "another.txt"
-      - type: file_exists
-        path: "tracked.txt"
+    - type: file_exists
+      path: untracked.txt
+    - type: file_exists
+      path: another.txt
+    - type: file_exists
+      path: tracked.txt
+purpose: Tests ability to preview untracked file removal with git clean -n (dry-run).
+  Evaluates safe-cleanup workflow.
+difficulty: easy
+tags:
+- git-clean
+- dry-run
+- preview
+- safe

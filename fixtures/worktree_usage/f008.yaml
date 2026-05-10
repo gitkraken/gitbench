@@ -1,26 +1,42 @@
 id: f008
-description: "Create worktree and make commit"
+description: Create worktree and make commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > hello.txt"
-  - "git add hello.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b feature"
-  - "echo 'Feature' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Add feature'"
-  - "git checkout main"
-prompt: "Create a worktree for 'feature' at '../feature-wt', then create a file '../feature-wt/new.txt' with content 'new file', add it and commit with message 'Add new file' in the worktree. Output ONLY the commands to run, one per line."
-expected: "git worktree add ../feature-wt feature\necho 'new file' > ../feature-wt/new.txt\ngit -C ../feature-wt add new.txt\ngit -C ../feature-wt commit -m 'Add new file'"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > hello.txt
+- git add hello.txt
+- git commit -m 'Initial commit'
+- git checkout -b feature
+- echo 'Feature' > feature.txt
+- git add feature.txt
+- git commit -m 'Add feature'
+- git checkout main
+prompt: Create a worktree for 'feature' at '../feature-wt', then create a file '../feature-wt/new.txt'
+  with content 'new file', add it and commit with message 'Add new file' in the worktree.
+  Output ONLY the commands to run, one per line.
+expected: 'git worktree add ../feature-wt feature
+
+  echo ''new file'' > ../feature-wt/new.txt
+
+  git -C ../feature-wt add new.txt
+
+  git -C ../feature-wt commit -m ''Add new file'''
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_content
-        path: "../feature-wt/new.txt"
-        value: "new file"
-      - type: git_output
-        command: "git -C ../feature-wt log --oneline -1"
-        contains: "Add new file"
+    - type: file_content
+      path: ../feature-wt/new.txt
+      value: new file
+    - type: git_output
+      command: git -C ../feature-wt log --oneline -1
+      contains: Add new file
+purpose: Tests ability to create a worktree and immediately make a commit in it. Evaluates
+  end-to-end worktree commit workflow.
+difficulty: medium
+tags:
+- worktree
+- commit
+- workflow
+- end-to-end

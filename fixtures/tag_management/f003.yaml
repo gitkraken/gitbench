@@ -1,26 +1,32 @@
 id: f003
-description: "Delete a tag"
+description: Delete a tag
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "git tag v0.1-beta"
-  - "echo 'Release' > release.txt"
-  - "git add release.txt"
-  - "git commit -m 'Release v1.0'"
-  - "git tag v1.0"
-prompt: "Delete the 'v0.1-beta' tag. Output ONLY the git command, nothing else."
-expected: "git tag -d v0.1-beta"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- git tag v0.1-beta
+- echo 'Release' > release.txt
+- git add release.txt
+- git commit -m 'Release v1.0'
+- git tag v1.0
+prompt: Delete the 'v0.1-beta' tag. Output ONLY the git command, nothing else.
+expected: git tag -d v0.1-beta
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git tag -l"
-        not_contains: "v0.1-beta"
-      - type: git_output
-        command: "git tag -l"
-        contains: "v1.0"
+    - type: git_output
+      command: git tag -l
+      not_contains: v0.1-beta
+    - type: git_output
+      command: git tag -l
+      contains: v1.0
+purpose: Tests ability to delete a tag. Evaluates tag-deletion command knowledge.
+difficulty: easy
+tags:
+- tag
+- delete
+- remove

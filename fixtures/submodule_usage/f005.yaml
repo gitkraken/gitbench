@@ -1,25 +1,40 @@
 id: f005
-description: "Add submodule and commit"
+description: Add submodule and commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com' && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py && git commit -m 'Initial lib'"
-  - "git clone --bare ../lib-src ../lib-bare"
-  - "git config protocol.file.allow always"
-prompt: "Add the repository at '../lib-bare' as a git submodule at path 'lib', then add and commit the changes. Output ONLY the commands to run, one per line."
-expected: "git submodule add ../lib-bare lib\ngit add .gitmodules lib\ngit commit -m 'Add lib submodule'"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com'
+  && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py
+  && git commit -m 'Initial lib'
+- git clone --bare ../lib-src ../lib-bare
+- git config protocol.file.allow always
+prompt: Add the repository at '../lib-bare' as a git submodule at path 'lib', then
+  add and commit the changes. Output ONLY the commands to run, one per line.
+expected: 'git submodule add ../lib-bare lib
+
+  git add .gitmodules lib
+
+  git commit -m ''Add lib submodule'''
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_exists
-        path: ".gitmodules"
-      - type: dir_exists
-        path: "lib"
-      - type: git_output
-        command: "git log --oneline -1"
-        contains: "Add lib submodule"
+    - type: file_exists
+      path: .gitmodules
+    - type: dir_exists
+      path: lib
+    - type: git_output
+      command: git log --oneline -1
+      contains: Add lib submodule
+purpose: Tests ability to add a submodule and commit the change. Evaluates end-to-end
+  submodule-addition workflow.
+difficulty: easy
+tags:
+- submodule
+- add
+- commit
+- workflow

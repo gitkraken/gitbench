@@ -1,25 +1,34 @@
 id: f008
-description: "Rename a tag via delete and create"
+description: Rename a tag via delete and create
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Release v1'"
-  - "git tag v1.0-rc"
-prompt: "Rename the tag 'v1.0-rc' to 'v1.0' by moving the tag to the same commit. Output ONLY the git commands, one per line, nothing else."
-expected: "git tag v1.0 v1.0-rc && git tag -d v1.0-rc"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Release v1'
+- git tag v1.0-rc
+prompt: Rename the tag 'v1.0-rc' to 'v1.0' by moving the tag to the same commit. Output
+  ONLY the git commands, one per line, nothing else.
+expected: git tag v1.0 v1.0-rc && git tag -d v1.0-rc
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git tag -l"
-        contains: "v1.0"
-      - type: git_output
-        command: "git tag -l"
-        not_contains: "v1.0-rc"
-      - type: git_output
-        command: "git log v1.0 --oneline -1"
-        contains: "Release v1"
+    - type: git_output
+      command: git tag -l
+      contains: v1.0
+    - type: git_output
+      command: git tag -l
+      not_contains: v1.0-rc
+    - type: git_output
+      command: git log v1.0 --oneline -1
+      contains: Release v1
+purpose: Tests ability to rename a tag via delete-and-create workflow. Evaluates tag-rename
+  as a composite operation.
+difficulty: medium
+tags:
+- tag
+- rename
+- delete-and-create
+- composite

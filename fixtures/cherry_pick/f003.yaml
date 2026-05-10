@@ -1,23 +1,33 @@
 id: f003
-description: "Single-line status message conflict"
+description: Single-line status message conflict
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Status: OK' > status.txt"
-  - "git add status.txt"
-  - "git commit -m 'Initial status'"
-  - "git checkout -b fix"
-  - "echo 'Status: Resolved' > status.txt"
-  - "git add status.txt"
-  - "git commit -m 'Fix status'"
-  - "git checkout main"
-  - "echo 'Status: Failed' > status.txt"
-  - "git add status.txt"
-  - "git commit -m 'Update status'"
-  - "git cherry-pick $(git rev-parse fix)"
-prompt: "Resolve the cherry-pick conflict in status.txt. The base was 'Status: OK'. The incoming commit changed it to 'Status: Resolved'. The current branch has 'Status: Failed'. Provide ONLY the resolved file content."
-expected: "Status: Resolved"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'echo ''Status: OK'' > status.txt'
+- git add status.txt
+- git commit -m 'Initial status'
+- git checkout -b fix
+- 'echo ''Status: Resolved'' > status.txt'
+- git add status.txt
+- git commit -m 'Fix status'
+- git checkout main
+- 'echo ''Status: Failed'' > status.txt'
+- git add status.txt
+- git commit -m 'Update status'
+- git cherry-pick $(git rev-parse fix)
+prompt: 'Resolve the cherry-pick conflict in status.txt. The base was ''Status: OK''.
+  The incoming commit changed it to ''Status: Resolved''. The current branch has ''Status:
+  Failed''. Provide ONLY the resolved file content.'
+expected: 'Status: Resolved'
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to resolve a status-message conflict. Evaluates choosing between
+  conflicting status values from different branches.
+difficulty: easy
+tags:
+- cherry-pick
+- conflict-resolution
+- status-message
+- text-merge

@@ -1,33 +1,46 @@
 id: f010
-description: "Multi-file: conflicts in both main.py and utils.py"
+description: 'Multi-file: conflicts in both main.py and utils.py'
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf 'def main():\n    print(\"Running\")' > main.py"
-  - "printf 'DEBUG = True\nPORT = 8000' > utils.py"
-  - "git add main.py utils.py"
-  - "git commit -m 'Initial code'"
-  - "git checkout -b feature"
-  - "printf 'def main():\n    print(\"Running v2\")' > main.py"
-  - "printf 'DEBUG = False\nPORT = 8000' > utils.py"
-  - "git add main.py utils.py"
-  - "git commit -m 'Feature: update main and disable debug'"
-  - "git checkout main"
-  - "printf 'def main():\n    print(\"Running enterprise\")' > main.py"
-  - "printf 'DEBUG = True\nPORT = 9000' > utils.py"
-  - "git add main.py utils.py"
-  - "git commit -m 'Enterprise: update main and port'"
-  - "git rebase feature"
-prompt: "Resolve the rebase conflicts in main.py and utils.py. For main.py: branch being rebased says 'Running v2', main says 'Running enterprise'. For utils.py: branch being rebased set DEBUG=False with PORT=8000, main kept DEBUG=True with PORT=9000. Resolve both conflicts preferring the more descriptive version for main.py and the safer DEBUG=True for utils.py. Provide ONLY the two resolved file contents, separated by a blank line, with each file prefixed by its filename."
-expected: |
-  main.py:
-  def main():
-      print("Running enterprise")
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- "printf 'def main():\n    print(\"Running\")' > main.py"
+- 'printf ''DEBUG = True
 
-  utils.py:
-  DEBUG = True
-  PORT = 9000
+  PORT = 8000'' > utils.py'
+- git add main.py utils.py
+- git commit -m 'Initial code'
+- git checkout -b feature
+- "printf 'def main():\n    print(\"Running v2\")' > main.py"
+- 'printf ''DEBUG = False
+
+  PORT = 8000'' > utils.py'
+- git add main.py utils.py
+- 'git commit -m ''Feature: update main and disable debug'''
+- git checkout main
+- "printf 'def main():\n    print(\"Running enterprise\")' > main.py"
+- 'printf ''DEBUG = True
+
+  PORT = 9000'' > utils.py'
+- git add main.py utils.py
+- 'git commit -m ''Enterprise: update main and port'''
+- git rebase feature
+prompt: 'Resolve the rebase conflicts in main.py and utils.py. For main.py: branch
+  being rebased says ''Running v2'', main says ''Running enterprise''. For utils.py:
+  branch being rebased set DEBUG=False with PORT=8000, main kept DEBUG=True with PORT=9000.
+  Resolve both conflicts preferring the more descriptive version for main.py and the
+  safer DEBUG=True for utils.py. Provide ONLY the two resolved file contents, separated
+  by a blank line, with each file prefixed by its filename.'
+expected: "main.py:\ndef main():\n    print(\"Running enterprise\")\n\nutils.py:\n\
+  DEBUG = True\nPORT = 9000\n"
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to resolve simultaneous rebase conflicts in two files with
+  different strategies. Evaluates multi-file rebase juggling.
+difficulty: hard
+tags:
+- rebase
+- multi-file
+- simultaneous
+- conflict-resolution

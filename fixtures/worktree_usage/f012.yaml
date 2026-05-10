@@ -1,25 +1,34 @@
 id: f012
-description: "Create worktree from tag"
+description: Create worktree from tag
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1.0' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Version 1.0'"
-  - "git tag v1.0"
-  - "echo 'v2.0' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Version 2.0'"
-  - "git tag v2.0"
-prompt: "Create a worktree at '../v1-checkout' pointing at the tag 'v1.0'. Output ONLY the git worktree command, nothing else."
-expected: "git worktree add ../v1-checkout v1.0"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1.0' > version.txt
+- git add version.txt
+- git commit -m 'Version 1.0'
+- git tag v1.0
+- echo 'v2.0' > version.txt
+- git add version.txt
+- git commit -m 'Version 2.0'
+- git tag v2.0
+prompt: Create a worktree at '../v1-checkout' pointing at the tag 'v1.0'. Output ONLY
+  the git worktree command, nothing else.
+expected: git worktree add ../v1-checkout v1.0
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: dir_exists
-        path: "../v1-checkout"
-      - type: file_content
-        path: "../v1-checkout/version.txt"
-        value: "v1.0"
+    - type: dir_exists
+      path: ../v1-checkout
+    - type: file_content
+      path: ../v1-checkout/version.txt
+      value: v1.0
+purpose: Tests ability to create a worktree from a specific tag. Evaluates tag-based
+  worktree creation.
+difficulty: medium
+tags:
+- worktree
+- tag
+- create
+- ref

@@ -1,23 +1,39 @@
 id: f001
-description: Linear history with bad commit at end - model identifies most recent commit as bad
+description: Linear history with bad commit at end - model identifies most recent
+  commit as bad
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo '#!/bin/bash' > test.sh"
-  - "echo 'grep \"return a + b\" src/index.js' >> test.sh"
-  - "chmod +x test.sh"
-  - "mkdir -p src && echo 'function add(a, b) { return a + b; }' > src/index.js"
-  - "git add test.sh src/index.js"
-  - "git commit -m 'Initial commit'"
-  - "echo '// feature X enabled' >> src/index.js"
-  - "git add src/index.js"
-  - "git commit -m 'add feature X'"
-  - "echo 'function add(a, b) { return a - b; }' > src/index.js"
-  - "git add src/index.js"
-  - "git commit -m 'change add operation'"
-prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "change add operation"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo '#!/bin/bash' > test.sh
+- echo 'grep "return a + b" src/index.js' >> test.sh
+- chmod +x test.sh
+- mkdir -p src && echo 'function add(a, b) { return a + b; }' > src/index.js
+- git add test.sh src/index.js
+- git commit -m 'Initial commit'
+- echo '// feature X enabled' >> src/index.js
+- git add src/index.js
+- git commit -m 'add feature X'
+- echo 'function add(a, b) { return a - b; }' > src/index.js
+- git add src/index.js
+- git commit -m 'change add operation'
+prompt: 'You are debugging a git repository. The following commit history has one
+  bad commit that broke the build. Identify the bad commit hash (first 7 characters)
+  or commit subject line that introduced the bug. Use the git log and test output
+  to determine which commit is bad.
+
+
+  Your answer should be the commit hash (e.g., ''abc1234'') or the commit subject
+  line.'
+expected: change add operation
 scoring:
   type: bisect_regression
   threshold: 0.5
+purpose: Tests ability to identify the most recent commit as bad using git bisect
+  on a linear history. Evaluates basic bisect with the bug at HEAD.
+difficulty: easy
+tags:
+- git-bisect
+- linear-history
+- recent-bug
+- basic

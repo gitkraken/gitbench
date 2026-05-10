@@ -1,23 +1,34 @@
 id: f005
 description: Experimental commits that should be combined
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'base' > base.txt"
-  - "git add base.txt"
-  - "git commit -m 'Base setup'"
-  - "echo 'exp1' > experiment.py"
-  - "git add experiment.py"
-  - "git commit -m 'Experiment v1'"
-  - "echo 'exp2' > experiment.py"
-  - "git add experiment.py"
-  - "git commit -m 'Experiment v2'"
-  - "echo 'final' > experiment.py"
-  - "git add experiment.py"
-  - "git commit -m 'Experiment final'"
-prompt: "Find the intermediate commits that should be marked as squash/fixup to clean up experimental work. These are consecutive commits with similar purpose that were split during development. Do not include the final experiment commit as one of the commits to squash. Provide the commit messages."
-expected: "Experiment v1, Experiment v2"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'base' > base.txt
+- git add base.txt
+- git commit -m 'Base setup'
+- echo 'exp1' > experiment.py
+- git add experiment.py
+- git commit -m 'Experiment v1'
+- echo 'exp2' > experiment.py
+- git add experiment.py
+- git commit -m 'Experiment v2'
+- echo 'final' > experiment.py
+- git add experiment.py
+- git commit -m 'Experiment final'
+prompt: Find the intermediate commits that should be marked as squash/fixup to clean
+  up experimental work. These are consecutive commits with similar purpose that were
+  split during development. Do not include the final experiment commit as one of the
+  commits to squash. Provide the commit messages.
+expected: Experiment v1, Experiment v2
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to identify experimental commits that should be combined into
+  a single coherent change. Evaluates recognizing exploratory work patterns.
+difficulty: medium
+tags:
+- commit-squash
+- experimental
+- exploration
+- squash

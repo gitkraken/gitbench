@@ -1,42 +1,51 @@
 id: f005
-description: "List tags matching a pattern"
+description: List tags matching a pattern
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'v1'"
-  - "git tag v1.0"
-  - "echo 'v2' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'v2'"
-  - "git tag v2.0"
-  - "echo 'beta' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'beta'"
-  - "git tag beta-1"
-  - "echo 'rc' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'rc'"
-  - "git tag rc-1"
-prompt: "List only git tags matching the pattern 'v*'. Output ONLY the git command, nothing else."
-expected: "git tag -l 'v*'"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1' > app.txt
+- git add app.txt
+- git commit -m 'v1'
+- git tag v1.0
+- echo 'v2' > app.txt
+- git add app.txt
+- git commit -m 'v2'
+- git tag v2.0
+- echo 'beta' > app.txt
+- git add app.txt
+- git commit -m 'beta'
+- git tag beta-1
+- echo 'rc' > app.txt
+- git add app.txt
+- git commit -m 'rc'
+- git tag rc-1
+prompt: List only git tags matching the pattern 'v*'. Output ONLY the git command,
+  nothing else.
+expected: git tag -l 'v*'
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git tag -l v*"
-        contains: "v1.0"
-      - type: git_output
-        command: "git tag -l v*"
-        contains: "v2.0"
-      - type: git_output
-        command: "git tag -l v*"
-        not_contains: "beta-1"
-      - type: git_output
-        command: "git tag -l v*"
-        not_contains: "rc-1"
-      - type: model_output
-        contains: "git tag"
+    - type: git_output
+      command: git tag -l v*
+      contains: v1.0
+    - type: git_output
+      command: git tag -l v*
+      contains: v2.0
+    - type: git_output
+      command: git tag -l v*
+      not_contains: beta-1
+    - type: git_output
+      command: git tag -l v*
+      not_contains: rc-1
+    - type: model_output
+      contains: git tag
+purpose: Tests ability to list tags matching a glob pattern. Evaluates tag-filtering
+  with pattern matching.
+difficulty: medium
+tags:
+- tag
+- list
+- pattern
+- glob

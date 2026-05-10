@@ -1,16 +1,24 @@
 id: f011
-description: "Update configuration"
+description: Update configuration
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf '{\\n  \"version\": \"1.0\",\\n  \"debug\": false\\n}\\n' > config.json"
-  - "git add config.json"
-  - "git commit -m 'Add config'"
-  - "printf '{\\n  \"version\": \"1.1\",\\n  \"debug\": true,\\n  \"cache\": true\\n}\\n' > config.json"
-  - "git add config.json"
-prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update')."
-expected: "Update config with caching enabled"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'printf ''{\n  "version": "1.0",\n  "debug": false\n}\n'' > config.json'
+- git add config.json
+- git commit -m 'Add config'
+- 'printf ''{\n  "version": "1.1",\n  "debug": true,\n  "cache": true\n}\n'' > config.json'
+- git add config.json
+prompt: Generate a concise commit message (max 50 characters) describing the changes
+  in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').
+expected: Update config with caching enabled
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to generate a commit message for a configuration change. Evaluates
+  describing infrastructure/config modifications.
+difficulty: easy
+tags:
+- commit-message
+- config
+- infrastructure

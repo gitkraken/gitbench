@@ -1,23 +1,34 @@
 id: f003
 description: Related changes split across commits
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo '// v1' > app.js"
-  - "git add app.js"
-  - "git commit -m 'Add app.js v1'"
-  - "echo '// v2' > app.js"
-  - "git add app.js"
-  - "git commit -m 'WIP: update app.js'"
-  - "echo '// v3' > app.js"
-  - "git add app.js"
-  - "git commit -m 'WIP: more updates'"
-  - "echo '// final' > app.js"
-  - "git add app.js"
-  - "git commit -m 'Finalize app.js'"
-prompt: "Analyze this git history. Multiple consecutive WIP commits updating the same file suggest the changes should be combined. Identify the WIP commits that should be marked as squash/fixup in an interactive rebase. Do not include the initial or final anchor commit. Provide the commit messages in order."
-expected: "WIP: update app.js, WIP: more updates"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo '// v1' > app.js
+- git add app.js
+- git commit -m 'Add app.js v1'
+- echo '// v2' > app.js
+- git add app.js
+- 'git commit -m ''WIP: update app.js'''
+- echo '// v3' > app.js
+- git add app.js
+- 'git commit -m ''WIP: more updates'''
+- echo '// final' > app.js
+- git add app.js
+- git commit -m 'Finalize app.js'
+prompt: Analyze this git history. Multiple consecutive WIP commits updating the same
+  file suggest the changes should be combined. Identify the WIP commits that should
+  be marked as squash/fixup in an interactive rebase. Do not include the initial or
+  final anchor commit. Provide the commit messages in order.
+expected: 'WIP: update app.js, WIP: more updates'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to identify related changes split across multiple commits that
+  should be combined. Evaluates recognizing atomic-commit boundaries.
+difficulty: medium
+tags:
+- commit-squash
+- related-changes
+- atomic-commits
+- squash

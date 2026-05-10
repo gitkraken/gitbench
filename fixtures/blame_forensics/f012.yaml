@@ -1,20 +1,32 @@
 id: f012
-description: "Null pointer introduced by removing check"
+description: Null pointer introduced by removing check
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'if user is not None:\n    return user.name\nreturn \"anonymous\"' > src/user.py"
-  - "git add src/user.py"
-  - "git commit -m 'Safe user name access'"
-  - "echo 'if user is not None:\n    return user.name.upper()\nreturn \"anonymous\"' > src/user.py"
-  - "git add src/user.py"
-  - "git commit -m 'Capitalize user names'"
-  - "echo 'return user.name.upper()' > src/user.py"
-  - "git add src/user.py"
-  - "git commit -m 'Simplify user name access'"
-prompt: "There is a null pointer error in src/user.py. Look at git log and git blame. Which commit removed the null check? Output ONLY the commit message of that commit, nothing else."
-expected: "Simplify user name access"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- "echo 'if user is not None:\n    return user.name\nreturn \"anonymous\"' > src/user.py"
+- git add src/user.py
+- git commit -m 'Safe user name access'
+- "echo 'if user is not None:\n    return user.name.upper()\nreturn \"anonymous\"\
+  ' > src/user.py"
+- git add src/user.py
+- git commit -m 'Capitalize user names'
+- echo 'return user.name.upper()' > src/user.py
+- git add src/user.py
+- git commit -m 'Simplify user name access'
+prompt: There is a null pointer error in src/user.py. Look at git log and git blame.
+  Which commit removed the null check? Output ONLY the commit message of that commit,
+  nothing else.
+expected: Simplify user name access
 scoring:
   type: exact_match
+purpose: Tests ability to identify which commit removed a null check, causing a null
+  pointer / attribute error. Evaluates git forensics for null-safety regressions.
+difficulty: easy
+tags:
+- null-pointer
+- null-check
+- regression
+- git-log
+- git-blame

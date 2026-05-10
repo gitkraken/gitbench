@@ -1,20 +1,38 @@
 id: f009
-description: "Memory leak from unclosed resource"
+description: Memory leak from unclosed resource
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'f = open(path)\ndata = f.read()\nf.close()' > src/io.py"
-  - "git add src/io.py"
-  - "git commit -m 'Read file with explicit close'"
-  - "echo 'with open(path) as f:\n    data = f.read()' > src/io.py"
-  - "git add src/io.py"
-  - "git commit -m 'Use context manager for file'"
-  - "echo 'f = open(path)\ndata = f.read()' > src/io.py"
-  - "git add src/io.py"
-  - "git commit -m 'Simplify file reading'"
-prompt: "There is a resource leak in src/io.py where the file handle is never closed. Look at git log and git blame. Which commit removed proper resource management? Output ONLY the commit message of that commit, nothing else."
-expected: "Simplify file reading"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- 'echo ''f = open(path)
+
+  data = f.read()
+
+  f.close()'' > src/io.py'
+- git add src/io.py
+- git commit -m 'Read file with explicit close'
+- "echo 'with open(path) as f:\n    data = f.read()' > src/io.py"
+- git add src/io.py
+- git commit -m 'Use context manager for file'
+- 'echo ''f = open(path)
+
+  data = f.read()'' > src/io.py'
+- git add src/io.py
+- git commit -m 'Simplify file reading'
+prompt: There is a resource leak in src/io.py where the file handle is never closed.
+  Look at git log and git blame. Which commit removed proper resource management?
+  Output ONLY the commit message of that commit, nothing else.
+expected: Simplify file reading
 scoring:
   type: exact_match
+purpose: Tests ability to identify which commit removed explicit file resource cleanup
+  (close/context manager), causing a resource leak. Evaluates git forensics for robustness
+  regressions.
+difficulty: easy
+tags:
+- resource-leak
+- memory-leak
+- regression
+- git-log
+- git-blame

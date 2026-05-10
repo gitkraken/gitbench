@@ -1,16 +1,24 @@
 id: f006
-description: "Search with no results returns empty output"
+description: Search with no results returns empty output
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'def hello(): return \"world\"' > hello.py"
-  - "git add hello.py"
-  - "git commit -m 'Add hello function'"
-  - "echo 'git grep nonexistent_token_xyz' > .grep_command"
-  - "git add .grep_command"
-  - "git commit -m 'Add grep sentinel'"
-prompt: "Here is the output of a git grep command run on this repository. Did the search find any matches? Output ONLY 'yes' or 'no', nothing else."
-expected: "no"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'echo ''def hello(): return "world"'' > hello.py'
+- git add hello.py
+- git commit -m 'Add hello function'
+- echo 'git grep nonexistent_token_xyz' > .grep_command
+- git add .grep_command
+- git commit -m 'Add grep sentinel'
+prompt: Here is the output of a git grep command run on this repository. Did the search
+  find any matches? Output ONLY 'yes' or 'no', nothing else.
+expected: 'no'
 scoring:
   type: exact_match
+purpose: Tests ability to handle searches with no results (empty output). Evaluates
+  edge-case handling in search operations.
+difficulty: easy
+tags:
+- git-grep
+- no-results
+- edge-case

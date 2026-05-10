@@ -1,21 +1,30 @@
 id: f009
-description: "Search across branches using git grep on a specific ref"
+description: Search across branches using git grep on a specific ref
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'version = 1.0' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Initial version 1.0'"
-  - "git checkout -b feature/v2"
-  - "echo 'version = 2.0' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Bump to version 2.0'"
-  - "git checkout main"
-  - "echo 'git grep version feature/v2' > .grep_command"
-  - "git add .grep_command"
-  - "git commit -m 'Add grep sentinel'"
-prompt: "Here is the output of a git grep command run against the feature/v2 branch. What version number is found? Output ONLY the version number, nothing else."
-expected: "2.0"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'version = 1.0' > version.txt
+- git add version.txt
+- git commit -m 'Initial version 1.0'
+- git checkout -b feature/v2
+- echo 'version = 2.0' > version.txt
+- git add version.txt
+- git commit -m 'Bump to version 2.0'
+- git checkout main
+- echo 'git grep version feature/v2' > .grep_command
+- git add .grep_command
+- git commit -m 'Add grep sentinel'
+prompt: Here is the output of a git grep command run against the feature/v2 branch.
+  What version number is found? Output ONLY the version number, nothing else.
+expected: '2.0'
 scoring:
   type: exact_match
+purpose: Tests ability to search across branches using git grep on a specific ref.
+  Evaluates revision-scoped search.
+difficulty: medium
+tags:
+- git-grep
+- branch-search
+- ref
+- cross-branch

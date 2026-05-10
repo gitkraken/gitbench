@@ -1,23 +1,40 @@
 id: f004
 description: Rebase/Squash style - intermediate commits
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "touch initial.txt"
-  - "git add initial.txt"
-  - "git commit -m 'Add initial file'"
-  - "echo 'line1' > data.txt"
-  - "git add data.txt"
-  - "git commit -m 'WIP: adding data'"
-  - "echo 'line1\nline2' > data.txt"
-  - "git add data.txt"
-  - "git commit -m 'WIP: continue data'"
-  - "echo 'line1\nline2\nline3' > data.txt"
-  - "git add data.txt"
-  - "git commit -m 'Add complete data'"
-prompt: "This repository has a series of commits that incrementally build up a feature. Identify the WIP commits that should be marked as squash/fixup into a single clean commit. Do not include the final completed-feature commit. Provide the commit messages to squash."
-expected: "WIP: adding data, WIP: continue data"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- touch initial.txt
+- git add initial.txt
+- git commit -m 'Add initial file'
+- echo 'line1' > data.txt
+- git add data.txt
+- 'git commit -m ''WIP: adding data'''
+- 'echo ''line1
+
+  line2'' > data.txt'
+- git add data.txt
+- 'git commit -m ''WIP: continue data'''
+- 'echo ''line1
+
+  line2
+
+  line3'' > data.txt'
+- git add data.txt
+- git commit -m 'Add complete data'
+prompt: This repository has a series of commits that incrementally build up a feature.
+  Identify the WIP commits that should be marked as squash/fixup into a single clean
+  commit. Do not include the final completed-feature commit. Provide the commit messages
+  to squash.
+expected: 'WIP: adding data, WIP: continue data'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to identify intermediate/rebase-style commits that should be
+  squashed. Evaluates recognizing incomplete or intermediate work.
+difficulty: medium
+tags:
+- commit-squash
+- intermediate
+- rebase
+- squash

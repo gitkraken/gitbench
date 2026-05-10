@@ -1,27 +1,38 @@
 id: f008
-description: "Three-way: multiple files with conflicting and non-conflicting changes"
+description: 'Three-way: multiple files with conflicting and non-conflicting changes'
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Title: My Project' > project.txt"
-  - "echo 'File A content' > file_a.txt"
-  - "echo 'File B content' > file_b.txt"
-  - "git add project.txt file_a.txt file_b.txt"
-  - "git commit -m 'Initial project'"
-  - "git checkout -b branch-a"
-  - "echo 'Title: My Project v2' > project.txt"
-  - "echo 'File A updated' > file_a.txt"
-  - "git add project.txt file_a.txt"
-  - "git commit -m 'Update title and file A'"
-  - "git checkout main"
-  - "echo 'Title: My Project v3' > project.txt"
-  - "echo 'File B updated' > file_b.txt"
-  - "git add project.txt file_b.txt"
-  - "git commit -m 'Update title and file B'"
-  - "git rebase branch-a"
-prompt: "Resolve the rebase conflict in project.txt. Branch being rebased set Title: My Project v2. Main branch set Title: My Project v3. Both branches also updated different files (file_a and file_b) without conflicts. For the project.txt conflict, the higher version is more appropriate. Provide ONLY the resolved project.txt content."
-expected: "Title: My Project v3"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'echo ''Title: My Project'' > project.txt'
+- echo 'File A content' > file_a.txt
+- echo 'File B content' > file_b.txt
+- git add project.txt file_a.txt file_b.txt
+- git commit -m 'Initial project'
+- git checkout -b branch-a
+- 'echo ''Title: My Project v2'' > project.txt'
+- echo 'File A updated' > file_a.txt
+- git add project.txt file_a.txt
+- git commit -m 'Update title and file A'
+- git checkout main
+- 'echo ''Title: My Project v3'' > project.txt'
+- echo 'File B updated' > file_b.txt
+- git add project.txt file_b.txt
+- git commit -m 'Update title and file B'
+- git rebase branch-a
+prompt: 'Resolve the rebase conflict in project.txt. Branch being rebased set Title:
+  My Project v2. Main branch set Title: My Project v3. Both branches also updated
+  different files (file_a and file_b) without conflicts. For the project.txt conflict,
+  the higher version is more appropriate. Provide ONLY the resolved project.txt content.'
+expected: 'Title: My Project v3'
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to handle rebase with partial conflicts across files. Evaluates
+  understanding of clean vs conflicted files in rebase.
+difficulty: hard
+tags:
+- rebase
+- multi-file
+- partial
+- conflict-resolution

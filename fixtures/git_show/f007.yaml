@@ -1,14 +1,23 @@
 id: f007
-description: "Show commit author date"
+description: Show commit author date
 setup:
-  - "git init"
-  - "git config user.email 'dev@org.io'"
-  - "git config user.name 'Developer'"
-  - "git config commit.gpgsign false"
-  - "echo 'data' > config.yaml"
-  - "git add config.yaml"
-  - "GIT_AUTHOR_DATE='2025-06-15T10:30:00' GIT_COMMITTER_DATE='2025-06-15T10:30:00' git commit -m 'Mid-year update'"
-prompt: "Using git show -s --format=%ae, what is the author email of the latest commit? Output ONLY the email, nothing else."
-expected: "dev@org.io"
+- git init
+- git config user.email 'dev@org.io'
+- git config user.name 'Developer'
+- git config commit.gpgsign false
+- echo 'data' > config.yaml
+- git add config.yaml
+- GIT_AUTHOR_DATE='2025-06-15T10:30:00' GIT_COMMITTER_DATE='2025-06-15T10:30:00' git
+  commit -m 'Mid-year update'
+prompt: Using git show -s --format=%ae, what is the author email of the latest commit?
+  Output ONLY the email, nothing else.
+expected: dev@org.io
 scoring:
   type: exact_match
+purpose: Tests ability to extract commit author date from git show. Evaluates date-field
+  extraction from commit metadata.
+difficulty: easy
+tags:
+- git-show
+- author-date
+- metadata

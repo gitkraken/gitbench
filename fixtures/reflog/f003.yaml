@@ -1,18 +1,29 @@
 id: f003
 description: Commit amend changes hash - find original commit before amend
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'function hello() { return 1; }' > app.js"
-  - "git add app.js"
-  - "git commit -m 'Add hello function'"
-  - "echo 'function hello() { return 2; }' > app.js"
-  - "git add app.js"
-  - "git commit -m 'Update hello function v2'"
-  - "git commit --amend -m 'Update hello function - revised'"
-prompt: "You amended a commit with 'git commit --amend' and need to find the original commit hash before the amendment. The commit message was changed from 'Update hello function v2' to 'Update hello function - revised'. Use git reflog to find the old commit hash."
-expected: "Update hello function v2"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'function hello() { return 1; }' > app.js
+- git add app.js
+- git commit -m 'Add hello function'
+- echo 'function hello() { return 2; }' > app.js
+- git add app.js
+- git commit -m 'Update hello function v2'
+- git commit --amend -m 'Update hello function - revised'
+prompt: You amended a commit with 'git commit --amend' and need to find the original
+  commit hash before the amendment. The commit message was changed from 'Update hello
+  function v2' to 'Update hello function - revised'. Use git reflog to find the old
+  commit hash.
+expected: Update hello function v2
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to find the original commit before an amend using reflog. Evaluates
+  amend-history tracking via reflog.
+difficulty: medium
+tags:
+- reflog
+- amend
+- history
+- recovery

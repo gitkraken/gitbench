@@ -1,20 +1,46 @@
 id: f008
-description: "Path traversal vulnerability introduced"
+description: Path traversal vulnerability introduced
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'import os\nsafe = os.path.basename(filename)\npath = os.path.join(\"/data\", safe)' > src/files.py"
-  - "git add src/files.py"
-  - "git commit -m 'Safe file path construction'"
-  - "echo 'import os\nsafe = os.path.basename(filename)\npath = os.path.join(\"/data\", safe)\nreturn open(path).read()' > src/files.py"
-  - "git add src/files.py"
-  - "git commit -m 'Add file reading'"
-  - "echo 'import os\npath = os.path.join(\"/data\", filename)\nreturn open(path).read()' > src/files.py"
-  - "git add src/files.py"
-  - "git commit -m 'Allow subdirectory access'"
-prompt: "There is a path traversal vulnerability in src/files.py. Look at git log and git blame. Which commit removed the basename sanitization? Output ONLY the commit message of that commit, nothing else."
-expected: "Allow subdirectory access"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- 'echo ''import os
+
+  safe = os.path.basename(filename)
+
+  path = os.path.join("/data", safe)'' > src/files.py'
+- git add src/files.py
+- git commit -m 'Safe file path construction'
+- 'echo ''import os
+
+  safe = os.path.basename(filename)
+
+  path = os.path.join("/data", safe)
+
+  return open(path).read()'' > src/files.py'
+- git add src/files.py
+- git commit -m 'Add file reading'
+- 'echo ''import os
+
+  path = os.path.join("/data", filename)
+
+  return open(path).read()'' > src/files.py'
+- git add src/files.py
+- git commit -m 'Allow subdirectory access'
+prompt: There is a path traversal vulnerability in src/files.py. Look at git log and
+  git blame. Which commit removed the basename sanitization? Output ONLY the commit
+  message of that commit, nothing else.
+expected: Allow subdirectory access
 scoring:
   type: exact_match
+purpose: Tests ability to trace when path sanitization (basename call) was removed,
+  introducing a path traversal vulnerability. Evaluates security-aware git forensics.
+difficulty: easy
+tags:
+- security
+- path-traversal
+- regression
+- git-log
+- git-blame
+- sanitization

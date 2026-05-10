@@ -1,31 +1,41 @@
 id: f001
-description: "Create worktree for a different branch"
+description: Create worktree for a different branch
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > hello.txt"
-  - "git add hello.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b feature"
-  - "echo 'Feature code' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Add feature'"
-  - "git checkout main"
-prompt: "Run the command to create a git worktree for the 'feature' branch at path '../feature-wt' (relative to the repo). Output ONLY the git worktree command, nothing else."
-expected: "git worktree add ../feature-wt feature"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > hello.txt
+- git add hello.txt
+- git commit -m 'Initial commit'
+- git checkout -b feature
+- echo 'Feature code' > feature.txt
+- git add feature.txt
+- git commit -m 'Add feature'
+- git checkout main
+prompt: Run the command to create a git worktree for the 'feature' branch at path
+  '../feature-wt' (relative to the repo). Output ONLY the git worktree command, nothing
+  else.
+expected: git worktree add ../feature-wt feature
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: dir_exists
-        path: "../feature-wt"
-      - type: branch_exists
-        name: "feature"
-        in_worktree: "../feature-wt"
-      - type: git_output
-        command: "git -C ../feature-wt branch --show-current"
-        contains: "feature"
-      - type: file_content
-        path: "../feature-wt/feature.txt"
-        value: "Feature code"
+    - type: dir_exists
+      path: ../feature-wt
+    - type: branch_exists
+      name: feature
+      in_worktree: ../feature-wt
+    - type: git_output
+      command: git -C ../feature-wt branch --show-current
+      contains: feature
+    - type: file_content
+      path: ../feature-wt/feature.txt
+      value: Feature code
+purpose: Tests ability to create a git worktree for an existing branch. Evaluates
+  basic worktree-creation command knowledge.
+difficulty: easy
+tags:
+- worktree
+- create
+- branch
+- basic

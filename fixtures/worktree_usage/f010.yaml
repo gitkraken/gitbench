@@ -1,27 +1,35 @@
 id: f010
-description: "Lock a worktree"
+description: Lock a worktree
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > hello.txt"
-  - "git add hello.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b feature"
-  - "echo 'Feature' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Add feature'"
-  - "git checkout main"
-  - "git worktree add ../feature-wt feature"
-prompt: "Lock the worktree at '../feature-wt' with the reason 'do not delete'. Output ONLY the git command, nothing else."
-expected: "git worktree lock --reason 'do not delete' ../feature-wt"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > hello.txt
+- git add hello.txt
+- git commit -m 'Initial commit'
+- git checkout -b feature
+- echo 'Feature' > feature.txt
+- git add feature.txt
+- git commit -m 'Add feature'
+- git checkout main
+- git worktree add ../feature-wt feature
+prompt: Lock the worktree at '../feature-wt' with the reason 'do not delete'. Output
+  ONLY the git command, nothing else.
+expected: git worktree lock --reason 'do not delete' ../feature-wt
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git worktree list --porcelain"
-        contains: "locked"
-      - type: git_output
-        command: "git worktree list --porcelain"
-        contains: "do not delete"
+    - type: git_output
+      command: git worktree list --porcelain
+      contains: locked
+    - type: git_output
+      command: git worktree list --porcelain
+      contains: do not delete
+purpose: Tests ability to lock a worktree to prevent modifications. Evaluates worktree-locking
+  command knowledge.
+difficulty: medium
+tags:
+- worktree
+- lock
+- protection

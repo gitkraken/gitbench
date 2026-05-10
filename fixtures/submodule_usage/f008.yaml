@@ -1,29 +1,39 @@
 id: f008
-description: "Deinit a submodule"
+description: Deinit a submodule
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com' && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py && git commit -m 'Initial lib'"
-  - "git clone --bare ../lib-src ../lib-bare"
-  - "git config protocol.file.allow always"
-  - "git -c protocol.file.allow=always submodule add ../lib-bare lib"
-  - "git add .gitmodules lib"
-  - "git commit -m 'Add lib submodule'"
-prompt: "Deinitialize the submodule 'lib' (remove its working tree but keep the config). Output ONLY the git command, nothing else."
-expected: "git submodule deinit -f lib"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com'
+  && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py
+  && git commit -m 'Initial lib'
+- git clone --bare ../lib-src ../lib-bare
+- git config protocol.file.allow always
+- git -c protocol.file.allow=always submodule add ../lib-bare lib
+- git add .gitmodules lib
+- git commit -m 'Add lib submodule'
+prompt: Deinitialize the submodule 'lib' (remove its working tree but keep the config).
+  Output ONLY the git command, nothing else.
+expected: git submodule deinit -f lib
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_not_exists
-        path: "lib/lib.py"
-      - type: file_content
-        path: ".gitmodules"
-        contains: "lib"
-      - type: git_output
-        command: "git config --get submodule.lib.url"
-        not_contains: "lib-bare"
+    - type: file_not_exists
+      path: lib/lib.py
+    - type: file_content
+      path: .gitmodules
+      contains: lib
+    - type: git_output
+      command: git config --get submodule.lib.url
+      not_contains: lib-bare
+purpose: Tests ability to deinitialize a submodule without removing it. Evaluates
+  submodule-deinit command understanding.
+difficulty: medium
+tags:
+- submodule
+- deinit
+- deactivate

@@ -1,23 +1,33 @@
 id: f002
-description: "Single-line version number conflict"
+description: Single-line version number conflict
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'VERSION=1.0.0' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Initial version'"
-  - "git checkout -b release"
-  - "echo 'VERSION=2.0.0' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Bump major version'"
-  - "git checkout main"
-  - "echo 'VERSION=1.1.0' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Bump minor version'"
-  - "git cherry-pick $(git rev-parse release)"
-prompt: "Resolve the cherry-pick conflict in version.txt. The base version was 'VERSION=1.0.0'. The incoming commit (release) changed it to 'VERSION=2.0.0'. The current branch (main) has 'VERSION=1.1.0'. Provide ONLY the resolved file content."
-expected: "VERSION=2.0.0"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'VERSION=1.0.0' > version.txt
+- git add version.txt
+- git commit -m 'Initial version'
+- git checkout -b release
+- echo 'VERSION=2.0.0' > version.txt
+- git add version.txt
+- git commit -m 'Bump major version'
+- git checkout main
+- echo 'VERSION=1.1.0' > version.txt
+- git add version.txt
+- git commit -m 'Bump minor version'
+- git cherry-pick $(git rev-parse release)
+prompt: Resolve the cherry-pick conflict in version.txt. The base version was 'VERSION=1.0.0'.
+  The incoming commit (release) changed it to 'VERSION=2.0.0'. The current branch
+  (main) has 'VERSION=1.1.0'. Provide ONLY the resolved file content.
+expected: VERSION=2.0.0
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to resolve a version number conflict during cherry-pick. Evaluates
+  handling of semantic versioning clashes between branches.
+difficulty: easy
+tags:
+- cherry-pick
+- conflict-resolution
+- version-number
+- semver

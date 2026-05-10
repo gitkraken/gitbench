@@ -1,26 +1,34 @@
 id: f005
-description: "Multi-line hunk: function body conflict"
+description: 'Multi-line hunk: function body conflict'
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf 'def greet(name):\n    print(\"Hello\")\n    return True' > greet.py"
-  - "git add greet.py"
-  - "git commit -m 'Initial greet'"
-  - "git checkout -b feature"
-  - "printf 'def greet(name):\n    print(f\"Hello, {name}\")\n    return True' > greet.py"
-  - "git add greet.py"
-  - "git commit -m 'Add name parameter'"
-  - "git checkout main"
-  - "printf 'def greet(name):\n    print(\"Hi there\")\n    return False' > greet.py"
-  - "git add greet.py"
-  - "git commit -m 'Change greeting'"
-  - "git merge feature"
-prompt: "Resolve the merge conflict in greet.py. The base was a simple greet with print(\"Hello\"). Branch A added f-string formatting with the name parameter. Branch B changed the greeting text to \"Hi there\" and changed return to False. Resolve the conflict keeping the most useful changes. Provide ONLY the resolved file content."
-expected: |
-  def greet(name):
-      print(f"Hello, {name}")
-      return True
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- "printf 'def greet(name):\n    print(\"Hello\")\n    return True' > greet.py"
+- git add greet.py
+- git commit -m 'Initial greet'
+- git checkout -b feature
+- "printf 'def greet(name):\n    print(f\"Hello, {name}\")\n    return True' > greet.py"
+- git add greet.py
+- git commit -m 'Add name parameter'
+- git checkout main
+- "printf 'def greet(name):\n    print(\"Hi there\")\n    return False' > greet.py"
+- git add greet.py
+- git commit -m 'Change greeting'
+- git merge feature
+prompt: Resolve the merge conflict in greet.py. The base was a simple greet with print("Hello").
+  Branch A added f-string formatting with the name parameter. Branch B changed the
+  greeting text to "Hi there" and changed return to False. Resolve the conflict keeping
+  the most useful changes. Provide ONLY the resolved file content.
+expected: "def greet(name):\n    print(f\"Hello, {name}\")\n    return True\n"
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to resolve a function-body merge conflict combining formatting
+  and logic changes. Evaluates semantic code merging.
+difficulty: medium
+tags:
+- merge-conflict
+- function-body
+- code-merge
+- resolution

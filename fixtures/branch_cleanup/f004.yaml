@@ -1,35 +1,47 @@
 id: f004
-description: "Feature branches merged and unmerged"
+description: Feature branches merged and unmerged
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.py"
-  - "git add app.py"
-  - "git commit -m 'Initial app'"
-  - "git checkout -b feature-auth"
-  - "echo 'auth' > auth.py"
-  - "git add auth.py"
-  - "git commit -m 'Add auth'"
-  - "git checkout main"
-  - "git merge feature-auth"
-  - "git checkout -b feature-db"
-  - "echo 'db' > db.py"
-  - "git add db.py"
-  - "git commit -m 'Add db'"
-  - "git checkout main"
-  - "git merge feature-db"
-  - "git checkout -b feature-api"
-  - "echo 'api' > api.py"
-  - "git add api.py"
-  - "git commit -m 'Add api'"
-  - "git checkout main"
-  - "git checkout -b feature-ui"
-  - "echo 'ui' > ui.py"
-  - "git add ui.py"
-  - "git commit -m 'Add ui'"
-  - "git checkout main"
-prompt: "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'."
-expected: "feature-auth\nfeature-db"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.py
+- git add app.py
+- git commit -m 'Initial app'
+- git checkout -b feature-auth
+- echo 'auth' > auth.py
+- git add auth.py
+- git commit -m 'Add auth'
+- git checkout main
+- git merge feature-auth
+- git checkout -b feature-db
+- echo 'db' > db.py
+- git add db.py
+- git commit -m 'Add db'
+- git checkout main
+- git merge feature-db
+- git checkout -b feature-api
+- echo 'api' > api.py
+- git add api.py
+- git commit -m 'Add api'
+- git checkout main
+- git checkout -b feature-ui
+- echo 'ui' > ui.py
+- git add ui.py
+- git commit -m 'Add ui'
+- git checkout main
+prompt: Look at the branches in this repository. Which branches should be deleted
+  because they are fully merged into main? List ONLY the branch names to delete, one
+  per line. If none, respond with 'none'.
+expected: 'feature-auth
+
+  feature-db'
 scoring:
   type: exact_match
+purpose: Tests ability to distinguish merged from unmerged feature branches. Evaluates
+  selective branch cleanup with mixed merge status.
+difficulty: medium
+tags:
+- branch-management
+- feature-branches
+- merged-vs-unmerged
+- cleanup

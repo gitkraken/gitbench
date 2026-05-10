@@ -1,35 +1,46 @@
 id: f007
-description: "Create multiple worktrees"
+description: Create multiple worktrees
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > hello.txt"
-  - "git add hello.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b feature-a"
-  - "echo 'A' > a.txt"
-  - "git add a.txt"
-  - "git commit -m 'Feature A'"
-  - "git checkout main"
-  - "git checkout -b feature-b"
-  - "echo 'B' > b.txt"
-  - "git add b.txt"
-  - "git commit -m 'Feature B'"
-  - "git checkout main"
-prompt: "Create worktrees for both 'feature-a' at '../wt-a' and 'feature-b' at '../wt-b'. Output ONLY the commands to run, one per line."
-expected: "git worktree add ../wt-a feature-a\ngit worktree add ../wt-b feature-b"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > hello.txt
+- git add hello.txt
+- git commit -m 'Initial commit'
+- git checkout -b feature-a
+- echo 'A' > a.txt
+- git add a.txt
+- git commit -m 'Feature A'
+- git checkout main
+- git checkout -b feature-b
+- echo 'B' > b.txt
+- git add b.txt
+- git commit -m 'Feature B'
+- git checkout main
+prompt: Create worktrees for both 'feature-a' at '../wt-a' and 'feature-b' at '../wt-b'.
+  Output ONLY the commands to run, one per line.
+expected: 'git worktree add ../wt-a feature-a
+
+  git worktree add ../wt-b feature-b'
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: dir_exists
-        path: "../wt-a"
-      - type: dir_exists
-        path: "../wt-b"
-      - type: file_content
-        path: "../wt-a/a.txt"
-        value: "A"
-      - type: file_content
-        path: "../wt-b/b.txt"
-        value: "B"
+    - type: dir_exists
+      path: ../wt-a
+    - type: dir_exists
+      path: ../wt-b
+    - type: file_content
+      path: ../wt-a/a.txt
+      value: A
+    - type: file_content
+      path: ../wt-b/b.txt
+      value: B
+purpose: Tests ability to create and manage multiple worktrees simultaneously. Evaluates
+  multi-worktree management.
+difficulty: hard
+tags:
+- worktree
+- multiple
+- create
+- management

@@ -1,20 +1,28 @@
 id: f001
-description: "Remove a single untracked file"
+description: Remove a single untracked file
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'tracked' > tracked.txt"
-  - "git add tracked.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'untracked' > untracked.txt"
-prompt: "Remove the untracked file from the working directory. Output ONLY the git command, nothing else."
-expected: "git clean -f"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'tracked' > tracked.txt
+- git add tracked.txt
+- git commit -m 'Initial commit'
+- echo 'untracked' > untracked.txt
+prompt: Remove the untracked file from the working directory. Output ONLY the git
+  command, nothing else.
+expected: git clean -f
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_not_exists
-        path: "untracked.txt"
-      - type: file_exists
-        path: "tracked.txt"
+    - type: file_not_exists
+      path: untracked.txt
+    - type: file_exists
+      path: tracked.txt
+purpose: Tests ability to remove a single untracked file with git clean -f. Evaluates
+  basic working-directory cleanup.
+difficulty: trivial
+tags:
+- git-clean
+- untracked
+- basic

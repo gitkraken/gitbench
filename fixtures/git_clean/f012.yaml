@@ -1,34 +1,48 @@
 id: f012
-description: "Combined cleanup of untracked and ignored with directories in specific path"
+description: Combined cleanup of untracked and ignored with directories in specific
+  path
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf '*.log\ntmp/\n' > .gitignore"
-  - "mkdir -p src"
-  - "echo 'main' > src/app.py"
-  - "git add .gitignore src"
-  - "git commit -m 'Initial commit'"
-  - "echo 'debug' > src/debug.log"
-  - "mkdir -p src/tmp"
-  - "echo 'cache' > src/tmp/data"
-  - "echo 'untracked' > src/new.py"
-  - "echo 'root junk' > root.log"
-prompt: "Remove all untracked and ignored files and directories from the src/ directory only. Output ONLY the git command, nothing else."
-expected: "git clean -f -x -d src/"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'printf ''*.log
+
+  tmp/
+
+  '' > .gitignore'
+- mkdir -p src
+- echo 'main' > src/app.py
+- git add .gitignore src
+- git commit -m 'Initial commit'
+- echo 'debug' > src/debug.log
+- mkdir -p src/tmp
+- echo 'cache' > src/tmp/data
+- echo 'untracked' > src/new.py
+- echo 'root junk' > root.log
+prompt: Remove all untracked and ignored files and directories from the src/ directory
+  only. Output ONLY the git command, nothing else.
+expected: git clean -f -x -d src/
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_not_exists
-        path: "src/debug.log"
-      - type: dir_not_exists
-        path: "src/tmp"
-      - type: file_not_exists
-        path: "src/new.py"
-      - type: file_exists
-        path: "root.log"
-      - type: file_exists
-        path: "src/app.py"
-      - type: file_exists
-        path: ".gitignore"
+    - type: file_not_exists
+      path: src/debug.log
+    - type: dir_not_exists
+      path: src/tmp
+    - type: file_not_exists
+      path: src/new.py
+    - type: file_exists
+      path: root.log
+    - type: file_exists
+      path: src/app.py
+    - type: file_exists
+      path: .gitignore
+purpose: Tests ability to perform combined cleanup of untracked and ignored files
+  with directories in a specific path. Evaluates advanced multi-flag cleanup.
+difficulty: hard
+tags:
+- git-clean
+- combined
+- advanced
+- multi-flag

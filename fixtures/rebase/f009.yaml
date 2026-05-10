@@ -1,23 +1,33 @@
 id: f009
-description: "Three-way: author line with three different values"
+description: 'Three-way: author line with three different values'
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Author: John' > author.txt"
-  - "git add author.txt"
-  - "git commit -m 'Initial author'"
-  - "git checkout -b fullname"
-  - "echo 'Author: John Smith' > author.txt"
-  - "git add author.txt"
-  - "git commit -m 'Use full name'"
-  - "git checkout main"
-  - "echo 'Author: J. Doe' > author.txt"
-  - "git add author.txt"
-  - "git commit -m 'Use initials'"
-  - "git rebase fullname"
-prompt: "Resolve the rebase conflict in author.txt. Base was 'Author: John'. Branch being rebased set 'Author: John Smith'. Main branch set 'Author: J. Doe'. Resolve the conflict. Provide ONLY the resolved file content."
-expected: "Author: J. Doe"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'echo ''Author: John'' > author.txt'
+- git add author.txt
+- git commit -m 'Initial author'
+- git checkout -b fullname
+- 'echo ''Author: John Smith'' > author.txt'
+- git add author.txt
+- git commit -m 'Use full name'
+- git checkout main
+- 'echo ''Author: J. Doe'' > author.txt'
+- git add author.txt
+- git commit -m 'Use initials'
+- git rebase fullname
+prompt: 'Resolve the rebase conflict in author.txt. Base was ''Author: John''. Branch
+  being rebased set ''Author: John Smith''. Main branch set ''Author: J. Doe''. Resolve
+  the conflict. Provide ONLY the resolved file content.'
+expected: 'Author: J. Doe'
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to resolve a three-way author-name conflict in rebase. Evaluates
+  complex merge decisions with rebase polarity.
+difficulty: medium
+tags:
+- rebase
+- three-way
+- author
+- conflict-resolution

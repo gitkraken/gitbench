@@ -1,21 +1,31 @@
 id: f001
 description: Soft reset hides last commit - identify commit hash to recover
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Initial content' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'Second version' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Add second version'"
-  - "echo 'Third version' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Add third version - important changes'"
-  - "git reset --soft HEAD~1"
-prompt: "You ran 'git reset --soft HEAD~1' which moved HEAD back one commit but kept the changes staged. Using git reflog, identify the full commit hash of the commit you just reset away. Provide ONLY the 40-character commit hash."
-expected: "Add third version - important changes"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Initial content' > file.txt
+- git add file.txt
+- git commit -m 'Initial commit'
+- echo 'Second version' > file.txt
+- git add file.txt
+- git commit -m 'Add second version'
+- echo 'Third version' > file.txt
+- git add file.txt
+- git commit -m 'Add third version - important changes'
+- git reset --soft HEAD~1
+prompt: You ran 'git reset --soft HEAD~1' which moved HEAD back one commit but kept
+  the changes staged. Using git reflog, identify the full commit hash of the commit
+  you just reset away. Provide ONLY the 40-character commit hash.
+expected: Add third version - important changes
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to recover a commit lost via soft reset by inspecting reflog.
+  Evaluates basic reflog navigation for recovery.
+difficulty: easy
+tags:
+- reflog
+- soft-reset
+- recovery
+- basic

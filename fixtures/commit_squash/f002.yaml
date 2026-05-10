@@ -1,20 +1,31 @@
 id: f002
 description: Fixup commits - typo fixes should be squashed into original
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Initial content' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'Helllo world' > hello.py"
-  - "git add hello.py"
-  - "git commit -m 'Add hello world program'"
-  - "echo 'Hello world' > hello.py"
-  - "git add hello.py"
-  - "git commit -m 'fixup: Fix typo in hello.py'"
-prompt: "Analyze this git history and identify commits that are fixups of previous commits (like typo corrections). These should be marked as fixup/squash back into the original commit they fix. Do not include the original target commit as one of the commits to squash. Provide the commit hashes or messages of the commits to squash."
-expected: "fixup: Fix typo in hello.py"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Initial content' > file.txt
+- git add file.txt
+- git commit -m 'Initial commit'
+- echo 'Helllo world' > hello.py
+- git add hello.py
+- git commit -m 'Add hello world program'
+- echo 'Hello world' > hello.py
+- git add hello.py
+- 'git commit -m ''fixup: Fix typo in hello.py'''
+prompt: Analyze this git history and identify commits that are fixups of previous
+  commits (like typo corrections). These should be marked as fixup/squash back into
+  the original commit they fix. Do not include the original target commit as one of
+  the commits to squash. Provide the commit hashes or messages of the commits to squash.
+expected: 'fixup: Fix typo in hello.py'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to squash fixup commits (typo fixes) into their original commit.
+  Evaluates recognizing fixup/follow-up patterns.
+difficulty: easy
+tags:
+- commit-squash
+- fixup
+- typo
+- squash

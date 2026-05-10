@@ -1,22 +1,30 @@
 id: f009
-description: "Show merge commit and its parents"
+description: Show merge commit and its parents
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'base' > shared.txt"
-  - "git add shared.txt"
-  - "git commit -m 'Base commit'"
-  - "git checkout -b feature"
-  - "echo 'feature' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Feature work'"
-  - "git checkout main"
-  - "echo 'main change' > shared.txt"
-  - "git add shared.txt"
-  - "git commit -m 'Main line work'"
-  - "git merge feature -m 'Merge feature branch'"
-prompt: "Using git show --merges -s --format=%P, how many parent commits does the merge commit have? Output ONLY the number, nothing else."
-expected: "2"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'base' > shared.txt
+- git add shared.txt
+- git commit -m 'Base commit'
+- git checkout -b feature
+- echo 'feature' > feature.txt
+- git add feature.txt
+- git commit -m 'Feature work'
+- git checkout main
+- echo 'main change' > shared.txt
+- git add shared.txt
+- git commit -m 'Main line work'
+- git merge feature -m 'Merge feature branch'
+prompt: Using git show --merges -s --format=%P, how many parent commits does the merge
+  commit have? Output ONLY the number, nothing else.
+expected: '2'
 scoring:
   type: exact_match
+purpose: Tests ability to inspect a merge commit and identify its parents. Evaluates
+  merge-commit structure comprehension.
+difficulty: medium
+tags:
+- git-show
+- merge-commit
+- parents

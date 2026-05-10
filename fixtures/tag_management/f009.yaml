@@ -1,25 +1,35 @@
 id: f009
-description: "Create a signed tag (simulated with annotated tag)"
+description: Create a signed tag (simulated with annotated tag)
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "git config tag.gpgSign false"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Secure release'"
-prompt: "Create an annotated git tag named 'v1.0-signed' on HEAD with the message 'Signed release'. Since no GPG key is configured, create it as a regular annotated tag. Output ONLY the git command, nothing else."
-expected: "git tag -a v1.0-signed -m 'Signed release'"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- git config tag.gpgSign false
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Secure release'
+prompt: Create an annotated git tag named 'v1.0-signed' on HEAD with the message 'Signed
+  release'. Since no GPG key is configured, create it as a regular annotated tag.
+  Output ONLY the git command, nothing else.
+expected: git tag -a v1.0-signed -m 'Signed release'
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git tag -l"
-        contains: "v1.0-signed"
-      - type: git_output
-        command: "git cat-file -t v1.0-signed"
-        contains: "tag"
-      - type: git_output
-        command: "git tag -n1 v1.0-signed"
-        contains: "Signed release"
+    - type: git_output
+      command: git tag -l
+      contains: v1.0-signed
+    - type: git_output
+      command: git cat-file -t v1.0-signed
+      contains: tag
+    - type: git_output
+      command: git tag -n1 v1.0-signed
+      contains: Signed release
+purpose: Tests ability to create a signed tag (simulated with annotated tag). Evaluates
+  signed-tag creation awareness.
+difficulty: medium
+tags:
+- tag
+- signed
+- gpg
+- annotated

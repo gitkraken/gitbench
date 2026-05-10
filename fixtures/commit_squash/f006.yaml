@@ -1,20 +1,36 @@
 id: f006
 description: Documentation then fixup pattern
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'content' > main.md"
-  - "git add main.md"
-  - "git commit -m 'Add documentation'"
-  - "echo 'content\nmore' > main.md"
-  - "git add main.md"
-  - "git commit -m 'WIP: update docs'"
-  - "echo 'content\nmore\ndone' > main.md"
-  - "git add main.md"
-  - "git commit -m 'WIP: finalize docs'"
-prompt: "Identify the commits that represent incremental work-in-progress updates to documentation and should be marked as squash/fixup. Do not include the documentation anchor commit they would be squashed into. Provide the commit messages."
-expected: "WIP: update docs, WIP: finalize docs"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'content' > main.md
+- git add main.md
+- git commit -m 'Add documentation'
+- 'echo ''content
+
+  more'' > main.md'
+- git add main.md
+- 'git commit -m ''WIP: update docs'''
+- 'echo ''content
+
+  more
+
+  done'' > main.md'
+- git add main.md
+- 'git commit -m ''WIP: finalize docs'''
+prompt: Identify the commits that represent incremental work-in-progress updates to
+  documentation and should be marked as squash/fixup. Do not include the documentation
+  anchor commit they would be squashed into. Provide the commit messages.
+expected: 'WIP: update docs, WIP: finalize docs'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to squash documentation-only fixup commits into the implementation
+  commit. Evaluates recognizing doc-then-fixup patterns.
+difficulty: easy
+tags:
+- commit-squash
+- documentation
+- fixup
+- squash

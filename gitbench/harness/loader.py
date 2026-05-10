@@ -1,6 +1,7 @@
 """Fixture loader for GitBench benchmarks."""
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,8 @@ from gitbench.harness.types import Fixture
 logger = logging.getLogger(__name__)
 
 REQUIRED_FIELDS = ("id", "setup", "prompt", "expected")
+ALLOWED_DIFFICULTIES = {"trivial", "easy", "medium", "hard", "expert"}
+METADATA_FIELDS = ("purpose", "difficulty", "tags")
 
 
 class FixtureLoader:
@@ -112,6 +115,44 @@ class FixtureLoader:
 
         description = data.get("description", "")
 
+        # Parse optional metadata fields
+        purpose = data.get("purpose", "")
+        difficulty = data.get("difficulty", "")
+        tags = data.get("tags", [])
+
+        # Soft validation: warn if metadata fields are missing
+        missing = [f for f in METADATA_FIELDS if f not in data]
+        if missing:
+            logger.warning(
+                "Fixture '%s' in %s is missing metadata fields: %s",
+                fixture_id, source, ", ".join(missing),
+            )
+
+        # Validate difficulty is in allowed enum
+        if difficulty and difficulty not in ALLOWED_DIFFICULTIES:
+            logger.warning(
+                "Fixture '%s': invalid difficulty '%s' (allowed: %s). Treating as empty.",
+                fixture_id, difficulty, ", ".join(sorted(ALLOWED_DIFFICULTIES)),
+            )
+            difficulty = ""
+
+        # Validate tags is a list of strings
+        if not isinstance(tags, list):
+            logger.warning(
+                "Fixture '%s': 'tags' must be a list of strings, got %s",
+                fixture_id, type(tags).__name__,
+            )
+            tags = []
+        else:
+            for t in tags:
+                if not isinstance(t, str):
+                    logger.warning(
+                        "Fixture '%s': each tag must be a string, got %s",
+                        fixture_id, type(t).__name__,
+                    )
+                    tags = [str(t) for t in tags]
+                    break
+
         return Fixture(
             id=fixture_id,
             description=description,
@@ -119,6 +160,9 @@ class FixtureLoader:
             prompt=prompt,
             expected=expected,
             scoring=scoring,
+            purpose=purpose,
+            difficulty=difficulty,
+            tags=tags,
         )
 
     def load_dir(self, dirpath: str) -> list[Fixture]:

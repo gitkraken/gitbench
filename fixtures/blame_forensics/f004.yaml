@@ -1,20 +1,43 @@
 id: f004
-description: "Race condition introduced by removing lock"
+description: Race condition introduced by removing lock
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'lock.acquire()\nresult = shared_resource.update(data)\nlock.release()' > src/concurrent.py"
-  - "git add src/concurrent.py"
-  - "git commit -m 'Thread-safe resource update'"
-  - "echo 'lock.acquire()\nresult = shared_resource.update(data)\nlock.release()\nlog(result)' > src/concurrent.py"
-  - "git add src/concurrent.py"
-  - "git commit -m 'Add logging to updates'"
-  - "echo 'result = shared_resource.update(data)\nlog(result)' > src/concurrent.py"
-  - "git add src/concurrent.py"
-  - "git commit -m 'Remove lock for better performance'"
-prompt: "There is a race condition in src/concurrent.py. Look at git log and git blame. Which commit removed the locking mechanism? Output ONLY the commit message of that commit, nothing else."
-expected: "Remove lock for better performance"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- 'echo ''lock.acquire()
+
+  result = shared_resource.update(data)
+
+  lock.release()'' > src/concurrent.py'
+- git add src/concurrent.py
+- git commit -m 'Thread-safe resource update'
+- 'echo ''lock.acquire()
+
+  result = shared_resource.update(data)
+
+  lock.release()
+
+  log(result)'' > src/concurrent.py'
+- git add src/concurrent.py
+- git commit -m 'Add logging to updates'
+- 'echo ''result = shared_resource.update(data)
+
+  log(result)'' > src/concurrent.py'
+- git add src/concurrent.py
+- git commit -m 'Remove lock for better performance'
+prompt: There is a race condition in src/concurrent.py. Look at git log and git blame.
+  Which commit removed the locking mechanism? Output ONLY the commit message of that
+  commit, nothing else.
+expected: Remove lock for better performance
 scoring:
   type: exact_match
+purpose: Tests ability to identify which commit removed thread-safety locking, introducing
+  a race condition. Evaluates concurrent programming awareness combined with git forensics.
+difficulty: easy
+tags:
+- concurrency
+- race-condition
+- regression
+- git-log
+- git-blame

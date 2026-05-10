@@ -1,6 +1,6 @@
 """Core types for the GitBench harness."""
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Any
 
 
@@ -31,6 +31,9 @@ class Fixture:
     prompt: str
     expected: str
     scoring: dict[str, Any]  # Contains 'type' and 'threshold'
+    purpose: str = ""       # What Git skill this tests and why it matters
+    difficulty: str = ""    # One of: trivial, easy, medium, hard, expert
+    tags: list[str] = field(default_factory=list)  # Searchable keywords
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
@@ -57,11 +60,19 @@ class Score:
     total_tokens: int | None = None
     cost_usd: float | None = None
     provider_cost_usd: float | None = None
+    purpose: str | None = None
+    difficulty: str | None = None
+    tags: list[str] | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         result = asdict(self)
-        for field in ("reasoning_level", "input_tokens", "output_tokens", "total_tokens", "cost_usd", "provider_cost_usd"):
+        none_fields = (
+            "reasoning_level", "input_tokens", "output_tokens",
+            "total_tokens", "cost_usd", "provider_cost_usd",
+            "purpose", "difficulty", "tags",
+        )
+        for field in none_fields:
             if result.get(field) is None:
                 del result[field]
         return result

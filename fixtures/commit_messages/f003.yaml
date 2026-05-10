@@ -1,15 +1,23 @@
 id: f003
-description: "File renamed"
+description: File renamed
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'old content' > oldname.txt"
-  - "git add oldname.txt"
-  - "git commit -m 'Initial commit'"
-  - "git mv oldname.txt newname.txt"
-prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Rename')."
-expected: "Rename oldname.txt to newname.txt"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'old content' > oldname.txt
+- git add oldname.txt
+- git commit -m 'Initial commit'
+- git mv oldname.txt newname.txt
+prompt: Generate a concise commit message (max 50 characters) describing the changes
+  in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Rename').
+expected: Rename oldname.txt to newname.txt
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to generate a commit message for a file rename. Evaluates recognizing
+  rename operations in diffs.
+difficulty: easy
+tags:
+- commit-message
+- rename
+- file-operations

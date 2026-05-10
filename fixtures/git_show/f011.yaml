@@ -1,16 +1,24 @@
 id: f011
-description: "Show binary file change in commit"
+description: Show binary file change in commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf '\x89PNG\r\n\x1a\nbinary' > image.png"
-  - "git add image.png"
-  - "git commit -m 'Add binary image'"
-  - "printf '\x89PNG\r\n\x1a\nupdated' > image.png"
-  - "git add image.png"
-  - "git commit -m 'Update binary image'"
-prompt: "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else."
-expected: "image.png"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- "printf '\x89PNG\r\n\x1A\nbinary' > image.png"
+- git add image.png
+- git commit -m 'Add binary image'
+- "printf '\x89PNG\r\n\x1A\nupdated' > image.png"
+- git add image.png
+- git commit -m 'Update binary image'
+prompt: Using git show --stat, which file was changed in the 'Update binary image'
+  commit? Output ONLY the filename, nothing else.
+expected: image.png
 scoring:
   type: exact_match
+purpose: Tests ability to inspect a binary file change in a commit. Evaluates binary-change
+  handling in commit display.
+difficulty: medium
+tags:
+- git-show
+- binary
+- file-change

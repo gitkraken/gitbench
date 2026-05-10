@@ -1,23 +1,33 @@
 id: f005
 description: Rebase squashes commits - find original commits before squash
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Set version v1'"
-  - "git checkout -b develop"
-  - "echo 'feat-a' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Add feature A'"
-  - "echo 'feat-b' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Add feature B - user dashboard'"
-  - "git checkout main"
-  - "git rebase develop"
-prompt: "After rebasing 'develop' onto 'main', you lost the intermediate commits 'Add feature A' and 'Add feature B - user dashboard'. They were squashed. Use git reflog to find the original commit hash of the commit with 'user dashboard' in the message."
-expected: "Add feature B - user dashboard"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1' > version.txt
+- git add version.txt
+- git commit -m 'Set version v1'
+- git checkout -b develop
+- echo 'feat-a' > feature.txt
+- git add feature.txt
+- git commit -m 'Add feature A'
+- echo 'feat-b' > feature.txt
+- git add feature.txt
+- git commit -m 'Add feature B - user dashboard'
+- git checkout main
+- git rebase develop
+prompt: After rebasing 'develop' onto 'main', you lost the intermediate commits 'Add
+  feature A' and 'Add feature B - user dashboard'. They were squashed. Use git reflog
+  to find the original commit hash of the commit with 'user dashboard' in the message.
+expected: Add feature B - user dashboard
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to find original commits before a squash rebase using reflog.
+  Evaluates reflog for pre-rebase state recovery.
+difficulty: hard
+tags:
+- reflog
+- rebase
+- squash
+- recovery

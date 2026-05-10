@@ -1,26 +1,44 @@
 id: f004
-description: Linear history with bad commit near beginning - model identifies early commit
+description: Linear history with bad commit near beginning - model identifies early
+  commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo '#!/bin/bash' > test.sh"
-  - "echo 'grep \"TODO\" README.md' >> test.sh"
-  - "chmod +x test.sh"
-  - "echo '# Project\n\nTODO: document setup' > README.md"
-  - "git add test.sh README.md"
-  - "git commit -m 'Initial commit'"
-  - "echo '# Project' > README.md"
-  - "git add README.md"
-  - "git commit -m 'remove setup todo'"
-  - "echo '## Features' >> README.md"
-  - "git add README.md"
-  - "git commit -m 'add features section'"
-  - "echo '## Installation' >> README.md"
-  - "git add README.md"
-  - "git commit -m 'add installation section'"
-prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "remove setup todo"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo '#!/bin/bash' > test.sh
+- echo 'grep "TODO" README.md' >> test.sh
+- chmod +x test.sh
+- 'echo ''# Project
+
+
+  TODO: document setup'' > README.md'
+- git add test.sh README.md
+- git commit -m 'Initial commit'
+- echo '# Project' > README.md
+- git add README.md
+- git commit -m 'remove setup todo'
+- echo '## Features' >> README.md
+- git add README.md
+- git commit -m 'add features section'
+- echo '## Installation' >> README.md
+- git add README.md
+- git commit -m 'add installation section'
+prompt: 'You are debugging a git repository. The following commit history has one
+  bad commit that broke the build. Identify the bad commit hash (first 7 characters)
+  or commit subject line that introduced the bug. Use the git log and test output
+  to determine which commit is bad.
+
+
+  Your answer should be the commit hash (e.g., ''abc1234'') or the commit subject
+  line.'
+expected: remove setup todo
 scoring:
   type: bisect_regression
   threshold: 0.5
+purpose: Tests ability to identify an early commit as bad in a linear history. Evaluates
+  bisect with the bug near the beginning.
+difficulty: medium
+tags:
+- git-bisect
+- linear-history
+- early-commit

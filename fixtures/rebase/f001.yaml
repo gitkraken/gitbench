@@ -1,23 +1,33 @@
 id: f001
-description: "Single-line greeting conflict"
+description: Single-line greeting conflict
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello, World!' > greeting.txt"
-  - "git add greeting.txt"
-  - "git commit -m 'Initial greeting'"
-  - "git checkout -b feature"
-  - "echo 'Hello, World!!!' > greeting.txt"
-  - "git add greeting.txt"
-  - "git commit -m 'Add excitement'"
-  - "git checkout main"
-  - "echo 'Hello, Planet!' > greeting.txt"
-  - "git add greeting.txt"
-  - "git commit -m 'Update greeting'"
-  - "git rebase feature"
-prompt: "Resolve the rebase conflict in greeting.txt. The base version was 'Hello, World!'. Branch being rebased changed it to 'Hello, World!!!'. Main branch changed it to 'Hello, Planet!'. Provide ONLY the resolved file content, nothing else."
-expected: "Hello, Planet!!!"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello, World!' > greeting.txt
+- git add greeting.txt
+- git commit -m 'Initial greeting'
+- git checkout -b feature
+- echo 'Hello, World!!!' > greeting.txt
+- git add greeting.txt
+- git commit -m 'Add excitement'
+- git checkout main
+- echo 'Hello, Planet!' > greeting.txt
+- git add greeting.txt
+- git commit -m 'Update greeting'
+- git rebase feature
+prompt: Resolve the rebase conflict in greeting.txt. The base version was 'Hello,
+  World!'. Branch being rebased changed it to 'Hello, World!!!'. Main branch changed
+  it to 'Hello, Planet!'. Provide ONLY the resolved file content, nothing else.
+expected: Hello, Planet!!!
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to resolve a simple single-line rebase conflict. Evaluates
+  basic rebase conflict resolution with correct polarity understanding.
+difficulty: easy
+tags:
+- rebase
+- single-line
+- conflict-resolution
+- basic

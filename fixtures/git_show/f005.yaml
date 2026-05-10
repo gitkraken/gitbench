@@ -1,17 +1,26 @@
 id: f005
-description: "Show file content at a specific revision"
+description: Show file content at a specific revision
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'version one' > doc.txt"
-  - "git add doc.txt"
-  - "git commit -m 'First version'"
-  - "FIRST=$(git rev-parse HEAD)"
-  - "echo 'version two' > doc.txt"
-  - "git add doc.txt"
-  - "git commit -m 'Second version'"
-prompt: "Using git show HEAD~1:doc.txt, what was the content of doc.txt in the first commit? Output ONLY the file content, nothing else."
-expected: "version one"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'version one' > doc.txt
+- git add doc.txt
+- git commit -m 'First version'
+- FIRST=$(git rev-parse HEAD)
+- echo 'version two' > doc.txt
+- git add doc.txt
+- git commit -m 'Second version'
+prompt: Using git show HEAD~1:doc.txt, what was the content of doc.txt in the first
+  commit? Output ONLY the file content, nothing else.
+expected: version one
 scoring:
   type: exact_match
+purpose: Tests ability to show file content at a specific revision. Evaluates historical-file-content
+  retrieval.
+difficulty: medium
+tags:
+- git-show
+- file-content
+- revision
+- history

@@ -1,20 +1,28 @@
 id: f002
-description: "Show which files changed in a specific commit"
+description: Show which files changed in a specific commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'alpha' > a.txt"
-  - "echo 'beta' > b.txt"
-  - "git add a.txt b.txt"
-  - "git commit -m 'Add both files'"
-  - "echo 'changed' > a.txt"
-  - "git add a.txt"
-  - "git commit -m 'Modify only a.txt'"
-  - "echo 'changed' >> b.txt"
-  - "git add b.txt"
-  - "git commit -m 'Modify only b.txt'"
-prompt: "Using git show --stat, which file was modified in the commit with message 'Modify only a.txt'? Output ONLY the filename, nothing else."
-expected: "a.txt"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'alpha' > a.txt
+- echo 'beta' > b.txt
+- git add a.txt b.txt
+- git commit -m 'Add both files'
+- echo 'changed' > a.txt
+- git add a.txt
+- git commit -m 'Modify only a.txt'
+- echo 'changed' >> b.txt
+- git add b.txt
+- git commit -m 'Modify only b.txt'
+prompt: Using git show --stat, which file was modified in the commit with message
+  'Modify only a.txt'? Output ONLY the filename, nothing else.
+expected: a.txt
 scoring:
   type: exact_match
+purpose: Tests ability to identify which files changed in a specific commit. Evaluates
+  file-list extraction from git show.
+difficulty: easy
+tags:
+- git-show
+- files-changed
+- file-list

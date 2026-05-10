@@ -1,16 +1,25 @@
 id: f008
-description: "Show commit full hash"
+description: Show commit full hash
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'initial' > seed.txt"
-  - "git add seed.txt"
-  - "git commit -m 'Seed commit'"
-  - "echo 'second' > seed.txt"
-  - "git add seed.txt"
-  - "git commit -m 'Second commit'"
-prompt: "Using git show -s --format=%H, what is the full SHA hash of the commit with message 'Second commit'? Output ONLY the full hash, nothing else."
-expected: "Second commit"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'initial' > seed.txt
+- git add seed.txt
+- git commit -m 'Seed commit'
+- echo 'second' > seed.txt
+- git add seed.txt
+- git commit -m 'Second commit'
+prompt: Using git show -s --format=%H, what is the full SHA hash of the commit with
+  message 'Second commit'? Output ONLY the full hash, nothing else.
+expected: Second commit
 scoring:
   type: exact_match
+purpose: Tests ability to extract full commit hash from git show. Evaluates SHA-extraction
+  from commit display.
+difficulty: easy
+tags:
+- git-show
+- full-hash
+- sha
+- metadata

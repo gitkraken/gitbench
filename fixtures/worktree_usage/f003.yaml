@@ -1,26 +1,35 @@
 id: f003
-description: "Delete worktree after use"
+description: Delete worktree after use
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > hello.txt"
-  - "git add hello.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b feature"
-  - "echo 'Feature' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Add feature'"
-  - "git checkout main"
-  - "git worktree add ../feature-wt feature"
-prompt: "Delete the worktree at '../feature-wt'. Output ONLY the git command to run, nothing else."
-expected: "git worktree remove ../feature-wt"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > hello.txt
+- git add hello.txt
+- git commit -m 'Initial commit'
+- git checkout -b feature
+- echo 'Feature' > feature.txt
+- git add feature.txt
+- git commit -m 'Add feature'
+- git checkout main
+- git worktree add ../feature-wt feature
+prompt: Delete the worktree at '../feature-wt'. Output ONLY the git command to run,
+  nothing else.
+expected: git worktree remove ../feature-wt
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git worktree list"
-        not_contains: "feature-wt"
-      - type: dir_not_exists
-        path: "../feature-wt"
+    - type: git_output
+      command: git worktree list
+      not_contains: feature-wt
+    - type: dir_not_exists
+      path: ../feature-wt
+purpose: Tests ability to delete a worktree after use. Evaluates worktree-cleanup
+  lifecycle.
+difficulty: easy
+tags:
+- worktree
+- delete
+- cleanup
+- lifecycle

@@ -1,27 +1,35 @@
 id: f009
-description: "Clean untracked files from a subdirectory only"
+description: Clean untracked files from a subdirectory only
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p frontend/dist backend/dist"
-  - "echo 'index' > frontend/index.html"
-  - "git add frontend backend"
-  - "git commit -m 'Initial commit'"
-  - "echo 'bundle' > frontend/dist/bundle.js"
-  - "echo 'binary' > backend/dist/app"
-  - "echo 'root' > scratch.txt"
-prompt: "Clean only the frontend/dist directory of untracked files. Output ONLY the git command, nothing else."
-expected: "git clean -f frontend/dist/"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p frontend/dist backend/dist
+- echo 'index' > frontend/index.html
+- git add frontend backend
+- git commit -m 'Initial commit'
+- echo 'bundle' > frontend/dist/bundle.js
+- echo 'binary' > backend/dist/app
+- echo 'root' > scratch.txt
+prompt: Clean only the frontend/dist directory of untracked files. Output ONLY the
+  git command, nothing else.
+expected: git clean -f frontend/dist/
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_not_exists
-        path: "frontend/dist/bundle.js"
-      - type: file_exists
-        path: "backend/dist/app"
-      - type: file_exists
-        path: "scratch.txt"
-      - type: file_exists
-        path: "frontend/index.html"
+    - type: file_not_exists
+      path: frontend/dist/bundle.js
+    - type: file_exists
+      path: backend/dist/app
+    - type: file_exists
+      path: scratch.txt
+    - type: file_exists
+      path: frontend/index.html
+purpose: Tests ability to clean untracked files from a subdirectory only. Evaluates
+  path-limited cleanup scoping.
+difficulty: easy
+tags:
+- git-clean
+- subdirectory
+- scoped

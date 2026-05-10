@@ -1,21 +1,31 @@
 id: f002
 description: Hard reset loses commits - find and recover the lost commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'First line' > notes.txt"
-  - "git add notes.txt"
-  - "git commit -m 'First note'"
-  - "echo 'Second line' >> notes.txt"
-  - "git add notes.txt"
-  - "git commit -m 'Second note'"
-  - "echo 'Third line' >> notes.txt"
-  - "git add notes.txt"
-  - "git commit -m 'Third note - contains bug fix'"
-  - "git reset --hard HEAD~1"
-prompt: "You accidentally ran 'git reset --hard HEAD~1' and lost the last commit. Looking at git reflog, what is the commit hash you need to recover to get back to 'Third note - contains bug fix'?"
-expected: "Third note - contains bug fix"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'First line' > notes.txt
+- git add notes.txt
+- git commit -m 'First note'
+- echo 'Second line' >> notes.txt
+- git add notes.txt
+- git commit -m 'Second note'
+- echo 'Third line' >> notes.txt
+- git add notes.txt
+- git commit -m 'Third note - contains bug fix'
+- git reset --hard HEAD~1
+prompt: You accidentally ran 'git reset --hard HEAD~1' and lost the last commit. Looking
+  at git reflog, what is the commit hash you need to recover to get back to 'Third
+  note - contains bug fix'?
+expected: Third note - contains bug fix
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to recover commits lost via hard reset using reflog. Evaluates
+  reflog-based recovery after destructive operations.
+difficulty: medium
+tags:
+- reflog
+- hard-reset
+- recovery
+- lost-commits

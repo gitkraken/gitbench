@@ -1,23 +1,33 @@
 id: f003
-description: "No branches to delete"
+description: No branches to delete
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > greeting.txt"
-  - "git add greeting.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b feature-a"
-  - "echo 'Feature A' > a.txt"
-  - "git add a.txt"
-  - "git commit -m 'Feature A'"
-  - "git checkout main"
-  - "git checkout -b feature-b"
-  - "echo 'Feature B' > b.txt"
-  - "git add b.txt"
-  - "git commit -m 'Feature B'"
-  - "git checkout main"
-prompt: "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'."
-expected: "none"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > greeting.txt
+- git add greeting.txt
+- git commit -m 'Initial commit'
+- git checkout -b feature-a
+- echo 'Feature A' > a.txt
+- git add a.txt
+- git commit -m 'Feature A'
+- git checkout main
+- git checkout -b feature-b
+- echo 'Feature B' > b.txt
+- git add b.txt
+- git commit -m 'Feature B'
+- git checkout main
+prompt: Look at the branches in this repository. Which branches should be deleted
+  because they are fully merged into main? List ONLY the branch names to delete, one
+  per line. If none, respond with 'none'.
+expected: none
 scoring:
   type: exact_match
+purpose: Tests ability to recognize when no branches need deletion (edge case). Evaluates
+  handling of the empty-result scenario in branch cleanup.
+difficulty: easy
+tags:
+- branch-management
+- edge-case
+- empty-result
+- cleanup

@@ -1,23 +1,35 @@
 id: f001
 description: WIP commits - two consecutive WIP commits should be squashed
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo '# Project' > README.md"
-  - "git add README.md"
-  - "git commit -m 'Initial commit'"
-  - "echo 'print(1)' > main.py"
-  - "git add main.py"
-  - "git commit -m 'WIP: add main.py'"
-  - "echo 'print(2)' >> main.py"
-  - "git add main.py"
-  - "git commit -m 'WIP: continue work'"
-  - "echo 'print(3)' >> main.py"
-  - "git add main.py"
-  - "git commit -m 'Complete feature'"
-prompt: "Analyze this git history and identify which consecutive commits should be marked as squash/fixup in an interactive rebase to create a cleaner history. Focus on WIP (Work In Progress) commits that represent incomplete work. Do not include the base/anchor commit they would be squashed into. Provide the commit hashes or commit messages in the order they should be combined."
-expected: "WIP: add main.py, WIP: continue work"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo '# Project' > README.md
+- git add README.md
+- git commit -m 'Initial commit'
+- echo 'print(1)' > main.py
+- git add main.py
+- 'git commit -m ''WIP: add main.py'''
+- echo 'print(2)' >> main.py
+- git add main.py
+- 'git commit -m ''WIP: continue work'''
+- echo 'print(3)' >> main.py
+- git add main.py
+- git commit -m 'Complete feature'
+prompt: Analyze this git history and identify which consecutive commits should be
+  marked as squash/fixup in an interactive rebase to create a cleaner history. Focus
+  on WIP (Work In Progress) commits that represent incomplete work. Do not include
+  the base/anchor commit they would be squashed into. Provide the commit hashes or
+  commit messages in the order they should be combined.
+expected: 'WIP: add main.py, WIP: continue work'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to identify that two consecutive WIP commits should be squashed
+  into one meaningful commit. Evaluates recognizing work-in-progress patterns.
+difficulty: easy
+tags:
+- commit-squash
+- wip
+- squash
+- cleanup

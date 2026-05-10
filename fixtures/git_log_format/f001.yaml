@@ -1,25 +1,34 @@
 id: f001
-description: "Count commits matching a grep pattern"
+description: Count commits matching a grep pattern
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'hello' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'world' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Fix: update greeting message'"
-  - "echo 'foo' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Add feature bar'"
-  - "echo 'baz' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Fix: resolve issue with greeting'"
-  - "echo 'qux' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Update documentation'"
-prompt: "How many commits in this repository have 'Fix' in their commit message? Output ONLY the number, nothing else."
-expected: "2"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'hello' > file.txt
+- git add file.txt
+- git commit -m 'Initial commit'
+- echo 'world' > file.txt
+- git add file.txt
+- 'git commit -m ''Fix: update greeting message'''
+- echo 'foo' > file.txt
+- git add file.txt
+- git commit -m 'Add feature bar'
+- echo 'baz' > file.txt
+- git add file.txt
+- 'git commit -m ''Fix: resolve issue with greeting'''
+- echo 'qux' > file.txt
+- git add file.txt
+- git commit -m 'Update documentation'
+prompt: How many commits in this repository have 'Fix' in their commit message? Output
+  ONLY the number, nothing else.
+expected: '2'
 scoring:
   type: exact_match
+purpose: Tests ability to count commits matching a grep pattern in git log. Evaluates
+  log filtering and counting.
+difficulty: easy
+tags:
+- git-log
+- grep
+- count
+- filter

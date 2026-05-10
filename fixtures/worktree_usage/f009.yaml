@@ -1,25 +1,35 @@
 id: f009
-description: "Repair broken worktree"
+description: Repair broken worktree
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > hello.txt"
-  - "git add hello.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b feature"
-  - "echo 'Feature' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Add feature'"
-  - "git checkout main"
-  - "git worktree add ../feature-wt feature"
-  - "rm -rf ../feature-wt"
-prompt: "The worktree at '../feature-wt' was deleted without using 'git worktree remove'. Run the command to repair/prune the stale worktree reference. Output ONLY the git command, nothing else."
-expected: "git worktree prune"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > hello.txt
+- git add hello.txt
+- git commit -m 'Initial commit'
+- git checkout -b feature
+- echo 'Feature' > feature.txt
+- git add feature.txt
+- git commit -m 'Add feature'
+- git checkout main
+- git worktree add ../feature-wt feature
+- rm -rf ../feature-wt
+prompt: The worktree at '../feature-wt' was deleted without using 'git worktree remove'.
+  Run the command to repair/prune the stale worktree reference. Output ONLY the git
+  command, nothing else.
+expected: git worktree prune
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git worktree list"
-        not_contains: "feature-wt"
+    - type: git_output
+      command: git worktree list
+      not_contains: feature-wt
+purpose: Tests ability to repair a broken worktree with git worktree repair. Evaluates
+  worktree-recovery knowledge.
+difficulty: hard
+tags:
+- worktree
+- repair
+- broken
+- recovery

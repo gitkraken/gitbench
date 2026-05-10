@@ -1,23 +1,34 @@
 id: f011
 description: Multiple separate feature development commits
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "touch base.txt"
-  - "git add base.txt"
-  - "git commit -m 'Base commit'"
-  - "echo 'feat1a' > feature1.txt"
-  - "git add feature1.txt"
-  - "git commit -m 'WIP: start feature 1'"
-  - "echo 'feat1b' >> feature1.txt"
-  - "git add feature1.txt"
-  - "git commit -m 'WIP: continue feature 1'"
-  - "echo 'feat2a' > feature2.txt"
-  - "git add feature2.txt"
-  - "git commit -m 'Start feature 2'"
-prompt: "The second feature was done cleanly in one commit, but feature 1 has WIP commits that should be marked as squash/fixup. Identify only the WIP commits for feature 1 that should be combined. Do not include the clean feature 2 commit. Provide the commit messages."
-expected: "WIP: start feature 1, WIP: continue feature 1"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- touch base.txt
+- git add base.txt
+- git commit -m 'Base commit'
+- echo 'feat1a' > feature1.txt
+- git add feature1.txt
+- 'git commit -m ''WIP: start feature 1'''
+- echo 'feat1b' >> feature1.txt
+- git add feature1.txt
+- 'git commit -m ''WIP: continue feature 1'''
+- echo 'feat2a' > feature2.txt
+- git add feature2.txt
+- git commit -m 'Start feature 2'
+prompt: The second feature was done cleanly in one commit, but feature 1 has WIP commits
+  that should be marked as squash/fixup. Identify only the WIP commits for feature
+  1 that should be combined. Do not include the clean feature 2 commit. Provide the
+  commit messages.
+expected: 'WIP: start feature 1, WIP: continue feature 1'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to squash multiple separate feature-development commits into
+  logical groups. Evaluates feature-level commit organization.
+difficulty: hard
+tags:
+- commit-squash
+- feature-development
+- grouping
+- squash

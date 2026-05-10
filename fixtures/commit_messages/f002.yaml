@@ -1,15 +1,24 @@
 id: f002
-description: "Multiple files added"
+description: Multiple files added
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'config' > config.py"
-  - "echo 'main' > main.py"
-  - "echo 'utils' > utils.py"
-  - "git add config.py main.py utils.py"
-prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update')."
-expected: "Add initial project files"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'config' > config.py
+- echo 'main' > main.py
+- echo 'utils' > utils.py
+- git add config.py main.py utils.py
+prompt: Generate a concise commit message (max 50 characters) describing the changes
+  in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').
+expected: Add initial project files
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to generate a commit message summarizing multiple new files
+  (config.py, main.py, utils.py). Evaluates grouping related file additions.
+difficulty: easy
+tags:
+- commit-message
+- multi-file
+- add
+- summarization

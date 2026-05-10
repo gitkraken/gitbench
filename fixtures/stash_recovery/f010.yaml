@@ -1,17 +1,26 @@
 id: f010
 description: Stash in subdirectory
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Initial' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Initial'"
-  - "mkdir subdir"
-  - "echo 'Subdir work' > subdir/file.txt"
-  - "git stash push -u -m 'subdir-work'"
-prompt: "You stashed work in a subdirectory with message 'subdir-work'. Which stash entry contains this work? Provide the stash reference."
-expected: "stash@{0}"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Initial' > file.txt
+- git add file.txt
+- git commit -m 'Initial'
+- mkdir subdir
+- echo 'Subdir work' > subdir/file.txt
+- git stash push -u -m 'subdir-work'
+prompt: You stashed work in a subdirectory with message 'subdir-work'. Which stash
+  entry contains this work? Provide the stash reference.
+expected: stash@{0}
 scoring:
   type: stash_recovery
   threshold: 0.5
+purpose: Tests ability to locate a stash created in a subdirectory context. Evaluates
+  path-aware stash identification.
+difficulty: medium
+tags:
+- stash
+- subdirectory
+- path-aware
+- recovery

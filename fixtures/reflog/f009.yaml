@@ -1,21 +1,31 @@
 id: f009
 description: Cherry-pick commit then reset - recover the cherry-picked commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'feature: none' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Initial feature state'"
-  - "git checkout -b bugfix"
-  - "echo 'feature: login' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Implement login feature - urgent'"
-  - "git checkout main"
-  - "git cherry-pick bugfix"
-  - "git reset --hard HEAD~1"
-prompt: "You cherry-picked a commit from 'bugfix' branch but then accidentally reset it away. The commit message was 'Implement login feature - urgent'. Use git reflog to recover this commit and provide the command needed."
-expected: "Implement login feature - urgent"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'echo ''feature: none'' > feature.txt'
+- git add feature.txt
+- git commit -m 'Initial feature state'
+- git checkout -b bugfix
+- 'echo ''feature: login'' > feature.txt'
+- git add feature.txt
+- git commit -m 'Implement login feature - urgent'
+- git checkout main
+- git cherry-pick bugfix
+- git reset --hard HEAD~1
+prompt: You cherry-picked a commit from 'bugfix' branch but then accidentally reset
+  it away. The commit message was 'Implement login feature - urgent'. Use git reflog
+  to recover this commit and provide the command needed.
+expected: Implement login feature - urgent
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to recover a cherry-picked commit after reset using reflog.
+  Evaluates reflog for cherry-pick-then-reset patterns.
+difficulty: medium
+tags:
+- reflog
+- cherry-pick
+- reset
+- recovery

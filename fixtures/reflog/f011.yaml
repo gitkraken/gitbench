@@ -1,24 +1,34 @@
 id: f011
 description: Rebase with multiple branches - find lost commit from feature branch
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1.0' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Release v1.0'"
-  - "git checkout -b feature-x"
-  - "echo 'export A' > env.sh"
-  - "git add env.sh"
-  - "git commit -m 'Add env export A'"
-  - "echo 'export B' >> env.sh"
-  - "git add env.sh"
-  - "git commit -m 'Add env export B - enables feature X'"
-  - "git checkout main"
-  - "git merge feature-x"
-  - "git branch -D feature-x"
-prompt: "After merging and deleting 'feature-x', you need to recover the commit 'Add env export B - enables feature X' which was the last commit on that branch. Use git reflog to identify what git command to run."
-expected: "Add env export B - enables feature X"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1.0' > version.txt
+- git add version.txt
+- git commit -m 'Release v1.0'
+- git checkout -b feature-x
+- echo 'export A' > env.sh
+- git add env.sh
+- git commit -m 'Add env export A'
+- echo 'export B' >> env.sh
+- git add env.sh
+- git commit -m 'Add env export B - enables feature X'
+- git checkout main
+- git merge feature-x
+- git branch -D feature-x
+prompt: After merging and deleting 'feature-x', you need to recover the commit 'Add
+  env export B - enables feature X' which was the last commit on that branch. Use
+  git reflog to identify what git command to run.
+expected: Add env export B - enables feature X
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to find lost commits from a feature branch after rebase with
+  multiple branches. Evaluates multi-branch reflog analysis.
+difficulty: expert
+tags:
+- reflog
+- multi-branch
+- rebase
+- recovery

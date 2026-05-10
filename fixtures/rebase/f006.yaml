@@ -1,26 +1,34 @@
 id: f006
-description: "Multi-line config block conflict"
+description: Multi-line config block conflict
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf 'server:\n  port: 8080\n  host: localhost' > config.yaml"
-  - "git add config.yaml"
-  - "git commit -m 'Initial config'"
-  - "git checkout -b prod"
-  - "printf 'server:\n  port: 443\n  host: localhost' > config.yaml"
-  - "git add config.yaml"
-  - "git commit -m 'Use HTTPS port'"
-  - "git checkout main"
-  - "printf 'server:\n  port: 8080\n  host: 0.0.0.0' > config.yaml"
-  - "git add config.yaml"
-  - "git commit -m 'Listen on all interfaces'"
-  - "git rebase prod"
-prompt: "Resolve the rebase conflict in config.yaml. The base had port: 8080 and host: localhost. Branch being rebased changed port to 443 (HTTPS) keeping localhost. Main branch kept port 8080 but changed host to 0.0.0.0. Provide ONLY the resolved file content."
-expected: |
-  server:
-    port: 443
-    host: 0.0.0.0
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- "printf 'server:\n  port: 8080\n  host: localhost' > config.yaml"
+- git add config.yaml
+- git commit -m 'Initial config'
+- git checkout -b prod
+- "printf 'server:\n  port: 443\n  host: localhost' > config.yaml"
+- git add config.yaml
+- git commit -m 'Use HTTPS port'
+- git checkout main
+- "printf 'server:\n  port: 8080\n  host: 0.0.0.0' > config.yaml"
+- git add config.yaml
+- git commit -m 'Listen on all interfaces'
+- git rebase prod
+prompt: 'Resolve the rebase conflict in config.yaml. The base had port: 8080 and host:
+  localhost. Branch being rebased changed port to 443 (HTTPS) keeping localhost. Main
+  branch kept port 8080 but changed host to 0.0.0.0. Provide ONLY the resolved file
+  content.'
+expected: "server:\n  port: 443\n  host: 0.0.0.0\n"
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to resolve a config block conflict during rebase. Evaluates
+  infrastructure-merge judgment with rebase polarity.
+difficulty: medium
+tags:
+- rebase
+- config
+- infrastructure
+- conflict-resolution

@@ -1,33 +1,41 @@
 id: f004
-description: "Count commits by a specific author"
+description: Count commits by a specific author
 setup:
-  - "git init"
-  - "git config user.email 'alice@example.com'"
-  - "git config user.name 'Alice'"
-  - "echo 'a' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Alice commit 1'"
-  - "git config user.email 'bob@example.com'"
-  - "git config user.name 'Bob'"
-  - "echo 'b' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Bob commit 1'"
-  - "git config user.email 'alice@example.com'"
-  - "git config user.name 'Alice'"
-  - "echo 'c' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Alice commit 2'"
-  - "git config user.email 'alice@example.com'"
-  - "git config user.name 'Alice'"
-  - "echo 'd' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Alice commit 3'"
-  - "git config user.email 'bob@example.com'"
-  - "git config user.name 'Bob'"
-  - "echo 'e' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Bob commit 2'"
-prompt: "How many commits were authored by Alice? Output ONLY the number, nothing else."
-expected: "3"
+- git init
+- git config user.email 'alice@example.com'
+- git config user.name 'Alice'
+- echo 'a' > file.txt
+- git add file.txt
+- git commit -m 'Alice commit 1'
+- git config user.email 'bob@example.com'
+- git config user.name 'Bob'
+- echo 'b' > file.txt
+- git add file.txt
+- git commit -m 'Bob commit 1'
+- git config user.email 'alice@example.com'
+- git config user.name 'Alice'
+- echo 'c' > file.txt
+- git add file.txt
+- git commit -m 'Alice commit 2'
+- git config user.email 'alice@example.com'
+- git config user.name 'Alice'
+- echo 'd' > file.txt
+- git add file.txt
+- git commit -m 'Alice commit 3'
+- git config user.email 'bob@example.com'
+- git config user.name 'Bob'
+- echo 'e' > file.txt
+- git add file.txt
+- git commit -m 'Bob commit 2'
+prompt: How many commits were authored by Alice? Output ONLY the number, nothing else.
+expected: '3'
 scoring:
   type: exact_match
+purpose: Tests ability to count commits by a specific author. Evaluates combining
+  author filter with counting.
+difficulty: easy
+tags:
+- git-log
+- author
+- count
+- filter

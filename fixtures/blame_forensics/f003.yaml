@@ -1,20 +1,42 @@
 id: f003
-description: "Hardcoded secret introduced"
+description: Hardcoded secret introduced
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'import os\nAPI_KEY = os.environ.get(\"API_KEY\")' > src/config.py"
-  - "git add src/config.py"
-  - "git commit -m 'Load API key from environment'"
-  - "echo 'import os\nAPI_KEY = os.environ.get(\"API_KEY\")\nDB_URL = os.environ.get(\"DATABASE_URL\")' > src/config.py"
-  - "git add src/config.py"
-  - "git commit -m 'Add database config'"
-  - "echo 'import os\nAPI_KEY = \"sk-1234567890abcdef\"\nDB_URL = os.environ.get(\"DATABASE_URL\")' > src/config.py"
-  - "git add src/config.py"
-  - "git commit -m 'Set default API key for dev'"
-prompt: "There is a hardcoded secret in src/config.py. Look at git log and git blame. Which commit hardcoded the API key? Output ONLY the commit message of that commit, nothing else."
-expected: "Set default API key for dev"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- 'echo ''import os
+
+  API_KEY = os.environ.get("API_KEY")'' > src/config.py'
+- git add src/config.py
+- git commit -m 'Load API key from environment'
+- 'echo ''import os
+
+  API_KEY = os.environ.get("API_KEY")
+
+  DB_URL = os.environ.get("DATABASE_URL")'' > src/config.py'
+- git add src/config.py
+- git commit -m 'Add database config'
+- 'echo ''import os
+
+  API_KEY = "sk-1234567890abcdef"
+
+  DB_URL = os.environ.get("DATABASE_URL")'' > src/config.py'
+- git add src/config.py
+- git commit -m 'Set default API key for dev'
+prompt: There is a hardcoded secret in src/config.py. Look at git log and git blame.
+  Which commit hardcoded the API key? Output ONLY the commit message of that commit,
+  nothing else.
+expected: Set default API key for dev
 scoring:
   type: exact_match
+purpose: Tests ability to detect when a hardcoded secret was introduced into code,
+  replacing environment-variable-based configuration. Evaluates security-sensitive
+  code review via git history.
+difficulty: easy
+tags:
+- security
+- hardcoded-secret
+- git-log
+- git-blame
+- credentials

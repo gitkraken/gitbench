@@ -1,23 +1,32 @@
 id: f006
-description: "Create detached worktree"
+description: Create detached worktree
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Version 1'"
-  - "echo 'v2' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Version 2'"
-prompt: "Create a detached git worktree at '../detached-wt' pointing at the first commit (HEAD~1). Output ONLY the git worktree command, nothing else."
-expected: "git worktree add --detach ../detached-wt HEAD~1"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1' > version.txt
+- git add version.txt
+- git commit -m 'Version 1'
+- echo 'v2' > version.txt
+- git add version.txt
+- git commit -m 'Version 2'
+prompt: Create a detached git worktree at '../detached-wt' pointing at the first commit
+  (HEAD~1). Output ONLY the git worktree command, nothing else.
+expected: git worktree add --detach ../detached-wt HEAD~1
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: dir_exists
-        path: "../detached-wt"
-      - type: file_content
-        path: "../detached-wt/version.txt"
-        value: "v1"
+    - type: dir_exists
+      path: ../detached-wt
+    - type: file_content
+      path: ../detached-wt/version.txt
+      value: v1
+purpose: Tests ability to create a detached worktree at a specific commit. Evaluates
+  detached-worktree creation.
+difficulty: medium
+tags:
+- worktree
+- detached
+- create
+- commit

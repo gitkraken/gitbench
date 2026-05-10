@@ -1,29 +1,41 @@
 id: f002
-description: "Multiple merged branches"
+description: Multiple merged branches
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1' > version.txt"
-  - "git add version.txt"
-  - "git commit -m 'Initial version'"
-  - "git checkout -b fix-a"
-  - "echo 'fix a' > a.txt"
-  - "git add a.txt"
-  - "git commit -m 'Fix A'"
-  - "git checkout main"
-  - "git merge fix-a"
-  - "git checkout -b fix-b"
-  - "echo 'fix b' > b.txt"
-  - "git add b.txt"
-  - "git commit -m 'Fix B'"
-  - "git checkout main"
-  - "git merge fix-b"
-  - "git checkout -b feature-new"
-  - "echo 'new feature' > new.txt"
-  - "git add new.txt"
-  - "git commit -m 'New feature'"
-prompt: "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'."
-expected: "fix-a\nfix-b"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1' > version.txt
+- git add version.txt
+- git commit -m 'Initial version'
+- git checkout -b fix-a
+- echo 'fix a' > a.txt
+- git add a.txt
+- git commit -m 'Fix A'
+- git checkout main
+- git merge fix-a
+- git checkout -b fix-b
+- echo 'fix b' > b.txt
+- git add b.txt
+- git commit -m 'Fix B'
+- git checkout main
+- git merge fix-b
+- git checkout -b feature-new
+- echo 'new feature' > new.txt
+- git add new.txt
+- git commit -m 'New feature'
+prompt: Look at the branches in this repository. Which branches should be deleted
+  because they are fully merged into main? List ONLY the branch names to delete, one
+  per line. If none, respond with 'none'.
+expected: 'fix-a
+
+  fix-b'
 scoring:
   type: exact_match
+purpose: Tests ability to identify multiple merged branches for deletion. Evaluates
+  git branch --merged output parsing with several branches.
+difficulty: easy
+tags:
+- branch-management
+- merged-branches
+- cleanup
+- multiple-branches

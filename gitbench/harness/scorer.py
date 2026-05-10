@@ -168,6 +168,9 @@ class StateAssertionScorer:
                 similarity=0.0,
                 model_output=model_output,
                 error="No assertions defined in fixture",
+                purpose=fixture.purpose or None,
+                difficulty=fixture.difficulty or None,
+                tags=fixture.tags or None,
             )
 
         results = []
@@ -195,6 +198,9 @@ class StateAssertionScorer:
             similarity=round(similarity, 4),
             model_output=model_output,
             error=error,
+            purpose=fixture.purpose or None,
+            difficulty=fixture.difficulty or None,
+            tags=fixture.tags or None,
         )
 
 
@@ -228,6 +234,9 @@ class StructuredScorer:
                 passed=similarity >= 0.5,
                 similarity=round(similarity, 4),
                 model_output=model_output,
+                purpose=fixture.purpose or None,
+                difficulty=fixture.difficulty or None,
+                tags=fixture.tags or None,
             )
 
         field_scores: dict[str, dict[str, Any]] = {}
@@ -278,6 +287,9 @@ class StructuredScorer:
             similarity=round(overall_similarity, 4),
             model_output=model_output,
             error=error,
+            purpose=fixture.purpose or None,
+            difficulty=fixture.difficulty or None,
+            tags=fixture.tags or None,
         )
 
 
@@ -327,6 +339,9 @@ class Scorer:
                     similarity=round(similarity, 4),
                     model_output=model_output,
                     error=None,
+                    purpose=fixture.purpose or None,
+                    difficulty=fixture.difficulty or None,
+                    tags=fixture.tags or None,
                 )
 
             elif scoring_type == "exact_match":
@@ -337,6 +352,9 @@ class Scorer:
                     similarity=1.0 if match else 0.0,
                     model_output=model_output,
                     error=None if match else f"Expected '{fixture.expected}', got '{model_output}'",
+                    purpose=fixture.purpose or None,
+                    difficulty=fixture.difficulty or None,
+                    tags=fixture.tags or None,
                 )
 
             elif scoring_type == "state_assertions":
@@ -358,6 +376,9 @@ class Scorer:
                 similarity=0.0,
                 model_output=model_output,
                 error=f"Scoring error: {e}",
+                purpose=fixture.purpose or None,
+                difficulty=fixture.difficulty or None,
+                tags=fixture.tags or None,
             )
 
     def pass_at_k(self, scores: list[Score], k: int = 1) -> float:

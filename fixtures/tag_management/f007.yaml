@@ -1,24 +1,33 @@
 id: f007
-description: "Show tag details"
+description: Show tag details
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Release candidate'"
-  - "git tag -a v1.0.0-rc1 -m 'Release candidate 1'"
-prompt: "Show the details (message, tagger, date) of the tag 'v1.0.0-rc1'. Output ONLY the git command, nothing else."
-expected: "git show v1.0.0-rc1"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Release candidate'
+- git tag -a v1.0.0-rc1 -m 'Release candidate 1'
+prompt: Show the details (message, tagger, date) of the tag 'v1.0.0-rc1'. Output ONLY
+  the git command, nothing else.
+expected: git show v1.0.0-rc1
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git tag -l"
-        contains: "v1.0.0-rc1"
-      - type: git_output
-        command: "git cat-file -t v1.0.0-rc1"
-        contains: "tag"
-      - type: model_output
-        contains: "git show"
+    - type: git_output
+      command: git tag -l
+      contains: v1.0.0-rc1
+    - type: git_output
+      command: git cat-file -t v1.0.0-rc1
+      contains: tag
+    - type: model_output
+      contains: git show
+purpose: Tests ability to show detailed tag information. Evaluates tag-inspection
+  with git show.
+difficulty: easy
+tags:
+- tag
+- show
+- details
+- inspection

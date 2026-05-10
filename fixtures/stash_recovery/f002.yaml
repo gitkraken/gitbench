@@ -1,23 +1,32 @@
 id: f002
 description: Multiple stashes - find specific stash
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Initial content' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'Work A' > file.txt"
-  - "git stash"
-  - "echo 'Work B' > file.txt"
-  - "git stash"
-  - "echo 'Work C' > file.txt"
-  - "git stash"
-  - "echo 'Clean state' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Clean state'"
-prompt: "You stashed 'Work A' first, then 'Work B', then 'Work C'. Which stash entry contains 'Work A'? Provide the stash reference."
-expected: "stash@{2}"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Initial content' > file.txt
+- git add file.txt
+- git commit -m 'Initial commit'
+- echo 'Work A' > file.txt
+- git stash
+- echo 'Work B' > file.txt
+- git stash
+- echo 'Work C' > file.txt
+- git stash
+- echo 'Clean state' > file.txt
+- git add file.txt
+- git commit -m 'Clean state'
+prompt: You stashed 'Work A' first, then 'Work B', then 'Work C'. Which stash entry
+  contains 'Work A'? Provide the stash reference.
+expected: stash@{2}
 scoring:
   type: stash_recovery
   threshold: 0.5
+purpose: Tests ability to find a specific stash among multiple stashes. Evaluates
+  stash-list filtering and identification.
+difficulty: easy
+tags:
+- stash
+- multiple
+- filtering
+- recovery

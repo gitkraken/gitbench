@@ -1,17 +1,31 @@
 id: f010
-description: "Word boundary search using git grep -w"
+description: Word boundary search using git grep -w
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'data = load_data(\"input.csv\")\nresult = process(data)\nsave_data(result, \"output.csv\")\ndata_loader = DataLoader()' > src/pipeline.py"
-  - "git add ."
-  - "git commit -m 'Add data pipeline'"
-  - "echo 'git grep -w data' > .grep_command"
-  - "git add .grep_command"
-  - "git commit -m 'Add grep sentinel'"
-prompt: "Here is the output of a git grep -w command that searches for the whole word 'data'. How many lines match? Output ONLY the number, nothing else."
-expected: "2"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- 'echo ''data = load_data("input.csv")
+
+  result = process(data)
+
+  save_data(result, "output.csv")
+
+  data_loader = DataLoader()'' > src/pipeline.py'
+- git add .
+- git commit -m 'Add data pipeline'
+- echo 'git grep -w data' > .grep_command
+- git add .grep_command
+- git commit -m 'Add grep sentinel'
+prompt: Here is the output of a git grep -w command that searches for the whole word
+  'data'. How many lines match? Output ONLY the number, nothing else.
+expected: '2'
 scoring:
   type: exact_match
+purpose: Tests ability to perform word-boundary search with git grep -w. Evaluates
+  precise vs substring matching awareness.
+difficulty: medium
+tags:
+- git-grep
+- word-boundary
+- precise

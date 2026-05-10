@@ -1,23 +1,35 @@
 id: f002
-description: "Make changes in worktree and commit"
+description: Make changes in worktree and commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > hello.txt"
-  - "git add hello.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b feature"
-  - "echo 'Feature' > feature.txt"
-  - "git add feature.txt"
-  - "git commit -m 'Add feature'"
-  - "git checkout main"
-prompt: "Create a git worktree for the 'feature' branch at '../feature-wt'. Then write 'Updated' to the file '../feature-wt/feature.txt'. Output ONLY the commands to run, one per line."
-expected: "git worktree add ../feature-wt feature\necho 'Updated' > ../feature-wt/feature.txt"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > hello.txt
+- git add hello.txt
+- git commit -m 'Initial commit'
+- git checkout -b feature
+- echo 'Feature' > feature.txt
+- git add feature.txt
+- git commit -m 'Add feature'
+- git checkout main
+prompt: Create a git worktree for the 'feature' branch at '../feature-wt'. Then write
+  'Updated' to the file '../feature-wt/feature.txt'. Output ONLY the commands to run,
+  one per line.
+expected: 'git worktree add ../feature-wt feature
+
+  echo ''Updated'' > ../feature-wt/feature.txt'
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_content
-        path: "../feature-wt/feature.txt"
-        value: "Updated"
+    - type: file_content
+      path: ../feature-wt/feature.txt
+      value: Updated
+purpose: Tests ability to make changes in a worktree and commit them. Evaluates worktree-as-workspace
+  workflow.
+difficulty: medium
+tags:
+- worktree
+- commit
+- changes
+- workflow

@@ -1,16 +1,24 @@
 id: f005
-description: "File modification"
+description: File modification
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'original content' > app.py"
-  - "git add app.py"
-  - "git commit -m 'Initial commit'"
-  - "echo 'updated content' > app.py"
-  - "git add app.py"
-prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update')."
-expected: "Update app.py with new content"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'original content' > app.py
+- git add app.py
+- git commit -m 'Initial commit'
+- echo 'updated content' > app.py
+- git add app.py
+prompt: Generate a concise commit message (max 50 characters) describing the changes
+  in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').
+expected: Update app.py with new content
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to generate a commit message for a single-file content modification.
+  Evaluates describing incremental changes.
+difficulty: easy
+tags:
+- commit-message
+- modification
+- update

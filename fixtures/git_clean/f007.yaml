@@ -1,26 +1,34 @@
 id: f007
-description: "Exclude specific files from cleaning"
+description: Exclude specific files from cleaning
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'tracked' > tracked.txt"
-  - "git add tracked.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'important' > important.tmp"
-  - "echo 'junk1' > junk1.tmp"
-  - "echo 'junk2' > junk2.txt"
-prompt: "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else."
-expected: "git clean -f -e important.tmp"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'tracked' > tracked.txt
+- git add tracked.txt
+- git commit -m 'Initial commit'
+- echo 'important' > important.tmp
+- echo 'junk1' > junk1.tmp
+- echo 'junk2' > junk2.txt
+prompt: Remove all untracked files except important.tmp. Output ONLY the git command,
+  nothing else.
+expected: git clean -f -e important.tmp
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_exists
-        path: "important.tmp"
-      - type: file_not_exists
-        path: "junk1.tmp"
-      - type: file_not_exists
-        path: "junk2.txt"
-      - type: file_exists
-        path: "tracked.txt"
+    - type: file_exists
+      path: important.tmp
+    - type: file_not_exists
+      path: junk1.tmp
+    - type: file_not_exists
+      path: junk2.txt
+    - type: file_exists
+      path: tracked.txt
+purpose: Tests ability to exclude specific files from cleaning with git clean -e.
+  Evaluates exclusion-pattern usage.
+difficulty: medium
+tags:
+- git-clean
+- exclusion
+- pattern

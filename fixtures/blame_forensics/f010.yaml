@@ -1,23 +1,39 @@
 id: f010
-description: "Broken import after module rename"
+description: Broken import after module rename
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'from utils import helper' > src/main.py"
-  - "git add src/main.py"
-  - "git commit -m 'Import helper from utils'"
-  - "echo 'from helpers import helper' > src/main.py"
-  - "git add src/main.py"
-  - "git commit -m 'Update import path'"
-  - "echo 'from utils import helper\nfrom helpers import formatter' > src/main.py"
-  - "git add src/main.py"
-  - "git commit -m 'Add formatter import'"
-  - "echo 'from utils import helper\nfrom util_helpers import formatter' > src/main.py"
-  - "git add src/main.py"
-  - "git commit -m 'Fix formatter import'"
-prompt: "There is an import error in src/main.py. The module 'helpers' does not exist. Look at git log and git blame. Which commit introduced the broken import? Output ONLY the commit message of that commit, nothing else."
-expected: "Update import path"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- echo 'from utils import helper' > src/main.py
+- git add src/main.py
+- git commit -m 'Import helper from utils'
+- echo 'from helpers import helper' > src/main.py
+- git add src/main.py
+- git commit -m 'Update import path'
+- 'echo ''from utils import helper
+
+  from helpers import formatter'' > src/main.py'
+- git add src/main.py
+- git commit -m 'Add formatter import'
+- 'echo ''from utils import helper
+
+  from util_helpers import formatter'' > src/main.py'
+- git add src/main.py
+- git commit -m 'Fix formatter import'
+prompt: There is an import error in src/main.py. The module 'helpers' does not exist.
+  Look at git log and git blame. Which commit introduced the broken import? Output
+  ONLY the commit message of that commit, nothing else.
+expected: Update import path
 scoring:
   type: exact_match
+purpose: Tests ability to trace a broken import path across multiple module-rename
+  commits. Requires navigating intertwined import changes to find the original error.
+difficulty: medium
+tags:
+- import-error
+- refactor
+- regression
+- git-log
+- git-blame
+- module-rename

@@ -1,20 +1,39 @@
 id: f012
-description: "Count mode with git grep -c"
+description: Count mode with git grep -c
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src tests"
-  - "echo 'def login(user): pass\ndef logout(user): pass\ndef login_as_admin(): pass' > src/auth.py"
-  - "echo 'def test_login(): pass\ndef test_logout(): pass' > tests/test_auth.py"
-  - "echo 'def render(): pass\ndef redirect(): pass' > src/views.py"
-  - "git add ."
-  - "git commit -m 'Add all source files'"
-  - "echo 'git grep -c login' > .grep_command"
-  - "git add .grep_command"
-  - "git commit -m 'Add grep sentinel'"
-prompt: "Here is the output of a git grep -c command that shows per-file counts of 'login'. For which file(s) is the count greater than zero? Output ONLY the filenames, one per line, nothing else."
-expected: "src/auth.py:2\ntests/test_auth.py:1"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src tests
+- 'echo ''def login(user): pass
+
+  def logout(user): pass
+
+  def login_as_admin(): pass'' > src/auth.py'
+- 'echo ''def test_login(): pass
+
+  def test_logout(): pass'' > tests/test_auth.py'
+- 'echo ''def render(): pass
+
+  def redirect(): pass'' > src/views.py'
+- git add .
+- git commit -m 'Add all source files'
+- echo 'git grep -c login' > .grep_command
+- git add .grep_command
+- git commit -m 'Add grep sentinel'
+prompt: Here is the output of a git grep -c command that shows per-file counts of
+  'login'. For which file(s) is the count greater than zero? Output ONLY the filenames,
+  one per line, nothing else.
+expected: 'src/auth.py:2
+
+  tests/test_auth.py:1'
 scoring:
   type: similarity
   threshold: 0.8
+purpose: Tests ability to use count mode with git grep -c. Evaluates aggregation-style
+  search output interpretation.
+difficulty: medium
+tags:
+- git-grep
+- count
+- aggregation

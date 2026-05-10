@@ -1,23 +1,34 @@
 id: f007
 description: Test commits first then implementation
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'code' > app.py"
-  - "git add app.py"
-  - "git commit -m 'Initial app'"
-  - "echo 'import unittest' > test.py"
-  - "git add test.py"
-  - "git commit -m 'WIP: add test stub'"
-  - "echo 'import unittest\n\nclass Test(unittest.TestCase):\n    pass' > test.py"
-  - "git add test.py"
-  - "git commit -m 'WIP: expand test'"
-  - "echo 'import unittest\n\nclass Test(unittest.TestCase):\n    def test_ok(self): pass' > test.py"
-  - "git add test.py"
-  - "git commit -m 'Complete tests'"
-prompt: "Identify the WIP commits that should be marked as squash/fixup for a cleaner test file addition. Do not include the final complete-tests commit. Provide the commit messages."
-expected: "WIP: add test stub, WIP: expand test"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'code' > app.py
+- git add app.py
+- git commit -m 'Initial app'
+- echo 'import unittest' > test.py
+- git add test.py
+- 'git commit -m ''WIP: add test stub'''
+- "echo 'import unittest\n\nclass Test(unittest.TestCase):\n    pass' > test.py"
+- git add test.py
+- 'git commit -m ''WIP: expand test'''
+- "echo 'import unittest\n\nclass Test(unittest.TestCase):\n    def test_ok(self):\
+  \ pass' > test.py"
+- git add test.py
+- git commit -m 'Complete tests'
+prompt: Identify the WIP commits that should be marked as squash/fixup for a cleaner
+  test file addition. Do not include the final complete-tests commit. Provide the
+  commit messages.
+expected: 'WIP: add test stub, WIP: expand test'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to squash test-first commits with their implementation commits.
+  Evaluates recognizing TDD-style commit patterns.
+difficulty: medium
+tags:
+- commit-squash
+- tdd
+- test-first
+- squash

@@ -1,22 +1,38 @@
 id: f010
-description: Bad commit changes multiple files (app.py and config.py) - model identifies the multi-file bad commit
+description: Bad commit changes multiple files (app.py and config.py) - model identifies
+  the multi-file bad commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo '#!/bin/bash' > test.sh"
-  - "echo 'grep -q \"DEBUG = False\" app.py && grep -q \"DEBUG = False\" config.py' >> test.sh"
-  - "chmod +x test.sh"
-  - "echo 'DEBUG = False' > app.py && echo 'DEBUG = False' > config.py"
-  - "git add test.sh app.py config.py && git commit -m 'Initial commit'"
-  - "echo '# debug defaults' >> config.py"
-  - "git add app.py config.py && git commit -m 'set debug off'"
-  - "echo 'DEBUG = True' > app.py && echo 'DEBUG = True' > config.py"
-  - "git add app.py config.py && git commit -m 'enable debug mode'"
-  - "echo '# verbose startup logs' >> app.py"
-  - "git add app.py && git commit -m 'add startup logging'"
-prompt: "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line."
-expected: "enable debug mode"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo '#!/bin/bash' > test.sh
+- echo 'grep -q "DEBUG = False" app.py && grep -q "DEBUG = False" config.py' >> test.sh
+- chmod +x test.sh
+- echo 'DEBUG = False' > app.py && echo 'DEBUG = False' > config.py
+- git add test.sh app.py config.py && git commit -m 'Initial commit'
+- echo '# debug defaults' >> config.py
+- git add app.py config.py && git commit -m 'set debug off'
+- echo 'DEBUG = True' > app.py && echo 'DEBUG = True' > config.py
+- git add app.py config.py && git commit -m 'enable debug mode'
+- echo '# verbose startup logs' >> app.py
+- git add app.py && git commit -m 'add startup logging'
+prompt: 'You are debugging a git repository. The following commit history has one
+  bad commit that broke the build. Identify the bad commit hash (first 7 characters)
+  or commit subject line that introduced the bug. Use the git log and test output
+  to determine which commit is bad.
+
+
+  Your answer should be the commit hash (e.g., ''abc1234'') or the commit subject
+  line.'
+expected: enable debug mode
 scoring:
   type: bisect_regression
   threshold: 0.5
+purpose: Tests ability to identify a multi-file bad commit (app.py + config.py) via
+  bisect. Evaluates bisect for changes spanning multiple files.
+difficulty: hard
+tags:
+- git-bisect
+- multi-file
+- branching
+- complex

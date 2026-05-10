@@ -1,23 +1,34 @@
 id: f008
 description: Config changes spread across commits
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo '{}' > config.json"
-  - "git add config.json"
-  - "git commit -m 'Initial config'"
-  - 'echo ''{"debug": true}'' > config.json'
-  - "git add config.json"
-  - "git commit -m 'WIP: add debug flag'"
-  - 'echo ''{"debug": true, "port": 8080}'' > config.json'
-  - "git add config.json"
-  - "git commit -m 'WIP: add port'"
-  - 'echo ''{"debug": true, "port": 8080, "host": "localhost"}'' > config.json'
-  - "git add config.json"
-  - "git commit -m 'Finalize config'"
-prompt: "These commits show incremental configuration changes. Identify the WIP commits that should be marked as squash/fixup to combine all config work into a single meaningful commit. Do not include the initial or final config anchor commit. Provide the commit messages."
-expected: "WIP: add debug flag, WIP: add port"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo '{}' > config.json
+- git add config.json
+- git commit -m 'Initial config'
+- 'echo ''{"debug": true}'' > config.json'
+- git add config.json
+- 'git commit -m ''WIP: add debug flag'''
+- 'echo ''{"debug": true, "port": 8080}'' > config.json'
+- git add config.json
+- 'git commit -m ''WIP: add port'''
+- 'echo ''{"debug": true, "port": 8080, "host": "localhost"}'' > config.json'
+- git add config.json
+- git commit -m 'Finalize config'
+prompt: These commits show incremental configuration changes. Identify the WIP commits
+  that should be marked as squash/fixup to combine all config work into a single meaningful
+  commit. Do not include the initial or final config anchor commit. Provide the commit
+  messages.
+expected: 'WIP: add debug flag, WIP: add port'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to squash config changes spread across multiple commits. Evaluates
+  recognizing scattered configuration updates.
+difficulty: medium
+tags:
+- commit-squash
+- config
+- scattered-changes
+- squash

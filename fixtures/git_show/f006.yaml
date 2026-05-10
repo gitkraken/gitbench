@@ -1,16 +1,37 @@
 id: f006
-description: "Show diff between two commits"
+description: Show diff between two commits
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf 'line1\nline2\nline3\n' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Original three lines'"
-  - "printf 'line1\nmodified\nline3\n' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Changed line2'"
-prompt: "Using git show --stat, how many files were changed in the commit 'Changed line2'? Output ONLY the number, nothing else."
-expected: "1"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'printf ''line1
+
+  line2
+
+  line3
+
+  '' > file.txt'
+- git add file.txt
+- git commit -m 'Original three lines'
+- 'printf ''line1
+
+  modified
+
+  line3
+
+  '' > file.txt'
+- git add file.txt
+- git commit -m 'Changed line2'
+prompt: Using git show --stat, how many files were changed in the commit 'Changed
+  line2'? Output ONLY the number, nothing else.
+expected: '1'
 scoring:
   type: exact_match
+purpose: Tests ability to show diff between two commits. Evaluates comparative-commit
+  inspection.
+difficulty: medium
+tags:
+- git-show
+- diff
+- compare
+- two-commits

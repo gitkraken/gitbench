@@ -1,24 +1,35 @@
 id: f004
 description: Feature branch merged and deleted - recover the last feature commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo '# Project' > README.md"
-  - "git add README.md"
-  - "git commit -m 'Initial project setup'"
-  - "git checkout -b feature-login"
-  - "echo 'user = {}' > auth.py"
-  - "git add auth.py"
-  - "git commit -m 'Add auth module'"
-  - "echo 'def login(): pass' >> auth.py"
-  - "git add auth.py"
-  - "git commit -m 'Add login function - critical feature'"
-  - "git checkout main"
-  - "git merge feature-login"
-  - "git branch -d feature-login"
-prompt: "You merged and deleted a feature branch 'feature-login' but need to recover the last commit that was added on that branch. The last feature commit message contained 'critical feature'. Use git reflog to identify what you need to run to recover that commit."
-expected: "Add login function - critical feature"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo '# Project' > README.md
+- git add README.md
+- git commit -m 'Initial project setup'
+- git checkout -b feature-login
+- echo 'user = {}' > auth.py
+- git add auth.py
+- git commit -m 'Add auth module'
+- 'echo ''def login(): pass'' >> auth.py'
+- git add auth.py
+- git commit -m 'Add login function - critical feature'
+- git checkout main
+- git merge feature-login
+- git branch -d feature-login
+prompt: You merged and deleted a feature branch 'feature-login' but need to recover
+  the last commit that was added on that branch. The last feature commit message contained
+  'critical feature'. Use git reflog to identify what you need to run to recover that
+  commit.
+expected: Add login function - critical feature
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to recover a commit from a deleted feature branch via reflog.
+  Evaluates branch-deletion recovery workflow.
+difficulty: medium
+tags:
+- reflog
+- deleted-branch
+- recovery
+- feature

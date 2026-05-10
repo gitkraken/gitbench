@@ -1,17 +1,45 @@
 id: f005
-description: "Combined flags: case-insensitive with line numbers"
+description: 'Combined flags: case-insensitive with line numbers'
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p docs"
-  - "printf '# README\n\nThis project uses Python.\n\n## Setup\n\nInstall PYTHON 3.10 or higher.\nThe python interpreter must be in your PATH.\n\n## Usage\n\nRun the main script with python main.py.\n' > docs/README.md"
-  - "git add ."
-  - "git commit -m 'Add readme'"
-  - "echo 'git grep -n -i python' > .grep_command"
-  - "git add .grep_command"
-  - "git commit -m 'Add grep sentinel'"
-prompt: "Here is the output of a git grep -n -i command that searches case-insensitively with line numbers. How many lines contain 'python' in any capitalization? Output ONLY the number, nothing else."
-expected: "3"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p docs
+- 'printf ''# README
+
+
+  This project uses Python.
+
+
+  ## Setup
+
+
+  Install PYTHON 3.10 or higher.
+
+  The python interpreter must be in your PATH.
+
+
+  ## Usage
+
+
+  Run the main script with python main.py.
+
+  '' > docs/README.md'
+- git add .
+- git commit -m 'Add readme'
+- echo 'git grep -n -i python' > .grep_command
+- git add .grep_command
+- git commit -m 'Add grep sentinel'
+prompt: Here is the output of a git grep -n -i command that searches case-insensitively
+  with line numbers. How many lines contain 'python' in any capitalization? Output
+  ONLY the number, nothing else.
+expected: '3'
 scoring:
   type: exact_match
+purpose: Tests ability to combine flags (case-insensitive + line numbers) with git
+  grep -in. Evaluates multi-flag composition.
+difficulty: easy
+tags:
+- git-grep
+- combined-flags
+- case-insensitive

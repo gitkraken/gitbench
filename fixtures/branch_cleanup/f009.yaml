@@ -1,18 +1,28 @@
 id: f009
-description: "Single unmerged branch"
+description: Single unmerged branch
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.py"
-  - "git add app.py"
-  - "git commit -m 'Initial'"
-  - "git checkout -b feature-experimental"
-  - "echo 'experimental' > exp.py"
-  - "git add exp.py"
-  - "git commit -m 'Experiment'"
-  - "git checkout main"
-prompt: "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'."
-expected: "none"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.py
+- git add app.py
+- git commit -m 'Initial'
+- git checkout -b feature-experimental
+- echo 'experimental' > exp.py
+- git add exp.py
+- git commit -m 'Experiment'
+- git checkout main
+prompt: Look at the branches in this repository. Which branches should be deleted
+  because they are fully merged into main? List ONLY the branch names to delete, one
+  per line. If none, respond with 'none'.
+expected: none
 scoring:
   type: exact_match
+purpose: Tests ability to identify that zero branches should be deleted when only
+  unmerged branches exist. Evaluates the all-unmerged edge case.
+difficulty: easy
+tags:
+- branch-management
+- unmerged
+- edge-case
+- cleanup

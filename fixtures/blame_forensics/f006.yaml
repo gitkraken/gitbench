@@ -1,23 +1,35 @@
 id: f006
-description: "Off-by-one error introduced"
+description: Off-by-one error introduced
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'for i in range(len(items)):\n    process(items[i])' > src/loop.py"
-  - "git add src/loop.py"
-  - "git commit -m 'Process all items in list'"
-  - "echo 'for i in range(1, len(items)):\n    process(items[i])' > src/loop.py"
-  - "git add src/loop.py"
-  - "git commit -m 'Skip first item for deduplication'"
-  - "echo 'for i in range(len(items)):\n    process(items[i])' > src/loop.py"
-  - "git add src/loop.py"
-  - "git commit -m 'Process all items again'"
-  - "echo 'for i in range(1, len(items) - 1):\n    process(items[i])' > src/loop.py"
-  - "git add src/loop.py"
-  - "git commit -m 'Fix boundary conditions'"
-prompt: "There is an off-by-one error in src/loop.py that skips both the first and last items. Look at git log and git blame. Which commit introduced this bug? Output ONLY the commit message of that commit, nothing else."
-expected: "Fix boundary conditions"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- "echo 'for i in range(len(items)):\n    process(items[i])' > src/loop.py"
+- git add src/loop.py
+- git commit -m 'Process all items in list'
+- "echo 'for i in range(1, len(items)):\n    process(items[i])' > src/loop.py"
+- git add src/loop.py
+- git commit -m 'Skip first item for deduplication'
+- "echo 'for i in range(len(items)):\n    process(items[i])' > src/loop.py"
+- git add src/loop.py
+- git commit -m 'Process all items again'
+- "echo 'for i in range(1, len(items) - 1):\n    process(items[i])' > src/loop.py"
+- git add src/loop.py
+- git commit -m 'Fix boundary conditions'
+prompt: There is an off-by-one error in src/loop.py that skips both the first and
+  last items. Look at git log and git blame. Which commit introduced this bug? Output
+  ONLY the commit message of that commit, nothing else.
+expected: Fix boundary conditions
 scoring:
   type: exact_match
+purpose: Tests ability to identify which commit introduced an off-by-one error in
+  a loop boundary. Requires distinguishing between intentional boundary changes and
+  accidental ones in git history.
+difficulty: medium
+tags:
+- off-by-one
+- loop-boundary
+- regression
+- git-log
+- git-blame

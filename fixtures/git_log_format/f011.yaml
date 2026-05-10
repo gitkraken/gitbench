@@ -1,20 +1,149 @@
 id: f011
-description: "Identify most changed file from stat output"
+description: Identify most changed file from stat output
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "printf 'line1\nline2\nline3\n' > small.txt"
-  - "printf 'a\nb\n' > medium.txt"
-  - "printf 'x\ny\nz\nw\nv\nu\nt\ns\nr\n' > large.txt"
-  - "git add small.txt medium.txt large.txt"
-  - "git commit -m 'Initial commit with three files'"
-  - "printf 'line1\nline2\nline3\nline4\nline5\n' > small.txt"
-  - "printf 'a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\n' > medium.txt"
-  - "printf 'x\ny\nz\nw\nv\nu\nt\ns\nr\nq\np\no\nn\nm\nl\nk\nj\ni\nh\ng\nf\ne\nd\nc\nb\na\n' > large.txt"
-  - "git add small.txt medium.txt large.txt"
-  - "git commit -m 'Update all files'"
-prompt: "In the most recent commit, which file had the most lines changed according to git log --stat? Output ONLY the filename, nothing else."
-expected: "large.txt"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'printf ''line1
+
+  line2
+
+  line3
+
+  '' > small.txt'
+- 'printf ''a
+
+  b
+
+  '' > medium.txt'
+- 'printf ''x
+
+  y
+
+  z
+
+  w
+
+  v
+
+  u
+
+  t
+
+  s
+
+  r
+
+  '' > large.txt'
+- git add small.txt medium.txt large.txt
+- git commit -m 'Initial commit with three files'
+- 'printf ''line1
+
+  line2
+
+  line3
+
+  line4
+
+  line5
+
+  '' > small.txt'
+- 'printf ''a
+
+  b
+
+  c
+
+  d
+
+  e
+
+  f
+
+  g
+
+  h
+
+  i
+
+  j
+
+  k
+
+  l
+
+  m
+
+  n
+
+  o
+
+  '' > medium.txt'
+- 'printf ''x
+
+  y
+
+  z
+
+  w
+
+  v
+
+  u
+
+  t
+
+  s
+
+  r
+
+  q
+
+  p
+
+  o
+
+  n
+
+  m
+
+  l
+
+  k
+
+  j
+
+  i
+
+  h
+
+  g
+
+  f
+
+  e
+
+  d
+
+  c
+
+  b
+
+  a
+
+  '' > large.txt'
+- git add small.txt medium.txt large.txt
+- git commit -m 'Update all files'
+prompt: In the most recent commit, which file had the most lines changed according
+  to git log --stat? Output ONLY the filename, nothing else.
+expected: large.txt
 scoring:
   type: exact_match
+purpose: Tests ability to identify the most-changed file from stat output. Evaluates
+  parsing git log --stat for change frequency.
+difficulty: medium
+tags:
+- git-log
+- stat
+- changed-files
+- analysis

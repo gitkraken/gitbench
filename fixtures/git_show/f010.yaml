@@ -1,15 +1,24 @@
 id: f010
-description: "Show file rename detection in commit"
+description: Show file rename detection in commit
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'content' > old_name.txt"
-  - "git add old_name.txt"
-  - "git commit -m 'Add original file'"
-  - "git mv old_name.txt new_name.txt"
-  - "git commit -m 'Rename file'"
-prompt: "Using git show --name-status, what is the status code for the file rename in the 'Rename file' commit? Output ONLY the single letter code (e.g. R for rename), nothing else."
-expected: "R"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'content' > old_name.txt
+- git add old_name.txt
+- git commit -m 'Add original file'
+- git mv old_name.txt new_name.txt
+- git commit -m 'Rename file'
+prompt: Using git show --name-status, what is the status code for the file rename
+  in the 'Rename file' commit? Output ONLY the single letter code (e.g. R for rename),
+  nothing else.
+expected: R
 scoring:
   type: exact_match
+purpose: Tests ability to detect file rename in a commit. Evaluates rename-detection
+  awareness in commit inspection.
+difficulty: medium
+tags:
+- git-show
+- rename
+- detection

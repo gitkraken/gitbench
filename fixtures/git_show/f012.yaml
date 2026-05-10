@@ -1,15 +1,23 @@
 id: f012
-description: "Show commit touching multiple files"
+description: Show commit touching multiple files
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'src' > main.py"
-  - "echo 'test' > test_main.py"
-  - "echo 'docs' > README.md"
-  - "git add main.py test_main.py README.md"
-  - "git commit -m 'Add all project files'"
-prompt: "Using git show --stat, how many files were added in the commit 'Add all project files'? Output ONLY the number, nothing else."
-expected: "3"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'src' > main.py
+- echo 'test' > test_main.py
+- echo 'docs' > README.md
+- git add main.py test_main.py README.md
+- git commit -m 'Add all project files'
+prompt: Using git show --stat, how many files were added in the commit 'Add all project
+  files'? Output ONLY the number, nothing else.
+expected: '3'
 scoring:
   type: exact_match
+purpose: Tests ability to inspect a commit touching multiple files. Evaluates multi-file
+  commit comprehension.
+difficulty: medium
+tags:
+- git-show
+- multi-file
+- comprehensive

@@ -1,25 +1,37 @@
 id: f010
-description: "Update submodule to latest"
+description: Update submodule to latest
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com' && git config user.name 'Test User' && echo 'lib v1' > lib.py && git add lib.py && git commit -m 'Initial lib'"
-  - "git clone --bare ../lib-src ../lib-bare"
-  - "git config protocol.file.allow always"
-  - "git -c protocol.file.allow=always submodule add ../lib-bare lib"
-  - "git add .gitmodules lib"
-  - "git commit -m 'Add lib submodule'"
-  - "cd ../lib-src && echo 'lib v2' > lib.py && git add lib.py && git commit -m 'Update lib to v2' && git push ../lib-bare HEAD:$(git branch --show-current)"
-prompt: "The remote submodule has been updated. Run the command to update the submodule to the latest remote version. Output ONLY the git command, nothing else."
-expected: "git submodule update --remote"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com'
+  && git config user.name 'Test User' && echo 'lib v1' > lib.py && git add lib.py
+  && git commit -m 'Initial lib'
+- git clone --bare ../lib-src ../lib-bare
+- git config protocol.file.allow always
+- git -c protocol.file.allow=always submodule add ../lib-bare lib
+- git add .gitmodules lib
+- git commit -m 'Add lib submodule'
+- cd ../lib-src && echo 'lib v2' > lib.py && git add lib.py && git commit -m 'Update
+  lib to v2' && git push ../lib-bare HEAD:$(git branch --show-current)
+prompt: The remote submodule has been updated. Run the command to update the submodule
+  to the latest remote version. Output ONLY the git command, nothing else.
+expected: git submodule update --remote
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_content
-        path: "lib/lib.py"
-        value: "lib v2"
+    - type: file_content
+      path: lib/lib.py
+      value: lib v2
+purpose: Tests ability to update a submodule to its latest remote commit. Evaluates
+  submodule-update workflow.
+difficulty: medium
+tags:
+- submodule
+- update
+- latest
+- fetch

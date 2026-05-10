@@ -1,19 +1,28 @@
 id: f005
 description: Stash pop failure - identify stash to reapply
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Initial' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Initial'"
-  - "echo 'Stashed content' > file.txt"
-  - "git stash"
-  - "echo 'Conflicting' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Conflicting commit'"
-prompt: "You stashed 'Stashed content' but git stash pop failed due to conflicting changes. Which stash entry contains 'Stashed content'? Provide the stash reference."
-expected: "stash@{0}"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Initial' > file.txt
+- git add file.txt
+- git commit -m 'Initial'
+- echo 'Stashed content' > file.txt
+- git stash
+- echo 'Conflicting' > file.txt
+- git add file.txt
+- git commit -m 'Conflicting commit'
+prompt: You stashed 'Stashed content' but git stash pop failed due to conflicting
+  changes. Which stash entry contains 'Stashed content'? Provide the stash reference.
+expected: stash@{0}
 scoring:
   type: stash_recovery
   threshold: 0.5
+purpose: Tests ability to identify and reapply a stash after a pop failure. Evaluates
+  stash-pop conflict recovery workflow.
+difficulty: hard
+tags:
+- stash
+- pop-failure
+- reapply
+- recovery

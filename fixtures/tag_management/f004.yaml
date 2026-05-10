@@ -1,35 +1,43 @@
 id: f004
-description: "List all tags"
+description: List all tags
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'v1'"
-  - "git tag v1.0"
-  - "echo 'v2' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'v2'"
-  - "git tag v2.0"
-  - "echo 'v3' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'v3'"
-  - "git tag v3.0"
-prompt: "List all git tags in the repository. Output ONLY the git command, nothing else."
-expected: "git tag -l"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1' > app.txt
+- git add app.txt
+- git commit -m 'v1'
+- git tag v1.0
+- echo 'v2' > app.txt
+- git add app.txt
+- git commit -m 'v2'
+- git tag v2.0
+- echo 'v3' > app.txt
+- git add app.txt
+- git commit -m 'v3'
+- git tag v3.0
+prompt: List all git tags in the repository. Output ONLY the git command, nothing
+  else.
+expected: git tag -l
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git tag -l"
-        contains: "v1.0"
-      - type: git_output
-        command: "git tag -l"
-        contains: "v2.0"
-      - type: git_output
-        command: "git tag -l"
-        contains: "v3.0"
-      - type: model_output
-        contains: "git tag"
+    - type: git_output
+      command: git tag -l
+      contains: v1.0
+    - type: git_output
+      command: git tag -l
+      contains: v2.0
+    - type: git_output
+      command: git tag -l
+      contains: v3.0
+    - type: model_output
+      contains: git tag
+purpose: Tests ability to list all tags in a repository. Evaluates tag-enumeration
+  command knowledge.
+difficulty: easy
+tags:
+- tag
+- list
+- enumeration

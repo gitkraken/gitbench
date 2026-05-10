@@ -1,23 +1,33 @@
 id: f012
 description: Hard reset to older commit then checkout - find detached HEAD commits
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'database: local' > db.yaml"
-  - "git add db.yaml"
-  - "git commit -m 'Local database config'"
-  - "echo 'database: prod' > db.yaml"
-  - "git add db.yaml"
-  - "git commit -m 'Production database config - critical'"
-  - "git checkout -b backup"
-  - "echo 'database: staging' > db.yaml"
-  - "git add db.yaml"
-  - "git commit -m 'Staging database config'"
-  - "git checkout main"
-  - "git reset --hard HEAD~1"
-prompt: "You reset main back to 'Local database config' and lost the 'Production database config - critical' commit. You then switched to 'backup' branch. Use git reflog on the main branch to find and recover the critical production config commit."
-expected: "Production database config - critical"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'echo ''database: local'' > db.yaml'
+- git add db.yaml
+- git commit -m 'Local database config'
+- 'echo ''database: prod'' > db.yaml'
+- git add db.yaml
+- git commit -m 'Production database config - critical'
+- git checkout -b backup
+- 'echo ''database: staging'' > db.yaml'
+- git add db.yaml
+- git commit -m 'Staging database config'
+- git checkout main
+- git reset --hard HEAD~1
+prompt: You reset main back to 'Local database config' and lost the 'Production database
+  config - critical' commit. You then switched to 'backup' branch. Use git reflog
+  on the main branch to find and recover the critical production config commit.
+expected: Production database config - critical
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to find detached HEAD commits after hard reset to older commit
+  then checkout. Evaluates complex reflog navigation.
+difficulty: hard
+tags:
+- reflog
+- hard-reset
+- detached-head
+- recovery

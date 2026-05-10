@@ -1,25 +1,37 @@
 id: f007
-description: "Branches off branches"
+description: Branches off branches
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'v1' > app.py"
-  - "git add app.py"
-  - "git commit -m 'Initial'"
-  - "git checkout -b feature-base"
-  - "echo 'base feature' > base.py"
-  - "git add base.py"
-  - "git commit -m 'Base feature'"
-  - "git checkout -b feature-sub"
-  - "echo 'sub feature' > sub.py"
-  - "git add sub.py"
-  - "git commit -m 'Sub feature'"
-  - "git checkout feature-base"
-  - "git merge feature-sub"
-  - "git checkout main"
-  - "git merge feature-base"
-prompt: "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'."
-expected: "feature-base\nfeature-sub"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'v1' > app.py
+- git add app.py
+- git commit -m 'Initial'
+- git checkout -b feature-base
+- echo 'base feature' > base.py
+- git add base.py
+- git commit -m 'Base feature'
+- git checkout -b feature-sub
+- echo 'sub feature' > sub.py
+- git add sub.py
+- git commit -m 'Sub feature'
+- git checkout feature-base
+- git merge feature-sub
+- git checkout main
+- git merge feature-base
+prompt: Look at the branches in this repository. Which branches should be deleted
+  because they are fully merged into main? List ONLY the branch names to delete, one
+  per line. If none, respond with 'none'.
+expected: 'feature-base
+
+  feature-sub'
 scoring:
   type: exact_match
+purpose: Tests ability to handle nested branch topology (branches off branches). Evaluates
+  understanding of merge status when branches fork from non-main branches.
+difficulty: medium
+tags:
+- branch-management
+- nested-branches
+- branch-topology
+- cleanup

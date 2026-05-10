@@ -1,25 +1,36 @@
 id: f002
-description: "List commit messages matching a grep pattern"
+description: List commit messages matching a grep pattern
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'alpha' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'beta' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Add authentication module'"
-  - "echo 'gamma' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Fix login bug'"
-  - "echo 'delta' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Add authorization checks'"
-  - "echo 'epsilon' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Update README'"
-prompt: "List the commit messages of all commits that contain the word 'Add' in their message. Output one commit message per line, nothing else."
-expected: "Add authentication module\nAdd authorization checks"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'alpha' > file.txt
+- git add file.txt
+- git commit -m 'Initial commit'
+- echo 'beta' > file.txt
+- git add file.txt
+- git commit -m 'Add authentication module'
+- echo 'gamma' > file.txt
+- git add file.txt
+- git commit -m 'Fix login bug'
+- echo 'delta' > file.txt
+- git add file.txt
+- git commit -m 'Add authorization checks'
+- echo 'epsilon' > file.txt
+- git add file.txt
+- git commit -m 'Update README'
+prompt: List the commit messages of all commits that contain the word 'Add' in their
+  message. Output one commit message per line, nothing else.
+expected: 'Add authentication module
+
+  Add authorization checks'
 scoring:
   type: exact_match
+purpose: Tests ability to list commit messages matching a grep pattern. Evaluates
+  log filtering with message output.
+difficulty: easy
+tags:
+- git-log
+- grep
+- list
+- filter

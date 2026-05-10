@@ -1,25 +1,37 @@
 id: f012
-description: "Add submodule with specific branch"
+description: Add submodule with specific branch
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com' && git config user.name 'Test User' && echo 'lib main' > lib.py && git add lib.py && git commit -m 'Initial lib on main' && git checkout -b develop && echo 'lib develop' > dev.py && git add dev.py && git commit -m 'Develop branch'"
-  - "git clone --bare ../lib-src ../lib-bare"
-  - "git config protocol.file.allow always"
-prompt: "Add the repository at '../lib-bare' as a submodule at path 'lib', tracking the 'develop' branch. Output ONLY the git submodule command, nothing else."
-expected: "git submodule add -b develop ../lib-bare lib"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com'
+  && git config user.name 'Test User' && echo 'lib main' > lib.py && git add lib.py
+  && git commit -m 'Initial lib on main' && git checkout -b develop && echo 'lib develop'
+  > dev.py && git add dev.py && git commit -m 'Develop branch'
+- git clone --bare ../lib-src ../lib-bare
+- git config protocol.file.allow always
+prompt: Add the repository at '../lib-bare' as a submodule at path 'lib', tracking
+  the 'develop' branch. Output ONLY the git submodule command, nothing else.
+expected: git submodule add -b develop ../lib-bare lib
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: dir_exists
-        path: "lib"
-      - type: file_exists
-        path: "lib/dev.py"
-      - type: git_output
-        command: "cat .gitmodules"
-        contains: "develop"
+    - type: dir_exists
+      path: lib
+    - type: file_exists
+      path: lib/dev.py
+    - type: git_output
+      command: cat .gitmodules
+      contains: develop
+purpose: Tests ability to add a submodule tracking a specific branch. Evaluates branch-specific
+  submodule configuration.
+difficulty: hard
+tags:
+- submodule
+- branch
+- tracking
+- config

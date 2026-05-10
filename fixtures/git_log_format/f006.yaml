@@ -1,15 +1,29 @@
 id: f006
-description: "Count commits in a date range"
+description: Count commits in a date range
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "GIT_AUTHOR_DATE='2025-01-15T10:00:00' GIT_COMMITTER_DATE='2025-01-15T10:00:00' bash -c 'echo x > f.txt && git add f.txt && git commit -m \"Mid-Jan commit\"'"
-  - "GIT_AUTHOR_DATE='2025-02-10T10:00:00' GIT_COMMITTER_DATE='2025-02-10T10:00:00' bash -c 'echo y > f.txt && git add f.txt && git commit -m \"Mid-Feb commit\"'"
-  - "GIT_AUTHOR_DATE='2025-02-20T10:00:00' GIT_COMMITTER_DATE='2025-02-20T10:00:00' bash -c 'echo z > f.txt && git add f.txt && git commit -m \"Late-Feb commit\"'"
-  - "GIT_AUTHOR_DATE='2025-03-05T10:00:00' GIT_COMMITTER_DATE='2025-03-05T10:00:00' bash -c 'echo w > f.txt && git add f.txt && git commit -m \"Early-Mar commit\"'"
-  - "GIT_AUTHOR_DATE='2025-04-01T10:00:00' GIT_COMMITTER_DATE='2025-04-01T10:00:00' bash -c 'echo v > f.txt && git add f.txt && git commit -m \"April commit\"'"
-prompt: "How many commits were made between 2025-02-01 and 2025-03-31 (inclusive)? Output ONLY the number, nothing else."
-expected: "3"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- GIT_AUTHOR_DATE='2025-01-15T10:00:00' GIT_COMMITTER_DATE='2025-01-15T10:00:00' bash
+  -c 'echo x > f.txt && git add f.txt && git commit -m "Mid-Jan commit"'
+- GIT_AUTHOR_DATE='2025-02-10T10:00:00' GIT_COMMITTER_DATE='2025-02-10T10:00:00' bash
+  -c 'echo y > f.txt && git add f.txt && git commit -m "Mid-Feb commit"'
+- GIT_AUTHOR_DATE='2025-02-20T10:00:00' GIT_COMMITTER_DATE='2025-02-20T10:00:00' bash
+  -c 'echo z > f.txt && git add f.txt && git commit -m "Late-Feb commit"'
+- GIT_AUTHOR_DATE='2025-03-05T10:00:00' GIT_COMMITTER_DATE='2025-03-05T10:00:00' bash
+  -c 'echo w > f.txt && git add f.txt && git commit -m "Early-Mar commit"'
+- GIT_AUTHOR_DATE='2025-04-01T10:00:00' GIT_COMMITTER_DATE='2025-04-01T10:00:00' bash
+  -c 'echo v > f.txt && git add f.txt && git commit -m "April commit"'
+prompt: How many commits were made between 2025-02-01 and 2025-03-31 (inclusive)?
+  Output ONLY the number, nothing else.
+expected: '3'
 scoring:
   type: exact_match
+purpose: Tests ability to count commits in a date range. Evaluates combining time
+  filters with aggregation.
+difficulty: medium
+tags:
+- git-log
+- date-range
+- count
+- filter

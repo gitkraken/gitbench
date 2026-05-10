@@ -1,26 +1,35 @@
 id: f005
-description: "Remove all untracked and ignored files"
+description: Remove all untracked and ignored files
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo '*.log' > .gitignore"
-  - "echo 'tracked' > tracked.txt"
-  - "git add .gitignore tracked.txt"
-  - "git commit -m 'Initial commit'"
-  - "echo 'data' > debug.log"
-  - "echo 'untracked' > notes.txt"
-prompt: "Remove all untracked and ignored files (but not directories). Output ONLY the git command, nothing else."
-expected: "git clean -f -x"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo '*.log' > .gitignore
+- echo 'tracked' > tracked.txt
+- git add .gitignore tracked.txt
+- git commit -m 'Initial commit'
+- echo 'data' > debug.log
+- echo 'untracked' > notes.txt
+prompt: Remove all untracked and ignored files (but not directories). Output ONLY
+  the git command, nothing else.
+expected: git clean -f -x
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_not_exists
-        path: "debug.log"
-      - type: file_not_exists
-        path: "notes.txt"
-      - type: file_exists
-        path: "tracked.txt"
-      - type: file_exists
-        path: ".gitignore"
+    - type: file_not_exists
+      path: debug.log
+    - type: file_not_exists
+      path: notes.txt
+    - type: file_exists
+      path: tracked.txt
+    - type: file_exists
+      path: .gitignore
+purpose: Tests ability to remove both untracked and ignored files with git clean -fx.
+  Evaluates comprehensive cleanup flags.
+difficulty: medium
+tags:
+- git-clean
+- untracked
+- ignored
+- comprehensive

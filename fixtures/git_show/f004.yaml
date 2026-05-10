@@ -1,14 +1,23 @@
 id: f004
-description: "Show annotated tag with tagger info and message"
+description: Show annotated tag with tagger info and message
 setup:
-  - "git init"
-  - "git config user.email 'releaser@company.com'"
-  - "git config user.name 'Release Bot'"
-  - "echo 'stable code' > main.py"
-  - "git add main.py"
-  - "git commit -m 'Stable release'"
-  - "git tag -a v2.0.0 -m 'Major release: stable API'"
-prompt: "Using git show, what is the tagger email for the annotated tag 'v2.0.0'? Output ONLY the email, nothing else."
-expected: "releaser@company.com"
+- git init
+- git config user.email 'releaser@company.com'
+- git config user.name 'Release Bot'
+- echo 'stable code' > main.py
+- git add main.py
+- git commit -m 'Stable release'
+- 'git tag -a v2.0.0 -m ''Major release: stable API'''
+prompt: Using git show, what is the tagger email for the annotated tag 'v2.0.0'? Output
+  ONLY the email, nothing else.
+expected: releaser@company.com
 scoring:
   type: exact_match
+purpose: Tests ability to inspect an annotated tag with tagger info and message. Evaluates
+  annotated-tag comprehension.
+difficulty: medium
+tags:
+- git-show
+- annotated-tag
+- tagger
+- message

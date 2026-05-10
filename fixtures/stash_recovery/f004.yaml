@@ -1,23 +1,32 @@
 id: f004
 description: Stash before merging another branch
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Base' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Base'"
-  - "git branch feature"
-  - "git checkout feature"
-  - "echo 'Feature change' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Feature change'"
-  - "git checkout main"
-  - "echo 'Main change' > file.txt"
-  - "git stash push -m 'main-changes'"
-  - "git merge feature"
-prompt: "You stashed 'Main change' before merging feature into main. Which stash entry contains your 'main-changes'? Provide the stash reference."
-expected: "stash@{0}"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Base' > file.txt
+- git add file.txt
+- git commit -m 'Base'
+- git branch feature
+- git checkout feature
+- echo 'Feature change' > file.txt
+- git add file.txt
+- git commit -m 'Feature change'
+- git checkout main
+- echo 'Main change' > file.txt
+- git stash push -m 'main-changes'
+- git merge feature
+prompt: You stashed 'Main change' before merging feature into main. Which stash entry
+  contains your 'main-changes'? Provide the stash reference.
+expected: stash@{0}
 scoring:
   type: stash_recovery
   threshold: 0.5
+purpose: Tests ability to recover stashed changes created before merging another branch.
+  Evaluates stash timing in multi-operation workflows.
+difficulty: medium
+tags:
+- stash
+- before-merge
+- timing
+- recovery

@@ -1,20 +1,39 @@
 id: f002
-description: "Missing error handling introduced"
+description: Missing error handling introduced
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'try:\n    data = fetch(url)\nexcept Exception as e:\n    log(e)\n    return None' > src/http.py"
-  - "git add src/http.py"
-  - "git commit -m 'Add HTTP fetch with error handling'"
-  - "echo 'data = fetch(url)\nprocess(data)' > src/http.py"
-  - "git add src/http.py"
-  - "git commit -m 'Refactor HTTP module'"
-  - "echo 'data = fetch(url)\nprocess(data)\nresult = transform(data)' > src/http.py"
-  - "git add src/http.py"
-  - "git commit -m 'Add data transformation'"
-prompt: "There is a missing error handling issue in src/http.py. Look at git log and git blame. Which commit removed the try/except block? Output ONLY the commit message of that commit, nothing else."
-expected: "Refactor HTTP module"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- "echo 'try:\n    data = fetch(url)\nexcept Exception as e:\n    log(e)\n    return\
+  \ None' > src/http.py"
+- git add src/http.py
+- git commit -m 'Add HTTP fetch with error handling'
+- 'echo ''data = fetch(url)
+
+  process(data)'' > src/http.py'
+- git add src/http.py
+- git commit -m 'Refactor HTTP module'
+- 'echo ''data = fetch(url)
+
+  process(data)
+
+  result = transform(data)'' > src/http.py'
+- git add src/http.py
+- git commit -m 'Add data transformation'
+prompt: There is a missing error handling issue in src/http.py. Look at git log and
+  git blame. Which commit removed the try/except block? Output ONLY the commit message
+  of that commit, nothing else.
+expected: Refactor HTTP module
 scoring:
   type: exact_match
+purpose: Tests ability to identify which commit removed error handling (try/except
+  block) from source code. Evaluates git blame and git log interpretation for security/robustness
+  regressions.
+difficulty: easy
+tags:
+- error-handling
+- regression
+- git-log
+- git-blame
+- refactor

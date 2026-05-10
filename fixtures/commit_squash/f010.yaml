@@ -1,23 +1,34 @@
 id: f010
 description: Debug commits that should be removed/squashed
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'real code' > app.js"
-  - "git add app.js"
-  - "git commit -m 'Add real feature'"
-  - "echo 'console.log(debug1)' >> app.js"
-  - "git add app.js"
-  - "git commit -m 'WIP: debug commit 1'"
-  - "echo 'console.log(debug2)' >> app.js"
-  - "git add app.js"
-  - "git commit -m 'WIP: debug commit 2'"
-  - "grep -v debug app.js > app.js.tmp && mv app.js.tmp app.js"
-  - "git add app.js"
-  - "git commit -m 'Remove debug statements'"
-prompt: "The history contains debug commits that should be marked as squash/fixup and removed as part of the final feature commit. Identify the debug-related WIP commits only. Do not include the cleanup commit that removes the debug statements. Provide the commit messages."
-expected: "WIP: debug commit 1, WIP: debug commit 2"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'real code' > app.js
+- git add app.js
+- git commit -m 'Add real feature'
+- echo 'console.log(debug1)' >> app.js
+- git add app.js
+- 'git commit -m ''WIP: debug commit 1'''
+- echo 'console.log(debug2)' >> app.js
+- git add app.js
+- 'git commit -m ''WIP: debug commit 2'''
+- grep -v debug app.js > app.js.tmp && mv app.js.tmp app.js
+- git add app.js
+- git commit -m 'Remove debug statements'
+prompt: The history contains debug commits that should be marked as squash/fixup and
+  removed as part of the final feature commit. Identify the debug-related WIP commits
+  only. Do not include the cleanup commit that removes the debug statements. Provide
+  the commit messages.
+expected: 'WIP: debug commit 1, WIP: debug commit 2'
 scoring:
   type: commit_selection
   threshold: 1.0
+purpose: Tests ability to identify debug commits that should be removed rather than
+  squashed. Evaluates recognizing debugging artifacts in history.
+difficulty: medium
+tags:
+- commit-squash
+- debug
+- removal
+- cleanup

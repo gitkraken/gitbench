@@ -1,5 +1,8 @@
 id: f001
 description: "SQL injection introduced by removing input validation"
+purpose: "Tests ability to trace a regression through git history using git log and git blame. Evaluates whether the model can identify the specific commit that removed input sanitization, reintroducing a SQL injection vulnerability."
+difficulty: medium
+tags: ["security", "sql-injection", "regression", "git-log", "git-blame"]
 setup:
   - "git init"
   - "git config user.email 'test@test.com'"

@@ -1,25 +1,36 @@
 id: f009
-description: "Sync submodule URLs"
+description: Sync submodule URLs
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com' && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py && git commit -m 'Initial lib'"
-  - "git clone --bare ../lib-src ../lib-bare"
-  - "git config protocol.file.allow always"
-  - "git -c protocol.file.allow=always submodule add ../lib-bare lib"
-  - "git add .gitmodules lib"
-  - "git commit -m 'Add lib submodule'"
-  - "git config submodule.lib.url ../wrong-bare"
-prompt: "Sync the submodule URLs from .gitmodules to .git/config. Output ONLY the git command, nothing else."
-expected: "git submodule sync"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com'
+  && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py
+  && git commit -m 'Initial lib'
+- git clone --bare ../lib-src ../lib-bare
+- git config protocol.file.allow always
+- git -c protocol.file.allow=always submodule add ../lib-bare lib
+- git add .gitmodules lib
+- git commit -m 'Add lib submodule'
+- git config submodule.lib.url ../wrong-bare
+prompt: Sync the submodule URLs from .gitmodules to .git/config. Output ONLY the git
+  command, nothing else.
+expected: git submodule sync
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: git_output
-        command: "git config --get submodule.lib.url"
-        contains: "lib-bare"
+    - type: git_output
+      command: git config --get submodule.lib.url
+      contains: lib-bare
+purpose: Tests ability to sync submodule remote URLs after upstream changes. Evaluates
+  submodule-sync workflow knowledge.
+difficulty: medium
+tags:
+- submodule
+- sync
+- url
+- upstream

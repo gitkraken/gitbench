@@ -1,26 +1,36 @@
 id: f008
 description: Rebase conflict resolved incorrectly - find the original branch tip
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'config: production' > app.yml"
-  - "git add app.yml"
-  - "git commit -m 'Production config'"
-  - "git checkout -b fix-branch"
-  - "echo 'config: development' > app.yml"
-  - "git add app.yml"
-  - "git commit -m 'Development config'"
-  - "echo 'config: staging' > app.yml"
-  - "git add app.yml"
-  - "git commit -m 'Staging config for testing'"
-  - "git checkout main"
-  - "echo 'config: custom' > app.yml"
-  - "git add app.yml"
-  - "git commit -m 'Custom config'"
-  - "git rebase fix-branch"
-prompt: "You rebased your main branch onto 'fix-branch' but the result is incorrect. You want to go back to the original 'Custom config' commit on main. Use git reflog to find the original main branch HEAD commit hash."
-expected: "Custom config"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- 'echo ''config: production'' > app.yml'
+- git add app.yml
+- git commit -m 'Production config'
+- git checkout -b fix-branch
+- 'echo ''config: development'' > app.yml'
+- git add app.yml
+- git commit -m 'Development config'
+- 'echo ''config: staging'' > app.yml'
+- git add app.yml
+- git commit -m 'Staging config for testing'
+- git checkout main
+- 'echo ''config: custom'' > app.yml'
+- git add app.yml
+- git commit -m 'Custom config'
+- git rebase fix-branch
+prompt: You rebased your main branch onto 'fix-branch' but the result is incorrect.
+  You want to go back to the original 'Custom config' commit on main. Use git reflog
+  to find the original main branch HEAD commit hash.
+expected: Custom config
 scoring:
   type: reflog_recovery
   threshold: 0.5
+purpose: Tests ability to find original branch tip after incorrect rebase conflict
+  resolution. Evaluates reflog for pre-rebase recovery.
+difficulty: hard
+tags:
+- reflog
+- rebase
+- conflict
+- recovery

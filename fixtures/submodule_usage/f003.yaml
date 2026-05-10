@@ -1,31 +1,46 @@
 id: f003
-description: "Remove a submodule"
+description: Remove a submodule
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com' && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py && git commit -m 'Initial lib'"
-  - "git clone --bare ../lib-src ../lib-bare"
-  - "git config protocol.file.allow always"
-  - "git -c protocol.file.allow=always submodule add ../lib-bare lib"
-  - "git add .gitmodules lib"
-  - "git commit -m 'Add lib submodule'"
-prompt: "Remove the submodule 'lib' completely. Output ONLY the commands to run, one per line. The .gitmodules file should no longer reference 'lib' after removal."
-expected: "git submodule deinit -f lib\ngit rm -f lib\nrm -rf .git/modules/lib"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com'
+  && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py
+  && git commit -m 'Initial lib'
+- git clone --bare ../lib-src ../lib-bare
+- git config protocol.file.allow always
+- git -c protocol.file.allow=always submodule add ../lib-bare lib
+- git add .gitmodules lib
+- git commit -m 'Add lib submodule'
+prompt: Remove the submodule 'lib' completely. Output ONLY the commands to run, one
+  per line. The .gitmodules file should no longer reference 'lib' after removal.
+expected: 'git submodule deinit -f lib
+
+  git rm -f lib
+
+  rm -rf .git/modules/lib'
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: dir_not_exists
-        path: "lib"
-      - type: dir_not_exists
-        path: ".git/modules/lib"
-      - type: file_not_contains
-        path: ".gitmodules"
-        value: "lib"
-      - type: git_output
-        command: "git submodule status"
-        not_contains: "lib"
+    - type: dir_not_exists
+      path: lib
+    - type: dir_not_exists
+      path: .git/modules/lib
+    - type: file_not_contains
+      path: .gitmodules
+      value: lib
+    - type: git_output
+      command: git submodule status
+      not_contains: lib
+purpose: Tests ability to properly remove a submodule (deinit + rm). Evaluates complete
+  submodule-removal procedure knowledge.
+difficulty: medium
+tags:
+- submodule
+- remove
+- deinit
+- cleanup

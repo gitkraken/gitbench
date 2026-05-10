@@ -1,31 +1,39 @@
 id: f008
-description: "Count total commits from oneline output"
+description: Count total commits from oneline output
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'a' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'First commit'"
-  - "echo 'b' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Second commit'"
-  - "echo 'c' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Third commit'"
-  - "echo 'd' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Fourth commit'"
-  - "echo 'e' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Fifth commit'"
-  - "echo 'f' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Sixth commit'"
-  - "echo 'g' > file.txt"
-  - "git add file.txt"
-  - "git commit -m 'Seventh commit'"
-prompt: "How many commits are in this repository? Use git log --oneline to count. Output ONLY the number, nothing else."
-expected: "7"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'a' > file.txt
+- git add file.txt
+- git commit -m 'First commit'
+- echo 'b' > file.txt
+- git add file.txt
+- git commit -m 'Second commit'
+- echo 'c' > file.txt
+- git add file.txt
+- git commit -m 'Third commit'
+- echo 'd' > file.txt
+- git add file.txt
+- git commit -m 'Fourth commit'
+- echo 'e' > file.txt
+- git add file.txt
+- git commit -m 'Fifth commit'
+- echo 'f' > file.txt
+- git add file.txt
+- git commit -m 'Sixth commit'
+- echo 'g' > file.txt
+- git add file.txt
+- git commit -m 'Seventh commit'
+prompt: How many commits are in this repository? Use git log --oneline to count. Output
+  ONLY the number, nothing else.
+expected: '7'
 scoring:
   type: exact_match
+purpose: Tests ability to count total commits from oneline output. Evaluates counting
+  from compact log display.
+difficulty: easy
+tags:
+- git-log
+- oneline
+- count

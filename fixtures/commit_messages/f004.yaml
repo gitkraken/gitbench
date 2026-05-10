@@ -1,15 +1,23 @@
 id: f004
-description: "File deleted"
+description: File deleted
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'to be deleted' > redundant.txt"
-  - "git add redundant.txt"
-  - "git commit -m 'Add file'"
-  - "git rm redundant.txt"
-prompt: "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Remove')."
-expected: "Remove redundant.txt"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'to be deleted' > redundant.txt
+- git add redundant.txt
+- git commit -m 'Add file'
+- git rm redundant.txt
+prompt: Generate a concise commit message (max 50 characters) describing the changes
+  in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Remove').
+expected: Remove redundant.txt
 scoring:
   type: similarity
   threshold: 0.5
+purpose: Tests ability to generate a commit message for a file deletion. Evaluates
+  handling of removal operations.
+difficulty: easy
+tags:
+- commit-message
+- deletion
+- remove

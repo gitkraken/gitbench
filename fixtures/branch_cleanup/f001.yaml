@@ -1,23 +1,33 @@
 id: f001
-description: "Single merged branch"
+description: Single merged branch
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Hello' > greeting.txt"
-  - "git add greeting.txt"
-  - "git commit -m 'Initial commit'"
-  - "git checkout -b fix-typo"
-  - "echo 'Hello fixed' > greeting.txt"
-  - "git add greeting.txt"
-  - "git commit -m 'Fix typo'"
-  - "git checkout main"
-  - "git merge fix-typo"
-  - "git checkout -b feature-login"
-  - "echo 'Login code' > login.py"
-  - "git add login.py"
-  - "git commit -m 'Add login'"
-prompt: "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'."
-expected: "fix-typo"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Hello' > greeting.txt
+- git add greeting.txt
+- git commit -m 'Initial commit'
+- git checkout -b fix-typo
+- echo 'Hello fixed' > greeting.txt
+- git add greeting.txt
+- git commit -m 'Fix typo'
+- git checkout main
+- git merge fix-typo
+- git checkout -b feature-login
+- echo 'Login code' > login.py
+- git add login.py
+- git commit -m 'Add login'
+prompt: Look at the branches in this repository. Which branches should be deleted
+  because they are fully merged into main? List ONLY the branch names to delete, one
+  per line. If none, respond with 'none'.
+expected: fix-typo
 scoring:
   type: exact_match
+purpose: Tests ability to identify a single merged branch that can be safely deleted.
+  Evaluates basic git branch --merged comprehension.
+difficulty: easy
+tags:
+- branch-management
+- merged-branches
+- cleanup
+- basic

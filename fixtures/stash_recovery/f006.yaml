@@ -1,22 +1,31 @@
 id: f006
 description: Multiple files stashed
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'Initial' > file1.txt"
-  - "echo 'Initial' > file2.txt"
-  - "git add file1.txt file2.txt"
-  - "git commit -m 'Initial'"
-  - "echo 'Work A' > file1.txt"
-  - "echo 'Work B' > file2.txt"
-  - "git stash push -m 'important-work'"
-  - "echo 'Done' > file1.txt"
-  - "echo 'Done' > file2.txt"
-  - "git add file1.txt file2.txt"
-  - "git commit -m 'Done'"
-prompt: "You stashed 'important-work' containing changes to file1.txt and file2.txt. Which stash entry contains this work? Provide the stash reference."
-expected: "stash@{0}"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'Initial' > file1.txt
+- echo 'Initial' > file2.txt
+- git add file1.txt file2.txt
+- git commit -m 'Initial'
+- echo 'Work A' > file1.txt
+- echo 'Work B' > file2.txt
+- git stash push -m 'important-work'
+- echo 'Done' > file1.txt
+- echo 'Done' > file2.txt
+- git add file1.txt file2.txt
+- git commit -m 'Done'
+prompt: You stashed 'important-work' containing changes to file1.txt and file2.txt.
+  Which stash entry contains this work? Provide the stash reference.
+expected: stash@{0}
 scoring:
   type: stash_recovery
   threshold: 0.5
+purpose: Tests ability to locate a stash containing multiple files. Evaluates stash-content
+  inspection.
+difficulty: easy
+tags:
+- stash
+- multiple-files
+- content
+- recovery

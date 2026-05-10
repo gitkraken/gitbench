@@ -1,20 +1,44 @@
 id: f005
-description: "Wrong variable used after refactor"
+description: Wrong variable used after refactor
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'total = price * quantity\ndiscount = total * 0.1\nfinal = total - discount' > src/calc.py"
-  - "git add src/calc.py"
-  - "git commit -m 'Calculate final price with discount'"
-  - "echo 'subtotal = price * quantity\ndiscount = subtotal * 0.1\nfinal = subtotal - discount' > src/calc.py"
-  - "git add src/calc.py"
-  - "git commit -m 'Rename total to subtotal'"
-  - "echo 'subtotal = price * quantity\ndiscount = total * 0.1\nfinal = subtotal - discount' > src/calc.py"
-  - "git add src/calc.py"
-  - "git commit -m 'Apply coding standards'"
-prompt: "There is a bug in src/calc.py where the wrong variable name is used for the discount calculation. Look at git log and git blame. Which commit introduced the bug? Output ONLY the commit message of that commit, nothing else."
-expected: "Apply coding standards"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- 'echo ''total = price * quantity
+
+  discount = total * 0.1
+
+  final = total - discount'' > src/calc.py'
+- git add src/calc.py
+- git commit -m 'Calculate final price with discount'
+- 'echo ''subtotal = price * quantity
+
+  discount = subtotal * 0.1
+
+  final = subtotal - discount'' > src/calc.py'
+- git add src/calc.py
+- git commit -m 'Rename total to subtotal'
+- 'echo ''subtotal = price * quantity
+
+  discount = total * 0.1
+
+  final = subtotal - discount'' > src/calc.py'
+- git add src/calc.py
+- git commit -m 'Apply coding standards'
+prompt: There is a bug in src/calc.py where the wrong variable name is used for the
+  discount calculation. Look at git log and git blame. Which commit introduced the
+  bug? Output ONLY the commit message of that commit, nothing else.
+expected: Apply coding standards
 scoring:
   type: exact_match
+purpose: Tests ability to trace a variable-name bug (total vs subtotal mismatch) across
+  multiple refactoring commits. Requires understanding that a later commit partially
+  reverted the rename.
+difficulty: medium
+tags:
+- refactor
+- variable-naming
+- regression
+- git-log
+- git-blame

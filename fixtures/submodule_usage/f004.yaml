@@ -1,19 +1,29 @@
 id: f004
-description: "Check submodule status"
+description: Check submodule status
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com' && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py && git commit -m 'Initial lib'"
-  - "git clone --bare ../lib-src ../lib-bare"
-  - "git config protocol.file.allow always"
-  - "git -c protocol.file.allow=always submodule add ../lib-bare lib"
-  - "git add .gitmodules lib"
-  - "git commit -m 'Add lib submodule'"
-prompt: "Run the command to show the status of all submodules. Output ONLY the git command, nothing else."
-expected: "git submodule status"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com'
+  && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py
+  && git commit -m 'Initial lib'
+- git clone --bare ../lib-src ../lib-bare
+- git config protocol.file.allow always
+- git -c protocol.file.allow=always submodule add ../lib-bare lib
+- git add .gitmodules lib
+- git commit -m 'Add lib submodule'
+prompt: Run the command to show the status of all submodules. Output ONLY the git
+  command, nothing else.
+expected: git submodule status
 scoring:
   type: exact_match
+purpose: Tests ability to check submodule status for modifications. Evaluates submodule-status
+  inspection.
+difficulty: easy
+tags:
+- submodule
+- status
+- inspection

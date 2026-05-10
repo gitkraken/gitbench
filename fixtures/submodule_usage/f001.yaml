@@ -1,25 +1,35 @@
 id: f001
-description: "Add a submodule"
+description: Add a submodule
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com' && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py && git commit -m 'Initial lib'"
-  - "git clone --bare ../lib-src ../lib-bare"
-  - "git config protocol.file.allow always"
-prompt: "Add the repository at '../lib-bare' as a git submodule at path 'lib'. Output ONLY the git command to run, nothing else."
-expected: "git submodule add ../lib-bare lib"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial commit'
+- mkdir -p ../lib-src && cd ../lib-src && git init && git config user.email 'test@test.com'
+  && git config user.name 'Test User' && echo 'lib code' > lib.py && git add lib.py
+  && git commit -m 'Initial lib'
+- git clone --bare ../lib-src ../lib-bare
+- git config protocol.file.allow always
+prompt: Add the repository at '../lib-bare' as a git submodule at path 'lib'. Output
+  ONLY the git command to run, nothing else.
+expected: git submodule add ../lib-bare lib
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: file_exists
-        path: ".gitmodules"
-      - type: dir_exists
-        path: "lib"
-      - type: git_output
-        command: "git submodule status"
-        contains: "lib"
+    - type: file_exists
+      path: .gitmodules
+    - type: dir_exists
+      path: lib
+    - type: git_output
+      command: git submodule status
+      contains: lib
+purpose: Tests ability to add a git submodule to a repository. Evaluates basic submodule-add
+  command knowledge.
+difficulty: easy
+tags:
+- submodule
+- add
+- basic

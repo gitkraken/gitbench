@@ -1,41 +1,56 @@
 id: f012
-description: "Mixed merged and unmerged with many branches"
+description: Mixed merged and unmerged with many branches
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'App' > app.txt"
-  - "git add app.txt"
-  - "git commit -m 'Initial'"
-  - "git checkout -b fix-typo"
-  - "echo 'typo fix' > typo.txt"
-  - "git add typo.txt"
-  - "git commit -m 'Fix typo'"
-  - "git checkout main"
-  - "git merge fix-typo"
-  - "git checkout -b fix-bug"
-  - "echo 'bug fix' > bug.txt"
-  - "git add bug.txt"
-  - "git commit -m 'Fix bug'"
-  - "git checkout main"
-  - "git merge fix-bug"
-  - "git checkout -b feature-v2"
-  - "echo 'v2' > v2.txt"
-  - "git add v2.txt"
-  - "git commit -m 'Start v2'"
-  - "git checkout main"
-  - "git checkout -b feature-v3"
-  - "echo 'v3' > v3.txt"
-  - "git add v3.txt"
-  - "git commit -m 'Start v3'"
-  - "git checkout main"
-  - "git checkout -b docs-update"
-  - "echo 'docs' > docs.txt"
-  - "git add docs.txt"
-  - "git commit -m 'Update docs'"
-  - "git checkout main"
-  - "git merge docs-update"
-prompt: "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'."
-expected: "docs-update\nfix-bug\nfix-typo"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'App' > app.txt
+- git add app.txt
+- git commit -m 'Initial'
+- git checkout -b fix-typo
+- echo 'typo fix' > typo.txt
+- git add typo.txt
+- git commit -m 'Fix typo'
+- git checkout main
+- git merge fix-typo
+- git checkout -b fix-bug
+- echo 'bug fix' > bug.txt
+- git add bug.txt
+- git commit -m 'Fix bug'
+- git checkout main
+- git merge fix-bug
+- git checkout -b feature-v2
+- echo 'v2' > v2.txt
+- git add v2.txt
+- git commit -m 'Start v2'
+- git checkout main
+- git checkout -b feature-v3
+- echo 'v3' > v3.txt
+- git add v3.txt
+- git commit -m 'Start v3'
+- git checkout main
+- git checkout -b docs-update
+- echo 'docs' > docs.txt
+- git add docs.txt
+- git commit -m 'Update docs'
+- git checkout main
+- git merge docs-update
+prompt: Look at the branches in this repository. Which branches should be deleted
+  because they are fully merged into main? List ONLY the branch names to delete, one
+  per line. If none, respond with 'none'.
+expected: 'docs-update
+
+  fix-bug
+
+  fix-typo'
 scoring:
   type: exact_match
+purpose: Tests ability to process many branches (10+) with mixed merge status. Evaluates
+  scalability of branch cleanup analysis.
+difficulty: hard
+tags:
+- branch-management
+- many-branches
+- scalability
+- mixed-status
+- cleanup

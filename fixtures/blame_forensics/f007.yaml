@@ -1,20 +1,36 @@
 id: f007
-description: "Integer overflow in calculation"
+description: Integer overflow in calculation
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "mkdir -p src"
-  - "echo 'result = int(a) * int(b)' > src/math.py"
-  - "git add src/math.py"
-  - "git commit -m 'Multiply two numbers'"
-  - "echo 'result = int(a) * int(b)\nreturn result' > src/math.py"
-  - "git add src/math.py"
-  - "git commit -m 'Return multiplication result'"
-  - "echo 'result = (a * b) % 256\nreturn result' > src/math.py"
-  - "git add src/math.py"
-  - "git commit -m 'Optimize for byte values'"
-prompt: "There is a truncation bug in src/math.py where large multiplication results get wrapped to 8 bits. Look at git log and git blame. Which commit introduced the modulo 256 truncation? Output ONLY the commit message of that commit, nothing else."
-expected: "Optimize for byte values"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- mkdir -p src
+- echo 'result = int(a) * int(b)' > src/math.py
+- git add src/math.py
+- git commit -m 'Multiply two numbers'
+- 'echo ''result = int(a) * int(b)
+
+  return result'' > src/math.py'
+- git add src/math.py
+- git commit -m 'Return multiplication result'
+- 'echo ''result = (a * b) % 256
+
+  return result'' > src/math.py'
+- git add src/math.py
+- git commit -m 'Optimize for byte values'
+prompt: There is a truncation bug in src/math.py where large multiplication results
+  get wrapped to 8 bits. Look at git log and git blame. Which commit introduced the
+  modulo 256 truncation? Output ONLY the commit message of that commit, nothing else.
+expected: Optimize for byte values
 scoring:
   type: exact_match
+purpose: Tests ability to detect when an integer overflow bug was introduced via modulo
+  truncation. Evaluates understanding of numeric precision issues combined with git
+  forensics.
+difficulty: easy
+tags:
+- integer-overflow
+- truncation
+- regression
+- git-log
+- git-blame

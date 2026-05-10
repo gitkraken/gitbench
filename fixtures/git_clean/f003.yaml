@@ -1,25 +1,33 @@
 id: f003
-description: "Remove untracked directories"
+description: Remove untracked directories
 setup:
-  - "git init"
-  - "git config user.email 'test@test.com'"
-  - "git config user.name 'Test User'"
-  - "echo 'tracked' > tracked.txt"
-  - "git add tracked.txt"
-  - "git commit -m 'Initial commit'"
-  - "mkdir -p build/output"
-  - "echo 'artifact' > build/output/app.bin"
-  - "mkdir -p tmp"
-  - "echo 'temp' > tmp/cache.txt"
-prompt: "Remove all untracked files and directories from the working directory. Output ONLY the git command, nothing else."
-expected: "git clean -f -d"
+- git init
+- git config user.email 'test@test.com'
+- git config user.name 'Test User'
+- echo 'tracked' > tracked.txt
+- git add tracked.txt
+- git commit -m 'Initial commit'
+- mkdir -p build/output
+- echo 'artifact' > build/output/app.bin
+- mkdir -p tmp
+- echo 'temp' > tmp/cache.txt
+prompt: Remove all untracked files and directories from the working directory. Output
+  ONLY the git command, nothing else.
+expected: git clean -f -d
 scoring:
   type: state_assertions
   expected_state:
     assertions:
-      - type: dir_not_exists
-        path: "build"
-      - type: dir_not_exists
-        path: "tmp"
-      - type: file_exists
-        path: "tracked.txt"
+    - type: dir_not_exists
+      path: build
+    - type: dir_not_exists
+      path: tmp
+    - type: file_exists
+      path: tracked.txt
+purpose: Tests ability to remove untracked directories with git clean -fd. Evaluates
+  recursive cleanup awareness.
+difficulty: easy
+tags:
+- git-clean
+- directories
+- recursive
