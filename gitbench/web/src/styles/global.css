@@ -1,3 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #07090f;
+  --color-surface: #0d1117;
+  --color-card: #0f1520;
+  --color-card-hover: #141d2e;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border-accent: rgba(6, 182, 212, 0.35);
+  --color-text: #e8f0ff;
+  --color-text-dim: #5a6a88;
+  --color-text-mid: #8898b8;
+  --color-accent: #06b6d4;
+  --color-accent-glow: rgba(6, 182, 212, 0.12);
+  --color-pass: #10b981;
+  --color-pass-bg: rgba(16, 185, 129, 0.12);
+  --color-pass-border: rgba(16, 185, 129, 0.35);
+  --color-warn: #f59e0b;
+  --color-warn-bg: rgba(245, 158, 11, 0.12);
+  --color-warn-border: rgba(245, 158, 11, 0.35);
+  --color-fail: #f43f5e;
+  --color-fail-bg: rgba(244, 63, 94, 0.12);
+  --color-fail-border: rgba(244, 63, 94, 0.3);
+  --font-display: 'Manrope', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  /* shadcn/ui design tokens — dark neutral theme */
+  --color-background: #07090f;
+  --color-foreground: #e8f0ff;
+  --color-card-foreground: #e8f0ff;
+  --color-popover: #0d1117;
+  --color-popover-foreground: #e8f0ff;
+  --color-primary: #06b6d4;
+  --color-primary-foreground: #07090f;
+  --color-secondary: #141d2e;
+  --color-secondary-foreground: #8898b8;
+  --color-muted: #141d2e;
+  --color-muted-foreground: #5a6a88;
+  --color-accent-foreground: #07090f;
+  --color-destructive: #f43f5e;
+  --color-destructive-foreground: #ffffff;
+  --color-input: rgba(255, 255, 255, 0.05);
+  --color-ring: #06b6d4;
+}
+
 /* ── Design Tokens ── */
 :root {
   --bg: #07090f;
@@ -27,13 +71,13 @@
 }
 
 /* ── Reset ── */
-*,
+/* *,
 *::before,
 *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
+} */
 
 html {
   scroll-behavior: smooth;
@@ -138,9 +182,9 @@ body::before {
 }
 
 .sidebar-link .icon {
-  font-size: 0.85rem;
-  width: 1.2em;
-  text-align: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 /* ── Header ── */
@@ -220,54 +264,6 @@ body::before {
 }
 
 /* ── Badges & Pills ── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.7rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--text-mid);
-  letter-spacing: 0.04em;
-}
-
-.heat-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.18rem 0.55rem;
-  border-radius: 5px;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.result-pill {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  padding: 0.18rem 0.55rem;
-  border-radius: 4px;
-  min-width: 42px;
-  text-align: center;
-}
-
-.result-pill.pass {
-  background: var(--pass-bg);
-  color: var(--pass);
-  border: 1px solid var(--pass-border);
-}
-
-.result-pill.fail {
-  background: var(--fail-bg);
-  color: var(--fail);
-  border: 1px solid var(--fail-border);
-}
-
 .tag-pill {
   display: inline-flex;
   align-items: center;
