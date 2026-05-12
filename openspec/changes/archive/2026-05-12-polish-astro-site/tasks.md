@@ -56,6 +56,6 @@
 
 ## 10. Regenerate and verify
 
-- [ ] 10.1 Re-run `gitbench render --format json` to regenerate `web/public/results.json` with cost data and filtered unknown model
-- [ ] 10.2 Run `cd gitbench/web && npm run build` and verify the static build succeeds
-- [ ] 10.3 Manual smoke test: Overview intro visible, model selectors sync on Dashboard, quadrant chart on /models, token badges on fixtures, tag search on Explore, Methodology page accessible, unknown model absent from all views
+- [x] 10.1 Re-run `gitbench render --format json` to regenerate `web/public/results.json` with cost data and filtered unknown model
+- [x] 10.2 Run `cd gitbench/web && npm run build` and verify the static build succeeds
+- [x] 10.3 Manual smoke test: Overview intro visible, model selectors sync on Dashboard, quadrant chart on /models, token badges on fixtures, tag search on Explore, Methodology page accessible, unknown model absent from all views

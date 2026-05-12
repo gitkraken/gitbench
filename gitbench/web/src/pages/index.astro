@@ -1,6 +1,7 @@
 ---
 import Layout from '../components/Layout.astro';
 import PassRateBarChart from '../components/charts/PassRateBarChart';
+import CostValueChart from '../components/charts/CostValueChart';
 import ModelSelector from '../components/charts/ModelSelector';
 import BenchmarkHeatmap from '../components/charts/BenchmarkHeatmap';
 ---
@@ -29,5 +30,10 @@ import BenchmarkHeatmap from '../components/charts/BenchmarkHeatmap';
   <section class="mt-10">
     <div class="section-label"><span>Benchmark Matrix</span></div>
     <BenchmarkHeatmap client:load />
+  </section>
+
+  <section class="mt-10">
+    <div class="section-label"><span>Cost vs Quality</span></div>
+    <CostValueChart client:load />
   </section>
 </Layout>

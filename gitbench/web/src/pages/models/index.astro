@@ -2,7 +2,6 @@
 import Layout from '../../components/Layout.astro';
 import { loadDataSync } from '../../lib/data';
 import { Badge } from '@/components/ui/badge';
-import CostValueChart from '../../components/charts/CostValueChart';
 
 const data = loadDataSync();
 ---
@@ -41,9 +40,4 @@ const data = loadDataSync();
       );
     })}
   </div>
-
-  <section class="mt-10">
-    <div class="section-label"><span>Cost vs Quality</span></div>
-    <CostValueChart client:load />
-  </section>
 </Layout>
