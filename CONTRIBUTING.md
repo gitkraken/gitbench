@@ -294,6 +294,52 @@ python -m gitbench.cli run --benchmark my_benchmark --model mock
 
 # Run all benchmarks
 python -m gitbench.cli run --all --model mock
+
+# Generate a report after running benchmarks
+gitbench report
+```
+
+## UI Development
+
+The report UI is an Astro static site at `gitbench/web/`.
+
+**Prerequisites:** Node.js >= 22.12.0
+
+```bash
+cd gitbench/web
+npm install
+```
+
+**Dev workflow:**
+
+```bash
+# Generate results.json from benchmark data
+gitbench report --no-build
+
+# Start Astro dev server with hot reload
+cd gitbench/web && npm run dev
+```
+
+**Tech stack:**
+- [Astro](https://astro.build) — static site generation
+- [React 19](https://react.dev) — interactive chart islands
+- [shadcn/ui](https://ui.shadcn.com) — component primitives (Card, Badge, Button, Select, Command, Popover)
+- [Tailwind CSS v4](https://tailwindcss.com) — utility-first CSS
+- [Recharts](https://recharts.org) — chart components
+- [Lucide](https://lucide.dev) — icons
+
+**Adding shadcn components:**
+```bash
+cd gitbench/web
+npx shadcn@latest add <component-name>
+```
+
+Components are stored in `src/components/ui/` and imported via `@/components/ui/<name>`.
+
+**Build:**
+```bash
+cd gitbench/web && npm run build
+# Output: dist/
 ```
 
 ---

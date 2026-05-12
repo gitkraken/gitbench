@@ -86,6 +86,22 @@ You can also set defaults in `gitbench.json` or `.gitbench.json`:
 }
 ```
 
+### Generate a report
+
+After running benchmarks, generate a static report site:
+
+```bash
+gitbench report
+```
+
+This aggregates results from `gitbench-results/`, generates `web/public/results.json`, builds the Astro site to `web/dist/`, and starts a preview server.
+
+```bash
+gitbench report --open    # build and open in browser
+gitbench report --dev     # start dev server with hot reload
+gitbench report --no-build  # only generate results.json (skip build)
+```
+
 ### Result versioning
 
 Saved run envelopes include two version fields:
