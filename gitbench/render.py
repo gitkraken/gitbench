@@ -97,6 +97,7 @@ def load_runs_from_combined(path: str) -> list[dict]:
         except ValueError:
             pass
 
+    # Format 1: multi-profile ("profiles" key)
     for profile_entry in data.get("profiles", []):
         profile_name = profile_entry.get("profile", "")
         for model_entry in profile_entry.get("models", []):
@@ -110,6 +111,31 @@ def load_runs_from_combined(path: str) -> list[dict]:
                 "timestamp": timestamp,
                 "results": model_results,
             })
+
+    # Format 2: single-profile multi-model ("models" key but no "profiles")
+    if not runs and "models" in data and "profiles" not in data:
+        for model_entry in data["models"]:
+            model_name = model_entry.get("model", "")
+            model_results = model_entry.get("results", [])
+            runs.append({
+                "version": "0.1.0",
+                "model": model_name,
+                "profile": data.get("profile", ""),
+                "benchmark_suite_version": suite_version,
+                "timestamp": timestamp,
+                "results": model_results,
+            })
+
+    # Format 3: flat per-benchmark result
+    if not runs and "benchmark" in data and "scores" in data:
+        runs.append({
+            "version": "0.1.0",
+            "model": data.get("model", "unknown"),
+            "profile": data.get("profile", ""),
+            "benchmark_suite_version": suite_version,
+            "timestamp": timestamp,
+            "results": [data],
+        })
 
     runs.sort(key=_run_sort_key)
     return runs

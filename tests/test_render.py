@@ -137,7 +137,7 @@ class TestAggregateRuns:
         runs = [_make_envelope(passed=10)]
         data = aggregate_runs(runs)
 
-        assert "mock" in data["models"]
+        assert any(m["name"] == "mock" for m in data["models"])
         assert "commit_messages" in data["benchmarks"]
         assert data["model_summaries"]["mock"]["total_passed"] == 10
         assert data["matrix"]["mock"]["commit_messages"]["pass_at_k"] == round(10 / 12, 4)
@@ -151,8 +151,8 @@ class TestAggregateRuns:
         data = aggregate_runs(runs)
 
         assert len(data["models"]) == 2
-        assert "mock" in data["models"]
-        assert "gpt-4o" in data["models"]
+        assert any(m["name"] == "mock" for m in data["models"])
+        assert any(m["name"] == "gpt-4o" for m in data["models"])
 
         assert data["model_summaries"]["mock"]["total_passed"] == 10
         assert data["model_summaries"]["gpt-4o"]["total_passed"] == 12
@@ -193,184 +193,149 @@ class TestAggregateRuns:
         assert data["runs_meta"][0]["benchmark_suite_version"] == BENCHMARK_SUITE_VERSION
 
 
-class TestRenderHtml:
-    """Tests for render_html."""
+class TestRenderJson:
+    """Tests for render_json."""
 
-    def test_produces_valid_html(self):
-        """Test that render_html produces a complete HTML document."""
+    def test_writes_json_file(self, tmp_path):
+        """Test that render_json writes a valid JSON file."""
         runs = [_make_envelope()]
         data = aggregate_runs(runs)
-        html = render_html(data)
+        output = tmp_path / "results.json"
 
-        assert html.startswith("<!DOCTYPE html>")
-        assert "</html>" in html
-        assert "Chart.js" in html or "chart.js" in html
+        render_json(data, str(output))
 
-    def test_includes_model_names(self):
-        """Test that model names appear in the HTML."""
-        runs = [_make_envelope(model="gpt-4o")]
-        data = aggregate_runs(runs)
-        html = render_html(data)
+        assert output.exists()
+        written = json.loads(output.read_text())
+        assert "models" in written
+        assert "benchmarks" in written
+        assert "model_summaries" in written
 
-        assert "gpt-4o" in html
-
-    def test_includes_custom_title(self):
-        """Test that custom title is used."""
+    def test_creates_parent_directories(self, tmp_path):
+        """Test that render_json creates parent directories."""
         runs = [_make_envelope()]
         data = aggregate_runs(runs)
-        html = render_html(data, title="My Custom Report")
+        output = tmp_path / "nested" / "deep" / "results.json"
 
-        assert "<title>My Custom Report</title>" in html
-        assert "<h1>My Custom Report</h1>" in html
+        render_json(data, str(output))
 
-    def test_includes_benchmark_names(self):
-        """Test that benchmark names appear in the HTML."""
-        runs = [_make_envelope(bench="rebase")]
-        data = aggregate_runs(runs)
-        html = render_html(data)
-
-        assert "rebase" in html
-
-
-class TestRenderCommand:
-    """Tests for the render CLI command."""
-
-    @pytest.fixture
-    def runner(self):
-        return CliRunner()
-
-    def test_render_from_dir(self, runner, tmp_path):
-        """Test render command with --input-dir."""
-        run = _make_envelope()
-        (tmp_path / "runs" / "run1.json").parent.mkdir(exist_ok=True)
-        (tmp_path / "runs" / "run1.json").write_text(json.dumps(run))
-        output = tmp_path / "report.html"
-
-        result = runner.invoke(cli, [
-            "render", "--input-dir", str(tmp_path / "runs"),
-            "--output", str(output),
-        ])
-        assert result.exit_code == 0
         assert output.exists()
 
-        html = output.read_text()
-        assert "<!DOCTYPE html>" in html
-        assert "mock" in html
-
-    def test_render_from_jsonl(self, runner, tmp_path):
-        """Test render command with --input."""
-        jsonl = tmp_path / "results.jsonl"
-        jsonl.write_text(json.dumps(_make_envelope()))
-        output = tmp_path / "report.html"
-
-        result = runner.invoke(cli, [
-            "render", "--input", str(jsonl),
-            "--output", str(output),
-        ])
-        assert result.exit_code == 0
-        assert output.exists()
-
-    def test_render_creates_nested_output_parent_dirs(self, runner, tmp_path):
-        """Test that render --output creates parent directories."""
-        jsonl = tmp_path / "results.jsonl"
-        jsonl.write_text(json.dumps(_make_envelope()))
-        output = tmp_path / "nested" / "reports" / "report.html"
-
-        result = runner.invoke(cli, [
-            "render", "--input", str(jsonl),
-            "--output", str(output),
-        ])
-
-        assert result.exit_code == 0
-        assert output.exists()
-        assert output.read_text().startswith("<!DOCTYPE html>")
-
-    def test_render_requires_input(self, runner):
-        """Test that render fails without input."""
-        result = runner.invoke(cli, ["render"])
-        assert result.exit_code != 0
-        assert "--input-dir" in result.output or "--input" in result.output
-
-    def test_render_with_title(self, runner, tmp_path):
-        """Test that --title sets the report title."""
-        jsonl = tmp_path / "results.jsonl"
-        jsonl.write_text(json.dumps(_make_envelope()))
-        output = tmp_path / "report.html"
-
-        result = runner.invoke(cli, [
-            "render", "--input", str(jsonl),
-            "--title", "Q1 Benchmarks",
-            "--output", str(output),
-        ])
-        assert result.exit_code == 0
-        assert "Q1 Benchmarks" in output.read_text()
-
-    def test_render_deduplicates(self, runner, tmp_path):
-        """Test that duplicate runs (same timestamp+model) are deduplicated."""
-        run = _make_envelope()
-        (tmp_path / "r1.json").write_text(json.dumps(run))
-        (tmp_path / "r2.json").write_text(json.dumps(run))  # duplicate
-
-        output = tmp_path / "report.html"
-        result = runner.invoke(cli, [
-            "render", "--input-dir", str(tmp_path),
-            "--output", str(output),
-        ])
-        assert result.exit_code == 0
-        # Should say 1 unique run, not 2
-        assert "1 unique" in result.output
-
-    def test_render_default_output(self, runner, tmp_path, monkeypatch):
-        """Test that default output is gitbench-report.html."""
-        monkeypatch.chdir(tmp_path)
-        jsonl = tmp_path / "results.jsonl"
-        jsonl.write_text(json.dumps(_make_envelope()))
-
-        result = runner.invoke(cli, ["render", "--input", str(jsonl)])
-        assert result.exit_code == 0
-        assert (tmp_path / "gitbench-report.html").exists()
-
-
-class TestRenderReasoningLevel:
-    """Tests for reasoning level in HTML reports."""
-
-    def test_runs_meta_includes_reasoning_level_from_model_name(self):
-        """runs_meta parses reasoning level from model name # suffix."""
-        run = _make_envelope(model="o3-mini#high")
-        data = aggregate_runs([run])
-
-        meta = data["runs_meta"][0]
-        assert meta["reasoning_level"] == "high"
-        assert meta["model"] == "o3-mini#high"
-
-    def test_runs_meta_reasoning_level_empty_when_absent(self):
-        """runs_meta reasoning_level is empty string when no # suffix."""
-        run = _make_envelope(model="gpt-4o")
-        data = aggregate_runs([run])
-
-        meta = data["runs_meta"][0]
-        assert meta["reasoning_level"] == ""
-
-    def test_html_includes_reasoning_column(self):
-        """HTML report includes Reasoning column header."""
-        runs = [_make_envelope(model="o3-mini#low")]
+    def test_writes_models_as_objects(self, tmp_path):
+        """Test that models are written as objects with name, baseModel, reasoningLevel."""
+        runs = [_make_envelope(model="o3-mini#high")]
         data = aggregate_runs(runs)
-        html = render_html(data)
+        output = tmp_path / "results.json"
 
-        assert "<th>Reasoning</th>" in html
+        render_json(data, str(output))
 
-    def test_html_displays_reasoning_level(self):
-        """HTML report displays the reasoning level value."""
-        runs = [_make_envelope(model="o3-mini#medium")]
-        data = aggregate_runs(runs)
-        html = render_html(data)
+        written = json.loads(output.read_text())
+        models = written["models"]
+        assert len(models) == 1
+        assert models[0]["name"] == "o3-mini#high"
+        assert models[0]["baseModel"] == "o3-mini"
+        assert models[0]["reasoningLevel"] == "high"
 
-        assert "medium" in html
 
-    def test_html_placeholder_when_no_reasoning(self):
-        """HTML report shows em-dash placeholder when no reasoning level."""
-        runs = [_make_envelope(model="gpt-4o")]
-        data = aggregate_runs(runs)
-        html = render_html(data)
+class TestAggregateRunsFixtureIndex:
+    """Tests for fixture_index in aggregate_runs."""
 
-        assert "—" in html
+    def test_fixture_index_has_metadata(self):
+        """Test that fixture_index contains prompt, expected, description fields."""
+        scores = [
+            {
+                "fixture_id": "f001",
+                "passed": True,
+                "similarity": 0.95,
+                "model_output": "git commit -m 'fix'",
+                "error": None,
+                "prompt": "Write a commit message for this diff",
+                "expected": "fix: resolve null pointer in parser",
+                "description": "Test commit message generation",
+                "purpose": "Tests the model's ability to generate concise commit messages",
+                "difficulty": "easy",
+                "tags": ["commit", "basic"],
+                "reasoning_level": None,
+                "input_tokens": 100,
+                "output_tokens": 50,
+                "total_tokens": 150,
+            }
+        ]
+        envelope = {
+            "version": 1,
+            "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+            "timestamp": "2026-04-25T13:00:00+00:00",
+            "git_sha": "abc123",
+            "model": "gpt-4o",
+            "profile": "(inline)",
+            "summary": {"total_benchmarks": 1, "total_fixtures": 1, "total_passed": 1, "overall_pass_at_k": 1.0},
+            "results": [
+                {
+                    "benchmark": "commit_messages",
+                    "total": 1,
+                    "passed": 1,
+                    "pass_at_k": 1.0,
+                    "scores": scores,
+                    "errors": 0,
+                }
+            ],
+        }
+        data = aggregate_runs([envelope])
+
+        assert "commit_messages/f001" in data["fixture_index"]
+        fi = data["fixture_index"]["commit_messages/f001"]
+        assert fi["prompt"] == "Write a commit message for this diff"
+        assert fi["expected"] == "fix: resolve null pointer in parser"
+        assert fi["description"] == "Test commit message generation"
+        assert fi["purpose"] == "Tests the model's ability to generate concise commit messages"
+        assert fi["difficulty"] == "easy"
+        assert fi["tags"] == ["commit", "basic"]
+        assert fi["id"] == "f001"
+        assert fi["benchmark"] == "commit_messages"
+
+    def test_fixtures_include_metadata_fields(self):
+        """Test that per-fixture data includes purpose, difficulty, tags."""
+        scores = [
+            {
+                "fixture_id": "f001",
+                "passed": True,
+                "similarity": 0.9,
+                "model_output": "output",
+                "error": None,
+                "purpose": "Test purpose",
+                "difficulty": "medium",
+                "tags": ["rebase", "conflict"],
+                "reasoning_level": "high",
+                "input_tokens": 200,
+                "output_tokens": 100,
+                "total_tokens": 300,
+            }
+        ]
+        envelope = {
+            "version": 1,
+            "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+            "timestamp": "2026-04-25T13:00:00+00:00",
+            "git_sha": "abc123",
+            "model": "gpt-4o",
+            "profile": "(inline)",
+            "summary": {"total_benchmarks": 1, "total_fixtures": 1, "total_passed": 1, "overall_pass_at_k": 1.0},
+            "results": [
+                {
+                    "benchmark": "rebase",
+                    "total": 1,
+                    "passed": 1,
+                    "pass_at_k": 1.0,
+                    "scores": scores,
+                    "errors": 0,
+                }
+            ],
+        }
+        data = aggregate_runs([envelope])
+
+        fixture = data["fixtures"]["gpt-4o"]["rebase"][0]
+        assert fixture["purpose"] == "Test purpose"
+        assert fixture["difficulty"] == "medium"
+        assert fixture["tags"] == ["rebase", "conflict"]
+        assert fixture["reasoning_level"] == "high"
+        assert fixture["input_tokens"] == 200
+        assert fixture["output_tokens"] == 100
+        assert fixture["total_tokens"] == 300

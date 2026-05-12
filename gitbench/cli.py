@@ -1074,27 +1074,23 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
     runs: list[dict] = []
 
     # 1. Try combined format (default output of `gitbench run -a`)
-    #    Looks for gitbench-results/<latest-ts>/results-v<version>.json
+    #    Loads results-v*.json from every timestamped subdirectory
     combined_runs_loaded = False
     if not input_file:
         try:
             dir_path = Path(results_dir)
             if dir_path.is_dir():
-                # Find the most recent timestamped subdirectory with a results file
-                best: tuple[str, str] | None = None
-                for subdir in sorted(dir_path.iterdir(), reverse=True):
+                any_loaded = False
+                for subdir in sorted(dir_path.iterdir()):
                     if subdir.is_dir():
-                        for f in subdir.glob("results-v*.json"):
-                            best = (str(f), subdir.name)
-                            break
-                    if best:
-                        break
-                if best:
-                    combined_runs = load_runs_from_combined(best[0])
-                    if combined_runs:
-                        click.echo(f"Loaded {len(combined_runs)} run(s) from combined file {best[0]}", err=True)
-                        runs.extend(combined_runs)
-                        combined_runs_loaded = True
+                        for f in sorted(subdir.glob("results-v*.json")):
+                            combined_runs = load_runs_from_combined(str(f))
+                            if combined_runs:
+                                click.echo(f"Loaded {len(combined_runs)} run(s) from {f}", err=True)
+                                runs.extend(combined_runs)
+                                any_loaded = True
+                if any_loaded:
+                    combined_runs_loaded = True
         except Exception:
             pass
 
