@@ -8,9 +8,11 @@ interface Props {
   similarity: number;
   difficulty: string;
   tags: string[];
+  inputTokens?: number | null;
+  outputTokens?: number | null;
 }
 
-const { fixtureId, benchmark, passed, similarity, difficulty, tags } = Astro.props;
+const { fixtureId, benchmark, passed, similarity, difficulty, tags, inputTokens, outputTokens } = Astro.props;
 const passVariant = passed ? 'default' : 'destructive';
 const passColor = passed ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]' : 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]';
 const tagsStr = tags.join(',');
@@ -47,6 +49,11 @@ const tagsStr = tags.join(',');
         <Badge variant="secondary" class="font-mono text-[0.58rem] px-1 py-0">
           {difficulty}
         </Badge>
+      </div>
+    )}
+    {inputTokens != null && outputTokens != null && (
+      <div class="mt-1.5 font-mono text-[0.58rem] text-[var(--color-text-dim)] opacity-60">
+        {inputTokens}→{outputTokens} tokens
       </div>
     )}
   </div>

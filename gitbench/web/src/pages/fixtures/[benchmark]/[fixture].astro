@@ -25,7 +25,7 @@ if (!fi) {
 }
 
 // Collect all model outputs for this fixture
-const modelOutputs: { model: string; passed: boolean; similarity: number; output: string; error: string | null }[] = [];
+const modelOutputs: { model: string; passed: boolean; similarity: number; output: string; error: string | null; inputTokens: number | null; outputTokens: number | null }[] = [];
 for (const m of data.models) {
   const results = data.fixtures[m.name]?.[fi.benchmark] || [];
   const fr = results.find(r => r.fixture_id === fixtureId);
@@ -36,6 +36,8 @@ for (const m of data.models) {
       similarity: Math.round(fr.similarity * 1000) / 10,
       output: fr.model_output,
       error: fr.error,
+      inputTokens: fr.input_tokens,
+      outputTokens: fr.output_tokens,
     });
   }
 }
@@ -92,6 +94,8 @@ modelOutputs.sort((a, b) => b.similarity - a.similarity);
           similarity={mo.similarity}
           output={mo.output}
           error={mo.error}
+          inputTokens={mo.inputTokens}
+          outputTokens={mo.outputTokens}
         />
       ))}
     </div>

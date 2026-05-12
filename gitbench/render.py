@@ -230,6 +230,7 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
                     "input_tokens": score.get("input_tokens"),
                     "output_tokens": score.get("output_tokens"),
                     "total_tokens": score.get("total_tokens"),
+                    "cost_usd": score.get("cost_usd"),
                     "purpose": score.get("purpose"),
                     "difficulty": score.get("difficulty"),
                     "tags": score.get("tags"),
@@ -248,10 +249,15 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
             "pass_at_k": round(
                 data["total_passed"] / data["total_fixtures"], 4
             ) if data["total_fixtures"] > 0 else 0.0,
+            "total_cost_usd": None,
+            "avg_cost_usd": None,
         }
 
         matrix[model] = {}
         fixtures[model] = {}
+
+        model_cost_sum = 0.0
+        model_cost_count = 0
 
         for bench, bd in data["benchmarks"].items():
             avg_sim = round(sum(bd["scores"]) / len(bd["scores"]), 4) if bd["scores"] else 0.0
@@ -263,6 +269,12 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
             }
             fixtures[model][bench] = bd["fixtures"]
 
+            # Collect cost data for this model
+            for fx in bd["fixtures"]:
+                if fx.get("cost_usd") is not None:
+                    model_cost_sum += fx["cost_usd"]
+                    model_cost_count += 1
+
             # Roll up to model summary
             model_summaries[model]["total_fixtures"] += bd["total"]
             model_summaries[model]["total_passed"] += bd["passed"]
@@ -272,6 +284,10 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
         sf["pass_at_k"] = round(
             sf["total_passed"] / sf["total_fixtures"], 4
         ) if sf["total_fixtures"] > 0 else 0.0
+
+        if model_cost_count > 0:
+            sf["total_cost_usd"] = round(model_cost_sum, 10)
+            sf["avg_cost_usd"] = round(model_cost_sum / model_cost_count, 10)
 
     # Build model list with parsed base model + reasoning level
     model_list = []
@@ -319,6 +335,13 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
 
     # Fall back: load any missing fixture metadata from YAML files
     _supplement_fixture_index_from_yaml(fixture_index)
+
+    # Filter out the "unknown" model from all collections
+    model_summaries.pop("unknown", None)
+    matrix.pop("unknown", None)
+    fixtures.pop("unknown", None)
+    model_list = [m for m in model_list if m["name"] != "unknown"]
+    runs_meta = [r for r in runs_meta if r["model"] != "unknown"]
 
     return {
         "models": model_list,

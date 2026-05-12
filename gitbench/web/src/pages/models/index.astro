@@ -2,6 +2,7 @@
 import Layout from '../../components/Layout.astro';
 import { loadDataSync } from '../../lib/data';
 import { Badge } from '@/components/ui/badge';
+import CostValueChart from '../../components/charts/CostValueChart';
 
 const data = loadDataSync();
 ---
@@ -28,6 +29,11 @@ const data = loadDataSync();
             {summary && (
               <div class="font-mono text-[0.65rem] text-[var(--color-text-dim)] mt-2">
                 {summary.total_passed} / {summary.total_fixtures} fixtures · {summary.total_runs} run(s)
+                {summary.total_cost_usd != null && (
+                  <span class="block mt-0.5 opacity-70">
+                    Cost: ${summary.total_cost_usd.toFixed(6)} · ~${summary.avg_cost_usd != null ? summary.avg_cost_usd.toFixed(6) : '—'}/fx
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -35,4 +41,9 @@ const data = loadDataSync();
       );
     })}
   </div>
+
+  <section class="mt-10">
+    <div class="section-label"><span>Cost vs Quality</span></div>
+    <CostValueChart client:load />
+  </section>
 </Layout>

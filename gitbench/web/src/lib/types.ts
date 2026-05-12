@@ -11,6 +11,8 @@ export interface ModelSummary {
   total_fixtures: number;
   total_passed: number;
   pass_at_k: number;
+  total_cost_usd: number | null;
+  avg_cost_usd: number | null;
 }
 
 export interface CellData {
@@ -30,6 +32,7 @@ export interface FixtureResult {
   input_tokens: number | null;
   output_tokens: number | null;
   total_tokens: number | null;
+  cost_usd: number | null;
   purpose: string | null;
   difficulty: string | null;
   tags: string[] | null;

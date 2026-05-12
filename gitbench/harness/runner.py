@@ -227,6 +227,8 @@ class BenchmarkRunner:
                 score.input_tokens = usage.get("input_tokens")
                 score.output_tokens = usage.get("output_tokens")
                 score.total_tokens = usage.get("total_tokens")
+                if usage.get("cost") is not None:
+                    score.cost_usd = usage.get("cost")
             return fixture.id, score
         except Exception as exc:
             logger.error("Error processing fixture %s: %s", fixture.id, exc)

@@ -5,7 +5,22 @@ import ModelSelector from '../components/charts/ModelSelector';
 import BenchmarkHeatmap from '../components/charts/BenchmarkHeatmap';
 ---
 
-<Layout title="Dashboard">
+<Layout title="Overview">
+  <section class="mb-8">
+    <div class="card">
+      <div class="section-label"><span>About</span></div>
+      <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl">
+        GitBench is a benchmark suite that evaluates how well language models perform on real-world Git tasks.
+        Each model is tested across dozens of fixtures — prompts that ask it to write commands like
+        <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git log</code>,
+        <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git rebase</code>, or
+        <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git bisect</code> —
+        and its output is compared against the expected command using a fuzzy similarity scorer.
+        The overview below shows per-model pass rates and a benchmark heatmap across all evaluated models.
+      </p>
+    </div>
+  </section>
+
   <section>
     <div class="section-label"><span>Model Summary</span></div>
     <PassRateBarChart client:load />

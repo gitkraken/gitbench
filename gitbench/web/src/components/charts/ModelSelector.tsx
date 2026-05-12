@@ -36,6 +36,18 @@ export default function ModelSelector({ initialSelected, onChange }: ModelSelect
     }
   }, [initialSelected?.join(',')]);
 
+  // Listen for external selection changes from other ModelSelector instances
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string[];
+      if (Array.isArray(detail)) {
+        setSelected(detail);
+      }
+    };
+    window.addEventListener('model-selection-changed', handler);
+    return () => window.removeEventListener('model-selection-changed', handler);
+  }, []);
+
   const options = models.map(m => ({
     value: m.name,
     label: m.name,
@@ -47,6 +59,8 @@ export default function ModelSelector({ initialSelected, onChange }: ModelSelect
       value={selected}
       onChange={(vals) => {
         setSelected(vals);
+        localStorage.setItem('gitbench-model-selection', JSON.stringify(vals));
+        window.dispatchEvent(new CustomEvent('model-selection-changed', { detail: vals }));
         onChange?.(vals);
       }}
       placeholder="Select models..."

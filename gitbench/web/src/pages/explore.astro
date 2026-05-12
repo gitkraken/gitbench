@@ -27,20 +27,40 @@ const allFixtures = Object.values(data.fixture_index);
 
 <Layout title="Explore">
   <div class="mb-8">
-    <div class="section-label"><span>Tag Cloud</span></div>
-    <div class="flex gap-1.5 flex-wrap" id="tag-cloud">
-      {sortedTags.map(([tag, count]) => {
-        const fontSize = Math.max(0.65, Math.min(1.2, 0.65 + (count / maxCount) * 0.55));
-        return (
-          <span
-            class="tag-pill tag-cloud-item cursor-pointer"
-            data-tag={tag}
-            style={`font-size: ${fontSize.toFixed(2)}rem;`}
-          >
-            {tag} ({count})
-          </span>
-        );
-      })}
+    <div class="section-label"><span>Explore Tags</span></div>
+    
+    <!-- Search input -->
+    <input
+      type="search"
+      id="tag-search"
+      placeholder="Filter tags & fixtures..."
+      class="w-full bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded-md px-3 py-2 font-mono text-xs placeholder:text-[var(--color-text-dim)] focus:outline-none focus:border-[var(--color-border-accent)] mb-3"
+    />
+
+    <!-- Popular tags row -->
+    <div class="flex gap-1.5 flex-wrap items-center mb-2" id="popular-tags">
+      {sortedTags.slice(0, 10).map(([tag, count]) => (
+        <a href={`?tag=${encodeURIComponent(tag)}`} class="tag-pill inline-flex cursor-pointer no-underline" data-tag={tag}>
+          {tag}
+          <span class="opacity-40 ml-1 text-[0.6rem]">{count}</span>
+        </a>
+      ))}
+    </div>
+
+    <!-- Show all toggle + full tag list -->
+    <button
+      id="tag-toggle"
+      class="font-mono text-[0.65rem] text-[var(--color-accent)] cursor-pointer bg-transparent border-none p-0 mb-1"
+    >
+      Show all {sortedTags.length} tags ▾
+    </button>
+    <div class="flex gap-1.5 flex-wrap mb-2 hidden" id="all-tags">
+      {sortedTags.slice(10).map(([tag, count]) => (
+        <a href={`?tag=${encodeURIComponent(tag)}`} class="tag-pill inline-flex cursor-pointer no-underline" data-tag={tag}>
+          {tag}
+          <span class="opacity-40 ml-1 text-[0.6rem]">{count}</span>
+        </a>
+      ))}
     </div>
   </div>
 
@@ -107,6 +127,7 @@ const allFixtures = Object.values(data.fixture_index);
     const tag = (document.getElementById('explore-tag') as HTMLSelectElement)?.value || '';
     const diff = (document.getElementById('explore-diff') as HTMLSelectElement)?.value || '';
     const bench = (document.getElementById('explore-bench') as HTMLSelectElement)?.value || '';
+    const search = (document.getElementById('tag-search') as HTMLInputElement)?.value || '';
     const results = document.querySelectorAll('.explore-result');
     let visible = 0;
     results.forEach((el: any) => {
@@ -127,19 +148,53 @@ const allFixtures = Object.values(data.fixture_index);
       const el = document.getElementById(id) as HTMLSelectElement;
       if (el) el.value = '';
     });
+    const si = document.getElementById('tag-search') as HTMLInputElement;
+    if (si) si.value = '';
     applyExploreFilters();
   }
+
+  // Filter selects
   document.getElementById('explore-tag')?.addEventListener('change', applyExploreFilters);
   document.getElementById('explore-diff')?.addEventListener('change', applyExploreFilters);
   document.getElementById('explore-bench')?.addEventListener('change', applyExploreFilters);
-  document.querySelectorAll('.tag-cloud-item').forEach(el => {
-    el.addEventListener('click', () => {
+
+  // Tag search filtering
+  const tagSearch = document.getElementById('tag-search') as HTMLInputElement;
+  if (tagSearch) {
+    tagSearch.addEventListener('input', () => {
+      const q = tagSearch.value.toLowerCase();
+      document.querySelectorAll('.tag-pill').forEach((el: any) => {
+        const t = (el.dataset.tag || '').toLowerCase();
+        el.style.display = !q || t.includes(q) ? '' : 'none';
+      });
+      applyExploreFilters();
+    });
+  }
+
+  // Tag pill clicks: set explore-tag select and apply filters
+  document.querySelectorAll('.tag-pill').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
       const tag = (el as HTMLElement).dataset.tag || '';
       const select = document.getElementById('explore-tag') as HTMLSelectElement;
       if (select) { select.value = tag; }
       applyExploreFilters();
     });
   });
+
+  // Show all tags toggle
+  const toggleBtn = document.getElementById('tag-toggle');
+  const allTags = document.getElementById('all-tags');
+  if (toggleBtn && allTags) {
+    toggleBtn.addEventListener('click', () => {
+      const hidden = allTags.classList.contains('hidden');
+      allTags.classList.toggle('hidden');
+      toggleBtn.textContent = hidden
+        ? 'Show fewer ▴'
+        : 'Show all {sortedTags.length} tags ▾';
+    });
+  }
+
   applyExploreFilters();
 
   // Handle ?tag= query param

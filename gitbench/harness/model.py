@@ -189,6 +189,9 @@ class OpenAIAdapter(ModelInterface):
                                     "output_tokens": getattr(raw_usage, "completion_tokens", None),
                                     "total_tokens": getattr(raw_usage, "total_tokens", None),
                                 }
+                                cost = getattr(raw_usage, "cost", None)
+                                if cost is not None:
+                                    usage["cost"] = cost
                         except Exception:
                             pass
                         result.append({"text": text, "usage": usage})

@@ -77,6 +77,29 @@ const passColor = summary.pass_at_k >= 0.8
           <Badge variant="secondary" class="font-mono text-[0.65rem]">{modelInfo.reasoningLevel}</Badge>
         )}
       </div>
+      {
+        (() => {
+          let totalTokens = 0;
+          let totalCost = 0;
+          let hasCost = false;
+          for (const bench of data.benchmarks) {
+            const results = data.fixtures[modelName]?.[bench] || [];
+            for (const r of results) {
+              totalTokens += (r.total_tokens || 0);
+              if (r.cost_usd != null) {
+                totalCost += r.cost_usd;
+                hasCost = true;
+              }
+            }
+          }
+          return (
+            <div class="font-mono text-[0.68rem] text-[var(--color-text-dim)] opacity-60 mt-1">
+              {totalTokens > 0 && <span class="mr-3">{totalTokens.toLocaleString()} tokens</span>}
+              {hasCost && <span>${totalCost.toFixed(8)}</span>}
+            </div>
+          );
+        })()
+      }
     </div>
     <a href={`/compare?with=${encodedModelName}`}>
       <Button variant="outline" size="sm" class="font-mono text-xs border-[var(--color-border-accent)] text-[var(--color-accent)]">
@@ -152,6 +175,8 @@ const passColor = summary.pass_at_k >= 0.8
             similarity={simPct}
             difficulty={fi?.difficulty || ''}
             tags={fi?.tags || []}
+            inputTokens={fx.input_tokens}
+            outputTokens={fx.output_tokens}
           />
         );
       })}

@@ -1,5 +1,5 @@
 ---
-import { LayoutDashboard, Cpu, BarChart3, Search, GitCompare, History } from 'lucide-react';
+import { LayoutDashboard, Cpu, BarChart3, Search, GitCompare, History, BookOpen } from 'lucide-react';
 
 const currentPath = Astro.url.pathname;
 
@@ -9,12 +9,13 @@ function isActive(path: string) {
 }
 
 const links = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/', label: 'Overview', icon: LayoutDashboard },
   { href: '/models', label: 'Models', icon: Cpu },
   { href: '/benchmarks', label: 'Benchmarks', icon: BarChart3 },
   { href: '/explore', label: 'Explore', icon: Search },
   { href: '/compare', label: 'Compare', icon: GitCompare },
   { href: '/history', label: 'History', icon: History },
+  { href: '/methodology', label: 'Methodology', icon: BookOpen },
 ];
 ---
 
