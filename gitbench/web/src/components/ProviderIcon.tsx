@@ -1,23 +1,5 @@
-import type { ComponentType } from 'react';
-import type { IconProps } from '@icons-pack/react-simple-icons';
-import {
-  SiAnthropic,
-  SiGoogle,
-  SiMeta,
-  SiMistralai,
-} from '@icons-pack/react-simple-icons';
+import { PROVIDER_ICONS } from '@/lib/custom-provider-icons';
 import { PROVIDER_COLORS, providerHue } from '@/lib/provider-colors';
-
-// Map of lowercase provider slugs → Simple Icons component
-const PROVIDER_ICON_MAP: Record<string, ComponentType<IconProps>> = {
-  anthropic: SiAnthropic,
-  google: SiGoogle,
-  meta: SiMeta,
-  mistral: SiMistralai,
-  // openai, deepseek: not yet in simple-icons 13.x — fallback below
-};
-
-const SIZE_REGEX = /^size-/;
 
 interface ProviderIconProps {
   provider: string;
@@ -26,27 +8,22 @@ interface ProviderIconProps {
 
 export default function ProviderIcon({ provider, size = 16 }: ProviderIconProps) {
   const normalized = provider.toLowerCase();
-  const IconComponent = PROVIDER_ICON_MAP[normalized];
+  const IconComponent = PROVIDER_ICONS[normalized];
 
   if (IconComponent) {
-    // Filter out size-* classes that simple-icons adds
-    const filtered: Record<string, string> = {};
-    if (IconComponent.defaultProps) {
-      for (const [k, v] of Object.entries(IconComponent.defaultProps as Record<string, unknown>)) {
-        if (typeof v === 'string' && !SIZE_REGEX.test(k)) {
-          filtered[k] = v;
-        }
-      }
-    }
-
-    // Anthropic: override near-black default with palette terracotta
-    const iconColor = normalized === 'anthropic' ? PROVIDER_COLORS.anthropic : 'default';
-
-    // Subtle background circle for small icons to ensure visibility on dark bg
+    const color = PROVIDER_COLORS[normalized];
     const showBgCircle = size <= 14;
 
     return (
-      <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span
+        style={{
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: color ?? undefined,
+        }}
+      >
         {showBgCircle && (
           <span
             style={{
@@ -59,9 +36,9 @@ export default function ProviderIcon({ provider, size = 16 }: ProviderIconProps)
           />
         )}
         <IconComponent
-          size={size}
-          color={iconColor}
-          {...filtered}
+          width={size}
+          height={size}
+          aria-hidden="true"
         />
       </span>
     );

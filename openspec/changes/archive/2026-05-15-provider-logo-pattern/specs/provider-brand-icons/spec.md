@@ -1,23 +1,17 @@
-# provider-brand-icons Specification
-
-## Purpose
-
-ProviderIcon renders brand SVG icons for AI model providers, sourced from `@thesvg/react`, with `currentColor` coloring and visibility enhancements for dark backgrounds.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: ProviderIcon maps provider slugs to custom SVG icons
 
 A `ProviderIcon` React component SHALL render the appropriate brand icon from a custom SVG lookup table for a given provider slug. The component SHALL accept a `provider` prop (lowercase string, e.g. `"anthropic"`, `"openai"`) and a `size` prop (number, default 16).
 
-The component SHALL look up the provider in a single `PROVIDER_ICONS` map. If found, it SHALL render the corresponding SVG component at the requested size. If not found, it SHALL render a colored circle with the provider's first letter.
+The component SHALL look up the provider in a single `PROVIDER_ICONS` map. If found, it SHALL render the corresponding custom SVG component at the requested size. If not found, it SHALL render a colored circle with the provider's first letter.
 
 For icons rendered at sizes ≤ 14 pixels, the component SHALL apply a subtle background circle (`rgba(255,255,255,0.08)`) behind the icon to ensure visibility of dark brand colors against dark backgrounds.
 
-#### Scenario: Claude icon renders for Anthropic provider
+#### Scenario: Anthropic icon renders with asterisk logo
 
 - **WHEN** `<ProviderIcon provider="anthropic" size={16} />` renders
-- **THEN** the Claude brand mark is displayed at 16×16 pixels in the Anthropic palette color (#D97757)
+- **THEN** the Anthropic asterisk/flower brand mark is displayed at 16×16 pixels in the Anthropic palette color (#D97757)
 
 #### Scenario: OpenAI icon renders
 
@@ -41,7 +35,7 @@ For icons rendered at sizes ≤ 14 pixels, the component SHALL apply a subtle ba
 
 ### Requirement: ProviderIcon supports known providers list
 
-The component SHALL include SVG icons for the following provider slugs: `anthropic`, `openai`, `google`, `meta`, `mistral`, `deepseek`, `minimax`, `xai`, `moonshot`, `zai`, `qwen`, `cohere`, `perplexity`. Each provider's icon SHALL be an SVG component registered in the `PROVIDER_ICONS` lookup table in `gitbench/web/src/lib/custom-provider-icons.tsx`, sourced from `@thesvg/react`. The mapping SHALL be extensible by adding new imports and table entries.
+The component SHALL include custom SVG icons for the following provider slugs: `anthropic`, `openai`, `google`, `meta`, `mistral`, `deepseek`, `minimax`, `xai`, `moonshot`, `zai`, `qwen`, `cohere`, `perplexity`. Each provider's icon SHALL be an inline React SVG component in `gitbench/web/src/lib/custom-provider-icons.ts`, registered in the `PROVIDER_ICONS` lookup table. The mapping SHALL be extensible by adding new SVG components and table entries.
 
 Providers that are proxy/infrastructure services rather than first-party model builders (e.g., Ollama, OpenRouter) SHALL NOT receive custom logos — they render the automatic initial-circle fallback.
 
@@ -52,12 +46,22 @@ Providers that are proxy/infrastructure services rather than first-party model b
 
 #### Scenario: New provider added to mapping
 
-- **WHEN** a developer adds an import from `@thesvg/react` to `custom-provider-icons.tsx` and an entry to the `PROVIDER_ICONS` table
+- **WHEN** a developer adds a new SVG component to `custom-provider-icons.ts` and an entry to the `PROVIDER_ICONS` table
 - **THEN** the new provider renders its icon without changes to `ProviderIcon.tsx` resolution logic
+
+## REMOVED Requirements
+
+### Requirement: @icons-pack/react-simple-icons is a project dependency
+
+**Reason**: Replaced by custom inline SVG components. Simple Icons used incorrect logos (e.g., Anthropic's "AI" mark instead of the asterisk brand mark) and lacked several providers (OpenAI, DeepSeek).
+
+**Migration**: All provider icons are now custom React SVG components in `gitbench/web/src/lib/custom-provider-icons.ts`. Remove `@icons-pack/react-simple-icons` from `package.json` dependencies.
+
+## ADDED Requirements
 
 ### Requirement: SVG icon components use currentColor for monochrome logos
 
-SVG icon components for monochrome providers SHALL use `currentColor` for their fill, allowing the parent `ProviderIcon` to control color via CSS. Multi-color logos (Google) MAY use hardcoded fill colors within the SVG paths. Each SVG component SHALL accept standard SVG props (`width`, `height`, `className`) and render an `<svg>` element with a 24×24 viewBox.
+Custom SVG icon components for monochrome providers SHALL use `currentColor` for their fill, allowing the parent `ProviderIcon` to control color via CSS. Multi-color logos (Google) MAY use hardcoded fill colors within the SVG paths. Each SVG component SHALL accept `size` (number) and `className` (string) props and render an `<svg>` element with `width={size}`, `height={size}`, and `viewBox="0 0 24 24"`.
 
 #### Scenario: Monochrome icon inherits color
 

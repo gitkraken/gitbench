@@ -50,10 +50,12 @@ export default function TimeSeriesChart() {
 
   return (
     <div>
-      <ModelSelector
-        initialSelected={selectedModels}
-        onChange={setSelectedModels}
-      />
+      <div className="max-w-xs ml-auto w-full mb-3">
+        <ModelSelector
+          initialSelected={selectedModels}
+          onChange={setSelectedModels}
+        />
+      </div>
       <div className="card">
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>

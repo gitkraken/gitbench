@@ -1,11 +1,17 @@
 export const PROVIDER_COLORS: Record<string, string> = {
-  anthropic: '#D97757', // warm terracotta
-  google:    '#4285F4', // Google Blue
-  meta:      '#0668E1', // Meta blue (brightened for dark bg)
-  mistral:   '#F59E0B', // warm amber
-  openai:    '#10A37F', // OpenAI green-teal
-  deepseek:  '#4F46E5', // indigo
-  xai:       '#E5E7EB', // light gray
+  anthropic:  '#D97757', // warm terracotta
+  cohere:     '#39594D', // dark forest green
+  deepseek:   '#4F46E5', // indigo
+  google:     '#4285F4', // Google Blue
+  meta:       '#0668E1', // Meta blue (brightened for dark bg)
+  minimax:    '#6C5CE7', // purple
+  mistral:    '#F59E0B', // warm amber
+  moonshot:   '#7C3AED', // violet (Kimi brand)
+  openai:     '#10A37F', // OpenAI green-teal
+  perplexity: '#1DD1A1', // bright teal
+  qwen:       '#1677FF', // Alibaba blue
+  xai:        '#E5E7EB', // light gray
+  zai:        '#FF6B35', // orange (01.AI brand)
 };
 
 /** Derive a deterministic hue for a provider string (golden-angle spacing). */

@@ -34,10 +34,12 @@ export default function BenchmarkHeatmap() {
 
   return (
     <div>
-      <ModelSelector
-        initialSelected={selectedModels}
-        onChange={setSelectedModels}
-      />
+      <div className="max-w-xs ml-auto w-full mb-3">
+        <ModelSelector
+          initialSelected={selectedModels}
+          onChange={setSelectedModels}
+        />
+      </div>
       <div className="card overflow-x-auto p-5">
         <table className="data-table">
           <thead>

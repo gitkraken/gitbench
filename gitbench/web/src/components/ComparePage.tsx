@@ -54,7 +54,7 @@ export default function ComparePage() {
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="max-w-xs ml-auto w-full mb-6">
         <ModelSelector
           initialSelected={selectedModels}
           onChange={setSelectedModels}
