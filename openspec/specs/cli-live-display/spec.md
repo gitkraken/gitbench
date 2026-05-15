@@ -39,16 +39,19 @@ Each model SHALL have a bordered Rich `Panel` displaying: a progress bar (benchm
 - **AND** cost in USD (e.g., "$0.042")
 
 ### Requirement: Comparison summary table fills in live
-A comparison table SHALL render below the model panels showing one row per benchmark. Columns SHALL be: benchmark name, then one column per model with its pass rate, and a delta column when 2+ models are present (showing difference between the first model and each subsequent model). Rows for benchmarks not yet started SHALL show "..." in dim text. Rows for in-progress benchmarks SHALL show "running" in cyan. Completed rows SHALL show the pass rate with the same color thresholds as the model panels.
+A comparison table SHALL render below the model panels showing one row per benchmark. For small model sets, columns SHALL be: benchmark name, then one column per model with its pass rate. For larger model sets, the table SHALL switch to aggregate columns showing completion count, best result, and result range. Rows for benchmarks not yet started SHALL show "..." in dim text. Rows for in-progress benchmarks SHALL show "running" in cyan. Completed rows SHALL show the pass rate with the same color thresholds as the model panels.
 
 #### Scenario: Row fills in as benchmark completes
 - **WHEN** `benchmark_finished(model, benchmark, errors=0)` is called
 - **THEN** if all models have completed this benchmark, the row SHALL switch from "running" to the pass rate with color coding
-- **AND** the delta column SHALL compute the difference against the first model's pass rate
 
-#### Scenario: Single model run omits delta column
-- **WHEN** only one model is being run
+#### Scenario: Multi-model run omits delta column
+- **WHEN** multiple models are being run
 - **THEN** the comparison table SHALL NOT include a delta column
+
+#### Scenario: Large model set uses aggregate summary
+- **WHEN** five or more models are being run
+- **THEN** the comparison table SHALL use aggregate columns instead of one column per model
 
 ### Requirement: Verbose mode shows log panel and writes log file
 When `--verbose` is passed, the live display SHALL include a fixed-height log panel (6 lines) at the bottom showing the most recent per-fixture results with timestamp, benchmark/fixture_id, PASS/FAIL status, and similarity score. On `close()`, the full verbose log SHALL be written to a timestamped file at `gitbench-logs/verbose-{timestamp}.log`, and the file path SHALL be printed to stderr.

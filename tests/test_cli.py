@@ -910,6 +910,34 @@ class TestRichProgressDisplay:
         assert "Cost:" not in rendered
         d.close()
 
+    def test_compact_model_panel_does_not_wrap_done_benchmark_label(self):
+        """Completed compact panels fit in narrow grid cells."""
+        from rich.console import Console as RichConsole
+
+        d = RichProgressDisplay(
+            ["google/gemini-3.1-flash-lite-preview"],
+            ["commit_messages"],
+        )
+        model = "google/gemini-3.1-flash-lite-preview"
+        d._rows[model].update(
+            status="done",
+            benchmarks_done=1,
+            fixtures_total=17,
+            fixtures_done=17,
+            passed=14,
+            errors=3,
+        )
+
+        console = RichConsole(width=37, color_system=None)
+        with console.capture() as capture:
+            console.print(d._render_model_panel(model, compact=True))
+        rendered = capture.get()
+
+        assert "1/1 bench" in rendered
+        assert "benchmarks" not in rendered
+        assert all(len(line) <= 37 for line in rendered.splitlines())
+        d.close()
+
     def test_summary_limit_prioritizes_active_benchmarks(self):
         """Short terminals keep running benchmarks in the visible summary."""
         benchmarks = [
@@ -986,8 +1014,8 @@ class TestRichProgressDisplay:
         d.close()
         # Should not raise — close is idempotent when live is None
 
-    def test_multiple_models_summary_has_delta(self):
-        """When 2+ models, summary table includes delta column."""
+    def test_multiple_models_summary_omits_delta(self):
+        """Multi-model summary keeps only benchmark and model columns."""
         from rich.console import Console as RichConsole
 
         d = RichProgressDisplay(["mock", "gpt-4o"], ["commit_messages"])
@@ -1009,12 +1037,12 @@ class TestRichProgressDisplay:
         with console.capture() as capture:
             console.print(table)
         rendered = capture.get()
-        # Summary table should have a delta column header for 2+ models
-        assert "Δ" in rendered or "delta" in rendered.lower()
+        assert "Δ" not in rendered
+        assert "delta" not in rendered.lower()
         d.close()
 
-    def test_summary_table_uses_single_delta_column_for_many_models(self):
-        """Many-model full summary does not create implicit extra columns."""
+    def test_summary_table_uses_one_column_per_model(self):
+        """Full summary does not add comparison columns."""
         d = RichProgressDisplay(
             ["m1", "m2", "m3", "m4"],
             ["commit_messages"],
@@ -1033,11 +1061,40 @@ class TestRichProgressDisplay:
 
         table = d._render_summary_table(width=140)
 
-        assert len(table.columns) == 6  # Benchmark + 4 models + one delta
+        assert len(table.columns) == 5  # Benchmark + 4 models
         d.close()
 
-    def test_summary_table_compacts_for_narrow_many_model_layouts(self):
-        """Narrow terminals get an aggregate summary instead of many model columns."""
+    def test_summary_table_keeps_model_cells_on_one_line(self):
+        """Pass-rate cells do not wrap percentage and raw counts apart."""
+        from rich.console import Console as RichConsole
+
+        d = RichProgressDisplay(
+            ["m1", "m2", "m3", "m4"],
+            ["blame_forensics", "branch_cleanup"],
+        )
+
+        for model in ["m1", "m2", "m3", "m4"]:
+            for bench in ["blame_forensics", "branch_cleanup"]:
+                d.model_started(model)
+                d.benchmark_started(model, bench, 12)
+                for _ in range(10):
+                    d.fixture_finished(model, bench, True)
+                for _ in range(2):
+                    d.fixture_finished(model, bench, False)
+                d.benchmark_finished(model, bench, 2)
+            d.model_finished(model, {"total_fixtures": 24, "total_passed": 20})
+
+        console = RichConsole(width=80, color_system=None)
+        with console.capture() as capture:
+            console.print(d._render_summary_table(width=80))
+        rendered = capture.get()
+
+        assert "(10/12)" in rendered
+        assert all(line.strip() != "(10/12)" for line in rendered.splitlines())
+        d.close()
+
+    def test_summary_table_compacts_for_many_model_layouts(self):
+        """Five-plus model runs get an aggregate summary for scalability."""
         from rich.console import Console as RichConsole
 
         models = [
@@ -1060,7 +1117,7 @@ class TestRichProgressDisplay:
             d.benchmark_finished(model, "commit_messages", 4 - passed)
             d.model_finished(model, {"total_fixtures": 4, "total_passed": passed})
 
-        table = d._render_summary_table(width=60)
+        table = d._render_summary_table(width=112)
 
         assert [column.header for column in table.columns] == [
             "Benchmark",
@@ -1069,12 +1126,12 @@ class TestRichProgressDisplay:
             "Range",
         ]
 
-        console = RichConsole(width=60, color_system=None)
+        console = RichConsole(width=112, color_system=None)
         with console.capture() as capture:
             console.print(table)
         rendered = capture.get()
 
-        assert all(len(line) <= 60 for line in rendered.splitlines())
+        assert all(len(line) <= 112 for line in rendered.splitlines())
         d.close()
 
 

@@ -512,9 +512,11 @@ class RichProgressDisplay:
         if compact:
             if row["status"] == "running" and row["fixtures_total"] > 0:
                 current = (
-                    f"{row['current_benchmark']} "
+                    f"{self._abbreviate(row['current_benchmark'], 12)} "
                     f"{row['fixtures_done']}/{row['fixtures_total']}"
                 )
+            elif row["status"] == "done":
+                current = f"{row['benchmarks_done']}/{row['benchmarks_total']} bench"
             elif row["status"] == "pending":
                 current = "[dim]waiting[/]"
 
@@ -529,7 +531,7 @@ class RichProgressDisplay:
         if dense:
             short_current = current.replace("  ·  ", " ")
             content = Text.from_markup(
-                f"{rate_str}  ·  {short_current}  ·  {row['errors']} failures"
+                f"{rate_str}  ·  {short_current}  ·  {row['errors']} fail"
             )
         elif compact:
             content = Text.from_markup(
@@ -543,11 +545,12 @@ class RichProgressDisplay:
                 f"{tokens_str}  ·  {cost_str}"
             )
 
-        title = f"[bold {sc}]{model}[/]"
+        title_model = self._abbreviate(model, 20 if dense else 28 if compact else 48)
+        title = f"[bold {sc}]{title_model}[/]"
         if row["status"] == "done":
-            title = f"[bold {sc}]✓ {model}[/]"
+            title = f"[bold {sc}]✓ {title_model}[/]"
         elif row["status"] == "error":
-            title = f"[bold {sc}]✗ {model}[/]"
+            title = f"[bold {sc}]✗ {title_model}[/]"
 
         return Panel(content, title=title, border_style=sc)
 
@@ -570,9 +573,9 @@ class RichProgressDisplay:
     def _compact_summary(self, width: int | None) -> bool:
         if width is None:
             return False
+        if len(self._models) > 4:
+            return True
         full_width = 18 + (len(self._models) * 14)
-        if len(self._models) >= 2:
-            full_width += 10
         return len(self._models) > 2 and width < full_width
 
     def _abbreviate(self, value: str, max_len: int) -> str:
@@ -603,20 +606,16 @@ class RichProgressDisplay:
                 justify="right",
                 max_width=16,
                 overflow="ellipsis",
+                no_wrap=True,
             )
-        if len(self._models) >= 2:
-            table.add_column("Δ", justify="right", max_width=12)
 
         visible_benchmarks, omitted = self._summary_benchmarks(limit)
         for bench in visible_benchmarks:
             row_values: list[str] = [bench]
-            all_done = True
-            first_pass_rate: float | None = None
 
             for model in self._models:
                 br = self._bench_results[model].get(bench, {})
                 if not br.get("done"):
-                    all_done = False
                     # Is it running?
                     is_running = (
                         self._rows[model]["current_benchmark"] == bench
@@ -634,42 +633,12 @@ class RichProgressDisplay:
                     row_values.append(
                         f"[{colour}]{rate:.1%}[/] [dim]({passed}/{total})[/]"
                     )
-                    if first_pass_rate is None:
-                        first_pass_rate = rate
-
-            # Delta column
-            if len(self._models) >= 2 and all_done and first_pass_rate is not None:
-                deltas = []
-                for i in range(1, len(self._models)):
-                    br = self._bench_results[self._models[i]].get(bench, {})
-                    total = br["total"]
-                    rate = (
-                        br["passed"] / total if total > 0 else 0.0
-                    )
-                    deltas.append(rate - first_pass_rate)
-
-                if len(deltas) == 1:
-                    delta = deltas[0]
-                    if delta > 0:
-                        row_values.append(f"[green]+{delta:.1%}[/]")
-                    elif delta < 0:
-                        row_values.append(f"[red]{delta:.1%}[/]")
-                    else:
-                        row_values.append(f"[dim]{delta:.1%}[/]")
-                else:
-                    low = min(deltas)
-                    high = max(deltas)
-                    row_values.append(f"[dim]{low:+.1%}..{high:+.1%}[/]")
-            elif len(self._models) >= 2 and not all_done:
-                row_values.append("[dim]...[/]")
 
             table.add_row(*row_values)
 
         if omitted:
             omitted_row = [f"[dim]... {omitted} more[/]"]
             omitted_row.extend(["[dim]...[/]"] * len(self._models))
-            if len(self._models) >= 2:
-                omitted_row.append("[dim]...[/]")
             table.add_row(*omitted_row)
 
         return table
@@ -687,10 +656,16 @@ class RichProgressDisplay:
             max_width=20,
             overflow="ellipsis",
         )
-        table.add_column("Done", justify="right", max_width=7)
-        table.add_column("Best", justify="right", max_width=16, overflow="ellipsis")
+        table.add_column("Done", justify="right", max_width=7, no_wrap=True)
+        table.add_column(
+            "Best",
+            justify="right",
+            max_width=16,
+            overflow="ellipsis",
+            no_wrap=True,
+        )
         if len(self._models) >= 2:
-            table.add_column("Range", justify="right", max_width=12)
+            table.add_column("Range", justify="right", max_width=12, no_wrap=True)
 
         visible_benchmarks, omitted = self._summary_benchmarks(limit)
         for bench in visible_benchmarks:
