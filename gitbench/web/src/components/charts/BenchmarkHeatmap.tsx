@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { GitBenchData } from '@/lib/types';
 import { loadData } from '@/lib/load-data';
+import { modelPath } from '@/lib/routes';
 import ModelSelector from './ModelSelector';
 import { Badge } from '@/components/ui/badge';
 
@@ -45,7 +46,7 @@ export default function BenchmarkHeatmap() {
               {selectedModels.map(m => (
                 <th key={m}>
                   <a
-                    href={`/models/${encodeURIComponent(m)}`}
+                    href={modelPath(m)}
                     className="text-inherit no-underline"
                   >
                     {m}

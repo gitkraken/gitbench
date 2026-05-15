@@ -1,6 +1,7 @@
 ---
 import Layout from '../../components/Layout.astro';
 import { loadDataSync } from '../../lib/data';
+import { modelPath } from '../../lib/routes';
 import { Badge } from '@/components/ui/badge';
 
 const data = loadDataSync();
@@ -18,7 +19,7 @@ const data = loadDataSync();
           ? 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]'
           : 'bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]';
       return (
-        <a href={`/models/${encodeURIComponent(m.name)}`} class="no-underline">
+        <a href={modelPath(m.name)} class="no-underline">
           <div class="card p-6 cursor-pointer transition-colors hover:border-[var(--color-border-accent)]">
             <div class="text-lg font-bold mb-1.5 text-[var(--color-text)]">{m.name}</div>
             <div class="flex gap-2 items-center flex-wrap">

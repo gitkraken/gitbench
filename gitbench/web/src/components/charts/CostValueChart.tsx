@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, ZAxis, ReferenceLine } from 'recharts';
 import type { GitBenchData } from '@/lib/types';
 import { loadData } from '@/lib/load-data';
+import { modelPath } from '@/lib/routes';
 
 interface ChartPoint {
   x: number;
@@ -124,7 +125,7 @@ export default function CostValueChart() {
             fill="#a78bfa"
             shape={(props: any) => {
               const { cx, cy, payload } = props;
-              const url = `/models/${encodeURIComponent(payload.model)}`;
+              const url = modelPath(payload.model);
               return (
                 <a href={url}>
                   <circle

@@ -2,6 +2,7 @@
 import Layout from '../components/Layout.astro';
 import TimeSeriesChart from '../components/charts/TimeSeriesChart';
 import { loadDataSync } from '../lib/data';
+import { modelPath } from '../lib/routes';
 import type { GitBenchData } from '../lib/types';
 import { Badge } from '@/components/ui/badge';
 
@@ -58,7 +59,7 @@ const runsWithDelta = sortedRuns.map((run, idx) => {
               <tr>
                 <td class="font-mono text-xs text-[var(--color-text-dim)]">{ts}</td>
                 <td>
-                  <a href={`/models/${encodeURIComponent(run.model)}`} class="text-[var(--color-text-mid)] no-underline font-mono text-xs">
+                  <a href={modelPath(run.model)} class="text-[var(--color-text-mid)] no-underline font-mono text-xs">
                     {run.model}
                   </a>
                 </td>

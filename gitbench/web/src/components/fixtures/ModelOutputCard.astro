@@ -1,6 +1,7 @@
 ---
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { modelPath } from '../../lib/routes';
 import { Copy } from 'lucide-react';
 
 interface Props {
@@ -17,13 +18,12 @@ const { modelName, passed, similarity, output, error, inputTokens, outputTokens 
 const passColor = passed
   ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
   : 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]';
-const encodedModel = encodeURIComponent(modelName);
 ---
 
 <div class="card p-5">
   <div class="flex justify-between items-start flex-wrap gap-3 mb-3">
     <div class="flex gap-2 items-center flex-wrap">
-      <a href={`/models/${encodedModel}`} class="font-display text-sm font-bold text-[var(--color-text)] no-underline">
+      <a href={modelPath(modelName)} class="font-display text-sm font-bold text-[var(--color-text)] no-underline">
         {modelName}
       </a>
       <Badge variant="outline" className={`font-mono text-[0.6rem] ${passColor}`}>
