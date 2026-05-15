@@ -1,5 +1,7 @@
-## ADDED Requirements
+## Purpose
 
+The Astro site provides the static frontend for GitBench benchmark results, rendering aggregated data from `results.json` into interactive charts and navigable model/fixture pages.
+## Requirements
 ### Requirement: Astro project scaffolded at gitbench/ui/
 The project SHALL include an Astro project at `gitbench/ui/` with `package.json`, `astro.config.mjs` (with `@astrojs/react` integration), `tsconfig.json`, and a `src/` directory structure containing `pages/`, `components/`, `lib/`, and `styles/`.
 
@@ -34,15 +36,19 @@ The site SHALL use CSS custom properties (design tokens) for colors, typography,
 - **THEN** it imports or references `global.css`
 
 ### Requirement: Client-side routing via Astro pages
-All routes SHALL be defined as `.astro` files in `src/pages/`. Dynamic routes SHALL use Astro's file-based routing with `[param].astro` syntax. SSG pages SHALL use `getStaticPaths()` to enumerate all possible paths from `results.json`.
+All routes SHALL be defined as `.astro` files in `src/pages/`. Dynamic routes SHALL use Astro's file-based routing with `[param].astro` syntax. SSG pages SHALL use `getStaticPaths()` to enumerate all possible paths from `results.json`. Model pages SHALL use a nested three-segment path: `[provider]/[model]/[level].astro` for fixture galleries and `[provider]/[model]/index.astro` for base model overviews.
 
 #### Scenario: Dashboard at root path
 - **WHEN** navigating to `/`
 - **THEN** the Dashboard page (`index.astro`) is rendered
 
-#### Scenario: Model detail at dynamic route
-- **WHEN** navigating to `/models/gpt-4o%23high`
-- **THEN** the Model Detail page (`models/[model].astro`) is rendered with the decoded model name
+#### Scenario: Model detail at nested route
+- **WHEN** navigating to `/models/anthropic/claude-opus-4.7/low/`
+- **THEN** the model fixture gallery page (`models/[provider]/[model]/[level].astro`) is rendered for `anthropic/claude-opus-4.7:low`
+
+#### Scenario: Base model overview at nested route
+- **WHEN** navigating to `/models/anthropic/claude-opus-4.7/`
+- **THEN** the base model overview page (`models/[provider]/[model]/index.astro`) is rendered with level cards
 
 #### Scenario: Fixture detail at dynamic route
 - **WHEN** navigating to `/fixtures/f001`
@@ -102,3 +108,4 @@ The fixture detail page (`/fixtures/[benchmark]/[fixture]`) SHALL display token 
 #### Scenario: ModelOutputCard handles missing tokens
 - **WHEN** a model output has null token values
 - **THEN** no token badges are displayed (the card looks the same as before)
+

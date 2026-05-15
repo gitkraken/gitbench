@@ -1,50 +1,70 @@
 ---
-import Layout from '../../components/Layout.astro';
-import FixtureCard from '../../components/fixtures/FixtureCard.astro';
-import { loadDataSync } from '../../lib/data';
-import { modelPath, modelSlug } from '../../lib/routes';
-import type { GitBenchData, FixtureResult } from '../../lib/types';
+import Layout from '../../../../components/Layout.astro';
+import FixtureCard from '../../../../components/fixtures/FixtureCard.astro';
+import { loadDataSync } from '../../../../lib/data';
+import { modelLevelPath } from '../../../../lib/routes';
+import type { GitBenchData, FixtureResult, BaseModelGroup } from '../../../../lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { GitCompare } from 'lucide-react';
+import ProviderIcon from '../../../../components/ProviderIcon.tsx';
 
 export function getStaticPaths() {
   const data = loadDataSync();
-  return data.models.map(m => ({
-    params: { model: modelSlug(m.name) },
-    props: { modelName: m.name, data },
-  }));
+  const paths: { params: { provider: string; model: string; level: string }; props: any }[] = [];
+  for (const g of data.base_model_groups) {
+    for (const l of g.levels) {
+      paths.push({
+        params: {
+          provider: g.provider,
+          model: g.baseModel,
+          level: l.level || '',
+        },
+        props: {
+          provider: g.provider,
+          baseModel: g.baseModel,
+          level: l.level || '',
+          modelName: l.modelName,
+          group: g,
+          data,
+        },
+      });
+    }
+  }
+  return paths;
 }
 
-const { modelName, data } = Astro.props as { modelName: string; data: GitBenchData };
+const { provider, baseModel, level, modelName, group, data } = Astro.props as {
+  provider: string;
+  baseModel: string;
+  level: string;
+  modelName: string;
+  group: BaseModelGroup;
+  data: GitBenchData;
+};
+
 const summary = data.model_summaries[modelName];
-const modelInfo = data.models.find(m => m.name === modelName);
-if (!summary || !modelInfo) {
+if (!summary) {
   return new Response('Model not found', { status: 404 });
 }
 
 const passRate = Math.round(summary.pass_at_k * 1000) / 10;
 const encodedModelName = encodeURIComponent(modelName);
+const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
 
 // Collect all fixture results for this model
-const allFixtures: FixtureResult[] = [];
+const allFixtures: (FixtureResult & { benchmark: string })[] = [];
 for (const bench of data.benchmarks) {
   const results = data.fixtures[modelName]?.[bench] || [];
   for (const r of results) {
-    allFixtures.push({ ...r, benchmark: bench } as any);
+    allFixtures.push({ ...r, benchmark: bench });
   }
 }
-
-// Check for multiple reasoning levels of same base model
-const sameBaseModels = data.models.filter(
-  m => m.baseModel === modelInfo.baseModel && m.name !== modelName
-);
-const hasOtherLevels = sameBaseModels.length > 0;
 
 // Benchmark list for filter
 const benchmarkList = data.benchmarks;
 
-// All unique difficulties
+// All unique difficulties / tags
 const diffs = new Set<string>();
 const allTags = new Set<string>();
 for (const fid in data.fixture_index) {
@@ -59,9 +79,55 @@ const passColor = summary.pass_at_k >= 0.8
   : summary.pass_at_k < 0.5
     ? 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]'
     : 'bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]';
+
+// Compute total tokens and cost
+let totalTokens = 0;
+let totalCost = 0;
+let hasCost = false;
+for (const bench of data.benchmarks) {
+  const results = data.fixtures[modelName]?.[bench] || [];
+  for (const r of results) {
+    totalTokens += (r.total_tokens || 0);
+    if (r.cost_usd != null) {
+      totalCost += r.cost_usd;
+      hasCost = true;
+    }
+  }
+}
 ---
 
-<Layout title={modelName}>
+<Layout title={`${providerName} / ${baseModel} / ${level || 'default'}`}>
+  <!-- Header with provider icon -->
+  <div class="flex items-center gap-3 mb-2">
+    <ProviderIcon provider={provider} size={24} client:load />
+    <div>
+      <div class="text-xs font-mono text-[var(--color-text-dim)]">{providerName} / {baseModel}</div>
+      <h1 class="text-xl font-bold text-[var(--color-text)]">{level || 'default'}</h1>
+    </div>
+  </div>
+
+  <!-- Reasoning level tab bar -->
+  <div class="flex gap-1.5 flex-wrap mb-6">
+    {group.levels.map(l => {
+      const lvl = l.level || '';
+      const isCurrent = lvl === level;
+      const href = modelLevelPath(provider, baseModel, lvl);
+      return (
+        <a
+          href={href}
+          class={`no-underline px-3 py-1.5 rounded-md font-mono text-[0.7rem] transition-colors ${
+            isCurrent
+              ? 'bg-[var(--color-accent)] text-white'
+              : 'bg-[var(--color-card)] text-[var(--color-text-mid)] hover:text-[var(--color-text)]'
+          }`}
+        >
+          {l.level || 'default'}
+        </a>
+      );
+    })}
+  </div>
+
+  <!-- Stats + Compare -->
   <div class="flex justify-between items-start flex-wrap gap-4 mb-8">
     <div>
       <div class="flex gap-2 items-center flex-wrap mb-2">
@@ -74,33 +140,11 @@ const passColor = summary.pass_at_k >= 0.8
         <span class="font-mono text-[0.68rem] text-[var(--color-text-dim)] opacity-60">
           {summary.total_runs} run(s)
         </span>
-        {modelInfo.reasoningLevel && (
-          <Badge variant="secondary" class="font-mono text-[0.65rem]">{modelInfo.reasoningLevel}</Badge>
-        )}
       </div>
-      {
-        (() => {
-          let totalTokens = 0;
-          let totalCost = 0;
-          let hasCost = false;
-          for (const bench of data.benchmarks) {
-            const results = data.fixtures[modelName]?.[bench] || [];
-            for (const r of results) {
-              totalTokens += (r.total_tokens || 0);
-              if (r.cost_usd != null) {
-                totalCost += r.cost_usd;
-                hasCost = true;
-              }
-            }
-          }
-          return (
-            <div class="font-mono text-[0.68rem] text-[var(--color-text-dim)] opacity-60 mt-1">
-              {totalTokens > 0 && <span class="mr-3">{totalTokens.toLocaleString()} tokens</span>}
-              {hasCost && <span>${totalCost.toFixed(8)}</span>}
-            </div>
-          );
-        })()
-      }
+      <div class="font-mono text-[0.68rem] text-[var(--color-text-dim)] opacity-60 mt-1">
+        {totalTokens > 0 && <span class="mr-3">{totalTokens.toLocaleString()} tokens</span>}
+        {hasCost && <span>${totalCost.toFixed(8)}</span>}
+      </div>
     </div>
     <a href={`/compare?with=${encodedModelName}`}>
       <Button variant="outline" size="sm" class="font-mono text-xs border-[var(--color-border-accent)] text-[var(--color-accent)]">
@@ -109,38 +153,6 @@ const passColor = summary.pass_at_k >= 0.8
       </Button>
     </a>
   </div>
-
-  {
-    hasOtherLevels && (
-      <div class="card mb-8">
-        <div class="section-label"><span>Reasoning Levels</span></div>
-        <div class="flex gap-4 flex-wrap">
-          {
-            [modelInfo, ...sameBaseModels].map(m => {
-              const ms = data.model_summaries[m.name];
-              const rp = ms ? Math.round(ms.pass_at_k * 1000) / 10 : 0;
-              const isCurrent = m.name === modelName;
-              return (
-                <a
-                  href={modelPath(m.name)}
-                  class="no-underline"
-                >
-                  <div class={`card p-4 cursor-pointer ${isCurrent ? 'border-[var(--color-border-accent)]' : ''}`}>
-                    <div class="font-mono text-[0.68rem] text-[var(--color-text-dim)] mb-1">
-                      {m.reasoningLevel || 'default'}
-                    </div>
-                    <div class={`text-2xl font-bold ${isCurrent ? 'text-[var(--color-accent)]' : 'text-[var(--color-text)]'}`}>
-                      {rp}%
-                    </div>
-                  </div>
-                </a>
-              );
-            })
-          }
-        </div>
-      </div>
-    )
-  }
 
   <section>
     <div class="section-label"><span>Fixture Gallery ({allFixtures.length})</span></div>
@@ -171,7 +183,7 @@ const passColor = summary.pass_at_k >= 0.8
         return (
           <FixtureCard
             fixtureId={fx.fixture_id}
-            benchmark={(fx as any).benchmark || fi?.benchmark || ''}
+            benchmark={fx.benchmark || fi?.benchmark || ''}
             passed={fx.passed}
             similarity={simPct}
             difficulty={fi?.difficulty || ''}
@@ -187,9 +199,9 @@ const passColor = summary.pass_at_k >= 0.8
 
 <script>
   function applyFilters() {
-    const bench = document.getElementById('filter-bench')?.value || '';
-    const diff = document.getElementById('filter-diff')?.value || '';
-    const tag = document.getElementById('filter-tag')?.value || '';
+    const bench = (document.getElementById('filter-bench') as HTMLSelectElement)?.value || '';
+    const diff = (document.getElementById('filter-diff') as HTMLSelectElement)?.value || '';
+    const tag = (document.getElementById('filter-tag') as HTMLSelectElement)?.value || '';
     const cards = document.querySelectorAll('.fixture-card');
     cards.forEach((card: any) => {
       const cBench = card.dataset.benchmark || '';

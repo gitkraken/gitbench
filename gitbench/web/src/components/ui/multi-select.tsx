@@ -33,6 +33,8 @@ export interface MultiSelectProps {
   className?: string;
   /** Render extra content next to each item in the dropdown */
   renderItemEnd?: (option: MultiSelectOption) => ReactNode;
+  /** Render content before the label in each dropdown item */
+  renderItemStart?: (option: MultiSelectOption) => ReactNode;
 }
 
 export function MultiSelect({
@@ -44,6 +46,7 @@ export function MultiSelect({
   emptyMessage = "No items found.",
   className,
   renderItemEnd,
+  renderItemStart,
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const selectedSet = new Set(value);
@@ -149,7 +152,7 @@ export function MultiSelect({
                     onSelect={() => toggle(option.value)}
                     className="pr-8"
                   >
-                    <span className="flex-1">{option.label}</span>
+                    <span className="flex-1">{renderItemStart?.(option)}{option.label}</span>
                     {renderItemEnd?.(option)}
                     {isSelected && (
                       <Check className="absolute right-2 h-4 w-4" />

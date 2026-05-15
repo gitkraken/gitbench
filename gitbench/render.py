@@ -166,6 +166,31 @@ def _run_sort_key(run: dict) -> tuple[tuple[int, ...], str]:
     )
 
 
+def _parse_model_parts(model_name: str) -> tuple[str, str, str | None]:
+    """Parse a model name into provider, base model, and reasoning level.
+
+    Handles ``provider/base:level`` format (try ``:``, fallback ``#``,
+    handle no level).
+
+    Returns:
+        Tuple of ``(provider, base_model, reasoning_level)``.
+    """
+    if "/" not in model_name:
+        return (model_name, model_name, None)
+
+    provider, rest = model_name.split("/", 1)
+
+    # Try ``:`` first (OpenRouter format), fall back to ``#``
+    if ":" in rest:
+        base_model, level = rest.split(":", 1)
+    elif "#" in rest:
+        base_model, level = rest.split("#", 1)
+    else:
+        return (provider, rest, None)
+
+    return (provider, base_model, level if level else None)
+
+
 def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
     """Aggregate multiple runs into a structured summary for rendering.
 
@@ -289,14 +314,42 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
             sf["total_cost_usd"] = round(model_cost_sum, 10)
             sf["avg_cost_usd"] = round(model_cost_sum / model_cost_count, 10)
 
-    # Build model list with parsed base model + reasoning level
+    # Build model list with parsed provider + base model + reasoning level
     model_list = []
     for m in sorted(models_set):
-        base, rl = parse_model_name(m)
+        provider, base, rl = _parse_model_parts(m)
         model_list.append({
             "name": m,
+            "provider": provider,
             "baseModel": base,
             "reasoningLevel": rl,
+        })
+
+    # Build base_model_groups: group by (provider, baseModel)
+    groups: dict[tuple[str, str], list[str]] = {}
+    for m_data in model_list:
+        key = (m_data["provider"], m_data["baseModel"])
+        if key not in groups:
+            groups[key] = []
+        groups[key].append(m_data["name"])
+
+    base_model_groups = []
+    for (provider, base), model_names in groups.items():
+        levels = []
+        for mn in sorted(model_names):
+            _, _, level = _parse_model_parts(mn)
+            ms = model_summaries.get(mn, {})
+            levels.append({
+                "level": level,
+                "modelName": mn,
+                "pass_at_k": ms.get("pass_at_k", 0),
+                "total_cost_usd": ms.get("total_cost_usd"),
+            })
+        levels.sort(key=lambda l: (l["level"] or ""))
+        base_model_groups.append({
+            "provider": provider,
+            "baseModel": base,
+            "levels": levels,
         })
 
     runs_meta = []
@@ -351,6 +404,7 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
         "fixtures": fixtures,
         "fixture_index": fixture_index,
         "runs_meta": runs_meta,
+        "base_model_groups": base_model_groups,
     }
 
 

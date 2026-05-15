@@ -1,44 +1,66 @@
 ---
 import Layout from '../../components/Layout.astro';
 import { loadDataSync } from '../../lib/data';
-import { modelPath } from '../../lib/routes';
+import { modelLevelPath } from '../../lib/routes';
 import { Badge } from '@/components/ui/badge';
+import ProviderIcon from '../../components/ProviderIcon.tsx';
 
 const data = loadDataSync();
 ---
 
 <Layout title="Models">
-  <div class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4">
-    {data.models.map(m => {
-      const summary = data.model_summaries[m.name];
-      const passRate = summary ? Math.round(summary.pass_at_k * 1000) / 10 : 0;
-      const passCls = summary && summary.pass_at_k >= 0.8 ? 'pass' : summary && summary.pass_at_k < 0.5 ? 'fail' : 'warn';
-      const passColor = summary && summary.pass_at_k >= 0.8
-        ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
-        : summary && summary.pass_at_k < 0.5
-          ? 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]'
-          : 'bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]';
-      return (
-        <a href={modelPath(m.name)} class="no-underline">
-          <div class="card p-6 cursor-pointer transition-colors hover:border-[var(--color-border-accent)]">
-            <div class="text-lg font-bold mb-1.5 text-[var(--color-text)]">{m.name}</div>
-            <div class="flex gap-2 items-center flex-wrap">
-              <Badge variant="outline" className={`font-mono text-xs ${passColor}`}>{passRate}%</Badge>
-              {m.reasoningLevel && <Badge variant="secondary" class="font-mono text-[0.65rem]">{m.reasoningLevel}</Badge>}
+  {data.base_model_groups.map(group => {
+    const providerName = group.provider.charAt(0).toUpperCase() + group.provider.slice(1);
+
+    return (
+      <section class="mb-10">
+        <!-- Provider header -->
+        <div class="flex items-center gap-2 mb-4">
+          <ProviderIcon provider={group.provider} size={22} client:load />
+          <h2 class="text-lg font-bold text-[var(--color-text)]">{providerName}</h2>
+        </div>
+
+        <!-- Base model cards -->
+        <div class="flex flex-col gap-4">
+          <div class="card p-5">
+            <h3 class="text-base font-semibold text-[var(--color-text)] mb-4">{group.baseModel}</h3>
+
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
+              {group.levels.map(l => {
+                const passRate = Math.round(l.pass_at_k * 1000) / 10;
+                const passCls = l.pass_at_k >= 0.8 ? 'pass'
+                  : l.pass_at_k < 0.5 ? 'fail' : 'warn';
+                const passColor = l.pass_at_k >= 0.8
+                  ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
+                  : l.pass_at_k < 0.5
+                    ? 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]'
+                    : 'bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]';
+                const href = modelLevelPath(group.provider, group.baseModel, l.level || '');
+
+                return (
+                  <a href={href} class="no-underline">
+                    <div class="card p-3 cursor-pointer transition-colors hover:border-[var(--color-border-accent)] bg-[var(--color-surface)]">
+                      <div class="text-xs font-mono text-[var(--color-text-dim)] mb-1.5">
+                        {l.level || 'default'}
+                      </div>
+                      <div class="flex items-center gap-1.5 mb-2">
+                        <Badge variant="outline" className={`font-mono text-[0.6rem] px-1.5 ${passColor}`}>
+                          {passRate}%
+                        </Badge>
+                      </div>
+                      {l.total_cost_usd != null && (
+                        <div class="font-mono text-[0.6rem] text-[var(--color-text-dim)] opacity-70">
+                          ${l.total_cost_usd.toFixed(4)}
+                        </div>
+                      )}
+                    </div>
+                  </a>
+                );
+              })}
             </div>
-            {summary && (
-              <div class="font-mono text-[0.65rem] text-[var(--color-text-dim)] mt-2">
-                {summary.total_passed} / {summary.total_fixtures} fixtures · {summary.total_runs} run(s)
-                {summary.total_cost_usd != null && (
-                  <span class="block mt-0.5 opacity-70">
-                    Cost: ${summary.total_cost_usd.toFixed(6)} · ~${summary.avg_cost_usd != null ? summary.avg_cost_usd.toFixed(6) : '—'}/fx
-                  </span>
-                )}
-              </div>
-            )}
           </div>
-        </a>
-      );
-    })}
-  </div>
+        </div>
+      </section>
+    );
+  })}
 </Layout>

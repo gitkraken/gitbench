@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-The CostValueChart provides a quadrant scatter plot comparing each model's total cost against its pass rate.
-## Requirements
 ### Requirement: CostValueChart renders quadrant scatter plot
 The `CostValueChart` React component SHALL render a Recharts ScatterChart with total cost of a full run (X-axis, USD) and pass rate percentage (Y-axis). Each point SHALL represent one model. Two ReferenceLines SHALL be drawn at the median X and median Y values to divide the chart into four quadrants. The X-axis SHALL be labeled "Total cost per full run (USD)" and SHALL use `summary.total_cost_usd` from model summaries.
 
@@ -52,4 +50,3 @@ The `CostValueChart` component SHALL be rendered on `/` (the Overview/Home page)
 #### Scenario: Chart on overview page
 - **WHEN** navigating to `/`
 - **THEN** a "Cost vs Quality" section with the quadrant scatter plot is visible below the benchmark heatmap
-

@@ -3,6 +3,7 @@ import type { GitBenchData, ModelInfo } from '@/lib/types';
 import { loadData } from '@/lib/load-data';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelect } from '@/components/ui/multi-select';
+import ProviderIcon from '@/components/ProviderIcon';
 
 interface ModelSelectorProps {
   initialSelected?: string[];
@@ -66,6 +67,15 @@ export default function ModelSelector({ initialSelected, onChange }: ModelSelect
       placeholder="Select models..."
       searchPlaceholder="Search models..."
       emptyMessage="No models found."
+      renderItemStart={(option) => {
+        const modelInfo = dataRef.current?.models.find(m => m.name === option.value);
+        if (!modelInfo) return null;
+        return (
+          <span className="inline-flex mr-1.5 align-middle">
+            <ProviderIcon provider={modelInfo.provider} size={14} />
+          </span>
+        );
+      }}
       renderItemEnd={(option) => {
         const summary = dataRef.current?.model_summaries[option.value];
         const passRate = summary ? Math.round(summary.pass_at_k * 1000) / 10 : 0;

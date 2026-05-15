@@ -1,0 +1,75 @@
+---
+import Layout from '../../../../components/Layout.astro';
+import { loadDataSync } from '../../../../lib/data';
+import { modelLevelPath } from '../../../../lib/routes';
+import type { GitBenchData, BaseModelGroup } from '../../../../lib/types';
+import { Badge } from '@/components/ui/badge';
+import ProviderIcon from '../../../../components/ProviderIcon.tsx';
+
+export function getStaticPaths() {
+  const data = loadDataSync();
+  return data.base_model_groups.map(g => ({
+    params: { provider: g.provider, model: g.baseModel },
+    props: { provider: g.provider, baseModel: g.baseModel, group: g, data },
+  }));
+}
+
+const { provider, baseModel, group, data } = Astro.props as {
+  provider: string;
+  baseModel: string;
+  group: BaseModelGroup;
+  data: GitBenchData;
+};
+
+// Capitalize provider name for display
+const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+---
+
+<Layout title={`${providerName} / ${baseModel}`}>
+  <div class="flex items-center gap-3 mb-6">
+    <ProviderIcon provider={provider} size={28} client:load />
+    <div>
+      <div class="text-sm font-mono text-[var(--color-text-dim)]">{providerName}</div>
+      <h1 class="text-2xl font-bold text-[var(--color-text)]">{baseModel}</h1>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+    {group.levels.map(l => {
+      const passRate = Math.round(l.pass_at_k * 1000) / 10;
+      const passCls = l.pass_at_k >= 0.8 ? 'pass'
+        : l.pass_at_k < 0.5 ? 'fail' : 'warn';
+      const passColor = l.pass_at_k >= 0.8
+        ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
+        : l.pass_at_k < 0.5
+          ? 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]'
+          : 'bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]';
+      const levelLabel = l.level || 'default';
+      const href = modelLevelPath(provider, baseModel, l.level || '');
+      const summary = data.model_summaries[l.modelName];
+
+      return (
+        <a href={href} class="no-underline">
+          <div class="card p-5 cursor-pointer transition-colors hover:border-[var(--color-border-accent)]">
+            <div class="text-xs font-mono text-[var(--color-text-dim)] mb-2">{levelLabel}</div>
+            <div class="flex gap-2 items-center flex-wrap mb-3">
+              <Badge variant="outline" className={`font-mono text-xs ${passColor}`}>
+                {passRate}%
+              </Badge>
+            </div>
+            {summary && (
+              <div class="font-mono text-[0.65rem] text-[var(--color-text-dim)]">
+                {summary.total_passed} / {summary.total_fixtures} fixtures · {summary.total_runs} run(s)
+                {summary.total_cost_usd != null && (
+                  <span class="block mt-1 opacity-70">
+                    Total cost: ${summary.total_cost_usd.toFixed(6)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </a>
+      );
+    })}
+  </div>
+</Layout>

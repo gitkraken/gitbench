@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, ZAxis, ReferenceLine } from 'recharts';
 import type { GitBenchData } from '@/lib/types';
 import { loadData } from '@/lib/load-data';
-import { modelPath } from '@/lib/routes';
+import { modelLevelPath } from '@/lib/routes';
 
 interface ChartPoint {
   x: number;
   y: number;
   model: string;
+  provider: string;
+  baseModel: string;
+  level: string;
 }
 
 export default function CostValueChart() {
@@ -23,11 +26,14 @@ export default function CostValueChart() {
   const chartData: ChartPoint[] = [];
   for (const m of data.models) {
     const summary = data.model_summaries[m.name];
-    if (summary && summary.avg_cost_usd != null && summary.pass_at_k != null) {
+    if (summary && summary.total_cost_usd != null && summary.pass_at_k != null) {
       chartData.push({
-        x: summary.avg_cost_usd,
+        x: summary.total_cost_usd,
         y: Math.round(summary.pass_at_k * 1000) / 10,
         model: m.name,
+        provider: m.provider,
+        baseModel: m.baseModel,
+        level: m.reasoningLevel || '',
       });
     }
   }
@@ -70,12 +76,12 @@ export default function CostValueChart() {
           <XAxis
             type="number"
             dataKey="x"
-            name="Avg cost"
+            name="Total cost"
             tick={{ fill: 'var(--text-dim)', fontSize: 11, fontFamily: 'var(--font-mono)' }}
             tickFormatter={formatCost}
             axisLine={false}
             tickLine={false}
-            label={{ value: 'Avg cost per fixture (USD)', position: 'bottom', offset: 10, fill: 'var(--text-dim)', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+            label={{ value: 'Total cost per full run (USD)', position: 'bottom', offset: 10, fill: 'var(--text-dim)', fontSize: 11, fontFamily: 'var(--font-mono)' }}
           />
           <YAxis
             type="number"
@@ -111,7 +117,7 @@ export default function CostValueChart() {
               color: 'var(--text)',
             }}
             formatter={(value: any, name: string) => {
-              if (name === 'Avg cost') return [formatCost(value), name];
+              if (name === 'Total cost') return [formatCost(value), name];
               if (name === 'Pass rate') return [`${value}%`, name];
               return [value, name];
             }}
@@ -125,7 +131,7 @@ export default function CostValueChart() {
             fill="#a78bfa"
             shape={(props: any) => {
               const { cx, cy, payload } = props;
-              const url = modelPath(payload.model);
+              const url = modelLevelPath(payload.provider, payload.baseModel, payload.level);
               return (
                 <a href={url}>
                   <circle

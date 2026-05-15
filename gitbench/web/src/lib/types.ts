@@ -2,8 +2,22 @@
 
 export interface ModelInfo {
   name: string;
+  provider: string;
   baseModel: string;
   reasoningLevel: string | null;
+}
+
+export interface BaseModelGroupLevel {
+  level: string | null;
+  modelName: string;
+  pass_at_k: number;
+  total_cost_usd: number | null;
+}
+
+export interface BaseModelGroup {
+  provider: string;
+  baseModel: string;
+  levels: BaseModelGroupLevel[];
 }
 
 export interface ModelSummary {
@@ -66,4 +80,5 @@ export interface GitBenchData {
   fixtures: Record<string, Record<string, FixtureResult[]>>;
   fixture_index: Record<string, FixtureInfo>;
   runs_meta: RunMeta[];
+  base_model_groups: BaseModelGroup[];
 }
