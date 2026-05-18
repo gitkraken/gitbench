@@ -222,7 +222,7 @@ class TestRenderJson:
 
     def test_writes_models_as_objects(self, tmp_path):
         """Test that models are written as objects with name, baseModel, reasoningLevel."""
-        runs = [_make_envelope(model="o3-mini#high")]
+        runs = [_make_envelope(model="openai/o3-mini:high")]
         data = aggregate_runs(runs)
         output = tmp_path / "results.json"
 
@@ -231,7 +231,7 @@ class TestRenderJson:
         written = json.loads(output.read_text())
         models = written["models"]
         assert len(models) == 1
-        assert models[0]["name"] == "o3-mini#high"
+        assert models[0]["name"] == "openai/o3-mini:high"
         assert models[0]["baseModel"] == "o3-mini"
         assert models[0]["reasoningLevel"] == "high"
 

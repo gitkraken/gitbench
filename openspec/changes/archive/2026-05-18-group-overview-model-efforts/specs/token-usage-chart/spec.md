@@ -1,8 +1,5 @@
-# token-usage-chart Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change overview-chart-improvements. Update Purpose after archive.
-## Requirements
 ### Requirement: TokenUsageChart renders horizontal bar chart
 
 The `TokenUsageChart` React component SHALL render a Recharts horizontal bar chart (bars go right, Y-axis = provider/base-model group, X-axis = total tokens). Each bar SHALL represent one selected provider/base-model group and SHALL visualize the range from the lowest effort token total to the highest effort token total in that group. The lowest effort token total SHALL be the representative value used for sorting and bar prominence. Bars SHALL be color-coded by provider using the `getProviderColor()` palette. Y-axis tick labels SHALL display the provider brand icon (via `ProviderIcon`) and the truncated base model name (max ~10 characters + ellipsis). The component SHALL accept a `data` prop containing the full dataset. Chart height SHALL be fixed at 350 pixels. A provider legend SHALL be rendered below the chart card showing colored dots for each unique provider present.
@@ -110,4 +107,3 @@ The `TokenUsageChart` component SHALL include a `ModelSelector` dropdown allowin
 #### Scenario: Selector remains available when selected groups have no token data
 - **WHEN** every model group in the selected group set has zero collected total tokens
 - **THEN** `TokenUsageChart` displays "No token data available" and still renders the ModelSelector
-

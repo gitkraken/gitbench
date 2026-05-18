@@ -1,8 +1,7 @@
-import { useState, useCallback, type ReactNode } from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { useState, useCallback, useMemo, type ReactNode } from "react";
+import { Check, ChevronsUpDown, Square } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandInput,
@@ -21,6 +20,7 @@ import {
 export interface MultiSelectOption {
   value: string;
   label: string;
+  keywords?: string[];
 }
 
 export interface MultiSelectProps {
@@ -49,7 +49,18 @@ export function MultiSelect({
   renderItemStart,
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const selectedSet = new Set(value);
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredOptions = useMemo(() => {
+    if (!normalizedSearch) return options;
+    return options.filter((option) => {
+      const haystack = [option.value, option.label, ...(option.keywords ?? [])]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(normalizedSearch);
+    });
+  }, [normalizedSearch, options]);
 
   const toggle = useCallback(
     (val: string) => {
@@ -58,13 +69,6 @@ export function MultiSelect({
       } else {
         onChange([...value, val]);
       }
-    },
-    [value, onChange],
-  );
-
-  const remove = useCallback(
-    (val: string) => {
-      onChange(value.filter((v) => v !== val));
     },
     [value, onChange],
   );
@@ -88,27 +92,9 @@ export function MultiSelect({
             className,
           )}
         >
-          <span className="flex items-center gap-1.5 flex-wrap min-w-0">
+          <span className="min-w-0 truncate">
             {selectedOptions.length === 0 ? (
               <span className="text-muted-foreground">{placeholder}</span>
-            ) : selectedOptions.length <= 2 ? (
-              selectedOptions.map((o) => (
-                <Badge
-                  key={o.value}
-                  variant="secondary"
-                  className="font-mono"
-                >
-                  {o.label}
-                  <X
-                    className="ml-0.5 h-3 w-3 cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      remove(o.value);
-                    }}
-                    aria-label={`Remove ${o.label}`}
-                  />
-                </Badge>
-              ))
             ) : (
               <span>{selectedOptions.length} selected</span>
             )}
@@ -120,30 +106,34 @@ export function MultiSelect({
         className="w-[--radix-popover-trigger-width] p-0"
         align="start"
       >
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={search}
+            onValueChange={setSearch}
+          />
+          <div className="flex items-center gap-2 px-2 py-1.5 shrink-0">
+            <button
+              type="button"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => onChange(filteredOptions.map((o) => o.value))}
+            >
+              Select all
+            </button>
+            <span className="text-border text-xs">·</span>
+            <button
+              type="button"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => onChange([])}
+            >
+              Clear
+            </button>
+          </div>
+          <CommandSeparator />
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
-              <div className="flex items-center gap-2 px-2 py-1.5">
-                <button
-                  type="button"
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => onChange(options.map((o) => o.value))}
-                >
-                  Select all
-                </button>
-                <span className="text-border text-xs">·</span>
-                <button
-                  type="button"
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => onChange([])}
-                >
-                  Clear
-                </button>
-              </div>
-              <CommandSeparator />
-              {options.map((option) => {
+              {filteredOptions.map((option) => {
                 const isSelected = selectedSet.has(option.value);
                 return (
                   <CommandItem
@@ -152,7 +142,13 @@ export function MultiSelect({
                     onSelect={() => toggle(option.value)}
                     className="pr-8"
                   >
-                    <span className="flex-1">{renderItemStart?.(option)}{option.label}</span>
+                    <span className="flex min-w-0 flex-1 items-center">
+                      <span className="mr-2 inline-flex size-4 shrink-0 items-center justify-center rounded-[3px] border border-input">
+                        {isSelected ? <Check className="size-3" /> : <Square className="size-3 opacity-0" />}
+                      </span>
+                      {renderItemStart?.(option)}
+                      <span className="truncate">{option.label}</span>
+                    </span>
                     {renderItemEnd?.(option)}
                     {isSelected && (
                       <Check className="absolute right-2 h-4 w-4" />

@@ -4,6 +4,7 @@ import { loadData } from '@/lib/load-data';
 import { modelPath } from '@/lib/routes';
 import ModelSelector from './ModelSelector';
 import { Badge } from '@/components/ui/badge';
+import { useSyncedModelSelection } from './useSyncedModelSelection';
 
 function heatBg(ratio: number): string {
   if (ratio >= 0.9) return 'rgba(16,185,129,0.28)';
@@ -21,12 +22,11 @@ function heatColor(ratio: number): string {
 
 export default function BenchmarkHeatmap() {
   const [data, setData] = useState<GitBenchData | null>(null);
-  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const { selectedGroups, setSelectedGroups, selectedModels } = useSyncedModelSelection(data);
 
   useEffect(() => {
     loadData().then(d => {
       setData(d);
-      setSelectedModels(d.models.map(m => m.name));
     });
   }, []);
 
@@ -36,8 +36,8 @@ export default function BenchmarkHeatmap() {
     <div>
       <div className="max-w-xs ml-auto w-full mb-3">
         <ModelSelector
-          initialSelected={selectedModels}
-          onChange={setSelectedModels}
+          value={selectedGroups}
+          onChange={setSelectedGroups}
         />
       </div>
       <div className="card overflow-x-auto p-5">

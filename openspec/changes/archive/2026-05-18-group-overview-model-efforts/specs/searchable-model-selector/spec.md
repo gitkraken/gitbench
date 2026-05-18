@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-The searchable model selector provides a multi-select dropdown for choosing which models to display in the overview charts.
-## Requirements
 ### Requirement: Model selector is a searchable dropdown
 The ModelSelector component SHALL render as a Popover-triggered Command menu instead of a flat row of pill checkboxes. On the Overview page, the trigger SHALL display the number of selected provider/base-model groups (e.g., "3 selected") or the names of selected base model groups when few are chosen. Clicking the trigger SHALL open a dropdown containing a search input, a selectable list of all available provider/base-model groups, and Select all / Clear all actions.
 
@@ -132,4 +130,3 @@ Each `ModelSelector` instance SHALL listen for `model-selection-changed` events 
 #### Scenario: Event listener is cleaned up on unmount
 - **WHEN** a `ModelSelector` instance unmounts
 - **THEN** its `model-selection-changed` event listener is removed from `window`
-

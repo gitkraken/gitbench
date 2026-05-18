@@ -5,6 +5,7 @@ import { loadData } from '@/lib/load-data';
 import ModelSelector from './charts/ModelSelector';
 import ScatterPlot from './charts/ScatterPlot';
 import { Badge } from '@/components/ui/badge';
+import { deriveModelGroups, expandGroupSelection, sanitizeGroupSelection } from './charts/model-groups';
 
 const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#ec4899', '#0ea5e9', '#84cc16'];
 
@@ -16,7 +17,7 @@ function getColor(passRate: number): string {
 
 export default function ComparePage() {
   const [data, setData] = useState<GitBenchData | null>(null);
-  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
 
   useEffect(() => {
     loadData().then(d => {
@@ -24,11 +25,12 @@ export default function ComparePage() {
       const params = new URLSearchParams(window.location.search);
       const withModel = params.get('with');
       const initial = withModel ? [withModel] : d.models.slice(0, 3).map(m => m.name);
-      setSelectedModels(initial);
+      setSelectedGroups(sanitizeGroupSelection(initial, deriveModelGroups(d)));
     });
   }, []);
 
   if (!data) return <div>Loading...</div>;
+  const selectedModels = expandGroupSelection(selectedGroups, data);
 
   const overallData = selectedModels
     .map(name => {
@@ -56,8 +58,8 @@ export default function ComparePage() {
     <div>
       <div className="max-w-xs ml-auto w-full mb-6">
         <ModelSelector
-          initialSelected={selectedModels}
-          onChange={setSelectedModels}
+          initialSelected={selectedGroups}
+          onChange={setSelectedGroups}
         />
       </div>
 

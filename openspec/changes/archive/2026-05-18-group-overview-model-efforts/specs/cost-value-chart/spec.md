@@ -1,7 +1,5 @@
-## Purpose
+## MODIFIED Requirements
 
-The CostValueChart provides a quadrant scatter plot comparing each model's total cost against its pass rate.
-## Requirements
 ### Requirement: CostValueChart shows tooltips on hover
 
 Hovering over a grouped cost bar SHALL display a tooltip with the provider/base-model group name, each effort's total cost formatted as USD (e.g., "$0.5270" or "$12.50"), and each effort's pass rate percentage for context. The tooltip SHALL identify the lowest-cost effort used for sorting.
@@ -101,4 +99,3 @@ The `CostValueChart` component SHALL include a `ModelSelector` dropdown allowing
 #### Scenario: Selector remains available when no selected groups have cost data
 - **WHEN** the selected group set contains no model groups with valid `total_cost_usd`
 - **THEN** `CostValueChart` displays "No pricing data available" and still renders the ModelSelector
-
