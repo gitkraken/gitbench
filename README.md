@@ -150,6 +150,8 @@ Each benchmark has 12 fixtures — 204 total — for meaningful pass@1 scoring.
 | `command_equivalence` | Tokenized command comparison against fixture-declared accepted alternatives |
 | `state_assertions` | Execute model output as git commands, then verify repo state via assertions (file_exists, dir_exists, file_content, branch_exists, git_config, git_output) |
 | `structured` | Parse model output as key-value fields, score each independently (exact_match or similarity per field) |
+| `commit_selection` | Verify that the model selects specific expected commits (used by commit_squash) |
+| `dynamic_hash` | Match against a git hash that varies per run (used by git_bisect, git_show) |
 
 Use `command_equivalence` for read-only fixtures that ask for a Git command and
 where multiple command spellings are semantically equivalent:
