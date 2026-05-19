@@ -88,11 +88,23 @@ def is_doctorable_error(error: str | None) -> bool:
     return doctorable_error_pattern(error) is not None
 
 
-def find_latest_result_files(results_root: str | Path = "gitbench-results") -> list[Path]:
-    """Find JSON result files under gitbench-results."""
+def find_timestamped_result_files(results_root: str | Path = "gitbench-results") -> list[Path]:
+    """Find JSON result files in timestamped result directories."""
     root = Path(results_root)
-    return sorted(path for path in root.glob("**/*.json") if path.is_file())
+    if not root.exists():
+        return []
 
+    result_files: list[Path] = []
+    for timestamp_dir in sorted(
+        path
+        for path in root.iterdir()
+        if path.is_dir() and RESULT_TIMESTAMP_DIR_RE.fullmatch(path.name)
+    ):
+        result_files.extend(
+            path for path in timestamp_dir.glob("*.json") if path.is_file()
+        )
+
+    return sorted(result_files)
 
 def load_result_payload(path: str | Path) -> dict[str, Any]:
     """Load a result JSON payload."""

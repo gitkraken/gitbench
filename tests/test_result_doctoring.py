@@ -179,12 +179,21 @@ def test_replace_scores_preserves_non_targets_and_recomputes_summaries():
     assert payload["summary"]["overall_pass_at_k"] == 0.6667
 
 
-def test_find_latest_result_files_returns_all_results(tmp_path):
-    first = tmp_path / "gitbench-results/a/results-v0.1.0.json"
-    second = tmp_path / "gitbench-results/b/2026-01-01_mock_v0.1.0.json"
-    first.parent.mkdir(parents=True)
-    second.parent.mkdir(parents=True)
-    first.write_text("{}")
-    second.write_text("{}")
+def test_find_timestamped_result_files_returns_all_timestamped_results(tmp_path):
+    ignored = tmp_path / "gitbench-results/a/results-v0.1.0.json"
+    ignored_z = tmp_path / "gitbench-results/scratchZ/results-v0.1.0.json"
+    older = tmp_path / "gitbench-results/20260101T000000Z/results-v0.1.0.json"
+    latest = tmp_path / "gitbench-results/20260102T000000Z/results-v0.1.0.json"
+    ignored.parent.mkdir(parents=True)
+    ignored_z.parent.mkdir(parents=True)
+    older.parent.mkdir(parents=True)
+    latest.parent.mkdir(parents=True)
+    ignored.write_text("{}")
+    ignored_z.write_text("{}")
+    older.write_text("{}")
+    latest.write_text("{}")
 
-    assert find_latest_result_files(tmp_path / "gitbench-results") == [first, second]
+    assert find_timestamped_result_files(tmp_path / "gitbench-results") == [
+        older,
+        latest,
+    ]
