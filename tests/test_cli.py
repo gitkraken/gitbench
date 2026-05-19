@@ -6,22 +6,25 @@ import sys
 import time
 from io import StringIO
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from click.testing import CliRunner
 
 from gitbench.cli import (
+    DEFAULT_DOCTOR_TIMEOUT,
     DEFAULT_JSON_OUTPUT_PATH,
     DEFAULT_RETRY_COUNT,
-    check_git_availability,
-    cli,
-    get_model_client,
-    resolve_run_output_path,
+    _doctor_progress_label,
+    _effective_doctor_timeout,
     _effective_retry_count,
     _effective_timeout,
     _progress_model_names,
     _progress_model_names_for_runs,
+    check_git_availability,
+    cli,
+    get_model_client,
+    resolve_run_output_path,
 )
 from gitbench.ui.display import RichProgressDisplay
 from gitbench.version import BENCHMARK_SUITE_VERSION
@@ -163,6 +166,11 @@ class TestModelRetryPolicy:
 
         assert _effective_timeout(profile, 10) == 10
         assert _effective_retry_count(profile, 1) == 1
+
+    def test_doctor_timeout_defaults_longer_but_respects_profile_and_cli(self):
+        assert _effective_doctor_timeout({}, None) == DEFAULT_DOCTOR_TIMEOUT
+        assert _effective_doctor_timeout({"timeout": 45}, None) == 45
+        assert _effective_doctor_timeout({"timeout": 45}, 180) == 180
 
 
 class TestListCommand:
@@ -834,7 +842,7 @@ class TestDoctorCommand:
         assert "APITimeoutError: 1" in result.output
         get_model_client.assert_not_called()
 
-    def test_latest_scans_all_default_result_files(self, runner, tmp_path):
+    def test_latest_scans_all_timestamped_result_files(self, runner, tmp_path):
         with runner.isolated_filesystem(temp_dir=tmp_path):
             first = Path("gitbench-results/20260101T000000Z/results-v0.1.0.json")
             second = Path("gitbench-results/20260102T000000Z/results-v0.1.0.json")
@@ -898,6 +906,211 @@ class TestDoctorCommand:
         assert scores[1]["model_output"] == "fixed"
         assert scores[2]["error"] == "expected got mismatch"
         assert fixed["summary"]["total_passed"] == 2
+
+    def test_doctor_uses_longer_default_timeout_and_cli_override(self, runner, tmp_path):
+        from gitbench.harness.types import BenchmarkResult, Score
+
+        rerun_result = BenchmarkResult(
+            benchmark="commit_messages",
+            total=1,
+            passed=1,
+            pass_at_k=1.0,
+            errors=0,
+            scores=[
+                Score(
+                    fixture_id="f002",
+                    passed=True,
+                    similarity=1.0,
+                    model_output="fixed",
+                    error=None,
+                )
+            ],
+        )
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result_path = Path("results-v0.1.0.json")
+            result_path.write_text(json.dumps(_doctor_payload()))
+            Path("gitbench.json").write_text(json.dumps({"models": {"local": {"models": ["mock"]}}}))
+
+            with patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch("gitbench.cli.get_model_client", return_value=Mock()) as get_model_client, \
+                 patch("gitbench.harness.runner.BenchmarkRunner.run_benchmark", return_value=rerun_result):
+                default_result = runner.invoke(cli, ["doctor", str(result_path)])
+                default_timeout = get_model_client.call_args.kwargs["timeout"]
+
+            result_path.write_text(json.dumps(_doctor_payload()))
+
+            with patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch("gitbench.cli.get_model_client", return_value=Mock()) as get_model_client, \
+                 patch("gitbench.harness.runner.BenchmarkRunner.run_benchmark", return_value=rerun_result):
+                override_result = runner.invoke(
+                    cli,
+                    ["doctor", str(result_path), "--timeout", "180"],
+                )
+                override_timeout = get_model_client.call_args.kwargs["timeout"]
+
+        assert default_result.exit_code == 0
+        assert default_timeout == DEFAULT_DOCTOR_TIMEOUT
+        assert override_result.exit_code == 0
+        assert override_timeout == 180
+
+    def test_doctor_shows_progress_for_repaired_fixtures(self, runner, tmp_path):
+        from gitbench.harness.types import BenchmarkResult, Score
+
+        rerun_result = BenchmarkResult(
+            benchmark="commit_messages",
+            total=1,
+            passed=1,
+            pass_at_k=1.0,
+            errors=0,
+            scores=[
+                Score(
+                    fixture_id="f002",
+                    passed=True,
+                    similarity=1.0,
+                    model_output="fixed",
+                    error=None,
+                )
+            ],
+        )
+        progress_context = MagicMock()
+        progress = MagicMock()
+        progress.add_task.return_value = 123
+        progress_context.__enter__.return_value = progress
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result_path = Path("results-v0.1.0.json")
+            result_path.write_text(json.dumps(_doctor_payload()))
+            Path("gitbench.json").write_text(json.dumps({"models": {"local": {"models": ["mock"]}}}))
+
+            with patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch("gitbench.cli.Progress", return_value=progress_context) as progress_factory, \
+                 patch("gitbench.harness.runner.BenchmarkRunner.run_benchmark", return_value=rerun_result):
+                result = runner.invoke(cli, ["doctor", str(result_path)])
+
+        assert result.exit_code == 0
+        progress_factory.assert_called_once()
+        progress.add_task.assert_called_once_with("Doctoring results", total=1)
+        assert progress.update.call_count == 2
+        assert "openai/mock/commit_messages" in progress.update.call_args_list[0].kwargs["description"]
+        assert progress.update.call_args_list[1].kwargs["advance"] == 1
+        assert "openai/mock/commit_messages" in progress.update.call_args_list[1].kwargs["description"]
+
+    def test_doctor_progress_label_includes_provider_model_and_effort(self):
+        assert _doctor_progress_label(
+            {"provider": "openai"},
+            "gpt-5#high",
+        ) == "openai/gpt-5:high"
+        assert _doctor_progress_label(
+            {"provider": "openrouter"},
+            "anthropic/claude-sonnet-4#low",
+        ) == "openrouter/anthropic/claude-sonnet-4:low"
+        assert _doctor_progress_label(
+            {"base_url": "http://localhost:11434"},
+            "gemma4:26b",
+        ) == "ollama/gemma4:26b"
+
+    def test_latest_updates_all_timestamped_files_then_second_run_does_nothing(self, runner, tmp_path):
+        from gitbench.harness.types import BenchmarkResult, Score
+
+        rerun_result = BenchmarkResult(
+            benchmark="commit_messages",
+            total=1,
+            passed=1,
+            pass_at_k=1.0,
+            errors=0,
+            scores=[
+                Score(
+                    fixture_id="f002",
+                    passed=True,
+                    similarity=1.0,
+                    model_output="fixed",
+                    error=None,
+                )
+            ],
+        )
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            first = Path("gitbench-results/20260101T000000Z/results-v0.1.0.json")
+            second = Path("gitbench-results/20260102T000000Z/results-v0.1.0.json")
+            first.parent.mkdir(parents=True)
+            second.parent.mkdir(parents=True)
+            first.write_text(json.dumps(_doctor_payload()))
+            second.write_text(json.dumps(_doctor_payload()))
+            Path("gitbench.json").write_text(json.dumps({"models": {"local": {"models": ["mock"]}}}))
+
+            with patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch("gitbench.harness.runner.BenchmarkRunner.run_benchmark", return_value=rerun_result) as run_benchmark:
+                first_result = runner.invoke(cli, ["doctor", "--latest"])
+
+            with patch("gitbench.cli.get_model_client") as get_model_client:
+                second_result = runner.invoke(cli, ["doctor", "--latest"])
+
+            fixed_first = json.loads(first.read_text())
+            fixed_second = json.loads(second.read_text())
+
+        assert first_result.exit_code == 0
+        assert run_benchmark.call_count == 2
+        assert fixed_first["summary"]["total_passed"] == 2
+        assert fixed_second["summary"]["total_passed"] == 2
+        assert second_result.exit_code == 0
+        assert "No doctorable failures found" in second_result.output
+        get_model_client.assert_not_called()
+
+    def test_doctor_persists_successful_targets_before_later_failure(self, runner, tmp_path):
+        from gitbench.harness.types import BenchmarkResult, Score
+
+        payload = _doctor_payload()
+        payload["profiles"][0]["models"][0]["results"].append(
+            {
+                "benchmark": "git_show",
+                "total": 1,
+                "passed": 0,
+                "pass_at_k": 0.0,
+                "errors": 1,
+                "scores": [
+                    {
+                        "fixture_id": "f002",
+                        "passed": False,
+                        "similarity": 0.0,
+                        "model_output": "",
+                        "error": "APITimeoutError",
+                    }
+                ],
+            }
+        )
+
+        first_rerun = BenchmarkResult(
+            benchmark="commit_messages",
+            total=1,
+            passed=1,
+            pass_at_k=1.0,
+            errors=0,
+            scores=[
+                Score(
+                    fixture_id="f002",
+                    passed=True,
+                    similarity=1.0,
+                    model_output="fixed",
+                    error=None,
+                )
+            ],
+        )
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result_path = Path("results-v0.1.0.json")
+            result_path.write_text(json.dumps(payload))
+            Path("gitbench.json").write_text(json.dumps({"models": {"local": {"models": ["mock"]}}}))
+
+            with patch("gitbench.cli._benchmark_registry", {"commit_messages": object(), "git_show": object()}), \
+                 patch("gitbench.harness.runner.BenchmarkRunner.run_benchmark", side_effect=[first_rerun, RuntimeError("boom")]):
+                result = runner.invoke(cli, ["doctor", str(result_path)])
+
+            saved = json.loads(result_path.read_text())
+
+        assert result.exit_code == 1
+        assert saved["profiles"][0]["models"][0]["results"][0]["scores"][1]["model_output"] == "fixed"
+        assert saved["profiles"][0]["models"][0]["results"][1]["scores"][0]["error"] == "APITimeoutError"
 
     def test_output_writes_explicit_copy_when_requested(self, runner, tmp_path):
         from gitbench.harness.types import BenchmarkResult, Score

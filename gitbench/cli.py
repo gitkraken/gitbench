@@ -515,6 +515,9 @@ def _doctor_one_file(
     input_path: Path,
     *,
     output_path: Path | None,
+    timeout: int | None,
+    progress: Progress | None = None,
+    progress_task: TaskID | None = None,
 ) -> tuple[Path, int]:
     """Doctor one result file and return output path plus repaired fixture count."""
     payload = load_result_payload(input_path)
@@ -529,11 +532,19 @@ def _doctor_one_file(
     if not _benchmark_registry:
         _benchmark_registry = discover_benchmarks()
 
+    final_output_path = output_path or input_path
     for target in plan.targets:
         profile_conf = resolved_profiles[(target.profile, target.model)]
+        progress_label = _doctor_progress_label(profile_conf, target.model)
+        progress_description = (
+            f"Doctoring {input_path.parent.name}/{progress_label}/"
+            f"{target.benchmark}"
+        )
+        if progress is not None and progress_task is not None:
+            progress.update(progress_task, description=progress_description)
         model_client = get_model_client(
             target.model,
-            timeout=_effective_timeout(profile_conf, None),
+            timeout=_effective_doctor_timeout(profile_conf, timeout),
             retry_count=_effective_retry_count(profile_conf, None),
             base_url=profile_conf.get("base_url"),
             api_key=profile_conf.get("api_key"),
@@ -548,9 +559,13 @@ def _doctor_one_file(
             progress_model_name=target.model,
         )
         replace_scores_and_recompute(payload, target, result.to_dict())
-
-    final_output_path = output_path or input_path
-    write_result_payload(final_output_path, payload)
+        write_result_payload(final_output_path, payload)
+        if progress is not None and progress_task is not None:
+            progress.update(
+                progress_task,
+                advance=len(target.fixture_ids),
+                description=progress_description,
+            )
     return final_output_path, plan.doctorable_count
 
 
@@ -565,7 +580,7 @@ def cli():
 @click.option(
     "--latest",
     is_flag=True,
-    help="Doctor every active JSON result file under gitbench-results/.",
+    help="Doctor every JSON result file in timestamped gitbench-results/ directories.",
 )
 @click.option(
     "--dry-run",
@@ -580,14 +595,30 @@ def cli():
     default=None,
     help="Path to write repaired JSON. Defaults to updating the input file.",
 )
-def doctor(result_file: str | None, latest: bool, dry_run: bool, output_path: str | None):
+@click.option(
+    "--timeout",
+    "-t",
+    type=int,
+    default=None,
+    help=(
+        "Timeout in seconds per doctor rerun attempt "
+        f"(default: profile timeout or {DEFAULT_DOCTOR_TIMEOUT})."
+    ),
+)
+def doctor(
+    result_file: str | None,
+    latest: bool,
+    dry_run: bool,
+    output_path: str | None,
+    timeout: int | None,
+):
     """Repair an existing result file by rerunning doctorable failures."""
     if latest and result_file:
         raise click.ClickException("Use either RESULT_FILE or --latest, not both.")
     if not latest and not result_file:
         raise click.ClickException("Provide RESULT_FILE or use --latest.")
 
-    input_paths = find_latest_result_files() if latest else [Path(result_file)]
+    input_paths = find_timestamped_result_files() if latest else [Path(result_file)]
     if not input_paths:
         raise click.ClickException("No result file found under gitbench-results")
 
@@ -608,17 +639,43 @@ def doctor(result_file: str | None, latest: bool, dry_run: bool, output_path: st
 
     repaired_files = 0
     repaired_fixtures = 0
+    total_doctorable = 0
     for input_path in input_paths:
-        written_path, count = _doctor_one_file(
-            input_path,
-            output_path=Path(output_path) if output_path else None,
+        total_doctorable += build_rerun_plan(load_result_payload(input_path)).doctorable_count
+
+    progress_context = nullcontext(None)
+    if total_doctorable > 0:
+        progress_context = Progress(
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(),
+            TextColumn("{task.completed}/{task.total} fixtures"),
+            TimeElapsedColumn(),
+            console=Console(stderr=True),
+            transient=False,
         )
-        if count == 0:
-            click.echo(f"No doctorable failures found in: {input_path}")
-            continue
-        repaired_files += 1
-        repaired_fixtures += count
-        click.echo(f"Doctored results written to: {written_path}")
+
+    with progress_context as progress:
+        progress_task = None
+        if progress is not None:
+            progress_task = progress.add_task(
+                "Doctoring results",
+                total=total_doctorable,
+            )
+
+        for input_path in input_paths:
+            written_path, count = _doctor_one_file(
+                input_path,
+                output_path=Path(output_path) if output_path else None,
+                timeout=timeout,
+                progress=progress,
+                progress_task=progress_task,
+            )
+            if count == 0:
+                click.echo(f"No doctorable failures found in: {input_path}")
+                continue
+            repaired_files += 1
+            repaired_fixtures += count
+            click.echo(f"Doctored results written to: {written_path}")
 
     click.echo(
         f"Doctor complete: repaired {repaired_fixtures} fixture(s) "
