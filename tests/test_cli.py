@@ -1863,8 +1863,8 @@ class TestRunnerReasoningLevel:
 
     def test_runner_populates_reasoning_level_in_score(self):
         """Score gets reasoning_level from the adapter."""
-        from gitbench.harness.runner import BenchmarkRunner
         from gitbench.harness.model import MockModelClient
+        from gitbench.harness.runner import BenchmarkRunner
         from gitbench.harness.types import Fixture
 
         client = MockModelClient(response="test output")
@@ -1894,8 +1894,8 @@ class TestRunnerReasoningLevel:
 
     def test_runner_score_none_when_no_reasoning(self):
         """Score reasoning_level is None when adapter has none."""
-        from gitbench.harness.runner import BenchmarkRunner
         from gitbench.harness.model import MockModelClient
+        from gitbench.harness.runner import BenchmarkRunner
         from gitbench.harness.types import Fixture
 
         client = MockModelClient(response="test output")
