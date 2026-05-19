@@ -2,7 +2,7 @@
 
 from gitbench.result_doctoring import (
     build_rerun_plan,
-    find_latest_result_files,
+    find_timestamped_result_files,
     format_dry_run_summary,
     is_doctorable_error,
     replace_scores_and_recompute,
@@ -89,7 +89,9 @@ def test_doctorable_and_non_doctorable_errors():
         "APIConnectionError",
         "InternalServerError",
         "provider returned 429",
+        "provider returned HTTP 429",
         "500 server error",
+        "HTTP 500 server error",
         "502 bad gateway",
         "503 unavailable",
         "504 gateway timeout",
@@ -98,6 +100,8 @@ def test_doctorable_and_non_doctorable_errors():
         assert is_doctorable_error(error)
 
     assert not is_doctorable_error("expected 'foo' got 'bar'")
+    assert not is_doctorable_error("expected score 500 but got 400")
+    assert not is_doctorable_error("validated fixture_500 incorrectly")
     assert not is_doctorable_error("extra selected commit messages")
     assert not is_doctorable_error("command-equivalence failure")
     assert not is_doctorable_error(None)

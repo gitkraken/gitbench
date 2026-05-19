@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -14,12 +15,26 @@ DOCTORABLE_ERROR_PATTERNS = (
     "APITimeoutError",
     "APIConnectionError",
     "InternalServerError",
-    "429",
-    "500",
-    "502",
-    "503",
-    "504",
 )
+
+_HTTP_STATUS_BEFORE = r"(?:api|http|provider|response|returned|server|status)"
+_HTTP_STATUS_AFTER = (
+    r"(?:bad gateway|error|gateway timeout|rate limit|response|server|"
+    r"status|timeout|too many requests|unavailable)"
+)
+
+DOCTORABLE_HTTP_STATUS_PATTERNS = tuple(
+    (
+        status,
+        re.compile(
+            rf"\b{_HTTP_STATUS_BEFORE}\b[^\n]{{0,80}}\b{status}\b|"
+            rf"\b{status}\b[^\n]{{0,80}}\b{_HTTP_STATUS_AFTER}\b",
+            re.IGNORECASE,
+        ),
+    )
+    for status in ("429", "500", "502", "503", "504")
+)
+RESULT_TIMESTAMP_DIR_RE = re.compile(r"^\d{8}T\d{6}Z$")
 
 
 @dataclass(frozen=True)
@@ -61,6 +76,9 @@ def doctorable_error_pattern(error: str | None) -> str | None:
         return None
     for pattern in DOCTORABLE_ERROR_PATTERNS:
         if pattern in error:
+            return pattern
+    for pattern, regex in DOCTORABLE_HTTP_STATUS_PATTERNS:
+        if regex.search(error):
             return pattern
     return None
 
