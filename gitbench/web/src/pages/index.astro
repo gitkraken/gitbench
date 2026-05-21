@@ -4,6 +4,7 @@ import PassRateBarChart from '../components/charts/PassRateBarChart';
 import CostValueChart from '../components/charts/CostValueChart';
 import RuntimeBarChart from '../components/charts/RuntimeBarChart';
 import TokenUsageChart from '../components/charts/TokenUsageChart';
+import QuadrantComparisonChart from '../components/charts/QuadrantComparisonChart';
 import ModelSelector from '../components/charts/ModelSelector';
 import BenchmarkHeatmap from '../components/charts/BenchmarkHeatmap';
 ---
@@ -47,6 +48,19 @@ import BenchmarkHeatmap from '../components/charts/BenchmarkHeatmap';
       Hover any bar for a breakdown by reasoning effort level.
     </p>
     <PassRateBarChart client:load />
+  </section>
+
+  <section class="mt-10">
+    <div class="section-label">
+      <span class="has-tooltip" data-tooltip="Select any two metrics to compare model tradeoffs.
+
+The shaded quadrant marks the direction where both criteria improve. Each point uses the best reasoning-effort variant for the selected pair." title="Quadrant comparison — compare two criteria and find the best combined tradeoff.">Quadrant Comparison</span>
+    </div>
+    <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
+      Pick two criteria to see where models land against both tradeoffs at once. The shaded quadrant is the optimal direction —
+      for example, lower cost with higher pass rate, or lower token usage with lower cost.
+    </p>
+    <QuadrantComparisonChart client:load />
   </section>
 
   <section class="mt-10">
