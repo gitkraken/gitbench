@@ -4,7 +4,7 @@ import type { GitBenchData, RunMeta } from '@/lib/types';
 import { loadData } from '@/lib/load-data';
 import ModelSelector from './ModelSelector';
 
-const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#ec4899', '#0ea5e9', '#84cc16'];
+const COLORS = ['#B657FF', '#196FFF', '#01B7A1', '#EC7FFF', '#01FEE0', '#C170FF', '#6AB8FF', '#FEDC00'];
 
 export default function TimeSeriesChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
@@ -79,8 +79,8 @@ export default function TimeSeriesChart() {
                 return (
                   <div style={{
                     background: 'var(--card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
+                    border: '2px solid var(--border)',
+                    borderRadius: '10px',
                     padding: '8px 12px',
                     fontFamily: 'var(--font-mono)',
                     fontSize: '0.75rem',

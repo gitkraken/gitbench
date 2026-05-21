@@ -83,10 +83,8 @@ export function MultiSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "flex w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none",
-            "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+            "brand-select flex w-full items-center justify-between gap-2 px-3 py-2 whitespace-nowrap",
             "disabled:cursor-not-allowed disabled:opacity-50",
-            "dark:bg-input/30 dark:hover:bg-input/50",
             "h-9 min-h-9",
             "[&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
             className,

@@ -21,7 +21,19 @@ const links = [
 
 <aside class="app-sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-brand">Git<span class="accent">Bench</span></div>
+    <div class="sidebar-brand-lockup">
+      <img
+        class="sidebar-logo"
+        src="/gitkraken-icon.svg"
+        alt=""
+        width="44"
+        aria-hidden="true"
+      />
+      <div class="sidebar-product" aria-label="GitBench by GitKraken">
+        <span class="sidebar-product-title">GitBench</span>
+        <span class="sidebar-product-subtitle">by GitKraken</span>
+      </div>
+    </div>
   </div>
   <nav class="sidebar-nav">
     {links.map(link => (
