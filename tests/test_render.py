@@ -192,6 +192,28 @@ class TestAggregateRuns:
         assert data["runs_meta"][0]["git_sha"] == "abc123"
         assert data["runs_meta"][0]["benchmark_suite_version"] == BENCHMARK_SUITE_VERSION
 
+    def test_unknown_model_filtered_from_base_model_groups(self):
+        """Test that the placeholder unknown model is filtered everywhere."""
+        runs = [
+            _make_envelope(model="unknown"),
+            _make_envelope(model="openai/gpt-5.4:medium"),
+        ]
+
+        data = aggregate_runs(runs)
+
+        assert all(model["name"] != "unknown" for model in data["models"])
+        assert "unknown" not in data["model_summaries"]
+        assert "unknown" not in data["matrix"]
+        assert "unknown" not in data["fixtures"]
+        assert all(meta["model"] != "unknown" for meta in data["runs_meta"])
+        assert all(group["provider"] != "unknown" for group in data["base_model_groups"])
+        assert all(group["baseModel"] != "unknown" for group in data["base_model_groups"])
+        assert all(
+            level["modelName"] != "unknown"
+            for group in data["base_model_groups"]
+            for level in group["levels"]
+        )
+
 
 class TestRenderJson:
     """Tests for render_json."""

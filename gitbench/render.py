@@ -416,6 +416,13 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
     fixtures.pop("unknown", None)
     model_list = [m for m in model_list if m["name"] != "unknown"]
     runs_meta = [r for r in runs_meta if r["model"] != "unknown"]
+    base_model_groups = [
+        group
+        for group in base_model_groups
+        if group["provider"] != "unknown"
+        and group["baseModel"] != "unknown"
+        and all(level["modelName"] != "unknown" for level in group["levels"])
+    ]
 
     return {
         "models": model_list,
