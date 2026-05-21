@@ -23,6 +23,7 @@ const fi = data.fixture_index[`${benchmark}/${fixtureId}`];
 if (!fi) {
   return new Response('Fixture not found', { status: 404 });
 }
+const setupCommands = fi.setup ?? [];
 
 // Collect all model outputs for this fixture
 const modelOutputs: { model: string; passed: boolean; similarity: number; output: string; error: string | null; inputTokens: number | null; outputTokens: number | null }[] = [];
@@ -80,6 +81,27 @@ modelOutputs.sort((a, b) => b.similarity - a.similarity);
       </div>
     </div>
   </div>
+
+  {setupCommands.length > 0 && (
+    <section class="card mb-8">
+      <div class="section-label"><span>Baseline Repository</span></div>
+      <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
+        These commands are replayed before the model sees the prompt. They define the starting file structure, staged changes, and Git history for this fixture.
+      </p>
+      <ol class="m-0 p-0 list-none flex flex-col gap-2">
+        {setupCommands.map((command, index) => (
+          <li class="grid grid-cols-[2.5rem_1fr] gap-3 items-start">
+            <span class="font-mono text-[0.7rem] text-[var(--color-text-dim)] pt-2 text-right">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <code class="block font-mono text-[0.78rem] leading-relaxed text-[var(--color-text)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md px-3 py-2 overflow-x-auto">
+              {command}
+            </code>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
 
   <PromptBlock text={fi.prompt} />
   <ExpectedBlock text={fi.expected} />
