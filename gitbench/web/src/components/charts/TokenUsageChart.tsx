@@ -77,7 +77,7 @@ export default function TokenUsageChart() {
               <BarChart
                 data={chartData}
                 layout="vertical"
-                margin={{ top: 5, right: 20, left: 128, bottom: 5 }}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
               >
                 <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.04)" />
                 <XAxis
@@ -95,7 +95,7 @@ export default function TokenUsageChart() {
                   axisLine={false}
                   tickLine={false}
                   interval={0}
-                  width={128}
+                  width={112}
                 />
                 <Bar
                   dataKey="range"

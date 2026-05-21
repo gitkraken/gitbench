@@ -103,7 +103,7 @@ export function HorizontalGroupTick({ x, y, payload, rowMap }: TickProps) {
   const row = rowMap?.[payload.value];
   return (
     <g transform={`translate(${x},${y})`}>
-      <foreignObject x={-128} y={-10} width={122} height={22} style={{ overflow: "visible" }}>
+      <foreignObject x={-112} y={-10} width={106} height={22} style={{ overflow: "visible" }}>
         <div
           style={{
             display: "flex",
@@ -117,7 +117,7 @@ export function HorizontalGroupTick({ x, y, payload, rowMap }: TickProps) {
           }}
         >
           <ProviderIcon provider={row?.provider ?? ""} size={12} />
-          <span>{truncateName(row?.baseModel ?? payload.value, 16)}</span>
+          <span>{truncateName(row?.baseModel ?? payload.value, 14)}</span>
         </div>
       </foreignObject>
     </g>
