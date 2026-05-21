@@ -175,7 +175,7 @@ FAIL means the output was too different from what was expected." title="PASS = s
     <!-- Filter controls -->
     <div id="filter-bar" class="flex gap-1.5 flex-wrap mb-4 items-center">
       <span class="has-tooltip" data-tooltip="Filter fixtures to only show results from a specific benchmark category." title="Filter by benchmark category.">
-        <select id="filter-bench" class="bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 font-mono text-[0.68rem]">
+        <select id="filter-bench" class="brand-select text-xs">
           <option value="">All benchmarks</option>
           {benchmarkList.map(b => <option value={b}>{b}</option>)}
         </select>
@@ -187,13 +187,13 @@ easy = single-step operations.
 medium = multi-step workflows.
 hard = complex scenarios with edge cases.
 expert = rare Git operations." title="Filter by difficulty: trivial/easy/medium/hard/expert.">
-        <select id="filter-diff" class="bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 font-mono text-[0.68rem]">
+        <select id="filter-diff" class="brand-select text-xs">
           <option value="">All difficulties</option>
           {Array.from(diffs).sort((a, b) => (DIFF_ORDER[a] ?? 99) - (DIFF_ORDER[b] ?? 99) || a.localeCompare(b)).map(d => <option value={d}>{d}</option>)}
         </select>
       </span>
       <span class="has-tooltip" data-tooltip="Filter fixtures by tag. Tags describe which Git concepts each fixture tests (e.g., 'detached-head', 'restore', 'branching')." title="Filter fixtures by tag (Git concept).">
-        <select id="filter-tag" class="bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 font-mono text-[0.68rem]">
+        <select id="filter-tag" class="brand-select text-xs">
           <option value="">All tags</option>
           {Array.from(allTags).sort().map(t => <option value={t}>{t}</option>)}
         </select>

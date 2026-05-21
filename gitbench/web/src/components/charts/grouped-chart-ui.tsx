@@ -161,8 +161,8 @@ export function formatCompactDecimal(value: number, maxFractionDigits = 2): stri
 
 export const tooltipStyle = {
   background: "var(--card)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: 8,
+  border: "2px solid var(--border)",
+  borderRadius: 10,
   padding: "8px 12px",
   fontSize: 12,
   fontFamily: "var(--font-mono)",

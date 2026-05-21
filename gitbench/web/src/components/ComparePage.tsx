@@ -7,7 +7,7 @@ import ScatterPlot from './charts/ScatterPlot';
 import { Badge } from '@/components/ui/badge';
 import { deriveModelGroups, expandGroupSelection, sanitizeGroupSelection } from './charts/model-groups';
 
-const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#ec4899', '#0ea5e9', '#84cc16'];
+const COLORS = ['#B657FF', '#196FFF', '#01B7A1', '#EC7FFF', '#01FEE0', '#C170FF', '#6AB8FF', '#FEDC00'];
 
 function getColor(passRate: number): string {
   if (passRate >= 0.8) return 'var(--color-pass)';

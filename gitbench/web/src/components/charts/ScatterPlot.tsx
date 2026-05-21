@@ -10,9 +10,9 @@ interface Props {
 }
 
 function dotColor(aPassed: boolean, bPassed: boolean): string {
-  if (aPassed && bPassed) return '#10b981';
-  if (!aPassed && !bPassed) return '#f43f5e';
-  return '#f59e0b';
+  if (aPassed && bPassed) return '#097886';
+  if (!aPassed && !bPassed) return '#CE5478';
+  return '#FEDC00';
 }
 
 export default function ScatterPlot({ modelA, modelB }: Props) {
@@ -70,7 +70,7 @@ export default function ScatterPlot({ modelA, modelB }: Props) {
           <select
             value={a}
             onChange={e => setA(e.target.value)}
-            className="bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded px-2 py-1 font-mono text-xs"
+            className="brand-select w-full text-xs"
           >
             {modelNames.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
@@ -80,7 +80,7 @@ export default function ScatterPlot({ modelA, modelB }: Props) {
           <select
             value={b}
             onChange={e => setB(e.target.value)}
-            className="bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded px-2 py-1 font-mono text-xs"
+            className="brand-select w-full text-xs"
           >
             {modelNames.map(m => <option key={m} value={m}>{m}</option>)}
           </select>

@@ -274,7 +274,7 @@ function MetricSelect({
     <label className="flex flex-col gap-1 text-[0.65rem] font-mono uppercase tracking-[0.08em] text-[var(--text-dim)]">
       {label}
       <select
-        className="h-9 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-sm normal-case tracking-normal text-[var(--text)] outline-none transition focus:border-[var(--accent)]"
+        className="brand-select w-full normal-case"
         value={value}
         onChange={(event) => onChange(event.target.value as MetricKey)}
       >

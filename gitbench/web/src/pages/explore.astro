@@ -84,7 +84,7 @@ expert = rare Git operations most developers never use" title="Fixture difficult
     <div class="section-label"><span>Filters</span></div>
     <div class="flex gap-2 flex-wrap items-center" id="filter-controls">
       <span class="has-tooltip" data-tooltip="Filter fixtures by tag. Tags describe which Git concepts each fixture tests." title="Filter fixtures by Git concept tag.">
-        <select id="explore-tag" class="bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 font-mono text-[0.7rem]">
+        <select id="explore-tag" class="brand-select text-xs">
           <option value="">Any tag</option>
           {sortedTags.map(([tag]) => <option value={tag}>{tag}</option>)}
         </select>
@@ -96,13 +96,13 @@ easy = single-step operations
 medium = multi-step workflows
 hard = complex scenarios
 expert = rare Git operations" title="Filter by difficulty: trivial/easy/medium/hard/expert.">
-        <select id="explore-diff" class="bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 font-mono text-[0.7rem]">
+        <select id="explore-diff" class="brand-select text-xs">
           <option value="">Any difficulty</option>
           {diffsSorted.map(d => <option value={d}>{d}</option>)}
         </select>
       </span>
       <span class="has-tooltip" data-tooltip="Filter fixtures to only show results from a specific benchmark category (e.g., rebase, merge, log)." title="Filter by benchmark category.">
-        <select id="explore-bench" class="bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)] rounded-md px-2.5 py-1.5 font-mono text-[0.7rem]">
+        <select id="explore-bench" class="brand-select text-xs">
           <option value="">Any benchmark</option>
           {data.benchmarks.map(b => <option value={b}>{b}</option>)}
         </select>
