@@ -2,11 +2,13 @@
 import Layout from '../components/Layout.astro';
 import TimeSeriesChart from '../components/charts/TimeSeriesChart';
 import { loadDataSync } from '../lib/data';
+import { hasRepeatModelRuns } from '../lib/history';
 import { modelPath } from '../lib/routes';
 import type { GitBenchData } from '../lib/types';
 import { Badge } from '@/components/ui/badge';
 
 const data = loadDataSync();
+const showHistory = hasRepeatModelRuns(data.runs_meta);
 
 // Sort runs by timestamp descending
 const sortedRuns = [...data.runs_meta].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
@@ -24,85 +26,97 @@ const runsWithDelta = sortedRuns.map((run, idx) => {
 ---
 
 <Layout title="Run History">
-  <section class="mb-10">
-    <div class="section-label"><span>Pass Rate Over Time</span></div>
-    <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
-      Track how model pass rates change over calendar time. Each point represents a benchmark run on that date.
-      Improvements may reflect model updates, benchmark suite changes, or new evaluation runs with different configurations.
-    </p>
-    <TimeSeriesChart client:load />
-  </section>
+  {showHistory ? (
+    <>
+      <section class="mb-10">
+        <div class="section-label"><span>Pass Rate Over Time</span></div>
+        <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
+          Track how model pass rates change over calendar time. Each point represents a benchmark run on that date.
+          Improvements may reflect model updates, benchmark suite changes, or new evaluation runs with different configurations.
+        </p>
+        <TimeSeriesChart client:load />
+      </section>
 
-  <section>
-    <div class="section-label"><span>Run Log ({sortedRuns.length})</span></div>
-    <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
-      Every benchmark evaluation on record. Use this to audit when results changed, track model improvements,
-      or find regressions.
-      <span class="has-tooltip" data-tooltip="Green Δ = pass rate improved since the previous run. Red Δ = pass rate declined. — = no previous run to compare against." title="Δ prev: change in pass rate from previous run. Green = improved, red = regressed.">Green Δ means improvement, red Δ means regression.</span>
-    </p>
-    <div class="card overflow-x-auto p-5">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Model</th>
-            <th><span class="has-tooltip" data-tooltip="Which API provider was used for this run.
+      <section>
+        <div class="section-label"><span>Run Log ({sortedRuns.length})</span></div>
+        <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
+          Every benchmark evaluation on record. Use this to audit when results changed, track model improvements,
+          or find regressions.
+          <span class="has-tooltip" data-tooltip="Green Δ = pass rate improved since the previous run. Red Δ = pass rate declined. — = no previous run to compare against." title="Δ prev: change in pass rate from previous run. Green = improved, red = regressed.">Green Δ means improvement, red Δ means regression.</span>
+        </p>
+        <div class="card overflow-x-auto p-5">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Model</th>
+                <th><span class="has-tooltip" data-tooltip="Which API provider was used for this run.
 
 OpenRouter = cloud API (costs tracked).
 Ollama = local server (no cost tracking)." title="Runner profile: OpenRouter = cloud API, Ollama = local server.">Profile</span></th>
-            <th><span class="has-tooltip" data-tooltip="Reasoning effort level for this run.
+                <th><span class="has-tooltip" data-tooltip="Reasoning effort level for this run.
 
 low = faster and cheaper.
 high = slower but more thorough.
 — = model doesn't support reasoning levels." title="Reasoning effort level for this run.">Reasoning</span></th>
-            <th>Pass</th>
-            <th><span class="has-tooltip" data-tooltip="Version of the benchmark suite used for this run. Different versions may have different fixtures or scoring thresholds." title="Benchmark suite version. Different versions may have different fixtures.">Suite</span></th>
-            <th><span class="has-tooltip" data-tooltip="Change in pass rate from this model's previous run.
+                <th>Pass</th>
+                <th><span class="has-tooltip" data-tooltip="Version of the benchmark suite used for this run. Different versions may have different fixtures or scoring thresholds." title="Benchmark suite version. Different versions may have different fixtures.">Suite</span></th>
+                <th><span class="has-tooltip" data-tooltip="Change in pass rate from this model's previous run.
 
 +2.5% = improved by 2.5 points.
 -1.0% = regressed by 1 point.
 — = no previous run recorded." title="Change in pass rate from previous run. Green = improved, red = regressed.">Δ prev</span></th>
-            <th><span class="has-tooltip" data-tooltip="The GitBench code version (git commit SHA) when this run was executed. Helps trace results to specific code changes." title="GitBench code version (commit SHA) at time of run.">Git SHA</span></th>
-            <th><span class="has-tooltip" data-tooltip="Quick link to compare this model against others on the Compare page." title="Compare this model against others.">Compare</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          {runsWithDelta.map(run => {
-            const ts = run.timestamp ? new Date(run.timestamp).toLocaleString() : '—';
-            const sha = run.git_sha ? run.git_sha.slice(0, 8) : '—';
-            const rl = run.reasoning_level || '—';
-            const summary = data.model_summaries[run.model];
-            const passRate = summary ? Math.round(summary.pass_at_k * 1000) / 10 : 0;
-            const hasDelta = run.delta !== null;
-            const deltaCls = hasDelta ? (run.delta! > 0 ? 'var(--color-pass)' : run.delta! < 0 ? 'var(--color-fail)' : 'var(--color-text-dim)') : '';
-            return (
-              <tr>
-                <td class="font-mono text-xs text-[var(--color-text-dim)]">{ts}</td>
-                <td>
-                  <a href={modelPath(run.model)} class="text-[var(--color-text-mid)] no-underline font-mono text-xs">
-                    {run.model}
-                  </a>
-                </td>
-                <td class="font-mono text-[0.68rem] text-[var(--color-text-dim)]">{run.profile || '—'}</td>
-                <td class="font-mono text-[0.68rem] text-[var(--color-text-dim)]">{rl}</td>
-                <td>
-                  <Badge variant="outline" class="font-mono text-[0.65rem] border-[var(--color-pass-border)] text-[var(--color-pass)] bg-[var(--color-pass-bg)]">
-                    {passRate}%
-                  </Badge>
-                </td>
-                <td class="font-mono text-[0.65rem] text-[var(--color-text-dim)] opacity-60">{run.benchmark_suite_version || '—'}</td>
-                <td class="font-mono text-[0.7rem]" style={`color: ${deltaCls};`}>
-                  {hasDelta ? (run.delta! >= 0 ? '+' : '') + run.delta + '%' : '—'}
-                </td>
-                <td class="font-mono text-[0.65rem] text-[var(--color-accent)] opacity-50">{sha}</td>
-                <td>
-                  <a href={`/compare?with=${encodeURIComponent(run.model)}`} class="font-mono text-[0.6rem] text-[var(--color-accent)] no-underline">Compare</a>
-                </td>
+                <th><span class="has-tooltip" data-tooltip="The GitBench code version (git commit SHA) when this run was executed. Helps trace results to specific code changes." title="GitBench code version (commit SHA) at time of run.">Git SHA</span></th>
+                <th><span class="has-tooltip" data-tooltip="Quick link to compare this model against others on the Compare page." title="Compare this model against others.">Compare</span></th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  </section>
+            </thead>
+            <tbody>
+              {runsWithDelta.map(run => {
+                const ts = run.timestamp ? new Date(run.timestamp).toLocaleString() : '—';
+                const sha = run.git_sha ? run.git_sha.slice(0, 8) : '—';
+                const rl = run.reasoning_level || '—';
+                const summary = data.model_summaries[run.model];
+                const passRate = summary ? Math.round(summary.pass_at_k * 1000) / 10 : 0;
+                const hasDelta = run.delta !== null;
+                const deltaCls = hasDelta ? (run.delta! > 0 ? 'var(--color-pass)' : run.delta! < 0 ? 'var(--color-fail)' : 'var(--color-text-dim)') : '';
+                return (
+                  <tr>
+                    <td class="font-mono text-xs text-[var(--color-text-dim)]">{ts}</td>
+                    <td>
+                      <a href={modelPath(run.model)} class="text-[var(--color-text-mid)] no-underline font-mono text-xs">
+                        {run.model}
+                      </a>
+                    </td>
+                    <td class="font-mono text-[0.68rem] text-[var(--color-text-dim)]">{run.profile || '—'}</td>
+                    <td class="font-mono text-[0.68rem] text-[var(--color-text-dim)]">{rl}</td>
+                    <td>
+                      <Badge variant="outline" class="font-mono text-[0.65rem] border-[var(--color-pass-border)] text-[var(--color-pass)] bg-[var(--color-pass-bg)]">
+                        {passRate}%
+                      </Badge>
+                    </td>
+                    <td class="font-mono text-[0.65rem] text-[var(--color-text-dim)] opacity-60">{run.benchmark_suite_version || '—'}</td>
+                    <td class="font-mono text-[0.7rem]" style={`color: ${deltaCls};`}>
+                      {hasDelta ? (run.delta! >= 0 ? '+' : '') + run.delta + '%' : '—'}
+                    </td>
+                    <td class="font-mono text-[0.65rem] text-[var(--color-accent)] opacity-50">{sha}</td>
+                    <td>
+                      <a href={`/compare?with=${encodeURIComponent(run.model)}`} class="font-mono text-[0.6rem] text-[var(--color-accent)] no-underline">Compare</a>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  ) : (
+    <section>
+      <div class="card p-5">
+        <p class="text-sm text-[var(--color-text-mid)] leading-relaxed">
+          Run history appears after at least one model has more than one recorded benchmark run.
+        </p>
+      </div>
+    </section>
+  )}
 </Layout>

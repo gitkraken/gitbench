@@ -1,7 +1,11 @@
 ---
 import { LayoutDashboard, Cpu, BarChart3, Search, GitCompare, History, BookOpen } from 'lucide-react';
+import { loadDataSync } from '../lib/data';
+import { hasRepeatModelRuns } from '../lib/history';
 
 const currentPath = Astro.url.pathname;
+const data = loadDataSync();
+const showHistory = hasRepeatModelRuns(data.runs_meta);
 
 function isActive(path: string) {
   if (path === '/') return currentPath === '/';
@@ -14,9 +18,9 @@ const links = [
   { href: '/benchmarks', label: 'Benchmarks', icon: BarChart3 },
   { href: '/explore', label: 'Explore', icon: Search },
   { href: '/compare', label: 'Compare', icon: GitCompare },
-  { href: '/history', label: 'History', icon: History },
+  showHistory ? { href: '/history', label: 'History', icon: History } : null,
   { href: '/methodology', label: 'Methodology', icon: BookOpen },
-];
+].filter(Boolean);
 ---
 
 <aside class="app-sidebar">

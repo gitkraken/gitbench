@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import type { GitBenchData, RunMeta } from '@/lib/types';
 import { loadData } from '@/lib/load-data';
+import { modelsWithRepeatRuns } from '@/lib/history';
 import ModelSelector from './ModelSelector';
 import { expandGroupSelection, groupIdsForData } from './model-groups';
 
@@ -20,10 +21,12 @@ export default function TimeSeriesChart() {
 
   if (!data) return <div>Loading...</div>;
 
-  const selectedModels = expandGroupSelection(selectedGroups, data);
+  const repeatModels = modelsWithRepeatRuns(data.runs_meta);
+  const selectedModels = expandGroupSelection(selectedGroups, data).filter(model => repeatModels.has(model));
 
   const runsByModel: Record<string, RunMeta[]> = {};
   for (const run of data.runs_meta) {
+    if (!repeatModels.has(run.model)) continue;
     if (!runsByModel[run.model]) runsByModel[run.model] = [];
     runsByModel[run.model].push(run);
   }
