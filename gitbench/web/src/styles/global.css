@@ -293,7 +293,9 @@ body::before {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #FFFFFF;
-  background: var(--gradient-core);
+  background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+              var(--gradient-core) border-box;
+  border: 2px solid transparent;
   border-radius: 999px;
   padding: 0.32rem 0.75rem;
 }
