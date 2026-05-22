@@ -2,10 +2,20 @@
 import Layout from '../../components/Layout.astro';
 import { loadDataSync } from '../../lib/data';
 import { modelLevelPath } from '../../lib/routes';
+import type { BaseModelGroup } from '../../lib/types';
 import { Badge } from '@/components/ui/badge';
 import ProviderIcon from '../../components/ProviderIcon.tsx';
 
 const data = loadDataSync();
+
+// Group base models by provider so each provider gets one card
+const providers = new Map<string, BaseModelGroup[]>();
+for (const g of data.base_model_groups) {
+  if (!providers.has(g.provider)) providers.set(g.provider, []);
+  providers.get(g.provider)!.push(g);
+}
+
+const LEVEL_ORDER: Record<string, number> = { none: 0, low: 1, medium: 2, high: 3, xhigh: 4, max: 5 };
 ---
 
 <Layout title="Models">
@@ -13,77 +23,57 @@ const data = loadDataSync();
     <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-2">
       Models are organized in three levels: <strong class="text-[var(--color-text)]">Provider</strong> → <strong class="text-[var(--color-text)]">Base Model</strong> → <strong class="text-[var(--color-text)]">Reasoning Level</strong>.
       Each base model may have multiple reasoning effort levels — variants that dial up or down how much compute the model spends "thinking" before answering.
-      <span class="has-tooltip" data-tooltip="Reasoning effort controls how much compute the model spends thinking before answering.
-
-low = faster and cheaper but less thorough.
-high = slower and more expensive but typically more accurate." title="Reasoning effort: low = faster/cheaper, high = more accurate but costlier.">Higher reasoning levels</span>
+      <span title="Reasoning effort: low = faster/cheaper, high = more accurate but costlier.">Higher reasoning levels</span>
       are typically more accurate but slower and costlier. Click any card to explore fixture-by-fixture results.
       <a href="/methodology#model-selection--run-metadata" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more →</a>
     </p>
   </section>
 
-  {data.base_model_groups.map(group => {
-    const providerName = group.provider.charAt(0).toUpperCase() + group.provider.slice(1);
+  {[...providers.entries()].map(([provider, groups]) => {
+    const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
 
     return (
-      <section class="mb-10">
+      <section class="mb-6">
         <!-- Provider header -->
         <div class="flex items-center gap-2 mb-4">
-          <ProviderIcon provider={group.provider} size={22} client:load />
+          <ProviderIcon provider={provider} size={22} client:load />
           <h2 class="text-lg font-bold text-[var(--color-text)]">{providerName}</h2>
         </div>
 
-        <!-- Base model cards -->
-        <div class="flex flex-col gap-4">
-          <div class="card p-5">
-            <h3 class="text-base font-semibold text-[var(--color-text)] mb-4">{group.baseModel}</h3>
+        <!-- One card per provider -->
+        <div class="card p-5 flex flex-col gap-4">
+          {groups.map(group => (
+            <div>
+              <h3 class="text-base font-semibold text-[var(--color-text)] mb-3">{group.baseModel}</h3>
 
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
-              {group.levels.map(l => {
-                const passRate = Math.round(l.pass_at_k * 1000) / 10;
-                const passCls = l.pass_at_k >= 0.8 ? 'pass'
-                  : l.pass_at_k < 0.5 ? 'fail' : 'warn';
-                const passColor = l.pass_at_k >= 0.8
-                  ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
-                  : l.pass_at_k < 0.5
-                    ? 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]'
-                    : 'bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]';
-                const href = modelLevelPath(group.provider, group.baseModel, l.level || 'default');
+              <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
+                {group.levels.sort((a, b) => (LEVEL_ORDER[a.level || 'none'] ?? 99) - (LEVEL_ORDER[b.level || 'none'] ?? 99)).map(l => {
+                  const passRate = Math.round(l.pass_at_k * 1000) / 10;
+                  const passCls = l.pass_at_k >= 0.8 ? 'pass'
+                    : l.pass_at_k < 0.5 ? 'fail' : 'warn';
+                  const passColor = l.pass_at_k >= 0.8
+                    ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
+                    : l.pass_at_k < 0.5
+                      ? 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]'
+                      : 'bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]';
+                  const href = modelLevelPath(provider, group.baseModel, l.level || 'default');
 
-                return (
-                  <a href={href} class="no-underline">
-                    <div class="card p-3 cursor-pointer transition-colors hover:border-[var(--color-border-accent)] bg-[var(--color-surface)]">
-                      <div class="text-xs font-mono text-[var(--color-text-dim)] mb-1.5">
-                        <span class="has-tooltip" data-tooltip="Reasoning effort level for this model variant.
-
-low = faster and cheaper.
-high = more thorough but costlier.
-default = model's standard behavior." title="Reasoning effort level: low = faster/cheaper, high = more accurate.">{l.level || 'default'}</span>
-                      </div>
-                      <div class="flex items-center gap-1.5 mb-2">
-                        <span class="has-tooltip" data-tooltip="Percentage of 204 Git fixtures this model answered correctly.
-
-80%+ = strong Git skills
-50-80% = moderate
-<50% = struggles with Git" title="Pass rate — % of 204 fixtures answered correctly.">
-                          <Badge variant="outline" className={`font-mono text-[0.6rem] px-1.5 ${passColor}`}>
+                  return (
+                    <a href={href} class="no-underline">
+                      <div class="bg-neutral-700 rounded-md border border-[#3E3E3E] p-2 transition-colors hover:border-[var(--color-border-accent)] cursor-pointer">
+                        <div class="flex items-center justify-between gap-2">
+                          <span class="text-xs font-mono text-[var(--color-text-dim)]" title="Reasoning effort level: low = faster/cheaper, high = more accurate.">{l.level || 'default'}</span>
+                          <Badge variant="outline" className={`font-mono text-[0.6rem] px-1.5 min-w-[2.8rem] text-center ${passColor}`}>
                             {passRate}%
                           </Badge>
-                        </span>
-                      </div>
-                      {l.total_cost_usd != null && (
-                        <div class="font-mono text-[0.6rem] text-[var(--color-text-dim)] opacity-70">
-                          <span class="has-tooltip" data-tooltip="Total API cost (USD) to evaluate all 204 fixtures for this model variant.
-
-Only tracked for cloud models via OpenRouter." title="Total cost in USD across all 204 fixtures.">${l.total_cost_usd.toFixed(4)}</span>
                         </div>
-                      )}
-                    </div>
-                  </a>
-                );
-              })}
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </section>
     );
