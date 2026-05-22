@@ -1,25 +1,33 @@
 ---
-import { LayoutDashboard, Cpu, BarChart3, Search, GitCompare, History, BookOpen } from 'lucide-react';
-import { loadDataSync } from '../lib/data';
-import { hasRepeatModelRuns } from '../lib/history';
+import {
+  LayoutDashboard,
+  Cpu,
+  BarChart3,
+  Search,
+  GitCompare,
+  History,
+  BookOpen,
+} from "lucide-react";
+import { loadDataSync } from "@/lib/data";
+import { hasRepeatModelRuns } from "@/lib/history";
 
 const currentPath = Astro.url.pathname;
 const data = loadDataSync();
 const showHistory = hasRepeatModelRuns(data.runs_meta);
 
 function isActive(path: string) {
-  if (path === '/') return currentPath === '/';
+  if (path === "/") return currentPath === "/";
   return currentPath.startsWith(path);
 }
 
 const links = [
-  { href: '/', label: 'Overview', icon: LayoutDashboard },
-  { href: '/models', label: 'Models', icon: Cpu },
-  { href: '/benchmarks', label: 'Benchmarks', icon: BarChart3 },
-  { href: '/explore', label: 'Explore', icon: Search },
-  { href: '/compare', label: 'Compare', icon: GitCompare },
-  showHistory ? { href: '/history', label: 'History', icon: History } : null,
-  { href: '/methodology', label: 'Methodology', icon: BookOpen },
+  { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/models", label: "Models", icon: Cpu },
+  { href: "/benchmarks", label: "Benchmarks", icon: BarChart3 },
+  { href: "/explore", label: "Explore", icon: Search },
+  { href: "/compare", label: "Compare", icon: GitCompare },
+  showHistory ? { href: "/history", label: "History", icon: History } : null,
+  { href: "/methodology", label: "Methodology", icon: BookOpen },
 ].filter(Boolean);
 ---
 
@@ -40,14 +48,16 @@ const links = [
     </div>
   </div>
   <nav class="sidebar-nav">
-    {links.map(link => (
-      <a
-        href={link.href}
-        class={`sidebar-link${isActive(link.href) ? ' active' : ''}`}
-      >
-        <link.icon size={18} strokeWidth={2} class="icon" />
-        <span>{link.label}</span>
-      </a>
-    ))}
+    {
+      links.map((link) => (
+        <a
+          href={link.href}
+          class={`sidebar-link${isActive(link.href) ? " active" : ""}`}
+        >
+          <link.icon size={18} strokeWidth={2} class="icon" />
+          <span>{link.label}</span>
+        </a>
+      ))
+    }
   </nav>
 </aside>

@@ -1,8 +1,8 @@
 ---
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { modelPath } from '../../lib/routes';
-import { Copy } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { modelPath } from "@/lib/routes";
+import { Copy } from "lucide-react";
 
 interface Props {
   modelName: string;
@@ -14,41 +14,67 @@ interface Props {
   outputTokens?: number | null;
 }
 
-const { modelName, passed, similarity, output, error, inputTokens, outputTokens } = Astro.props;
+const {
+  modelName,
+  passed,
+  similarity,
+  output,
+  error,
+  inputTokens,
+  outputTokens,
+} = Astro.props;
 const passColor = passed
-  ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
-  : 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]';
+  ? "bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]"
+  : "bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]";
 ---
 
 <div class="card p-5">
   <div class="flex justify-between items-start flex-wrap gap-3 mb-3">
     <div class="flex gap-2 items-center flex-wrap">
-      <a href={modelPath(modelName)} class="font-display text-sm font-bold text-[var(--color-text)] no-underline">
+      <a
+        href={modelPath(modelName)}
+        class="font-display text-sm font-bold text-[var(--color-text)] no-underline"
+      >
         {modelName}
       </a>
-      <Badge variant="outline" className={`font-mono text-[0.6rem] ${passColor}`}>
-        {passed ? 'PASS' : 'FAIL'}
+      <Badge
+        variant="outline"
+        className={`font-mono text-[0.6rem] ${passColor}`}
+      >
+        {passed ? "PASS" : "FAIL"}
       </Badge>
       <span class="font-mono text-xs font-semibold text-[var(--color-text)]">
         {similarity}%
       </span>
-      {inputTokens != null && outputTokens != null && (
-        <span class="font-mono text-[0.6rem] px-1.5 py-0.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded text-[var(--color-text-dim)]">
-          {inputTokens}→{outputTokens}
-        </span>
-      )}
+      {
+        inputTokens != null && outputTokens != null && (
+          <span class="font-mono text-[0.6rem] px-1.5 py-0.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded text-[var(--color-text-dim)]">
+            {inputTokens}→{outputTokens}
+          </span>
+        )
+      }
     </div>
-    <Button variant="ghost" size="xs" class="font-mono text-[0.6rem]" data-text={output} onclick="navigator.clipboard.writeText(this.getAttribute('data-text') || '')">
+    <Button
+      variant="ghost"
+      size="xs"
+      class="font-mono text-[0.6rem]"
+      data-text={output}
+      onclick="navigator.clipboard.writeText(this.getAttribute('data-text') || '')"
+    >
       <Copy class="size-3" />
       Copy
     </Button>
   </div>
-  <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 font-mono text-xs text-[var(--color-text-mid)] whitespace-pre-wrap break-words leading-relaxed max-h-[300px] overflow-y-auto">
-    {output || '(empty output)'}
+  <div
+    class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 font-mono text-xs text-[var(--color-text-mid)] whitespace-pre-wrap break-words leading-relaxed max-h-[300px] overflow-y-auto"
+  >
+    {output || "(empty output)"}
   </div>
-  {error && (
-    <div class="mt-2 font-mono text-[0.65rem] text-[var(--color-fail)]">
-      Failure: {error}
-    </div>
-  )}
+  {
+    error && (
+      <div class="mt-2 font-mono text-[0.65rem] text-[var(--color-fail)]">
+        Failure: {error}
+      </div>
+    )
+  }
 </div>

@@ -1,66 +1,70 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #1C1C1C;
+  --color-bg: #1c1c1c;
   --color-surface: #272727;
   --color-card: #272727;
   --color-card-hover: #333333;
-  --color-border: #3E3E3E;
-  --color-border-accent: #7900C9;
-  --color-text: #FFFFFF;
-  --color-text-dim: #A4A4A4;
-  --color-text-mid: #C9C9C9;
-  --color-accent: #EC7FFF;
+  --color-border: #3e3e3e;
+  --color-border-accent: #7900c9;
+  --color-text: #ffffff;
+  --color-text-dim: #a4a4a4;
+  --color-text-mid: #c9c9c9;
+  --color-accent: #ec7fff;
   --color-accent-glow: rgba(182, 87, 255, 0.14);
-  --color-pass: #AAE3EC;
+  --color-pass: #aae3ec;
   --color-pass-bg: rgba(9, 120, 134, 0.28);
   --color-pass-border: #097886;
-  --color-warn: #FEDC00;
+  --color-warn: #fedc00;
   --color-warn-bg: rgba(254, 220, 0, 0.14);
-  --color-warn-border: #FEDC00;
-  --color-fail: #D0809E;
+  --color-warn-border: #fedc00;
+  --color-fail: #d0809e;
   --color-fail-bg: rgba(206, 84, 120, 0.2);
-  --color-fail-border: #CE5478;
-  --font-display: 'Inter', sans-serif;
+  --color-fail-border: #ce5478;
+  --font-display: "Inter", sans-serif;
   --font-mono: "Fira Code Medium", SFMono-Regular, Consolas, monospace;
   /* shadcn/ui design tokens - GitKraken Celestial 2026 */
-  --color-background: #1C1C1C;
-  --color-foreground: #FFFFFF;
-  --color-card-foreground: #FFFFFF;
+  --color-background: #1c1c1c;
+  --color-foreground: #ffffff;
+  --color-card-foreground: #ffffff;
   --color-popover: #272727;
-  --color-popover-foreground: #FFFFFF;
-  --color-primary: #7900C9;
-  --color-primary-foreground: #FFFFFF;
+  --color-popover-foreground: #ffffff;
+  --color-primary: #7900c9;
+  --color-primary-foreground: #ffffff;
   --color-secondary: #333333;
-  --color-secondary-foreground: #C9C9C9;
+  --color-secondary-foreground: #c9c9c9;
   --color-muted: #333333;
-  --color-muted-foreground: #A4A4A4;
-  --color-accent-foreground: #1C1C1C;
-  --color-destructive: #CE5478;
+  --color-muted-foreground: #a4a4a4;
+  --color-accent-foreground: #1c1c1c;
+  --color-destructive: #ce5478;
   --color-destructive-foreground: #ffffff;
   --color-input: #272727;
-  --color-ring: #B657FF;
+  --color-ring: #b657ff;
 }
 
 /* ── Design Tokens ── */
 :root {
-  --bg-primary: #1C1C1C;
+  --bg-primary: #1c1c1c;
   --bg-secondary: #272727;
-  --bg-tertiary: #3E3E3E;
-  --text-primary: #FFFFFF;
-  --text-secondary: #C9C9C9;
-  --text-tertiary: #A4A4A4;
-  --text-link: #EC7FFF;
-  --text-link-hover: #C170FF;
-  --brand-primary: #7900C9;
-  --brand-secondary: #2C30C0;
-  --brand-tertiary: #01B7A1;
-  --brand-primary-highlight: #B657FF;
-  --brand-secondary-highlight: #196FFF;
-  --brand-tertiary-highlight: #01FEE0;
-  --gradient-core: linear-gradient(97deg, #7900C9 19.46%, #2B5FFE 109.79%);
-  --gradient-core-hover: linear-gradient(97deg, #7D14F7 19.46%, #1970FF 109.79%);
-  --gradient-bright: linear-gradient(180deg, #01FEE0 0%, #EC7FFF 100%);
+  --bg-tertiary: #3e3e3e;
+  --text-primary: #ffffff;
+  --text-secondary: #c9c9c9;
+  --text-tertiary: #a4a4a4;
+  --text-link: #ec7fff;
+  --text-link-hover: #c170ff;
+  --brand-primary: #7900c9;
+  --brand-secondary: #2c30c0;
+  --brand-tertiary: #01b7a1;
+  --brand-primary-highlight: #b657ff;
+  --brand-secondary-highlight: #196fff;
+  --brand-tertiary-highlight: #01fee0;
+  --gradient-core: linear-gradient(97deg, #7900c9 19.46%, #2b5ffe 109.79%);
+  --gradient-core-hover: linear-gradient(
+    97deg,
+    #7d14f7 19.46%,
+    #1970ff 109.79%
+  );
+  --gradient-bright: linear-gradient(180deg, #01fee0 0%, #ec7fff 100%);
   --bg: var(--bg-primary);
   --surface: var(--bg-secondary);
   --card: var(--bg-secondary);
@@ -72,16 +76,16 @@
   --text-mid: var(--text-secondary);
   --accent: var(--text-link);
   --accent-glow: rgba(182, 87, 255, 0.14);
-  --pass: #AAE3EC;
+  --pass: #aae3ec;
   --pass-bg: rgba(9, 120, 134, 0.28);
   --pass-border: #097886;
-  --warn: #FEDC00;
+  --warn: #fedc00;
   --warn-bg: rgba(254, 220, 0, 0.14);
-  --warn-border: #FEDC00;
-  --fail: #D0809E;
+  --warn-border: #fedc00;
+  --fail: #d0809e;
   --fail-bg: rgba(206, 84, 120, 0.2);
-  --fail-border: #CE5478;
-  --font-display: 'Inter', sans-serif;
+  --fail-border: #ce5478;
+  --font-display: "Inter", sans-serif;
   --font-mono: "Fira Code Medium", SFMono-Regular, Consolas, monospace;
   --sidebar-width: 220px;
   --sidebar-bg: rgba(28, 28, 28, 0.94);
@@ -106,16 +110,27 @@ body {
   color: var(--text);
   min-height: 100vh;
   line-height: 1.5;
-  background-image:
-    radial-gradient(ellipse 70% 40% at 68% -12%, rgba(121, 0, 201, 0.18), transparent),
-    radial-gradient(ellipse 50% 60% at -10% 82%, rgba(1, 254, 224, 0.07), transparent);
+  background-image: radial-gradient(
+      ellipse 70% 40% at 68% -12%,
+      rgba(121, 0, 201, 0.18),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 50% 60% at -10% 82%,
+      rgba(1, 254, 224, 0.07),
+      transparent
+    );
 }
 
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.045) 1px,
+    transparent 1px
+  );
   background-size: 40px 40px;
   pointer-events: none;
   z-index: 0;
@@ -292,23 +307,24 @@ body::before {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #FFFFFF;
-  background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
-              var(--gradient-core) border-box;
+  color: #ffffff;
+  background: linear-gradient(var(--bg-secondary), var(--bg-secondary))
+      padding-box,
+    var(--gradient-core) border-box;
   border: 2px solid transparent;
   border-radius: 999px;
   padding: 0.32rem 0.75rem;
 }
 
 .section-label::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: linear-gradient(to right, var(--border), transparent);
 }
 
 .card {
-  background: linear-gradient(180deg, #272727 0%, #1C1C1C 100%);
+  background: linear-gradient(180deg, #272727 0%, #1c1c1c 100%);
   border: 2px solid var(--border);
   border-radius: 10px;
   padding: 1.5rem;
@@ -327,7 +343,8 @@ body::before {
   line-height: 20px;
   letter-spacing: 0;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
 .brand-select:hover {
@@ -346,12 +363,9 @@ select.brand-select {
   padding: 0 2.25rem 0 0.75rem;
   appearance: none;
   background-color: var(--bg-secondary);
-  background-image:
-    linear-gradient(45deg, transparent 50%, #C9C9C9 50%),
-    linear-gradient(135deg, #C9C9C9 50%, transparent 50%);
-  background-position:
-    calc(100% - 16px) 50%,
-    calc(100% - 11px) 50%;
+  background-image: linear-gradient(45deg, transparent 50%, #c9c9c9 50%),
+    linear-gradient(135deg, #c9c9c9 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }

@@ -70,7 +70,7 @@ export function MultiSelect({
         onChange([...value, val]);
       }
     },
-    [value, onChange],
+    [value, onChange]
   );
 
   const selectedOptions = options.filter((o) => selectedSet.has(o.value));
@@ -87,7 +87,7 @@ export function MultiSelect({
             "disabled:cursor-not-allowed disabled:opacity-50",
             "h-9 min-h-9",
             "[&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-            className,
+            className
           )}
         >
           <span className="min-w-0 truncate">

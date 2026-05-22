@@ -1,4 +1,4 @@
-import type { RunMeta } from './types';
+import type { RunMeta } from "@/types";
 
 export function modelRunCounts(runs: RunMeta[]): Record<string, number> {
   return runs.reduce<Record<string, number>>((counts, run) => {
@@ -8,10 +8,14 @@ export function modelRunCounts(runs: RunMeta[]): Record<string, number> {
 }
 
 export function hasRepeatModelRuns(runs: RunMeta[]): boolean {
-  return Object.values(modelRunCounts(runs)).some(count => count > 1);
+  return Object.values(modelRunCounts(runs)).some((count) => count > 1);
 }
 
 export function modelsWithRepeatRuns(runs: RunMeta[]): Set<string> {
   const counts = modelRunCounts(runs);
-  return new Set(Object.entries(counts).filter(([, count]) => count > 1).map(([model]) => model));
+  return new Set(
+    Object.entries(counts)
+      .filter(([, count]) => count > 1)
+      .map(([model]) => model),
+  );
 }

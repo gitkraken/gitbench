@@ -1,12 +1,15 @@
-import { PROVIDER_ICONS } from '@/lib/custom-provider-icons';
-import { PROVIDER_COLORS, providerHue } from '@/lib/provider-colors';
+import { PROVIDER_ICONS } from "@/lib/custom-provider-icons";
+import { PROVIDER_COLORS, providerHue } from "@/lib/provider-colors";
 
 interface ProviderIconProps {
   provider: string;
   size?: number;
 }
 
-export default function ProviderIcon({ provider, size = 16 }: ProviderIconProps) {
+export default function ProviderIcon({
+  provider,
+  size = 16,
+}: ProviderIconProps) {
   const normalized = provider.toLowerCase();
   const IconComponent = PROVIDER_ICONS[normalized];
 
@@ -17,29 +20,25 @@ export default function ProviderIcon({ provider, size = 16 }: ProviderIconProps)
     return (
       <span
         style={{
-          position: 'relative',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          position: "relative",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
           color: color ?? undefined,
         }}
       >
         {showBgCircle && (
           <span
             style={{
-              position: 'absolute',
+              position: "absolute",
               width: size + 4,
               height: size + 4,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.08)',
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.08)",
             }}
           />
         )}
-        <IconComponent
-          width={size}
-          height={size}
-          aria-hidden="true"
-        />
+        <IconComponent width={size} height={size} aria-hidden="true" />
       </span>
     );
   }

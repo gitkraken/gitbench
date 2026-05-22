@@ -1,51 +1,54 @@
 ---
-import Layout from '../../../../components/Layout.astro';
-import FixtureCard from '../../../../components/fixtures/FixtureCard.astro';
-import { loadDataSync } from '../../../../lib/data';
-import { modelLevelPath } from '../../../../lib/routes';
-import type { GitBenchData, FixtureResult, BaseModelGroup } from '../../../../lib/types';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { GitCompare } from 'lucide-react';
-import ProviderIcon from '../../../../components/ProviderIcon.tsx';
+import Layout from "@/components/Layout.astro";
+import FixtureCard from "@/components/fixtures/FixtureCard.astro";
+import { loadDataSync } from "@/lib/data";
+import { modelLevelPath } from "@/lib/routes";
+import type { GitBenchData, FixtureResult, BaseModelGroup } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { GitCompare } from "lucide-react";
+import ProviderIcon from "@/components/ProviderIcon.tsx";
 
 export function getStaticPaths() {
- const data = loadDataSync();
- const paths: { params: { provider: string; model: string; level: string }; props: any }[] = [];
- for (const g of data.base_model_groups) {
- for (const l of g.levels) {
- paths.push({
- params: {
- provider: g.provider,
- model: g.baseModel,
- level: l.level || 'default',
- },
- props: {
- provider: g.provider,
- baseModel: g.baseModel,
- level: l.level || 'default',
- modelName: l.modelName,
- group: g,
- data,
- },
- });
- }
- }
- return paths;
+  const data = loadDataSync();
+  const paths: {
+    params: { provider: string; model: string; level: string };
+    props: any;
+  }[] = [];
+  for (const g of data.base_model_groups) {
+    for (const l of g.levels) {
+      paths.push({
+        params: {
+          provider: g.provider,
+          model: g.baseModel,
+          level: l.level || "default",
+        },
+        props: {
+          provider: g.provider,
+          baseModel: g.baseModel,
+          level: l.level || "default",
+          modelName: l.modelName,
+          group: g,
+          data,
+        },
+      });
+    }
+  }
+  return paths;
 }
 
 const { provider, baseModel, level, modelName, group, data } = Astro.props as {
- provider: string;
- baseModel: string;
- level: string;
- modelName: string;
- group: BaseModelGroup;
- data: GitBenchData;
+  provider: string;
+  baseModel: string;
+  level: string;
+  modelName: string;
+  group: BaseModelGroup;
+  data: GitBenchData;
 };
 
 const summary = data.model_summaries[modelName];
 if (!summary) {
- return new Response('Model not found', { status: 404 });
+  return new Response("Model not found", { status: 404 });
 }
 
 const passRate = Math.round(summary.pass_at_k * 1000) / 10;
@@ -55,10 +58,10 @@ const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
 // Collect all fixture results for this model
 const allFixtures: (FixtureResult & { benchmark: string })[] = [];
 for (const bench of data.benchmarks) {
- const results = data.fixtures[modelName]?.[bench] || [];
- for (const r of results) {
- allFixtures.push({ ...r, benchmark: bench });
- }
+  const results = data.fixtures[modelName]?.[bench] || [];
+  for (const r of results) {
+    allFixtures.push({ ...r, benchmark: bench });
+  }
 }
 
 // Benchmark list for filter
@@ -68,19 +71,27 @@ const benchmarkList = data.benchmarks;
 const diffs = new Set<string>();
 const allTags = new Set<string>();
 for (const fid in data.fixture_index) {
- const fi = data.fixture_index[fid];
- if (fi.difficulty) diffs.add(fi.difficulty);
- for (const t of fi.tags) allTags.add(t);
+  const fi = data.fixture_index[fid];
+  if (fi.difficulty) diffs.add(fi.difficulty);
+  for (const t of fi.tags) allTags.add(t);
 }
 
-const DIFF_ORDER: Record<string, number> = { trivial: 0, easy: 1, medium: 2, hard: 3, expert: 4 };
+const DIFF_ORDER: Record<string, number> = {
+  trivial: 0,
+  easy: 1,
+  medium: 2,
+  hard: 3,
+  expert: 4,
+};
 
-const passCls = summary.pass_at_k >= 0.8 ? 'pass' : summary.pass_at_k < 0.5 ? 'fail' : 'warn';
-const passColor = summary.pass_at_k >= 0.8
- ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
- : summary.pass_at_k < 0.5
- ? 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]'
- : 'bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]';
+const passCls =
+  summary.pass_at_k >= 0.8 ? "pass" : summary.pass_at_k < 0.5 ? "fail" : "warn";
+const passColor =
+  summary.pass_at_k >= 0.8
+    ? "bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]"
+    : summary.pass_at_k < 0.5
+      ? "bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]"
+      : "bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[var(--color-warn-border)]";
 
 // Compute total tokens and cost
 let totalInputTokens = 0;
@@ -88,139 +99,191 @@ let totalOutputTokens = 0;
 let totalCost = 0;
 let hasCost = false;
 for (const bench of data.benchmarks) {
- const results = data.fixtures[modelName]?.[bench] || [];
- for (const r of results) {
- totalInputTokens += (r.input_tokens || 0);
- totalOutputTokens += (r.output_tokens || 0);
- if (r.cost_usd != null) {
- totalCost += r.cost_usd;
- hasCost = true;
- }
- }
+  const results = data.fixtures[modelName]?.[bench] || [];
+  for (const r of results) {
+    totalInputTokens += r.input_tokens || 0;
+    totalOutputTokens += r.output_tokens || 0;
+    if (r.cost_usd != null) {
+      totalCost += r.cost_usd;
+      hasCost = true;
+    }
+  }
 }
 ---
 
-<Layout title={`${providerName} / ${baseModel} / ${level || 'default'}`}>
- <!-- Header with provider icon -->
- <div class="flex items-center gap-3 mb-2">
- <ProviderIcon provider={provider} size={24} client:load />
- <div>
- <div class="text-xs font-mono text-[var(--color-text-dim)]">{providerName} / {baseModel}</div>
- <h1 class="text-xl font-bold text-[var(--color-text)]">{level}</h1>
- </div>
- </div>
+<Layout title={`${providerName} / ${baseModel} / ${level || "default"}`}>
+  <!-- Header with provider icon -->
+  <div class="flex items-center gap-3 mb-2">
+    <ProviderIcon provider={provider} size={24} client:load />
+    <div>
+      <div class="text-xs font-mono text-[var(--color-text-dim)]">
+        {providerName} / {baseModel}
+      </div>
+      <h1 class="text-xl font-bold text-[var(--color-text)]">{level}</h1>
+    </div>
+  </div>
 
   <!-- Reasoning level tab bar -->
   <div class="flex gap-1.5 flex-wrap mb-6">
-    {group.levels.map(l => {
-      const lvl = l.level || 'default';
-      const isCurrent = lvl === level;
-      const href = modelLevelPath(provider, baseModel, lvl);
-      return (
-        <a
-          href={href}
-          data-effort-link
-          class={`no-underline px-3 py-1.5 rounded-md font-mono text-[0.7rem] transition-colors ${
-            isCurrent
-              ? 'bg-[var(--color-accent)] text-white'
-              : 'bg-[var(--color-card)] text-[var(--color-text-mid)] hover:text-[var(--color-text)]'
-          }`}
-        >
-          {l.level || 'default'}
-        </a>
-      );
-    })}
+    {
+      group.levels.map((l) => {
+        const lvl = l.level || "default";
+        const isCurrent = lvl === level;
+        const href = modelLevelPath(provider, baseModel, lvl);
+        return (
+          <a
+            href={href}
+            data-effort-link
+            class={`no-underline px-3 py-1.5 rounded-md font-mono text-[0.7rem] transition-colors ${
+              isCurrent
+                ? "bg-[var(--color-accent)] text-white"
+                : "bg-[var(--color-card)] text-[var(--color-text-mid)] hover:text-[var(--color-text)]"
+            }`}
+          >
+            {l.level || "default"}
+          </a>
+        );
+      })
+    }
   </div>
 
- <!-- Stats + Compare -->
- <div class="flex justify-between items-start flex-wrap gap-4 mb-8">
- <div>
- <div class="flex gap-2 items-center flex-wrap mb-2">
- <Badge variant="outline" className={`font-mono text-xs ${passColor}`}>
- {passRate}%
- </Badge>
- <span class="font-mono text-xs text-[var(--color-text-dim)]">
- {summary.total_passed} / {summary.total_fixtures} fixtures
- </span>
- <span class="font-mono text-[0.68rem] text-[var(--color-text-dim)] opacity-60">
- {summary.total_runs} run(s)
- </span>
- </div>
- <div class="font-mono text-[0.68rem] text-[var(--color-text-dim)] opacity-60 mt-1">
- {(totalInputTokens > 0 || totalOutputTokens > 0) && <span class="mr-3">{totalInputTokens.toLocaleString()} in / {totalOutputTokens.toLocaleString()} out tokens</span>}
- {hasCost && <span>${totalCost.toFixed(8)}</span>}
- </div>
- </div>
- <a href={`/compare?with=${encodedModelName}`}>
- <Button variant="outline" size="sm" class="font-mono text-xs border-[var(--color-border-accent)] text-[var(--color-accent)]">
- <GitCompare class="size-3.5" />
- Compare
- </Button>
- </a>
- </div>
+  <!-- Stats + Compare -->
+  <div class="flex justify-between items-start flex-wrap gap-4 mb-8">
+    <div>
+      <div class="flex gap-2 items-center flex-wrap mb-2">
+        <Badge variant="outline" className={`font-mono text-xs ${passColor}`}>
+          {passRate}%
+        </Badge>
+        <span class="font-mono text-xs text-[var(--color-text-dim)]">
+          {summary.total_passed} / {summary.total_fixtures} fixtures
+        </span>
+        <span
+          class="font-mono text-[0.68rem] text-[var(--color-text-dim)] opacity-60"
+        >
+          {summary.total_runs} run(s)
+        </span>
+      </div>
+      <div
+        class="font-mono text-[0.68rem] text-[var(--color-text-dim)] opacity-60 mt-1"
+      >
+        {
+          (totalInputTokens > 0 || totalOutputTokens > 0) && (
+            <span class="mr-3">
+              {totalInputTokens.toLocaleString()} in /{" "}
+              {totalOutputTokens.toLocaleString()} out tokens
+            </span>
+          )
+        }
+        {hasCost && <span>${totalCost.toFixed(8)}</span>}
+      </div>
+    </div>
+    <a href={`/compare?with=${encodedModelName}`}>
+      <Button
+        variant="outline"
+        size="sm"
+        class="font-mono text-xs border-[var(--color-border-accent)] text-[var(--color-accent)]"
+      >
+        <GitCompare class="size-3.5" />
+        Compare
+      </Button>
+    </a>
+  </div>
 
- <section>
- <div class="section-label"><span>Fixture Gallery ({allFixtures.length})</span></div>
+  <section>
+    <div class="section-label">
+      <span>Fixture Gallery ({allFixtures.length})</span>
+    </div>
 
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- Each card represents one test fixture — a single Git task this model was asked to complete.
- <span title="PASS = similar enough to correct answer. FAIL = too different.">PASS/FAIL</span>
- is determined by fuzzy similarity to the expected answer. Use the filters below to find patterns — for example,
- filter to <em>expert</em> difficulty to see where this model struggles most.
- <a href="/methodology#similarity-scoring" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more →</a>
- </p>
+    <p
+      class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4"
+    >
+      Each card represents one test fixture — a single Git task this model was
+      asked to complete.
+      <span
+        title="PASS = similar enough to correct answer. FAIL = too different."
+        >PASS/FAIL</span
+      >
+      is determined by fuzzy similarity to the expected answer. Use the filters below
+      to find patterns — for example, filter to <em>expert</em> difficulty to see
+      where this model struggles most.
+      <a
+        href="/methodology#similarity-scoring"
+        class="text-[var(--color-accent)] no-underline text-xs font-mono"
+        >Learn more →</a
+      >
+    </p>
 
- <!-- Filter controls -->
- <div id="filter-bar" class="flex gap-1.5 flex-wrap mb-4 items-center">
- <span title="Filter by benchmark category.">
- <select id="filter-bench" class="brand-select text-xs">
- <option value="">All benchmarks</option>
- {benchmarkList.map(b => <option value={b}>{b}</option>)}
- </select>
- </span>
- <span title="Filter by difficulty: trivial/easy/medium/hard/expert.">
- <select id="filter-diff" class="brand-select text-xs">
- <option value="">All difficulties</option>
- {Array.from(diffs).sort((a, b) => (DIFF_ORDER[a] ?? 99) - (DIFF_ORDER[b] ?? 99) || a.localeCompare(b)).map(d => <option value={d}>{d}</option>)}
- </select>
- </span>
- <span title="Filter fixtures by tag (Git concept).">
- <select id="filter-tag" class="brand-select text-xs">
- <option value="">All tags</option>
- {Array.from(allTags).sort().map(t => <option value={t}>{t}</option>)}
- </select>
- </span>
- <button onclick="resetFilters()" class="bg-transparent border border-[var(--color-border)] text-[var(--color-text-dim)] rounded-md px-2.5 py-1.5 font-mono text-[0.65rem] cursor-pointer">
- Reset
- </button>
- </div>
+    <!-- Filter controls -->
+    <div id="filter-bar" class="flex gap-1.5 flex-wrap mb-4 items-center">
+      <span title="Filter by benchmark category.">
+        <select id="filter-bench" class="brand-select text-xs">
+          <option value="">All benchmarks</option>
+          {benchmarkList.map((b) => <option value={b}>{b}</option>)}
+        </select>
+      </span>
+      <span title="Filter by difficulty: trivial/easy/medium/hard/expert.">
+        <select id="filter-diff" class="brand-select text-xs">
+          <option value="">All difficulties</option>
+          {
+            Array.from(diffs)
+              .sort(
+                (a, b) =>
+                  (DIFF_ORDER[a] ?? 99) - (DIFF_ORDER[b] ?? 99) ||
+                  a.localeCompare(b),
+              )
+              .map((d) => <option value={d}>{d}</option>)
+          }
+        </select>
+      </span>
+      <span title="Filter fixtures by tag (Git concept).">
+        <select id="filter-tag" class="brand-select text-xs">
+          <option value="">All tags</option>
+          {
+            Array.from(allTags)
+              .sort()
+              .map((t) => <option value={t}>{t}</option>)
+          }
+        </select>
+      </span>
+      <button
+        onclick="resetFilters()"
+        class="bg-transparent border border-[var(--color-border)] text-[var(--color-text-dim)] rounded-md px-2.5 py-1.5 font-mono text-[0.65rem] cursor-pointer"
+      >
+        Reset
+      </button>
+    </div>
 
- <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3" id="fixture-gallery">
- {allFixtures.map(fx => {
- const fi = data.fixture_index[`${fx.benchmark}/${fx.fixture_id}`];
- const simPct = Math.round(fx.similarity * 1000) / 10;
- return (
- <FixtureCard
- fixtureId={fx.fixture_id}
- benchmark={fx.benchmark || fi?.benchmark || ''}
- passed={fx.passed}
- similarity={simPct}
- difficulty={fi?.difficulty || ''}
- tags={fi?.tags || []}
- inputTokens={fx.input_tokens}
- outputTokens={fx.output_tokens}
- />
- );
- })}
- </div>
- </section>
+    <div
+      class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3"
+      id="fixture-gallery"
+    >
+      {
+        allFixtures.map((fx) => {
+          const fi = data.fixture_index[`${fx.benchmark}/${fx.fixture_id}`];
+          const simPct = Math.round(fx.similarity * 1000) / 10;
+          return (
+            <FixtureCard
+              fixtureId={fx.fixture_id}
+              benchmark={fx.benchmark || fi?.benchmark || ""}
+              passed={fx.passed}
+              similarity={simPct}
+              difficulty={fi?.difficulty || ""}
+              tags={fi?.tags || []}
+              inputTokens={fx.input_tokens}
+              outputTokens={fx.output_tokens}
+            />
+          );
+        })
+      }
+    </div>
+  </section>
 </Layout>
 
 <script>
   const filterParamMap = {
-    'filter-bench': 'benchmark',
-    'filter-diff': 'difficulty',
-    'filter-tag': 'tag',
+    "filter-bench": "benchmark",
+    "filter-diff": "difficulty",
+    "filter-tag": "tag",
   };
 
   function getFilterSelect(id) {
@@ -232,31 +295,37 @@ for (const bench of data.benchmarks) {
     const select = getFilterSelect(id);
     if (!select) return;
 
-    const value = params.get(filterParamMap[id]) || '';
-    const hasOption = Array.from(select.options).some(option => option.value === value);
-    select.value = hasOption ? value : '';
+    const value = params.get(filterParamMap[id]) || "";
+    const hasOption = Array.from(select.options).some(
+      (option) => option.value === value,
+    );
+    select.value = hasOption ? value : "";
   }
 
   function syncUrlFromFilters() {
     const url = new URL(window.location.href);
     Object.entries(filterParamMap).forEach(([id, param]) => {
-      const value = getFilterSelect(id)?.value || '';
+      const value = getFilterSelect(id)?.value || "";
       if (value) {
         url.searchParams.set(param, value);
       } else {
         url.searchParams.delete(param);
       }
     });
-    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      {},
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
     updateEffortLinks();
   }
 
   function updateEffortLinks() {
-    document.querySelectorAll('a[data-effort-link]').forEach(link => {
+    document.querySelectorAll("a[data-effort-link]").forEach((link) => {
       if (!(link instanceof HTMLAnchorElement)) return;
 
       const url = new URL(link.href, window.location.origin);
-      Object.values(filterParamMap).forEach(param => {
+      Object.values(filterParamMap).forEach((param) => {
         url.searchParams.delete(param);
       });
 
@@ -270,35 +339,38 @@ for (const bench of data.benchmarks) {
   }
 
   function applyFilters(options = {}) {
-    const bench = document.getElementById('filter-bench')?.value || '';
-    const diff = document.getElementById('filter-diff')?.value || '';
-    const tag = document.getElementById('filter-tag')?.value || '';
-    const cards = document.querySelectorAll('.fixture-card');
-    cards.forEach(function(card) {
-      const cBench = card.dataset.benchmark || '';
-      const cDiff = card.dataset.difficulty || '';
-      const cTags = card.dataset.tags || '';
-      const show = (!bench || cBench === bench)
-        && (!diff || cDiff === diff)
-        && (!tag || cTags.split(',').includes(tag));
-      card.style.display = show ? '' : 'none';
+    const bench = document.getElementById("filter-bench")?.value || "";
+    const diff = document.getElementById("filter-diff")?.value || "";
+    const tag = document.getElementById("filter-tag")?.value || "";
+    const cards = document.querySelectorAll(".fixture-card");
+    cards.forEach(function (card) {
+      const cBench = card.dataset.benchmark || "";
+      const cDiff = card.dataset.difficulty || "";
+      const cTags = card.dataset.tags || "";
+      const show =
+        (!bench || cBench === bench) &&
+        (!diff || cDiff === diff) &&
+        (!tag || cTags.split(",").includes(tag));
+      card.style.display = show ? "" : "none";
     });
     if (options.syncUrl !== false) syncUrlFromFilters();
   }
   function resetFilters() {
-    ['filter-bench', 'filter-diff', 'filter-tag'].forEach(id => {
+    ["filter-bench", "filter-diff", "filter-tag"].forEach((id) => {
       const el = getFilterSelect(id);
-      if (el) el.value = '';
+      if (el) el.value = "";
     });
     applyFilters();
   }
   window.resetFilters = resetFilters;
 
   const initialParams = new URLSearchParams(window.location.search);
-  Object.keys(filterParamMap).forEach(id => setSelectValueFromParam(id, initialParams));
+  Object.keys(filterParamMap).forEach((id) =>
+    setSelectValueFromParam(id, initialParams),
+  );
 
-  Object.keys(filterParamMap).forEach(id => {
-    getFilterSelect(id)?.addEventListener('change', () => applyFilters());
+  Object.keys(filterParamMap).forEach((id) => {
+    getFilterSelect(id)?.addEventListener("change", () => applyFilters());
   });
 
   applyFilters();

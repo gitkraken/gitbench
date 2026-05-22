@@ -1,15 +1,27 @@
 ---
-import Layout from '../components/Layout.astro';
-import ComparePage from '../components/ComparePage';
+import Layout from "@/components/Layout.astro";
+import ComparePage from "@/components/ComparePage";
 ---
 
 <Layout title="Compare">
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-6">
- Select 2+ models to compare side-by-side. The <strong class="text-[var(--color-text)]">Overall Pass Rates</strong> chart shows which model wins across all 204 fixtures.
- <strong class="text-[var(--color-text)]">By Benchmark</strong> reveals where each model shines or struggles. The
- <span title="Head-to-head per-fixture comparison. Green = both passed, red = both failed, orange = disagreement.">head-to-head scatter</span>
- shows which fixtures each model got right that the other missed.
- <a href="/methodology#passk-metric" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more →</a>
- </p>
- <ComparePage client:load />
+  <p
+    class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-6"
+  >
+    Select 2+ models to compare side-by-side. The <strong
+      class="text-[var(--color-text)]">Overall Pass Rates</strong
+    > chart shows which model wins across all 204 fixtures.
+    <strong class="text-[var(--color-text)]">By Benchmark</strong> reveals where each
+    model shines or struggles. The
+    <span
+      title="Head-to-head per-fixture comparison. Green = both passed, red = both failed, orange = disagreement."
+      >head-to-head scatter</span
+    >
+    shows which fixtures each model got right that the other missed.
+    <a
+      href="/methodology#passk-metric"
+      class="text-[var(--color-accent)] no-underline text-xs font-mono"
+      >Learn more →</a
+    >
+  </p>
+  <ComparePage client:load />
 </Layout>

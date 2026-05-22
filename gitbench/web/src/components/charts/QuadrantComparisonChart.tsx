@@ -16,8 +16,8 @@ import { loadData } from "@/lib/load-data";
 import { modelGroupPath } from "@/lib/routes";
 import { getProviderColor } from "@/lib/provider-colors";
 import ProviderIcon from "@/components/ProviderIcon";
-import ModelSelector from "./ModelSelector";
-import { useSyncedModelSelection } from "./useSyncedModelSelection";
+import ModelSelector from "@/components/charts/ModelSelector";
+import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 import {
   costMetric,
   deriveModelGroups,
@@ -28,12 +28,12 @@ import {
   type MetricEffort,
   type MetricExtractor,
   type ModelGroup,
-} from "./model-groups";
+} from "@/components/charts/model-groups";
 import {
   formatCompactDecimal,
   tooltipStyle,
   truncateName,
-} from "./grouped-chart-ui";
+} from "@/components/charts/grouped-chart-ui";
 
 type MetricKey = "passRate" | "cost" | "tokens" | "runtime";
 

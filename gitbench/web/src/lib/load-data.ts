@@ -1,4 +1,4 @@
-import type { GitBenchData } from './types';
+import type { GitBenchData } from "@/types";
 
 let cachedData: GitBenchData | null = null;
 
@@ -7,7 +7,7 @@ export async function loadData(): Promise<GitBenchData> {
     return cachedData;
   }
 
-  const response = await fetch('/results.json');
+  const response = await fetch("/results.json");
   if (!response.ok) {
     throw new Error(`Failed to load results.json: ${response.status}`);
   }

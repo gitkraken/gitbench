@@ -1,115 +1,211 @@
 ---
-import Layout from '../components/Layout.astro';
+import Layout from "@/components/Layout.astro";
 ---
 
 <Layout title="Methodology">
- <div class="card">
- <div class="section-label"><span>How GitBench Works</span></div>
- 
- <div class="space-y-6 text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl">
- 
- <section>
- <h3 class="text-base font-bold text-[var(--color-text)] mb-2">Benchmark Design</h3>
- <p>
- A benchmark <em>fixture</em> is a single test case: a prompt describing a Git task
- (e.g., "show the last 3 commits as one-liners"),
- an expected output (the correct command or output), and a scoring configuration.
- Fixtures are defined in YAML files under the <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">fixtures/</code> directory
- and grouped into benchmarks by Git task domain.
- </p>
- <p class="mt-2">
- The current benchmark suite covers ~17 domains, including
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">log</code>,
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">branch</code>,
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">commit</code>,
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">rebase</code>,
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">merge</code>,
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">bisect</code>,
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">cherry-pick</code>, and more.
- Each fixture runs in an isolated Git repository set up specifically for that test,
- ensuring deterministic execution.
- </p>
- </section>
+  <div class="card">
+    <div class="section-label"><span>How GitBench Works</span></div>
 
- <section>
- <h3 class="text-base font-bold text-[var(--color-text)] mb-2">Similarity Scoring</h3>
- <p>
- Each model output is compared to the expected answer using a fuzzy similarity algorithm
- (Python's <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded " title="difflib.SequenceMatcher — Python's fuzzy string comparison algorithm.">SequenceMatcher</code> from the standard library).
- The similarity score ranges from 0% (completely different) to 100% (exact match).
- A fixture is marked as <strong>passed</strong> when the similarity exceeds the
- fixture's configured threshold (typically 80–90%, depending on the prompt).
- </p>
- <p class="mt-2">
- Similarity scoring is an approximation of correctness — a high score means the output
- is textually close to the expected answer, which nearly always correlates with a correct
- Git command. However, semantically equivalent but differently-phrased answers may score
- lower than expected, and near-matches may occasionally be false positives.
- </p>
- </section>
+    <div
+      class="space-y-6 text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl"
+    >
+      <section>
+        <h3 class="text-base font-bold text-[var(--color-text)] mb-2">
+          Benchmark Design
+        </h3>
+        <p>
+          A benchmark <em>fixture</em> is a single test case: a prompt describing
+          a Git task (e.g., "show the last 3 commits as one-liners"), an expected
+          output (the correct command or output), and a scoring configuration. Fixtures
+          are defined in YAML files under the <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >fixtures/</code
+          > directory and grouped into benchmarks by Git task domain.
+        </p>
+        <p class="mt-2">
+          The current benchmark suite covers ~17 domains, including
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >log</code
+          >,
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >branch</code
+          >,
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >commit</code
+          >,
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >rebase</code
+          >,
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >merge</code
+          >,
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >bisect</code
+          >,
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >cherry-pick</code
+          >, and more. Each fixture runs in an isolated Git repository set up
+          specifically for that test, ensuring deterministic execution.
+        </p>
+      </section>
 
- <section>
- <h3 class="text-base font-bold text-[var(--color-text)] mb-2">Pass@k Metric</h3>
- <p>
- The <strong>pass@k</strong> metric is the proportion of fixtures a model passed:
- </p>
- <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 my-3 font-mono text-xs">
- pass@k = passed_fixtures / total_fixtures
- </div>
- <p>
- For single-run evaluations (the default), <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">k = 1</code>.
- When a model is run multiple times, <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">k</code> represents the number of runs,
- and pass@k is computed per benchmark or across all benchmarks.
- Pass rates are shown as percentages on the Overview and model detail pages.
- </p>
- </section>
+      <section>
+        <h3 class="text-base font-bold text-[var(--color-text)] mb-2">
+          Similarity Scoring
+        </h3>
+        <p>
+          Each model output is compared to the expected answer using a fuzzy
+          similarity algorithm (Python's <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            title="difflib.SequenceMatcher — Python's fuzzy string comparison algorithm."
+            >SequenceMatcher</code
+          > from the standard library). The similarity score ranges from 0% (completely
+          different) to 100% (exact match). A fixture is marked as <strong
+            >passed</strong
+          > when the similarity exceeds the fixture's configured threshold (typically
+          80–90%, depending on the prompt).
+        </p>
+        <p class="mt-2">
+          Similarity scoring is an approximation of correctness — a high score
+          means the output is textually close to the expected answer, which
+          nearly always correlates with a correct Git command. However,
+          semantically equivalent but differently-phrased answers may score
+          lower than expected, and near-matches may occasionally be false
+          positives.
+        </p>
+      </section>
 
- <section>
- <h3 class="text-base font-bold text-[var(--color-text)] mb-2">Model Selection &amp; Run Metadata</h3>
- <p>
- Models are called through <strong><span title="OpenRouter — unified API gateway for AI model access.">OpenRouter</span></strong> (for cloud-hosted models)
- or a local <strong><span title="Ollama — runs AI models locally on your hardware.">Ollama</span></strong> server. Each run records:
- </p>
- <ul class="list-disc list-inside mt-2 space-y-1 font-mono text-xs">
- <li><code>profile</code> — the runner profile used (e.g., "openrouter")</li>
- <li><code>git_sha</code> — the GitBench commit hash at the time of the run</li>
- <li><code>benchmark_suite_version</code> — version of the benchmark suite</li>
- <li><code>timestamp</code> — UTC timestamp of the run</li>
- <li><code>reasoning_level</code> — optional reasoning effort level (e.g., "low", "high") for models that support it</li>
- </ul>
- <p class="mt-2">
- Model names may include a <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">#level</code> suffix
- to specify a reasoning effort level. For example, <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">o3-mini#high</code>
- runs the o3-mini model with high reasoning effort. The base model name is used for grouping.
- </p>
- </section>
+      <section>
+        <h3 class="text-base font-bold text-[var(--color-text)] mb-2">
+          Pass@k Metric
+        </h3>
+        <p>
+          The <strong>pass@k</strong> metric is the proportion of fixtures a model
+          passed:
+        </p>
+        <div
+          class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-4 my-3 font-mono text-xs"
+        >
+          pass@k = passed_fixtures / total_fixtures
+        </div>
+        <p>
+          For single-run evaluations (the default), <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >k = 1</code
+          >. When a model is run multiple times, <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >k</code
+          > represents the number of runs, and pass@k is computed per benchmark or
+          across all benchmarks. Pass rates are shown as percentages on the Overview
+          and model detail pages.
+        </p>
+      </section>
 
- <section>
- <h3 class="text-base font-bold text-[var(--color-text)] mb-2">Cost Data</h3>
- <p>
- When models are called through OpenRouter, the API response includes a
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">cost</code> field (in USD).
- GitBench extracts this cost and surfaces it on the Models overview page
- (per-model total and average cost) and on the Cost vs Quality quadrant chart.
- Models run through Ollama do not produce cost data and will show "—" for cost fields.
- </p>
- <p class="mt-2">
- Raw run files in <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">gitbench-results/</code>
- remain untouched and contain the full run data, including any models filtered from the UI output.
- </p>
- </section>
+      <section>
+        <h3 class="text-base font-bold text-[var(--color-text)] mb-2">
+          Model Selection &amp; Run Metadata
+        </h3>
+        <p>
+          Models are called through <strong
+            ><span title="OpenRouter — unified API gateway for AI model access."
+              >OpenRouter</span
+            ></strong
+          > (for cloud-hosted models) or a local <strong
+            ><span title="Ollama — runs AI models locally on your hardware."
+              >Ollama</span
+            ></strong
+          > server. Each run records:
+        </p>
+        <ul class="list-disc list-inside mt-2 space-y-1 font-mono text-xs">
+          <li>
+            <code>profile</code> — the runner profile used (e.g., "openrouter")
+          </li>
+          <li>
+            <code>git_sha</code> — the GitBench commit hash at the time of the run
+          </li>
+          <li>
+            <code>benchmark_suite_version</code> — version of the benchmark suite
+          </li>
+          <li><code>timestamp</code> — UTC timestamp of the run</li>
+          <li>
+            <code>reasoning_level</code> — optional reasoning effort level (e.g.,
+            "low", "high") for models that support it
+          </li>
+        </ul>
+        <p class="mt-2">
+          Model names may include a <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >#level</code
+          > suffix to specify a reasoning effort level. For example, <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >o3-mini#high</code
+          >
+          runs the o3-mini model with high reasoning effort. The base model name is
+          used for grouping.
+        </p>
+      </section>
 
- <section>
- <h3 class="text-base font-bold text-[var(--color-text)] mb-2">Limitations</h3>
- <ul class="list-disc list-inside space-y-1">
- <li>Only measures <strong>output correctness</strong> — does not evaluate speed, UX, multi-turn reasoning, or tool use.</li>
- <li>Results <strong>vary by run</strong> — LLM outputs are non-deterministic. Pass rates should be treated as estimates, not absolute scores.</li>
- <li><strong>Similarity scoring is approximate</strong> — a correct answer with different phrasing may score lower; an incorrect but similar-looking answer may pass.</li>
- <li>Only <strong>open-weight models available through OpenRouter</strong> (or local Ollama models) are tested. Proprietary model evaluation depends on API access.</li>
- <li>The benchmark suite is <strong>under active development</strong>. New fixtures and benchmarks are added regularly, and scoring thresholds may be tuned over time.</li>
- </ul>
- </section>
+      <section>
+        <h3 class="text-base font-bold text-[var(--color-text)] mb-2">
+          Cost Data
+        </h3>
+        <p>
+          When models are called through OpenRouter, the API response includes a
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >cost</code
+          > field (in USD). GitBench extracts this cost and surfaces it on the Models
+          overview page (per-model total and average cost) and on the Cost vs Quality
+          quadrant chart. Models run through Ollama do not produce cost data and will
+          show "—" for cost fields.
+        </p>
+        <p class="mt-2">
+          Raw run files in <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >gitbench-results/</code
+          >
+          remain untouched and contain the full run data, including any models filtered
+          from the UI output.
+        </p>
+      </section>
 
- </div>
- </div>
+      <section>
+        <h3 class="text-base font-bold text-[var(--color-text)] mb-2">
+          Limitations
+        </h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li>
+            Only measures <strong>output correctness</strong> — does not evaluate
+            speed, UX, multi-turn reasoning, or tool use.
+          </li>
+          <li>
+            Results <strong>vary by run</strong> — LLM outputs are non-deterministic.
+            Pass rates should be treated as estimates, not absolute scores.
+          </li>
+          <li>
+            <strong>Similarity scoring is approximate</strong> — a correct answer
+            with different phrasing may score lower; an incorrect but similar-looking
+            answer may pass.
+          </li>
+          <li>
+            Only <strong>open-weight models available through OpenRouter</strong
+            > (or local Ollama models) are tested. Proprietary model evaluation depends
+            on API access.
+          </li>
+          <li>
+            The benchmark suite is <strong>under active development</strong>.
+            New fixtures and benchmarks are added regularly, and scoring
+            thresholds may be tuned over time.
+          </li>
+        </ul>
+      </section>
+    </div>
+  </div>
 </Layout>

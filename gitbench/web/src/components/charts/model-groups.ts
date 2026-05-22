@@ -45,7 +45,10 @@ export interface GroupedMetricRow {
   range: [number, number];
 }
 
-export type MetricExtractor = (effort: ModelGroupEffort, data: GitBenchData) => MetricEffort | null;
+export type MetricExtractor = (
+  effort: ModelGroupEffort,
+  data: GitBenchData
+) => MetricEffort | null;
 
 const REASONING_LEVEL_ORDER = new Map<string, number>([
   ["", 0],
@@ -68,11 +71,17 @@ function compareReasoningEfforts(a: MetricEffort, b: MetricEffort): number {
   return a.modelName.localeCompare(b.modelName);
 }
 
-export function modelGroupId(provider: string, baseModel: string): ModelGroupId {
+export function modelGroupId(
+  provider: string,
+  baseModel: string
+): ModelGroupId {
   return `${provider}/${baseModel}`;
 }
 
-function effortFromModelInfo(model: ModelInfo, data: GitBenchData): ModelGroupEffort {
+function effortFromModelInfo(
+  model: ModelInfo,
+  data: GitBenchData
+): ModelGroupEffort {
   const summary = data.model_summaries[model.name];
   const groupId = modelGroupId(model.provider, model.baseModel);
   return {
@@ -89,7 +98,7 @@ function effortFromModelInfo(model: ModelInfo, data: GitBenchData): ModelGroupEf
 function effortFromGroupLevel(
   group: BaseModelGroup,
   level: BaseModelGroup["levels"][number],
-  data: GitBenchData,
+  data: GitBenchData
 ): ModelGroupEffort {
   const modelInfo = data.models.find((model) => model.name === level.modelName);
   const summary = data.model_summaries[level.modelName];
@@ -109,10 +118,15 @@ function effortFromGroupLevel(
 export function deriveModelGroups(data: GitBenchData): ModelGroup[] {
   if (data.base_model_groups?.length) {
     return data.base_model_groups.map((group) => {
-      const efforts = group.levels.map((level) => effortFromGroupLevel(group, level, data));
+      const efforts = group.levels.map((level) =>
+        effortFromGroupLevel(group, level, data)
+      );
       const first = efforts[0];
       return {
-        id: modelGroupId(first?.provider ?? group.provider, first?.baseModel ?? group.baseModel),
+        id: modelGroupId(
+          first?.provider ?? group.provider,
+          first?.baseModel ?? group.baseModel
+        ),
         provider: first?.provider ?? group.provider,
         baseModel: first?.baseModel ?? group.baseModel,
         efforts,
@@ -144,7 +158,7 @@ export function groupIdsForData(data: GitBenchData): ModelGroupId[] {
 
 export function sanitizeGroupSelection(
   selection: string[],
-  groups: ModelGroup[],
+  groups: ModelGroup[]
 ): ModelGroupId[] {
   const groupIds = new Set(groups.map((group) => group.id));
   const modelToGroup = new Map<string, ModelGroupId>();
@@ -165,8 +179,13 @@ export function sanitizeGroupSelection(
   return result;
 }
 
-export function expandGroupSelection(selection: string[], data: GitBenchData): string[] {
-  const selectedGroups = new Set(sanitizeGroupSelection(selection, deriveModelGroups(data)));
+export function expandGroupSelection(
+  selection: string[],
+  data: GitBenchData
+): string[] {
+  const selectedGroups = new Set(
+    sanitizeGroupSelection(selection, deriveModelGroups(data))
+  );
   return deriveModelGroups(data)
     .filter((group) => selectedGroups.has(group.id))
     .flatMap((group) => group.efforts.map((effort) => effort.modelName));
@@ -182,7 +201,10 @@ export function costMetric(effort: ModelGroupEffort): MetricEffort | null {
   return { ...effort, value: effort.totalCostUsd };
 }
 
-export function runtimeMetric(effort: ModelGroupEffort, data: GitBenchData): MetricEffort | null {
+export function runtimeMetric(
+  effort: ModelGroupEffort,
+  data: GitBenchData
+): MetricEffort | null {
   const runtime = data.model_runtimes[effort.modelName];
   if (!runtime) return null;
   return {
@@ -193,7 +215,9 @@ export function runtimeMetric(effort: ModelGroupEffort, data: GitBenchData): Met
   };
 }
 
-function sumFixtureTokens(fixtures: Record<string, FixtureResult[]> | undefined) {
+function sumFixtureTokens(
+  fixtures: Record<string, FixtureResult[]> | undefined
+) {
   let total = 0;
   let input = 0;
   let output = 0;
@@ -210,7 +234,10 @@ function sumFixtureTokens(fixtures: Record<string, FixtureResult[]> | undefined)
   return { total, input, output };
 }
 
-export function tokenMetric(effort: ModelGroupEffort, data: GitBenchData): MetricEffort {
+export function tokenMetric(
+  effort: ModelGroupEffort,
+  data: GitBenchData
+): MetricEffort {
   const tokens = sumFixtureTokens(data.fixtures[effort.modelName]);
   return {
     ...effort,
@@ -224,9 +251,11 @@ export function buildGroupedMetricRows(
   data: GitBenchData,
   selectedGroupIds: string[],
   extractor: MetricExtractor,
-  representative: "min" | "max",
+  representative: "min" | "max"
 ): GroupedMetricRow[] {
-  const selected = new Set(sanitizeGroupSelection(selectedGroupIds, deriveModelGroups(data)));
+  const selected = new Set(
+    sanitizeGroupSelection(selectedGroupIds, deriveModelGroups(data))
+  );
   return deriveModelGroups(data)
     .filter((group) => selected.has(group.id))
     .map((group) => {
@@ -238,9 +267,11 @@ export function buildGroupedMetricRows(
       const values = efforts.map((effort) => effort.value);
       const minValue = Math.min(...values);
       const maxValue = Math.max(...values);
-      const representativeValue = representative === "min" ? minValue : maxValue;
+      const representativeValue =
+        representative === "min" ? minValue : maxValue;
       const representativeEffort =
-        efforts.find((effort) => effort.value === representativeValue) ?? efforts[0];
+        efforts.find((effort) => effort.value === representativeValue) ??
+        efforts[0];
       return {
         id: group.id,
         name: group.id,

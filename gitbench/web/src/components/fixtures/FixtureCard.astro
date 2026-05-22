@@ -1,5 +1,5 @@
 ---
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   fixtureId: string;
@@ -12,12 +12,21 @@ interface Props {
   outputTokens?: number | null;
 }
 
-const { fixtureId, benchmark, passed, similarity, difficulty, tags, inputTokens, outputTokens } = Astro.props;
-const passVariant = passed ? 'default' : 'destructive';
+const {
+  fixtureId,
+  benchmark,
+  passed,
+  similarity,
+  difficulty,
+  tags,
+  inputTokens,
+  outputTokens,
+} = Astro.props;
+const passVariant = passed ? "default" : "destructive";
 const passColor = passed
-  ? 'bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]'
-  : 'bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]';
-const tagsStr = tags.join(',');
+  ? "bg-[var(--color-pass-bg)] text-[var(--color-pass)] border-[var(--color-pass-border)]"
+  : "bg-[var(--color-fail-bg)] text-[var(--color-fail)] border-[var(--color-fail-border)]";
+const tagsStr = tags.join(",");
 ---
 
 <a
@@ -32,7 +41,7 @@ const tagsStr = tags.join(',');
       {fixtureId}
     </span>
     <Badge variant="outline" className={`font-mono text-[0.6rem] ${passColor}`}>
-      {passed ? 'PASS' : 'FAIL'}
+      {passed ? "PASS" : "FAIL"}
     </Badge>
   </div>
   <div class="flex justify-between items-center">
@@ -43,16 +52,20 @@ const tagsStr = tags.join(',');
       {similarity}%
     </span>
   </div>
-  {difficulty && (
-    <div class="mt-1.5">
-      <Badge variant="secondary" class="font-mono text-[0.58rem] px-1 py-0">
-        {difficulty}
-      </Badge>
-    </div>
-  )}
-  {inputTokens != null && outputTokens != null && (
-    <div class="mt-1.5 font-mono text-[0.58rem] text-[var(--color-text-dim)] opacity-60">
-      {inputTokens}→{outputTokens} tokens
-    </div>
-  )}
+  {
+    difficulty && (
+      <div class="mt-1.5">
+        <Badge variant="secondary" class="font-mono text-[0.58rem] px-1 py-0">
+          {difficulty}
+        </Badge>
+      </div>
+    )
+  }
+  {
+    inputTokens != null && outputTokens != null && (
+      <div class="mt-1.5 font-mono text-[0.58rem] text-[var(--color-text-dim)] opacity-60">
+        {inputTokens}→{outputTokens} tokens
+      </div>
+    )
+  }
 </a>

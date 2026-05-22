@@ -1,6 +1,6 @@
 import ProviderIcon from "@/components/ProviderIcon";
 import { getProviderColor } from "@/lib/provider-colors";
-import type { GroupedMetricRow } from "./model-groups";
+import type { GroupedMetricRow } from "@/components/charts/model-groups";
 
 export function truncateName(name: string, maxLen = 16): string {
   if (!name || name.length <= maxLen) return name || "";
@@ -14,7 +14,10 @@ export function providerLegend(rows: GroupedMetricRow[]) {
     const key = row.provider.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    providers.push({ slug: row.provider, color: getProviderColor(row.provider) });
+    providers.push({
+      slug: row.provider,
+      color: getProviderColor(row.provider),
+    });
   }
   return providers;
 }
@@ -68,7 +71,13 @@ export function VerticalGroupTick({ x, y, payload, rowMap }: TickProps) {
   return (
     <g transform={`translate(${x},${y})`}>
       <g transform="rotate(-40)">
-        <foreignObject x={-138} y={-6} width={138} height={32} style={{ overflow: "visible" }}>
+        <foreignObject
+          x={-138}
+          y={-6}
+          width={138}
+          height={32}
+          style={{ overflow: "visible" }}
+        >
           <div
             style={{
               display: "flex",
@@ -103,7 +112,13 @@ export function HorizontalGroupTick({ x, y, payload, rowMap }: TickProps) {
   const row = rowMap?.[payload.value];
   return (
     <g transform={`translate(${x},${y})`}>
-      <foreignObject x={-112} y={-10} width={106} height={22} style={{ overflow: "visible" }}>
+      <foreignObject
+        x={-112}
+        y={-10}
+        width={106}
+        height={22}
+        style={{ overflow: "visible" }}
+      >
         <div
           style={{
             display: "flex",
@@ -152,7 +167,10 @@ export function paddedDomain(
   return [lower, upper];
 }
 
-export function formatCompactDecimal(value: number, maxFractionDigits = 2): string {
+export function formatCompactDecimal(
+  value: number,
+  maxFractionDigits = 2,
+): string {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: maxFractionDigits,

@@ -1,46 +1,58 @@
 ---
-import Layout from '../../../components/Layout.astro';
-import PromptBlock from '../../../components/fixtures/PromptBlock.astro';
-import ExpectedBlock from '../../../components/fixtures/ExpectedBlock.astro';
-import ModelOutputCard from '../../../components/fixtures/ModelOutputCard.astro';
-import { loadDataSync } from '../../../lib/data';
-import type { GitBenchData } from '../../../lib/types';
-import { Badge } from '@/components/ui/badge';
+import Layout from "@/components/Layout.astro";
+import PromptBlock from "@/components/fixtures/PromptBlock.astro";
+import ExpectedBlock from "@/components/fixtures/ExpectedBlock.astro";
+import ModelOutputCard from "@/components/fixtures/ModelOutputCard.astro";
+import { loadDataSync } from "@/lib/data";
+import type { GitBenchData } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
 
 export function getStaticPaths() {
- const data = loadDataSync();
- return Object.keys(data.fixture_index).map(key => {
- const [benchmark, fixture] = key.split('/');
- return {
- params: { benchmark, fixture },
- props: { benchmark, fixtureId: fixture, data },
- };
- });
+  const data = loadDataSync();
+  return Object.keys(data.fixture_index).map((key) => {
+    const [benchmark, fixture] = key.split("/");
+    return {
+      params: { benchmark, fixture },
+      props: { benchmark, fixtureId: fixture, data },
+    };
+  });
 }
 
-const { benchmark, fixtureId, data } = Astro.props as { benchmark: string; fixtureId: string; data: GitBenchData };
+const { benchmark, fixtureId, data } = Astro.props as {
+  benchmark: string;
+  fixtureId: string;
+  data: GitBenchData;
+};
 const fi = data.fixture_index[`${benchmark}/${fixtureId}`];
 if (!fi) {
- return new Response('Fixture not found', { status: 404 });
+  return new Response("Fixture not found", { status: 404 });
 }
 const setupCommands = fi.setup ?? [];
 
 // Collect all model outputs for this fixture
-const modelOutputs: { model: string; passed: boolean; similarity: number; output: string; error: string | null; inputTokens: number | null; outputTokens: number | null }[] = [];
+const modelOutputs: {
+  model: string;
+  passed: boolean;
+  similarity: number;
+  output: string;
+  error: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+}[] = [];
 for (const m of data.models) {
- const results = data.fixtures[m.name]?.[fi.benchmark] || [];
- const fr = results.find(r => r.fixture_id === fixtureId);
- if (fr) {
- modelOutputs.push({
- model: m.name,
- passed: fr.passed,
- similarity: Math.round(fr.similarity * 1000) / 10,
- output: fr.model_output,
- error: fr.error,
- inputTokens: fr.input_tokens,
- outputTokens: fr.output_tokens,
- });
- }
+  const results = data.fixtures[m.name]?.[fi.benchmark] || [];
+  const fr = results.find((r) => r.fixture_id === fixtureId);
+  if (fr) {
+    modelOutputs.push({
+      model: m.name,
+      passed: fr.passed,
+      similarity: Math.round(fr.similarity * 1000) / 10,
+      output: fr.model_output,
+      error: fr.error,
+      inputTokens: fr.input_tokens,
+      outputTokens: fr.output_tokens,
+    });
+  }
 }
 
 // Sort by similarity descending
@@ -48,84 +60,127 @@ modelOutputs.sort((a, b) => b.similarity - a.similarity);
 ---
 
 <Layout title={`${fixtureId} — ${fi.benchmark}`}>
- <div class="mb-6">
- <a href={`/benchmarks/${fi.benchmark}`} class="font-mono text-[0.68rem] text-[var(--color-accent)] no-underline">
- ← {fi.benchmark}
- </a>
- </div>
+  <div class="mb-6">
+    <a
+      href={`/benchmarks/${fi.benchmark}`}
+      class="font-mono text-[0.68rem] text-[var(--color-accent)] no-underline"
+    >
+      ← {fi.benchmark}
+    </a>
+  </div>
 
- <div class="card mb-8">
- <div class="flex justify-between items-start flex-wrap gap-4">
- <div>
- <div class="text-xl font-extrabold tracking-tight mb-1">
- {fixtureId}
- </div>
- {fi.description && (
- <div class="font-mono text-xs text-[var(--color-text-mid)] mb-2">
- {fi.description}
- </div>
- )}
- {fi.purpose && (
- <div class="font-display text-sm text-[var(--color-text-dim)] leading-relaxed mb-3 max-w-[700px]">
- {fi.purpose}
- </div>
- )}
- </div>
- <div class="flex gap-2 flex-wrap items-center">
- {fi.difficulty && <Badge variant="secondary" class="font-mono text-[0.7rem]">{fi.difficulty}</Badge>}
- {fi.tags.map(t => (
- <a href={`/explore?tag=${encodeURIComponent(t)}`} class="no-underline">
- <Badge variant="secondary" class="font-mono text-[0.65rem] cursor-pointer">{t}</Badge>
- </a>
- ))}
- </div>
- </div>
- </div>
+  <div class="card mb-8">
+    <div class="flex justify-between items-start flex-wrap gap-4">
+      <div>
+        <div class="text-xl font-extrabold tracking-tight mb-1">
+          {fixtureId}
+        </div>
+        {
+          fi.description && (
+            <div class="font-mono text-xs text-[var(--color-text-mid)] mb-2">
+              {fi.description}
+            </div>
+          )
+        }
+        {
+          fi.purpose && (
+            <div class="font-display text-sm text-[var(--color-text-dim)] leading-relaxed mb-3 max-w-[700px]">
+              {fi.purpose}
+            </div>
+          )
+        }
+      </div>
+      <div class="flex gap-2 flex-wrap items-center">
+        {
+          fi.difficulty && (
+            <Badge variant="secondary" class="font-mono text-[0.7rem]">
+              {fi.difficulty}
+            </Badge>
+          )
+        }
+        {
+          fi.tags.map((t) => (
+            <a
+              href={`/explore?tag=${encodeURIComponent(t)}`}
+              class="no-underline"
+            >
+              <Badge
+                variant="secondary"
+                class="font-mono text-[0.65rem] cursor-pointer"
+              >
+                {t}
+              </Badge>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
 
- {setupCommands.length > 0 && (
- <section class="card mb-8">
- <div class="section-label"><span>Baseline Repository</span></div>
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- These commands are replayed before the model sees the prompt. They define the starting file structure, staged changes, and Git history for this fixture.
- </p>
- <ol class="m-0 p-0 list-none flex flex-col gap-2">
- {setupCommands.map((command, index) => (
- <li class="grid grid-cols-[2.5rem_1fr] gap-3 items-start">
- <span class="font-mono text-[0.7rem] text-[var(--color-text-dim)] pt-2 text-right">
- {String(index + 1).padStart(2, '0')}
- </span>
- <code class="block font-mono text-[0.78rem] leading-relaxed text-[var(--color-text)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md px-3 py-2 overflow-x-auto">
- {command}
- </code>
- </li>
- ))}
- </ol>
- </section>
- )}
+  {
+    setupCommands.length > 0 && (
+      <section class="card mb-8">
+        <div class="section-label">
+          <span>Baseline Repository</span>
+        </div>
+        <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
+          These commands are replayed before the model sees the prompt. They
+          define the starting file structure, staged changes, and Git history
+          for this fixture.
+        </p>
+        <ol class="m-0 p-0 list-none flex flex-col gap-2">
+          {setupCommands.map((command, index) => (
+            <li class="grid grid-cols-[2.5rem_1fr] gap-3 items-start">
+              <span class="font-mono text-[0.7rem] text-[var(--color-text-dim)] pt-2 text-right">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <code class="block font-mono text-[0.78rem] leading-relaxed text-[var(--color-text)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-md px-3 py-2 overflow-x-auto">
+                {command}
+              </code>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )
+  }
 
- <PromptBlock text={fi.prompt} />
- <ExpectedBlock text={fi.expected} />
+  <PromptBlock text={fi.prompt} />
+  <ExpectedBlock text={fi.expected} />
 
- <section class="mt-8">
- <div class="section-label"><span>Model Outputs ({modelOutputs.length})</span></div>
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- All model responses for this fixture, sorted by similarity to the correct answer.
- <span title="PASS = met similarity threshold. FAIL = below threshold.">PASS</span>
- means the model's output was close enough to the expected answer. Click any model name to explore its full results.
- <a href="/methodology#similarity-scoring" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more →</a>
- </p>
- <div class="flex flex-col gap-4">
- {modelOutputs.map(mo => (
- <ModelOutputCard
- modelName={mo.model}
- passed={mo.passed}
- similarity={mo.similarity}
- output={mo.output}
- error={mo.error}
- inputTokens={mo.inputTokens}
- outputTokens={mo.outputTokens}
- />
- ))}
- </div>
- </section>
+  <section class="mt-8">
+    <div class="section-label">
+      <span>Model Outputs ({modelOutputs.length})</span>
+    </div>
+    <p
+      class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4"
+    >
+      All model responses for this fixture, sorted by similarity to the correct
+      answer.
+      <span title="PASS = met similarity threshold. FAIL = below threshold."
+        >PASS</span
+      >
+      means the model's output was close enough to the expected answer. Click any
+      model name to explore its full results.
+      <a
+        href="/methodology#similarity-scoring"
+        class="text-[var(--color-accent)] no-underline text-xs font-mono"
+        >Learn more →</a
+      >
+    </p>
+    <div class="flex flex-col gap-4">
+      {
+        modelOutputs.map((mo) => (
+          <ModelOutputCard
+            modelName={mo.model}
+            passed={mo.passed}
+            similarity={mo.similarity}
+            output={mo.output}
+            error={mo.error}
+            inputTokens={mo.inputTokens}
+            outputTokens={mo.outputTokens}
+          />
+        ))
+      }
+    </div>
+  </section>
 </Layout>

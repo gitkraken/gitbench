@@ -14,9 +14,12 @@ import { loadData } from "@/lib/load-data";
 import { modelGroupPath } from "@/lib/routes";
 import { getProviderColor } from "@/lib/provider-colors";
 import ProviderIcon from "@/components/ProviderIcon";
-import ModelSelector from "./ModelSelector";
-import { useSyncedModelSelection } from "./useSyncedModelSelection";
-import { buildGroupedMetricRows, passRateMetric } from "./model-groups";
+import ModelSelector from "@/components/charts/ModelSelector";
+import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
+import {
+  buildGroupedMetricRows,
+  passRateMetric,
+} from "@/components/charts/model-groups";
 import {
   ProviderLegend,
   VerticalGroupTick,
@@ -24,7 +27,7 @@ import {
   paddedDomain,
   rowMap,
   tooltipStyle,
-} from "./grouped-chart-ui";
+} from "@/components/charts/grouped-chart-ui";
 
 export default function PassRateBarChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
@@ -36,9 +39,12 @@ export default function PassRateBarChart() {
 
   const chartData = useMemo(() => {
     if (!data) return [];
-    return buildGroupedMetricRows(data, selectedGroups, passRateMetric, "max").sort(
-      (a, b) => b.representativeValue - a.representativeValue,
-    );
+    return buildGroupedMetricRows(
+      data,
+      selectedGroups,
+      passRateMetric,
+      "max",
+    ).sort((a, b) => b.representativeValue - a.representativeValue);
   }, [data, selectedGroups]);
 
   const rowsById = useMemo(() => rowMap(chartData), [chartData]);
@@ -54,7 +60,10 @@ export default function PassRateBarChart() {
       <div className="max-w-xs ml-auto w-full mb-3">
         <ModelSelector value={selectedGroups} onChange={setSelectedGroups} />
       </div>
-      <div className="card" title="Pass rate percentages for each model across all 204 Git fixtures. Higher bars = better Git skills.">
+      <div
+        className="card"
+        title="Pass rate percentages for each model across all 204 Git fixtures. Higher bars = better Git skills."
+      >
         <ResponsiveContainer width="100%" height={350}>
           <BarChart
             data={chartData}
@@ -65,7 +74,9 @@ export default function PassRateBarChart() {
             <XAxis
               type="category"
               dataKey="id"
-              tick={(props: any) => <VerticalGroupTick {...props} rowMap={rowsById} />}
+              tick={(props: any) => (
+                <VerticalGroupTick {...props} rowMap={rowsById} />
+              )}
               axisLine={false}
               tickLine={false}
               interval={0}
@@ -74,19 +85,31 @@ export default function PassRateBarChart() {
             <YAxis
               type="number"
               domain={yDomain}
-              tick={{ fill: "var(--text-dim)", fontSize: 11, fontFamily: "var(--font-mono)" }}
-              tickFormatter={(value: number) => `${formatCompactDecimal(value, 2)}%`}
+              tick={{
+                fill: "var(--text-dim)",
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+              }}
+              tickFormatter={(value: number) =>
+                `${formatCompactDecimal(value, 2)}%`
+              }
               axisLine={false}
               tickLine={false}
             />
             <Bar
               dataKey="range"
               radius={[4, 4, 4, 4]}
-              barSize={Math.max(12, Math.min(28, 400 / Math.max(1, chartData.length)))}
+              barSize={Math.max(
+                12,
+                Math.min(28, 400 / Math.max(1, chartData.length)),
+              )}
               cursor="pointer"
               onClick={(entry: any) => {
                 if (entry?.provider && entry?.baseModel) {
-                  window.location.href = modelGroupPath(entry.provider, entry.baseModel);
+                  window.location.href = modelGroupPath(
+                    entry.provider,
+                    entry.baseModel,
+                  );
                 }
               }}
             >
@@ -115,13 +138,31 @@ export default function PassRateBarChart() {
                       {entry.provider}/{entry.baseModel}
                     </div>
                     {entry.efforts.map((effort) => (
-                      <div key={effort.modelName} style={{ color: "var(--text-dim)" }}>
-                        {effort.reasoningLevel ?? "default"}: {effort.value.toFixed(1)}%
-                        {effort.modelName === entry.representativeEffort.modelName ? " (best)" : ""}
+                      <div
+                        key={effort.modelName}
+                        style={{ color: "var(--text-dim)" }}
+                      >
+                        {effort.reasoningLevel ?? "default"}:{" "}
+                        {effort.value.toFixed(1)}%
+                        {effort.modelName ===
+                        entry.representativeEffort.modelName
+                          ? " (best)"
+                          : ""}
                       </div>
                     ))}
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "6px 0" }} />
-                    <div style={{ color: "var(--text-dim)", fontSize: 10, lineHeight: 1.4 }}>
+                    <div
+                      style={{
+                        borderTop: "1px solid rgba(255,255,255,0.06)",
+                        margin: "6px 0",
+                      }}
+                    />
+                    <div
+                      style={{
+                        color: "var(--text-dim)",
+                        fontSize: 10,
+                        lineHeight: 1.4,
+                      }}
+                    >
                       Pass rate = % of 204 Git fixtures answered correctly.
                       Higher reasoning levels typically score better.
                     </div>

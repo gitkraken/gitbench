@@ -1,104 +1,175 @@
 ---
-import Layout from '../components/Layout.astro';
-import PassRateBarChart from '../components/charts/PassRateBarChart';
-import CostValueChart from '../components/charts/CostValueChart';
-import RuntimeBarChart from '../components/charts/RuntimeBarChart';
-import TokenUsageChart from '../components/charts/TokenUsageChart';
-import QuadrantComparisonChart from '../components/charts/QuadrantComparisonChart';
-import ModelSelector from '../components/charts/ModelSelector';
-import BenchmarkHeatmap from '../components/charts/BenchmarkHeatmap';
+import Layout from "@/components/Layout.astro";
+import PassRateBarChart from "@/components/charts/PassRateBarChart";
+import CostValueChart from "@/components/charts/CostValueChart";
+import RuntimeBarChart from "@/components/charts/RuntimeBarChart";
+import TokenUsageChart from "@/components/charts/TokenUsageChart";
+import QuadrantComparisonChart from "@/components/charts/QuadrantComparisonChart";
+import ModelSelector from "@/components/charts/ModelSelector";
+import BenchmarkHeatmap from "@/components/charts/BenchmarkHeatmap";
 ---
 
 <Layout title="Overview">
- <section class="mb-8">
- <div class="card">
- <div class="section-label"><span>About</span></div>
- <div class="space-y-3 text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl">
- <p>
- <strong class="text-[var(--color-text)]">GitBench is a benchmark suite that evaluates how well language models perform on real-world Git tasks.</strong>
- Modern AI models claim coding prowess, but Git — the tool every developer uses daily — is a different kind of test.
- It requires procedural knowledge: knowing not just <em>what</em> to do, but <em>how</em> to express it as precise commands.
- </p>
- <p>
- Each model is tested across 204 fixtures — prompts that ask it to write commands like
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git log</code>,
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git rebase</code>, or
- <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git bisect</code>
- — and its output is compared against the expected command using a fuzzy similarity scorer.
- From basic log formatting to complex merge conflict resolution, every test runs in an isolated Git repository to ensure deterministic, reproducible results.
- </p>
- <p>
- Whether you're picking an AI coding assistant, evaluating your own fine-tuned model, or just curious how the latest
- LLMs handle Git, this dashboard gives you transparent, reproducible data — not marketing claims.
- The charts below show pass rates, costs, runtimes, and a detailed benchmark matrix across all evaluated models.
- <a href="/methodology" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more about how GitBench works →</a>
- </p>
- </div>
- </div>
- </section>
+  <section class="mb-8">
+    <div class="card">
+      <div class="section-label"><span>About</span></div>
+      <div
+        class="space-y-3 text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl"
+      >
+        <p>
+          <strong class="text-[var(--color-text)]"
+            >GitBench is a benchmark suite that evaluates how well language
+            models perform on real-world Git tasks.</strong
+          >
+          Modern AI models claim coding prowess, but Git — the tool every developer
+          uses daily — is a different kind of test. It requires procedural knowledge:
+          knowing not just <em>what</em> to do, but <em>how</em> to express it as
+          precise commands.
+        </p>
+        <p>
+          Each model is tested across 204 fixtures — prompts that ask it to
+          write commands like
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >git log</code
+          >,
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >git rebase</code
+          >, or
+          <code
+            class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded"
+            >git bisect</code
+          >
+          — and its output is compared against the expected command using a fuzzy
+          similarity scorer. From basic log formatting to complex merge conflict resolution,
+          every test runs in an isolated Git repository to ensure deterministic, reproducible
+          results.
+        </p>
+        <p>
+          Whether you're picking an AI coding assistant, evaluating your own
+          fine-tuned model, or just curious how the latest LLMs handle Git, this
+          dashboard gives you transparent, reproducible data — not marketing
+          claims. The charts below show pass rates, costs, runtimes, and a
+          detailed benchmark matrix across all evaluated models.
+          <a
+            href="/methodology"
+            class="text-[var(--color-accent)] no-underline text-xs font-mono"
+            >Learn more about how GitBench works →</a
+          >
+        </p>
+      </div>
+    </div>
+  </section>
 
- <section>
- <div class="section-label">
- <span title="Pass rate — % of fixtures answered correctly. Higher is better.">Model Summary</span>
- </div>
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- Overall Git competency across all 204 fixtures. Higher bars mean the model answered more Git tasks correctly.
- Hover any bar for a breakdown by reasoning effort level.
- </p>
- <PassRateBarChart client:load />
- </section>
+  <section>
+    <div class="section-label">
+      <span
+        title="Pass rate — % of fixtures answered correctly. Higher is better."
+        >Model Summary</span
+      >
+    </div>
+    <p
+      class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4"
+    >
+      Overall Git competency across all 204 fixtures. Higher bars mean the model
+      answered more Git tasks correctly. Hover any bar for a breakdown by
+      reasoning effort level.
+    </p>
+    <PassRateBarChart client:load />
+  </section>
 
- <section class="mt-10">
- <div class="section-label">
- <span title="Quadrant comparison — compare two criteria and find the best combined tradeoff.">Quadrant Comparison</span>
- </div>
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- Pick two criteria to see where models land against both tradeoffs at once. The shaded quadrant is the optimal direction —
- for example, lower cost with higher pass rate, or lower token usage with lower cost.
- </p>
- <QuadrantComparisonChart client:load />
- </section>
+  <section class="mt-10">
+    <div class="section-label">
+      <span
+        title="Quadrant comparison — compare two criteria and find the best combined tradeoff."
+        >Quadrant Comparison</span
+      >
+    </div>
+    <p
+      class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4"
+    >
+      Pick two criteria to see where models land against both tradeoffs at once.
+      The shaded quadrant is the optimal direction — for example, lower cost
+      with higher pass rate, or lower token usage with lower cost.
+    </p>
+    <QuadrantComparisonChart client:load />
+  </section>
 
- <section class="mt-10">
- <div class="section-label">
- <span title="Cost — total USD to evaluate all 204 fixtures via OpenRouter. — = local/Ollama.">Cost per Full Run</span>
- </div>
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- Total API cost (USD) to evaluate each model across all 204 fixtures. Models showing "—" run locally via Ollama and have no tracked cost.
- <a href="/methodology#cost-data" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more →</a>
- </p>
- <CostValueChart client:load />
- </section>
+  <section class="mt-10">
+    <div class="section-label">
+      <span
+        title="Cost — total USD to evaluate all 204 fixtures via OpenRouter. — = local/Ollama."
+        >Cost per Full Run</span
+      >
+    </div>
+    <p
+      class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4"
+    >
+      Total API cost (USD) to evaluate each model across all 204 fixtures.
+      Models showing "—" run locally via Ollama and have no tracked cost.
+      <a
+        href="/methodology#cost-data"
+        class="text-[var(--color-accent)] no-underline text-xs font-mono"
+        >Learn more →</a
+      >
+    </p>
+    <CostValueChart client:load />
+  </section>
 
- <section class="mt-10">
- <div class="section-label">
- <span title="Runtime — wall-clock time for all 204 fixtures. Affected by API latency and rate limits.">Runtime (Wall Clock)</span>
- </div>
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- Total wall-clock time to run all 204 fixtures. This includes API latency and rate limiting overhead — it's not a pure model speed benchmark.
- </p>
- <RuntimeBarChart client:load />
- </section>
+  <section class="mt-10">
+    <div class="section-label">
+      <span
+        title="Runtime — wall-clock time for all 204 fixtures. Affected by API latency and rate limits."
+        >Runtime (Wall Clock)</span
+      >
+    </div>
+    <p
+      class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4"
+    >
+      Total wall-clock time to run all 204 fixtures. This includes API latency
+      and rate limiting overhead — it's not a pure model speed benchmark.
+    </p>
+    <RuntimeBarChart client:load />
+  </section>
 
- <section class="mt-10">
- <div class="section-label">
- <span title="Token usage — total input + output tokens across all 204 fixtures.">Token Usage</span>
- </div>
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- Total tokens consumed (input + output) across all 204 fixtures. A rough measure of efficiency — delivering correct answers with fewer tokens is better.
- </p>
- <TokenUsageChart client:load />
- </section>
+  <section class="mt-10">
+    <div class="section-label">
+      <span
+        title="Token usage — total input + output tokens across all 204 fixtures."
+        >Token Usage</span
+      >
+    </div>
+    <p
+      class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4"
+    >
+      Total tokens consumed (input + output) across all 204 fixtures. A rough
+      measure of efficiency — delivering correct answers with fewer tokens is
+      better.
+    </p>
+    <TokenUsageChart client:load />
+  </section>
 
- <section class="mt-10">
- <div class="section-label">
- <span title="Benchmark matrix — pass rate per model per Git skill. Green = strong, red = weak.">Benchmark Matrix</span>
- </div>
- <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4">
- The deep dive. Rows are Git task categories, columns are models. Green cells show where a model excels on a specific skill;
- red cells reveal its weaknesses. Look for patterns — some models dominate basics but struggle with complex workflows.
- <a href="/methodology#benchmark-design" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more →</a>
- </p>
- <BenchmarkHeatmap client:load />
- </section>
+  <section class="mt-10">
+    <div class="section-label">
+      <span
+        title="Benchmark matrix — pass rate per model per Git skill. Green = strong, red = weak."
+        >Benchmark Matrix</span
+      >
+    </div>
+    <p
+      class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-4"
+    >
+      The deep dive. Rows are Git task categories, columns are models. Green
+      cells show where a model excels on a specific skill; red cells reveal its
+      weaknesses. Look for patterns — some models dominate basics but struggle
+      with complex workflows.
+      <a
+        href="/methodology#benchmark-design"
+        class="text-[var(--color-accent)] no-underline text-xs font-mono"
+        >Learn more →</a
+      >
+    </p>
+    <BenchmarkHeatmap client:load />
+  </section>
 </Layout>

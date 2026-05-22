@@ -14,9 +14,12 @@ import { loadData } from "@/lib/load-data";
 import { modelGroupPath } from "@/lib/routes";
 import { getProviderColor } from "@/lib/provider-colors";
 import ProviderIcon from "@/components/ProviderIcon";
-import ModelSelector from "./ModelSelector";
-import { useSyncedModelSelection } from "./useSyncedModelSelection";
-import { buildGroupedMetricRows, runtimeMetric } from "./model-groups";
+import ModelSelector from "@/components/charts/ModelSelector";
+import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
+import {
+  buildGroupedMetricRows,
+  runtimeMetric,
+} from "@/components/charts/model-groups";
 import {
   HorizontalGroupTick,
   ProviderLegend,
@@ -24,7 +27,7 @@ import {
   paddedDomain,
   rowMap,
   tooltipStyle,
-} from "./grouped-chart-ui";
+} from "@/components/charts/grouped-chart-ui";
 
 function formatRuntime(seconds: number): string {
   if (seconds >= 60) {
@@ -51,9 +54,12 @@ export default function RuntimeBarChart() {
 
   const chartData = useMemo(() => {
     if (!data) return [];
-    return buildGroupedMetricRows(data, selectedGroups, runtimeMetric, "min").sort(
-      (a, b) => a.representativeValue - b.representativeValue,
-    );
+    return buildGroupedMetricRows(
+      data,
+      selectedGroups,
+      runtimeMetric,
+      "min",
+    ).sort((a, b) => a.representativeValue - b.representativeValue);
   }, [data, selectedGroups]);
 
   const rowsById = useMemo(() => rowMap(chartData), [chartData]);
@@ -80,18 +86,28 @@ export default function RuntimeBarChart() {
         </div>
       ) : (
         <>
-          <div className="card" title="Total wall-clock time to run all 204 fixtures. Affected by API latency and rate limits. Not a pure speed benchmark.">
+          <div
+            className="card"
+            title="Total wall-clock time to run all 204 fixtures. Affected by API latency and rate limits. Not a pure speed benchmark."
+          >
             <ResponsiveContainer width="100%" height={350}>
               <BarChart
                 data={chartData}
                 layout="vertical"
                 margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
               >
-                <CartesianGrid horizontal={false} stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid
+                  horizontal={false}
+                  stroke="rgba(255,255,255,0.04)"
+                />
                 <XAxis
                   type="number"
                   domain={xDomain}
-                  tick={{ fill: "var(--text-dim)", fontSize: 11, fontFamily: "var(--font-mono)" }}
+                  tick={{
+                    fill: "var(--text-dim)",
+                    fontSize: 11,
+                    fontFamily: "var(--font-mono)",
+                  }}
                   tickFormatter={formatAxis}
                   axisLine={false}
                   tickLine={false}
@@ -99,7 +115,9 @@ export default function RuntimeBarChart() {
                 <YAxis
                   type="category"
                   dataKey="id"
-                  tick={(props: any) => <HorizontalGroupTick {...props} rowMap={rowsById} />}
+                  tick={(props: any) => (
+                    <HorizontalGroupTick {...props} rowMap={rowsById} />
+                  )}
                   axisLine={false}
                   tickLine={false}
                   interval={0}
@@ -108,16 +126,25 @@ export default function RuntimeBarChart() {
                 <Bar
                   dataKey="range"
                   radius={[4, 4, 4, 4]}
-                  barSize={Math.max(12, Math.min(28, 300 / Math.max(1, chartData.length)))}
+                  barSize={Math.max(
+                    12,
+                    Math.min(28, 300 / Math.max(1, chartData.length)),
+                  )}
                   cursor="pointer"
                   onClick={(entry: any) => {
                     if (entry?.provider && entry?.baseModel) {
-                      window.location.href = modelGroupPath(entry.provider, entry.baseModel);
+                      window.location.href = modelGroupPath(
+                        entry.provider,
+                        entry.baseModel,
+                      );
                     }
                   }}
                 >
                   {chartData.map((entry) => (
-                    <Cell key={entry.id} fill={getProviderColor(entry.provider)} />
+                    <Cell
+                      key={entry.id}
+                      fill={getProviderColor(entry.provider)}
+                    />
                   ))}
                 </Bar>
                 <Tooltip
@@ -141,16 +168,36 @@ export default function RuntimeBarChart() {
                           {entry.provider}/{entry.baseModel}
                         </div>
                         {entry.efforts.map((effort) => (
-                          <div key={effort.modelName} style={{ color: "var(--text-dim)" }}>
-                            {effort.reasoningLevel ?? "default"}: {formatRuntime(effort.value)}
-                            {effort.avgMs ? `, avg ${(effort.avgMs / 1000).toFixed(1)}s` : ""}
-                            {effort.modelName === entry.representativeEffort.modelName ? " (fastest)" : ""}
+                          <div
+                            key={effort.modelName}
+                            style={{ color: "var(--text-dim)" }}
+                          >
+                            {effort.reasoningLevel ?? "default"}:{" "}
+                            {formatRuntime(effort.value)}
+                            {effort.avgMs
+                              ? `, avg ${(effort.avgMs / 1000).toFixed(1)}s`
+                              : ""}
+                            {effort.modelName ===
+                            entry.representativeEffort.modelName
+                              ? " (fastest)"
+                              : ""}
                           </div>
                         ))}
-                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "6px 0" }} />
-                        <div style={{ color: "var(--text-dim)", fontSize: 10, lineHeight: 1.4 }}>
-                          Wall-clock time for all 204 fixtures.
-                          Affected by API latency and rate limits.
+                        <div
+                          style={{
+                            borderTop: "1px solid rgba(255,255,255,0.06)",
+                            margin: "6px 0",
+                          }}
+                        />
+                        <div
+                          style={{
+                            color: "var(--text-dim)",
+                            fontSize: 10,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          Wall-clock time for all 204 fixtures. Affected by API
+                          latency and rate limits.
                         </div>
                       </div>
                     );

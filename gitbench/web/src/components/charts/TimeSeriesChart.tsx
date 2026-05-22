@@ -1,19 +1,39 @@
-import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import type { GitBenchData, RunMeta } from '@/lib/types';
-import { loadData } from '@/lib/load-data';
-import { modelsWithRepeatRuns } from '@/lib/history';
-import ModelSelector from './ModelSelector';
-import { expandGroupSelection, groupIdsForData } from './model-groups';
+import { useState, useEffect } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+import type { GitBenchData, RunMeta } from "@/lib/types";
+import { loadData } from "@/lib/load-data";
+import { modelsWithRepeatRuns } from "@/lib/history";
+import ModelSelector from "@/components/charts/ModelSelector";
+import {
+  expandGroupSelection,
+  groupIdsForData,
+} from "@/components/charts/model-groups";
 
-const COLORS = ['#B657FF', '#196FFF', '#01B7A1', '#EC7FFF', '#01FEE0', '#C170FF', '#6AB8FF', '#FEDC00'];
+const COLORS = [
+  "#B657FF",
+  "#196FFF",
+  "#01B7A1",
+  "#EC7FFF",
+  "#01FEE0",
+  "#C170FF",
+  "#6AB8FF",
+  "#FEDC00",
+];
 
 export default function TimeSeriesChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
 
   useEffect(() => {
-    loadData().then(d => {
+    loadData().then((d) => {
       setData(d);
       setSelectedGroups(groupIdsForData(d));
     });
@@ -22,7 +42,9 @@ export default function TimeSeriesChart() {
   if (!data) return <div>Loading...</div>;
 
   const repeatModels = modelsWithRepeatRuns(data.runs_meta);
-  const selectedModels = expandGroupSelection(selectedGroups, data).filter(model => repeatModels.has(model));
+  const selectedModels = expandGroupSelection(selectedGroups, data).filter(
+    (model) => repeatModels.has(model),
+  );
 
   const runsByModel: Record<string, RunMeta[]> = {};
   for (const run of data.runs_meta) {
@@ -34,18 +56,18 @@ export default function TimeSeriesChart() {
   const dateSet = new Set<string>();
   for (const runs of Object.values(runsByModel)) {
     for (const r of runs) {
-      const date = r.timestamp.split('T')[0];
+      const date = r.timestamp.split("T")[0];
       dateSet.add(date);
     }
   }
 
   const sortedDates = Array.from(dateSet).sort();
 
-  const chartData = sortedDates.map(date => {
+  const chartData = sortedDates.map((date) => {
     const point: Record<string, string | number> = { date };
     for (const model of selectedModels) {
       const runs = runsByModel[model] || [];
-      const runOnDate = runs.find(r => r.timestamp.startsWith(date));
+      const runOnDate = runs.find((r) => r.timestamp.startsWith(date));
       if (runOnDate) {
         const summary = data.model_summaries[model];
         point[model] = summary ? Math.round(summary.pass_at_k * 1000) / 10 : 0;
@@ -57,24 +79,35 @@ export default function TimeSeriesChart() {
   return (
     <div>
       <div className="max-w-xs ml-auto w-full mb-3">
-        <ModelSelector
-          value={selectedGroups}
-          onChange={setSelectedGroups}
-        />
+        <ModelSelector value={selectedGroups} onChange={setSelectedGroups} />
       </div>
-      <div className="card" title="Pass rate over calendar time. Each point = a benchmark run on that date. Changes may reflect model updates or benchmark suite changes.">
+      <div
+        className="card"
+        title="Pass rate over calendar time. Each point = a benchmark run on that date. Changes may reflect model updates or benchmark suite changes."
+      >
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+          <LineChart
+            data={chartData}
+            margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+          >
             <CartesianGrid stroke="rgba(255,255,255,0.04)" />
             <XAxis
               dataKey="date"
-              tick={{ fill: 'var(--text-dim)', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+              tick={{
+                fill: "var(--text-dim)",
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+              }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               domain={[0, 100]}
-              tick={{ fill: 'var(--text-dim)', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+              tick={{
+                fill: "var(--text-dim)",
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+              }}
               tickFormatter={(v: number) => `${v}%`}
               axisLine={false}
               tickLine={false}
@@ -83,26 +116,49 @@ export default function TimeSeriesChart() {
               content={({ active, payload, label }) => {
                 if (!active || !payload || !payload.length) return null;
                 return (
-                  <div style={{
-                    background: 'var(--card)',
-                    border: '2px solid var(--border)',
-                    borderRadius: '10px',
-                    padding: '8px 12px',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.75rem',
-                    color: 'var(--text)',
-                  }}>
-                    <div style={{ marginBottom: 4, color: 'var(--text-dim)', fontSize: '0.7rem' }}>
+                  <div
+                    style={{
+                      background: "var(--card)",
+                      border: "2px solid var(--border)",
+                      borderRadius: "10px",
+                      padding: "8px 12px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.75rem",
+                      color: "var(--text)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        marginBottom: 4,
+                        color: "var(--text-dim)",
+                        fontSize: "0.7rem",
+                      }}
+                    >
                       {label}
                     </div>
                     {payload.map((p: any) => (
-                      <div key={p.dataKey} style={{ color: p.color, marginBottom: 1 }}>
+                      <div
+                        key={p.dataKey}
+                        style={{ color: p.color, marginBottom: 1 }}
+                      >
                         {p.dataKey}: {p.value}%
                       </div>
                     ))}
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '6px 0' }} />
-                    <div style={{ color: 'var(--text-dim)', fontSize: 10, lineHeight: 1.4 }}>
-                      Pass rate on this date. Changes may reflect<br/>
+                    <div
+                      style={{
+                        borderTop: "1px solid rgba(255,255,255,0.06)",
+                        margin: "6px 0",
+                      }}
+                    />
+                    <div
+                      style={{
+                        color: "var(--text-dim)",
+                        fontSize: 10,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      Pass rate on this date. Changes may reflect
+                      <br />
                       model updates or benchmark suite changes.
                     </div>
                   </div>

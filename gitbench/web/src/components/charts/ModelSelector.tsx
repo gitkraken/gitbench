@@ -4,7 +4,11 @@ import { loadData } from "@/lib/load-data";
 import { Badge } from "@/components/ui/badge";
 import { MultiSelect } from "@/components/ui/multi-select";
 import ProviderIcon from "@/components/ProviderIcon";
-import { deriveModelGroups, sanitizeGroupSelection, type ModelGroup } from "./model-groups";
+import {
+  deriveModelGroups,
+  sanitizeGroupSelection,
+  type ModelGroup,
+} from "@/components/charts/model-groups";
 
 interface ModelSelectorProps {
   initialSelected?: string[];
@@ -16,8 +20,10 @@ const STORAGE_KEY = "gitbench-model-selection";
 const EVENT_NAME = "model-selection-changed";
 
 function getPassColor(passRate: number): string {
-  if (passRate >= 0.8) return "text-[var(--color-pass)] bg-[var(--color-pass-bg)] border-[var(--color-pass-border)]";
-  if (passRate >= 0.5) return "text-[var(--color-warn)] bg-[var(--color-warn-bg)] border-[var(--color-warn-border)]";
+  if (passRate >= 0.8)
+    return "text-[var(--color-pass)] bg-[var(--color-pass-bg)] border-[var(--color-pass-border)]";
+  if (passRate >= 0.5)
+    return "text-[var(--color-warn)] bg-[var(--color-warn-bg)] border-[var(--color-warn-border)]";
   return "text-[var(--color-fail)] bg-[var(--color-fail-bg)] border-[var(--color-fail-border)]";
 }
 
@@ -51,7 +57,11 @@ function passRange(group: ModelGroup): { label: string; colorValue: number } {
   };
 }
 
-export default function ModelSelector({ initialSelected, value, onChange }: ModelSelectorProps) {
+export default function ModelSelector({
+  initialSelected,
+  value,
+  onChange,
+}: ModelSelectorProps) {
   const [data, setData] = useState<GitBenchData | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const groupsRef = useRef<ModelGroup[]>([]);
@@ -68,7 +78,9 @@ export default function ModelSelector({ initialSelected, value, onChange }: Mode
       const next = initialSelected
         ? sanitizeGroupSelection(initialSelected, groups)
         : readStoredSelection(groups);
-      setSelected(next && next.length > 0 ? next : groups.map((group) => group.id));
+      setSelected(
+        next && next.length > 0 ? next : groups.map((group) => group.id),
+      );
     });
   }, []);
 
@@ -87,7 +99,11 @@ export default function ModelSelector({ initialSelected, value, onChange }: Mode
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail;
-      if (!Array.isArray(detail) || !detail.every((item) => typeof item === "string")) return;
+      if (
+        !Array.isArray(detail) ||
+        !detail.every((item) => typeof item === "string")
+      )
+        return;
       const next = sanitizeGroupSelection(detail, groupsRef.current);
       if (next.length !== detail.length && groupsRef.current.length > 0) return;
       if (!isControlled) {
@@ -154,12 +170,15 @@ export default function ModelSelector({ initialSelected, value, onChange }: Mode
         return (
           <span className="ml-2 inline-flex shrink-0 items-center gap-1.5">
             <Badge
-              className={`rounded-full border px-1.5 py-px font-mono text-[0.6rem] ${getPassColor(range.colorValue)}`}
+              className={`rounded-full border px-1.5 py-px font-mono text-[0.6rem] ${getPassColor(
+                range.colorValue,
+              )}`}
             >
               {range.label}
             </Badge>
             <span className="font-mono text-[0.6rem] text-muted-foreground">
-              {group.efforts.length} {group.efforts.length === 1 ? "effort" : "efforts"}
+              {group.efforts.length}{" "}
+              {group.efforts.length === 1 ? "effort" : "efforts"}
             </span>
           </span>
         );

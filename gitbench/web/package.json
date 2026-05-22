@@ -9,7 +9,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "fmt": "prettier src --write"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.4",

@@ -5,7 +5,7 @@ import {
   expandGroupSelection,
   sanitizeGroupSelection,
   type ModelGroup,
-} from "./model-groups";
+} from "@/components/charts/model-groups";
 
 const STORAGE_KEY = "gitbench-model-selection";
 const EVENT_NAME = "model-selection-changed";
@@ -52,7 +52,8 @@ export function useSyncedModelSelection(data: GitBenchData | null) {
     }
 
     const stored = readStoredSelection(groups);
-    const next = stored && stored.length > 0 ? stored : groups.map((group) => group.id);
+    const next =
+      stored && stored.length > 0 ? stored : groups.map((group) => group.id);
     selectedRef.current = next;
     setSelectedGroupsState(next);
     writeSelection(next);
