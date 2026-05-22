@@ -26,34 +26,19 @@ const passColor = passed
       <a href={modelPath(modelName)} class="font-display text-sm font-bold text-[var(--color-text)] no-underline">
         {modelName}
       </a>
-      <span class="has-tooltip" data-tooltip={`${passed ? 'PASS' : 'FAIL'} — the model's output ${passed ? 'was similar enough to' : 'was too different from'} the expected answer.
-
-Threshold is typically 80-90% depending on the fixture.`} title={`${passed ? 'PASS' : 'FAIL'}: output ${passed ? 'met' : 'failed to meet'} similarity threshold.`}>
-        <Badge variant="outline" className={`font-mono text-[0.6rem] ${passColor}`}>
-          {passed ? 'PASS' : 'FAIL'}
-        </Badge>
-      </span>
-      <span class="font-mono text-xs font-semibold text-[var(--color-text)] has-tooltip" data-tooltip={`Textual similarity between this model's output and the correct answer.
-
-${similarity}% means the output was ${similarity >= 90 ? 'nearly identical to' : similarity >= 70 ? 'close to' : 'quite different from'} the expected answer.`} title="Similarity to correct answer. 100% = exact match.">
+      <Badge variant="outline" className={`font-mono text-[0.6rem] ${passColor}`}>
+        {passed ? 'PASS' : 'FAIL'}
+      </Badge>
+      <span class="font-mono text-xs font-semibold text-[var(--color-text)]">
         {similarity}%
       </span>
       {inputTokens != null && outputTokens != null && (
-        <span class="font-mono text-[0.6rem] px-1.5 py-0.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded text-[var(--color-text-dim)] has-tooltip" data-tooltip={`Tokens consumed for this fixture.
-
-Input: ${inputTokens} (prompt sent to model).
-Output: ${outputTokens} (model's response).`} title="Tokens: input (prompt) → output (response).">
+        <span class="font-mono text-[0.6rem] px-1.5 py-0.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded text-[var(--color-text-dim)]">
           {inputTokens}→{outputTokens}
         </span>
       )}
     </div>
-    <Button
-      variant="ghost"
-      size="xs"
-      class="font-mono text-[0.6rem]"
-      data-text={output}
-      onclick="navigator.clipboard.writeText(this.getAttribute('data-text') || '')"
-    >
+    <Button variant="ghost" size="xs" class="font-mono text-[0.6rem]" data-text={output} onclick="navigator.clipboard.writeText(this.getAttribute('data-text') || '')">
       <Copy class="size-3" />
       Copy
     </Button>

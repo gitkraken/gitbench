@@ -29,19 +29,15 @@ const tagsStr = tags.join(',');
     <span class="font-mono text-xs text-[var(--color-text-mid)] font-medium">
       {fixtureId}
     </span>
-    <span class="has-tooltip" data-tooltip={`${passed ? 'PASS' : 'FAIL'} — the model's answer ${passed ? 'met' : 'failed to meet'} the similarity threshold (typically 80-90%).`} title={`${passed ? 'PASS: met' : 'FAIL: below'} similarity threshold.`}>
-      <Badge variant="outline" className={`font-mono text-[0.6rem] ${passColor}`}>
-        {passed ? 'PASS' : 'FAIL'}
-      </Badge>
-    </span>
+    <Badge variant="outline" className={`font-mono text-[0.6rem] ${passColor}`}>
+      {passed ? 'PASS' : 'FAIL'}
+    </Badge>
   </div>
   <div class="flex justify-between items-center">
     <span class="font-mono text-[0.62rem] text-[var(--color-text-dim)]">
       {benchmark}
     </span>
-    <span class="font-mono text-xs font-semibold text-[var(--color-text)] has-tooltip" data-tooltip={`Text similarity between the model's output and the correct answer.
-
-${similarity}% similarity. ${passed ? 'Above the pass threshold.' : 'Below the pass threshold.'}`} title={`${similarity}% similarity to expected answer.`}>
+    <span class="font-mono text-xs font-semibold text-[var(--color-text)]">
       {similarity}%
     </span>
   </div>

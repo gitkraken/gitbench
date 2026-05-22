@@ -3,29 +3,29 @@ import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
 
 interface Props {
-  text: string;
+ text: string;
 }
 
 const { text } = Astro.props;
 ---
 
 <div class="mb-6">
-  <div class="flex justify-between items-center mb-2.5">
-    <span class="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--color-accent)] opacity-75 has-tooltip" data-tooltip="The exact text sent to the model. Models receive only this prompt — no additional context or instructions." title="The exact text sent to the model.">
-      Prompt
-    </span>
-    <Button
-      variant="ghost"
-      size="xs"
-      class="font-mono text-[0.6rem]"
-      data-text={text}
-      onclick="navigator.clipboard.writeText(this.getAttribute('data-text') || '')"
-    >
-      <Copy class="size-3" />
-      Copy
-    </Button>
-  </div>
-  <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 font-mono text-xs text-[var(--color-text-mid)] whitespace-pre-wrap break-words leading-relaxed max-h-[500px] overflow-y-auto">
-    {text}
-  </div>
+ <div class="flex justify-between items-center mb-2.5">
+ <span class="font-mono text-[0.65rem] uppercase tracking-wider text-[var(--color-accent)] opacity-75 " title="The exact text sent to the model.">
+ Prompt
+ </span>
+ <Button
+ variant="ghost"
+ size="xs"
+ class="font-mono text-[0.6rem]"
+ data-text={text}
+ onclick="navigator.clipboard.writeText(this.getAttribute('data-text') || '')"
+ >
+ <Copy class="size-3" />
+ Copy
+ </Button>
+ </div>
+ <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 font-mono text-xs text-[var(--color-text-mid)] whitespace-pre-wrap break-words leading-relaxed max-h-[500px] overflow-y-auto">
+ {text}
+ </div>
 </div>

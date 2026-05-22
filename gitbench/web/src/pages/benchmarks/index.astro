@@ -7,51 +7,45 @@ const data = loadDataSync();
 ---
 
 <Layout title="Benchmarks">
-  <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-6">
-    GitBench covers <strong class="text-[var(--color-text)]">17 benchmark categories</strong>, each with 12 fixtures testing a different Git skill —
-    from basic commands like <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git log</code>
-    to complex workflows like <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git rebase</code> and
-    <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git bisect</code>.
-    The <span class="has-tooltip" data-tooltip="The highest pass rate any evaluated model achieved on this benchmark.
+ <p class="text-sm text-[var(--color-text-mid)] leading-relaxed max-w-3xl mb-6">
+ GitBench covers <strong class="text-[var(--color-text)]">17 benchmark categories</strong>, each with 12 fixtures testing a different Git skill —
+ from basic commands like <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git log</code>
+ to complex workflows like <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git rebase</code> and
+ <code class="font-mono text-[0.75rem] bg-[var(--color-surface)] px-1 py-0.5 rounded">git bisect</code>.
+ The <span title="Best pass rate on this benchmark. Click for leaderboard.">Best %</span>
+ badge shows the top-performing model's score on each skill — click any card to see the full leaderboard.
+ <a href="/methodology#benchmark-design" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more →</a>
+ </p>
+ <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
+ {data.benchmarks.map(bench => {
+ // Collect best pass rate across models
+ let bestRate = 0;
+ for (const m of data.models) {
+ const cell = data.matrix[m.name]?.[bench];
+ if (cell && cell.pass_at_k > bestRate) bestRate = cell.pass_at_k;
+ }
+ const bestPct = Math.round(bestRate * 1000) / 10;
 
-Click the card to see the full leaderboard for this skill." title="Best pass rate on this benchmark. Click for leaderboard.">Best %</span>
-    badge shows the top-performing model's score on each skill — click any card to see the full leaderboard.
-    <a href="/methodology#benchmark-design" class="text-[var(--color-accent)] no-underline text-xs font-mono">Learn more →</a>
-  </p>
-  <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
-    {data.benchmarks.map(bench => {
-      // Collect best pass rate across models
-      let bestRate = 0;
-      for (const m of data.models) {
-        const cell = data.matrix[m.name]?.[bench];
-        if (cell && cell.pass_at_k > bestRate) bestRate = cell.pass_at_k;
-      }
-      const bestPct = Math.round(bestRate * 1000) / 10;
+ // Count fixtures
+ const fixtures = Object.values(data.fixture_index).filter(fi => fi.benchmark === bench);
 
-      // Count fixtures
-      const fixtures = Object.values(data.fixture_index).filter(fi => fi.benchmark === bench);
-
-      return (
-        <a href={`/benchmarks/${bench}`} class="no-underline">
-          <div class="card p-6 cursor-pointer transition-colors hover:border-[var(--color-border-accent)]">
-            <div class="font-mono text-sm font-semibold text-[var(--color-text)] mb-1.5">
-              {bench}
-            </div>
-            <div class="flex gap-2 items-center flex-wrap">
-              <span class="has-tooltip" data-tooltip="Highest pass rate any model achieved on this benchmark.
-
-Click to see which models lead this category." title="Best pass rate on this benchmark.">
-                <Badge variant="outline" class="font-mono text-[0.68rem] border-[var(--color-pass-border)] text-[var(--color-pass)] bg-[var(--color-pass-bg)]">Best: {bestPct}%</Badge>
-              </span>
-              <span class="has-tooltip font-mono text-[0.65rem] text-[var(--color-text-dim)]" data-tooltip="Each benchmark has 12 fixtures — 204 total across all 17 categories.
-
-Every fixture tests a different scenario within this skill domain." title="12 test fixtures in this benchmark category.">
-                {fixtures.length} fixtures
-              </span>
-            </div>
-          </div>
-        </a>
-      );
-    })}
-  </div>
+ return (
+ <a href={`/benchmarks/${bench}`} class="no-underline">
+ <div class="card p-6 cursor-pointer transition-colors hover:border-[var(--color-border-accent)]">
+ <div class="font-mono text-sm font-semibold text-[var(--color-text)] mb-1.5">
+ {bench}
+ </div>
+ <div class="flex gap-2 items-center flex-wrap">
+ <span title="Best pass rate on this benchmark.">
+ <Badge variant="outline" class="font-mono text-[0.68rem] border-[var(--color-pass-border)] text-[var(--color-pass)] bg-[var(--color-pass-bg)]">Best: {bestPct}%</Badge>
+ </span>
+ <span class="font-mono text-[0.65rem] text-[var(--color-text-dim)]" title="12 test fixtures in this benchmark category.">
+ {fixtures.length} fixtures
+ </span>
+ </div>
+ </div>
+ </a>
+ );
+ })}
+ </div>
 </Layout>
