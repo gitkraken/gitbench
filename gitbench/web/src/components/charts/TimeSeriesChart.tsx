@@ -1,23 +1,26 @@
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import type { GitBenchData, RunMeta } from '@/lib/types';
 import { loadData } from '@/lib/load-data';
 import ModelSelector from './ModelSelector';
+import { expandGroupSelection, groupIdsForData } from './model-groups';
 
 const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#ec4899', '#0ea5e9', '#84cc16'];
 
 export default function TimeSeriesChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
-  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
 
   useEffect(() => {
     loadData().then(d => {
       setData(d);
-      setSelectedModels(d.models.map(m => m.name));
+      setSelectedGroups(groupIdsForData(d));
     });
   }, []);
 
   if (!data) return <div>Loading...</div>;
+
+  const selectedModels = expandGroupSelection(selectedGroups, data);
 
   const runsByModel: Record<string, RunMeta[]> = {};
   for (const run of data.runs_meta) {
@@ -52,8 +55,8 @@ export default function TimeSeriesChart() {
     <div>
       <div className="max-w-xs ml-auto w-full mb-3">
         <ModelSelector
-          initialSelected={selectedModels}
-          onChange={setSelectedModels}
+          value={selectedGroups}
+          onChange={setSelectedGroups}
         />
       </div>
       <div className="card" title="Pass rate over calendar time. Each point = a benchmark run on that date. Changes may reflect model updates or benchmark suite changes.">
@@ -102,9 +105,6 @@ export default function TimeSeriesChart() {
                   </div>
                 );
               }}
-            />
-            <Legend
-              wrapperStyle={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-dim)' }}
             />
             {selectedModels.map((model, i) => (
               <Line
