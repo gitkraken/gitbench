@@ -45,20 +45,15 @@ for (const fid of fixtureKeys) {
   </div>
 
   <section class="mb-10">
-    <div class="section-label"><span>Model Leaderboard</span></div>
-    <p
-      class="text-sm text-(--color-text-mid) leading-relaxed max-w-3xl mb-4"
-    >
-      Models ranked by pass rate on <strong class="text-(--color-text)"
-        >{benchName}</strong
-      > specifically. A model that dominates overall might rank lower here — this
-      reveals each model's true strengths and weaknesses per skill.
-      <a
-        href="/compare"
-        class="text-accent no-underline text-xs font-mono"
-        >Compare models side-by-side →</a
-      >
-    </p>
+    <div class="info-tip">
+      <div class="section-label"><span>Model Leaderboard</span></div>
+      <p class="info-blurb">
+        Models ranked by pass rate on <strong class="text-(--color-text)"
+          >{benchName}</strong
+        >. A model that dominates overall might rank lower here. That's
+        the point.
+      </p>
+    </div>
     <PassRateBarChart client:load />
   </section>
 
@@ -91,33 +86,12 @@ for (const fid of fixtureKeys) {
 
   <section>
     <div class="section-label"><span>Per-Fixture Comparison</span></div>
-    <p
-      class="text-sm text-(--color-text-mid) leading-relaxed max-w-3xl mb-4"
-    >
-      Each row is one test fixture, each column is one model. Percentages show
-      how similar the model's output was to the correct answer.
-      <span
-        title="Green = passed, red = failed. Click fixture ID for full details."
-        >Green cells passed, red cells failed.</span
-      >
-      Click any fixture to drill into the full prompt and all model responses.
-    </p>
     <div class="card overflow-x-auto p-5">
       <table class="data-table">
         <thead>
           <tr>
-            <th
-              ><span
-                title="Click to see the full fixture prompt and all model responses."
-                >Fixture</span
-              ></th
-            >
-            <th
-              ><span
-                title="Fixture complexity: trivial/easy/medium/hard/expert."
-                >Difficulty</span
-              ></th
-            >
+            <th>Fixture</th>
+            <th>Difficulty</th>
             {data.models.map((m) => <th>{m.name}</th>)}
           </tr>
         </thead>
@@ -137,9 +111,7 @@ for (const fid of fixtureKeys) {
                     </a>
                   </td>
                   <td class="font-mono text-[0.68rem] text-(--color-text-dim)">
-                    <span title="Fixture complexity: {fi?.difficulty || 'unknown'}.">
-                      {fi?.difficulty || "—"}
-                    </span>
+                    {fi?.difficulty || "—"}
                   </td>
                   {data.models.map((m) => {
                     const results = data.fixtures[m.name]?.[benchName] || [];

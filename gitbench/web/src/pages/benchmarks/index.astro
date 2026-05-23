@@ -7,35 +7,6 @@ const data = loadDataSync();
 ---
 
 <Layout title="Benchmarks">
-  <p
-    class="text-sm text-(--color-text-mid) leading-relaxed max-w-3xl mb-6"
-  >
-    GitBench covers <strong class="text-(--color-text)"
-      >17 benchmark categories</strong
-    >, each with 12 fixtures testing a different Git skill — from basic commands
-    like <code
-      class="font-mono text-[0.75rem] bg-(--color-surface) px-1 py-0.5 rounded"
-      >git log</code
-    >
-    to complex workflows like <code
-      class="font-mono text-[0.75rem] bg-(--color-surface) px-1 py-0.5 rounded"
-      >git rebase</code
-    > and
-    <code
-      class="font-mono text-[0.75rem] bg-(--color-surface) px-1 py-0.5 rounded"
-      >git bisect</code
-    >. The <span
-      title="Best pass rate on this benchmark. Click for leaderboard."
-      >Best %</span
-    >
-    badge shows the top-performing model's score on each skill — click any card to
-    see the full leaderboard.
-    <a
-      href="/methodology#benchmark-design"
-      class="text-accent no-underline text-xs font-mono"
-      >Learn more →</a
-    >
-  </p>
   <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
     {
       data.benchmarks.map((bench) => {
@@ -69,7 +40,6 @@ const data = loadDataSync();
                 </span>
                 <span
                   class="font-mono text-[0.65rem] text-(--color-text-dim)"
-                  title="12 test fixtures in this benchmark category."
                 >
                   {fixtures.length} fixtures
                 </span>

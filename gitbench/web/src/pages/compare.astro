@@ -4,24 +4,13 @@ import ComparePage from "@/components/ComparePage";
 ---
 
 <Layout title="Compare">
-  <p
-    class="text-sm text-(--color-text-mid) leading-relaxed max-w-3xl mb-6"
-  >
-    Select 2+ models to compare side-by-side. The <strong
-      class="text-(--color-text)">Overall Pass Rates</strong
-    > chart shows which model wins across all 204 fixtures.
-    <strong class="text-(--color-text)">By Benchmark</strong> reveals where each
-    model shines or struggles. The
-    <span
-      title="Head-to-head per-fixture comparison. Green = both passed, red = both failed, orange = disagreement."
-      >head-to-head scatter</span
-    >
-    shows which fixtures each model got right that the other missed.
-    <a
-      href="/methodology#passk-metric"
-      class="text-accent no-underline text-xs font-mono"
-      >Learn more →</a
-    >
-  </p>
+  <div class="info-tip">
+    <div class="section-label"><span>About</span></div>
+    <p class="info-blurb">
+      Pick 2+ models to compare side by side. The head-to-head scatter shows
+      which fixtures each model aced and the other bombed. Disagreement is
+      where you learn.
+    </p>
+  </div>
   <ComparePage client:load />
 </Layout>
