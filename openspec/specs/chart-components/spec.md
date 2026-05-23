@@ -208,3 +208,21 @@ The ScatterPlot and QuadrantComparisonChart React components SHALL NOT display a
 - **WHEN** hovering a point in QuadrantComparisonChart
 - **THEN** no separator line or explanatory footnote appears in the tooltip
 
+### Requirement: Chart wrapper elements have title attributes
+Each chart component's outermost rendered element SHALL include a `title` attribute with a brief description of what the chart displays, serving as a fallback for users who cannot interact with the Recharts tooltips.
+
+#### Scenario: Chart has title attribute
+- **WHEN** inspecting a rendered chart component (e.g., PassRateBarChart wrapper div)
+- **THEN** it has a `title` attribute with descriptive text like "Pass rate percentages for each model across all 204 Git fixtures"
+
+### Requirement: BenchmarkHeatmap cells have enhanced title attributes
+The BenchmarkHeatmap React component SHALL render `<td>` elements with `title` attributes containing descriptive cell information. Each cell title SHALL include the model name, benchmark name, pass rate percentage, passed/total counts, and a qualitative descriptor (Strong/Moderate/Weak based on pass rate thresholds: ≥80% Strong, ≥50% Moderate, <50% Weak).
+
+#### Scenario: Heatmap cell title shows full context
+- **WHEN** a user hovers over a heatmap cell for model "openai/o3-mini#high" on benchmark "rebase" with 91.7% and 11/12 passed
+- **THEN** the `title` attribute shows: "openai/o3-mini#high on rebase: 91.7% (11/12 passed) — Strong"
+
+#### Scenario: Heatmap cell title for missing data
+- **WHEN** a cell has no data for a model×benchmark combination
+- **THEN** the `title` attribute shows "No data available for [model] on [benchmark]"
+
