@@ -7,6 +7,8 @@ import {
   GitCompare,
   History,
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { loadDataSync } from "@/lib/data";
 import { hasRepeatModelRuns } from "@/lib/history";
@@ -32,6 +34,8 @@ const links = [
 ---
 
 <aside class="app-sidebar">
+  <input type="checkbox" id="sidebar-collapse-toggle" class="sidebar-collapse-toggle" />
+  <input type="checkbox" id="menu-toggle" class="menu-toggle" />
   <div class="sidebar-header">
     <div class="sidebar-brand-lockup">
       <img
@@ -46,6 +50,11 @@ const links = [
         <span class="sidebar-product-subtitle">by GitKraken</span>
       </div>
     </div>
+    <label for="menu-toggle" class="menu-btn" aria-label="Toggle menu">
+      <span class="menu-btn-bar"></span>
+      <span class="menu-btn-bar"></span>
+      <span class="menu-btn-bar"></span>
+    </label>
   </div>
   <nav class="sidebar-nav">
     {
@@ -60,4 +69,8 @@ const links = [
       ))
     }
   </nav>
+  <label for="sidebar-collapse-toggle" class="sidebar-collapse-btn" title="Toggle sidebar" aria-label="Toggle sidebar">
+    <span class="collapse-icon-expanded"><ChevronLeft size={16} /></span>
+    <span class="collapse-icon-collapsed"><ChevronRight size={16} /></span>
+  </label>
 </aside>

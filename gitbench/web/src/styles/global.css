@@ -181,17 +181,17 @@ body::before {
 
 .sidebar-logo {
   display: block;
-  width: 44px;
-  min-width: 25px;
-  height: auto;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
+  max-width: none;
 }
 
 .sidebar-product {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0;
 }
 
 .sidebar-product-title {
@@ -240,10 +240,64 @@ body::before {
   background: var(--accent-glow);
 }
 
+.sidebar-link span {
+  line-height: 1;
+}
+
 .sidebar-link .icon {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+}
+
+/* ── Sidebar Toggle Controls ── */
+.sidebar-collapse-toggle,
+.menu-toggle {
+  display: none;
+}
+
+/* Hamburger button (mobile) */
+.menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.menu-btn-bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--text-dim);
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* Collapse button (tablet) */
+.sidebar-collapse-btn {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 0.6rem;
+  border-top: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.sidebar-collapse-btn:hover {
+  color: var(--text);
+}
+
+.collapse-icon-collapsed {
+  display: none;
 }
 
 /* ── Header ── */
@@ -476,9 +530,12 @@ select.brand-select option {
 }
 
 /* ── Responsive ── */
+/* Tablet: 601–960px */
 @media (max-width: 960px) {
   .app-sidebar {
     width: 180px;
+    display: flex;
+    flex-direction: column;
   }
 
   .app-main {
@@ -490,7 +547,7 @@ select.brand-select option {
   }
 
   .sidebar-logo {
-    width: 40px;
+    width: 32px;
   }
 
   .sidebar-brand-lockup {
@@ -508,7 +565,7 @@ select.brand-select option {
   }
 
   .sidebar-link {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.3rem;
     font-size: 0.78rem;
   }
 
@@ -518,8 +575,44 @@ select.brand-select option {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
+
+  /* Collapse toggle visible */
+  .sidebar-collapse-btn {
+    display: flex;
+  }
+
+  /* Collapsed state */
+  .app-layout:has(.sidebar-collapse-toggle:checked) .app-sidebar {
+    width: 64px;
+  }
+
+  .app-layout:has(.sidebar-collapse-toggle:checked) .app-main {
+    margin-left: 64px;
+  }
+
+  .sidebar-collapse-toggle:checked ~ .sidebar-nav .sidebar-link span {
+    display: none;
+  }
+
+  .sidebar-collapse-toggle:checked ~ .sidebar-header .sidebar-product {
+    display: none;
+  }
+
+  .sidebar-collapse-toggle:checked ~ .sidebar-header .sidebar-brand-lockup {
+    min-height: 2.025rem;
+  }
+
+  /* Chevron icon swap */
+  .sidebar-collapse-toggle:checked ~ .sidebar-collapse-btn .collapse-icon-expanded {
+    display: none;
+  }
+
+  .sidebar-collapse-toggle:checked ~ .sidebar-collapse-btn .collapse-icon-collapsed {
+    display: inline;
+  }
 }
 
+/* Mobile: ≤600px */
 @media (max-width: 600px) {
   .app-layout {
     display: block;
@@ -532,34 +625,64 @@ select.brand-select option {
     height: auto;
     border-right: 0;
     border-bottom: 1px solid #333333;
-    overflow-x: auto;
-    overflow-y: hidden;
+    display: block;
+    overflow: visible;
   }
 
   .sidebar-header {
-    padding: 0.75rem 1rem 0.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
     border-bottom: 0;
   }
 
-  .sidebar-product {
+  .menu-btn {
+    display: flex;
+  }
+
+  .sidebar-collapse-btn {
     display: none;
   }
 
   .sidebar-nav {
-    flex-direction: row;
-    gap: 0.25rem;
-    padding: 0 0.75rem 0.75rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0;
+  }
+
+  .menu-toggle:checked ~ .sidebar-nav {
+    max-height: 400px;
+    padding: 0.5rem 0;
+  }
+
+  /* Hamburger → X animation */
+  .menu-toggle:checked ~ .sidebar-header .menu-btn .menu-btn-bar:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .menu-toggle:checked ~ .sidebar-header .menu-btn .menu-btn-bar:nth-child(2) {
+    opacity: 0;
+  }
+
+  .menu-toggle:checked ~ .sidebar-header .menu-btn .menu-btn-bar:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
   }
 
   .sidebar-link {
     border-left: 0;
-    border-bottom: 2px solid transparent;
     border-radius: 5px;
-    white-space: nowrap;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.86rem;
   }
 
   .sidebar-link.active {
-    border-bottom-color: var(--brand-primary-highlight);
+    border-left: 2px solid var(--brand-primary-highlight);
+    background: var(--accent-glow);
   }
 
   .app-main {
