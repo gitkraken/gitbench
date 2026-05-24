@@ -277,7 +277,9 @@ export function buildGroupedMetricRows(
         maxValue,
         representativeValue,
         representativeEffort,
-        range: [minValue, maxValue] as [number, number],
+        range: (minValue === maxValue
+          ? [minValue - 0.4, maxValue + 0.4]
+          : [minValue, maxValue]) as [number, number],
       };
     })
     .filter((row): row is GroupedMetricRow => row !== null);
