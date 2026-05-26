@@ -73,15 +73,8 @@ modelOutputs.sort((a, b) => b.similarity - a.similarity);
     <div class="flex justify-between items-start flex-wrap gap-4">
       <div>
         <div class="text-xl font-extrabold tracking-tight mb-1">
-          {fixtureId}
+          {fi.description ? fi.description : fi.id}
         </div>
-        {
-          fi.description && (
-            <div class="font-mono text-xs text-(--color-text-mid) mb-2">
-              {fi.description}
-            </div>
-          )
-        }
         {
           fi.purpose && (
             <div class="font-display text-sm text-(--color-text-dim) leading-relaxed mb-3 max-w-[700px]">
