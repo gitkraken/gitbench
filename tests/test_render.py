@@ -452,12 +452,18 @@ class TestSqliteReportDb:
 
         for index_name in [
             "idx_fixture_results_model_benchmark",
+            "idx_fixture_results_model_difficulty",
             "idx_fixture_results_benchmark_fixture",
+            "idx_fixture_results_benchmark_model_fixture",
             "idx_fixtures_benchmark",
             "idx_fixture_tags_tag_fixture",
+            "idx_fixture_tags_benchmark_tag",
             "idx_runs_model_timestamp",
+            "idx_runs_version_timestamp",
             "idx_models_grouping",
             "idx_benchmark_summaries_model_benchmark",
+            "idx_benchmark_summaries_leaderboard",
+            "idx_base_model_group_levels_group_level",
         ]:
             assert index_name in schema
 
