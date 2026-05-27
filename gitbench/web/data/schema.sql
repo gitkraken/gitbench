@@ -111,17 +111,29 @@ CREATE TABLE base_model_group_levels (
 
 CREATE INDEX idx_fixture_results_model_benchmark
   ON fixture_results(model_name, benchmark_name);
+CREATE INDEX idx_fixture_results_model_difficulty
+  ON fixture_results(model_name, difficulty, benchmark_name, fixture_id);
 CREATE INDEX idx_fixture_results_benchmark_fixture
   ON fixture_results(benchmark_name, fixture_id);
+CREATE INDEX idx_fixture_results_benchmark_model_fixture
+  ON fixture_results(benchmark_name, model_name, fixture_id);
 CREATE INDEX idx_fixtures_benchmark
   ON fixtures(benchmark_name);
 CREATE INDEX idx_fixture_tags_tag_fixture
   ON fixture_tags(tag, benchmark_name, fixture_id);
+CREATE INDEX idx_fixture_tags_benchmark_tag
+  ON fixture_tags(benchmark_name, tag);
 CREATE INDEX idx_runs_model_timestamp
   ON runs(model_name, timestamp);
+CREATE INDEX idx_runs_version_timestamp
+  ON runs(benchmark_suite_version, timestamp);
 CREATE INDEX idx_models_grouping
   ON models(provider, base_model, reasoning_level);
 CREATE INDEX idx_benchmark_summaries_model_benchmark
   ON benchmark_summaries(model_name, benchmark_name);
 CREATE INDEX idx_benchmark_summaries_benchmark_model
   ON benchmark_summaries(benchmark_name, model_name);
+CREATE INDEX idx_benchmark_summaries_leaderboard
+  ON benchmark_summaries(benchmark_name, pass_at_k DESC, avg_similarity DESC, model_name);
+CREATE INDEX idx_base_model_group_levels_group_level
+  ON base_model_group_levels(group_id, level);
