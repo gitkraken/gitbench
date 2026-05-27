@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "astro dev",
     "dev:api": "vercel dev",
-    "test:api": "node --experimental-strip-types --experimental-transform-types --test test/report-store.test.mjs",
+    "build:db": "node scripts/build-db.mjs",
+    "test:api": "node --experimental-strip-types --experimental-transform-types --test test/*.test.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",

@@ -41,3 +41,14 @@ root:
 ```sh
 gitbench report --no-build
 ```
+
+To rebuild only the SQLite database from the already-generated aggregate JSON,
+run this from `gitbench/web`:
+
+```sh
+pnpm build:db
+```
+
+The command reads `public/results.json`, applies `data/schema.sql`, loads the
+tables inside one transaction, runs `ANALYZE`, and atomically replaces
+`data/gitbench.db`.
