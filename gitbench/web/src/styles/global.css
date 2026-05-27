@@ -349,52 +349,19 @@ body::before {
   opacity: 0.6;
 }
 
-/* ── Info Tip (tooltip on desktop, inline on mobile) ── */
-.info-tip {
-  position: relative;
-}
-
-.info-tip .section-label span::after {
-  content: " ⓘ";
-  font-size: 0.7rem;
-  opacity: 0.4;
-}
-
+/* ── Section Blurbs ── */
 .info-tip > .info-blurb {
-  display: none;
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 100;
-  background: var(--card);
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  max-width: 320px;
+  display: block;
+  max-width: 48rem;
+  margin: -0.5rem 0 1.25rem;
   font-size: 0.8rem;
   line-height: 1.5;
   color: var(--text-mid);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
-.info-tip:hover > .info-blurb {
-  display: block;
 }
 
 @media (max-width: 768px) {
-  .info-tip .section-label span::after {
-    content: none;
-  }
-
   .info-tip > .info-blurb {
-    display: block;
-    position: static;
-    background: none;
-    border: none;
-    padding: 0;
     margin-bottom: 1rem;
-    max-width: 48rem;
-    box-shadow: none;
     font-size: 0.875rem;
     line-height: 1.625;
   }
