@@ -18,7 +18,7 @@ from rich.console import Console
 from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedColumn
 
 from gitbench.benchmarks import Benchmark
-from gitbench.config import find_profile_for_model, load_config, resolve_profile
+from gitbench.config import find_profile_for_model, load_config, load_project_env, resolve_profile
 from gitbench.export import FORMAT_REGISTRY, get_available_formats
 from gitbench.harness.capacity import (
     CapacityInfo,
@@ -505,6 +505,19 @@ def _resolve_doctor_profile(config: dict, profile_name: str, model_name: str) ->
         )
 
     return profile_conf
+
+
+def _validate_run_credentials(runs: list[tuple[str, dict, list[str]]]) -> None:
+    """Fail before model calls when a configured credential variable is missing."""
+    for profile_name, profile_conf, models in runs:
+        api_key_env = profile_conf.get("_api_key_env")
+        if not api_key_env or profile_conf.get("api_key"):
+            continue
+        if any(not model.startswith("mock") for model in models):
+            raise click.ClickException(
+                f"Environment variable {api_key_env} is not set "
+                f"(required by profile '{profile_name}')"
+            )
 
 
 def _validate_doctor_targets(config: dict, plan) -> dict[tuple[str, str], dict]:
@@ -1092,15 +1105,10 @@ def run(
         resolved_api_key = profile_values.get("api_key")
         resolved_provider = provider or profile_values.get("provider")
 
-        has_real_models = any(not m.startswith("mock") for m in models_to_run)
-        if has_real_models and not resolved_api_key and profile_values.get("_api_key_env"):
-            raise click.ClickException(
-                f"Environment variable {profile_values['_api_key_env']} is not set "
-                f"(required by profile '{profile}')"
-            )
-
         effective_profile_name = profile or "(inline)"
         runs.append((effective_profile_name, profile_values, models_to_run))
+
+    _validate_run_credentials(runs)
 
     total_models = sum(len(r[2]) for r in runs)
     if total_models == 1:
@@ -1546,6 +1554,7 @@ def list_profiles():
         click.echo("Searched: ./gitbench.json, ./.gitbench.json, ~/.gitbench.json")
         return
 
+    load_project_env(config_path)
     config = load_config(config_path)
     profiles = config.get("models", {})
 
@@ -1567,7 +1576,6 @@ def list_profiles():
 
         base_url = values.get("base_url", "")
         api_key_env = values.get("api_key_env", "")
-        api_key = values.get("api_key", "")
         provider = values.get("provider", "")
         parts = [f"models=[{models_str}]"]
         if base_url:
@@ -1576,8 +1584,6 @@ def list_profiles():
             parts.append(f"provider={provider}")
         if api_key_env:
             parts.append(f"api_key_env={api_key_env}")
-        elif api_key:
-            parts.append("api_key=<set>")
         click.echo(f"  - {name}: {', '.join(parts)}")
 
 

@@ -706,6 +706,40 @@ class TestRunCommand:
         assert calls[0]["timeout"] == 10
         assert calls[0]["retry_count"] == 1
 
+    def test_run_missing_api_key_env_fails_before_model_call(self, runner, tmp_path):
+        """Profiles with missing credential variables fail before model clients are built."""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            config = {
+                "models": {
+                    "remote": {
+                        "models": ["remote-model"],
+                        "provider": "openai",
+                        "base_url": "https://example.invalid/v1",
+                        "api_key_env": "MISSING_REMOTE_KEY",
+                    }
+                }
+            }
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch.dict("os.environ", {}, clear=True), \
+                 patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch("gitbench.cli.get_model_client") as get_model_client:
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--profile",
+                        "remote",
+                    ],
+                )
+
+        assert result.exit_code != 0
+        assert "Environment variable MISSING_REMOTE_KEY is not set" in result.output
+        get_model_client.assert_not_called()
+
     def test_run_all_models_with_workers_runs_across_profiles_concurrently(self, runner, tmp_path):
         """Test that -a parallelizes all-model runs across provider profiles."""
         starts = []
@@ -780,6 +814,28 @@ class TestRunCommand:
         assert json_start != -1
         data = json.loads(result.output[json_start:])
         assert data["summary"]["total_models"] == 2
+
+    def test_profiles_command_shows_api_key_env_not_secret(self, runner, tmp_path):
+        """Profile listing shows credential source names without resolved values."""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            config = {
+                "models": {
+                    "remote": {
+                        "models": ["gpt-4o"],
+                        "provider": "openai",
+                        "api_key_env": "OPENAI_API_KEY",
+                    }
+                }
+            }
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch.dict("os.environ", {"OPENAI_API_KEY": "sk-secret-value"}):
+                result = runner.invoke(cli, ["profiles"])
+
+        assert result.exit_code == 0
+        assert "api_key_env=OPENAI_API_KEY" in result.output
+        assert "sk-secret-value" not in result.output
 
     def test_run_all_models_with_workers_respects_shared_group_budget(self, runner, tmp_path):
         """Shared OpenRouter capacity groups serialize request-budget acquisition."""
@@ -1124,19 +1180,39 @@ class TestDoctorCommand:
                 "openrouter": {
                     "models": ["new-model"],
                     "base_url": "https://openrouter.ai/api/v1",
-                    "api_key": "test-key",
+                    "api_key_env": "OPENROUTER_API_KEY",
                 }
             }
         }
 
-        profile = _resolve_doctor_profile(
-            config,
-            "openrouter",
-            "old-model:no-longer-listed",
-        )
+        with patch.dict("os.environ", {"OPENROUTER_API_KEY": "test-key"}):
+            profile = _resolve_doctor_profile(
+                config,
+                "openrouter",
+                "old-model:no-longer-listed",
+            )
 
         assert profile["base_url"] == "https://openrouter.ai/api/v1"
         assert profile["api_key"] == "test-key"
+
+    def test_doctor_missing_api_key_env_fails_before_model_call(self):
+        config = {
+            "models": {
+                "openrouter": {
+                    "models": ["new-model"],
+                    "base_url": "https://openrouter.ai/api/v1",
+                    "api_key_env": "OPENROUTER_API_KEY",
+                }
+            }
+        }
+
+        with patch.dict("os.environ", {}, clear=True):
+            with pytest.raises(Exception, match="Environment variable OPENROUTER_API_KEY is not set"):
+                _resolve_doctor_profile(
+                    config,
+                    "openrouter",
+                    "old-model:no-longer-listed",
+                )
 
     def test_latest_updates_all_timestamped_files_then_second_run_does_nothing(self, runner, tmp_path):
         from gitbench.harness.types import BenchmarkResult, Score

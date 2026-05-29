@@ -2,13 +2,23 @@
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
+
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
 CONFIG_FILENAMES = ["gitbench.json", ".gitbench.json"]
 USER_CONFIG = Path.home() / ".gitbench.json"
+
+
+def load_project_env(config_path: Path | None = None) -> bool:
+    """Load a project .env file without overriding existing environment values."""
+    base_dir = config_path.parent if config_path is not None else Path.cwd()
+    env_path = base_dir / ".env"
+    return load_dotenv(dotenv_path=env_path, override=False)
 
 
 def find_config() -> Path | None:
@@ -40,6 +50,8 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
     if config_path is None:
         config_path = find_config()
 
+    load_project_env(config_path)
+
     if config_path is None:
         return {}
 
@@ -69,8 +81,6 @@ def resolve_profile(config: dict[str, Any], profile_name: str) -> dict[str, Any]
     Raises:
         SystemExit: If profile not found.
     """
-    import os
-
     profiles = config.get("models", {})
 
     if profile_name not in profiles:
@@ -81,6 +91,13 @@ def resolve_profile(config: dict[str, Any], profile_name: str) -> dict[str, Any]
         )
 
     profile = dict(profiles[profile_name])
+
+    if "api_key" in profile:
+        raise SystemExit(
+            f"Profile '{profile_name}' contains unsupported field 'api_key'. "
+            "Move the secret to .env or your shell environment and set "
+            "'api_key_env' to the environment variable name."
+        )
 
     # Normalize models: accept "model" (string or list) or "models" (list), always produce list
     if "models" in profile:
@@ -97,13 +114,10 @@ def resolve_profile(config: dict[str, Any], profile_name: str) -> dict[str, Any]
     else:
         profile["models"] = []
 
-    # Resolve API key: direct api_key in config, or api_key_env for env var lookup.
-    # api_key_env takes precedence if both are set (env vars are more secure).
     api_key_env = profile.pop("api_key_env", None)
     if api_key_env:
         profile["api_key"] = os.environ.get(api_key_env)
         profile["_api_key_env"] = api_key_env
-    # If no api_key_env, api_key from config is used as-is (already in profile)
 
     # Resolve provider: explicit field wins, otherwise infer from base_url
     if "provider" not in profile:

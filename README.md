@@ -62,6 +62,18 @@ Model profiles can be defined in `gitbench.json` (searched in `./gitbench.json`,
 }
 ```
 
+Store API keys in a local `.env` file or in your shell environment, then reference
+the variable name from each profile with `api_key_env`. GitBench loads `.env`
+without overriding variables already exported by your shell.
+
+```dotenv
+OPENAI_API_KEY=
+OPENROUTER_API_KEY=
+```
+
+Do not put literal API keys in `gitbench.json`; persisted `api_key` fields are
+rejected so secrets stay out of configuration files.
+
 Then run with profiles:
 
 ```bash
@@ -570,7 +582,7 @@ tests/
 ## Architecture
 
 - **CLI** (`gitbench/cli.py`): Click-based command group with `run`, `list`, `doctor`, `profiles`, and `report` commands.
-- **Configuration** (`gitbench/config.py`): Loads model profiles from `gitbench.json`. Profiles define model lists, provider type, base URL, API key resolution, timeout, and retry settings.
+- **Configuration** (`gitbench/config.py`): Loads model profiles from `gitbench.json` and project `.env` files. Profiles define model lists, provider type, base URL, credential variable names via `api_key_env`, timeout, and retry settings.
 - **Benchmark ABC** (`gitbench/harness/benchmark.py`): Abstract base class enforcing `run_setup()`, `load_fixtures()`, and `score()` interface. Drop a new Python module in `benchmarks/` to add a new benchmark category — auto-discovered via `importlib`.
 - **Benchmark Runner** (`gitbench/harness/runner.py`): Orchestrates fixture execution against a model, supports concurrent fixtures, and reports progress via the `RunProgress` protocol.
 - **Model adapters** (`gitbench/harness/model.py`): `ModelInterface` ABC with `OpenAIAdapter`, `OllamaAdapter`, and `MockModelClient` implementations. Models can specify a reasoning level with `model#level` syntax.

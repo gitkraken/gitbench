@@ -6,7 +6,13 @@ from unittest.mock import patch
 
 import pytest
 
-from gitbench.config import find_config, find_profile_for_model, load_config, resolve_profile
+from gitbench.config import (
+    find_config,
+    find_profile_for_model,
+    load_config,
+    load_project_env,
+    resolve_profile,
+)
 
 
 class TestFindConfig:
@@ -62,6 +68,33 @@ class TestLoadConfig:
         config_file.write_text("{invalid json}")
         with pytest.raises(SystemExit):
             load_config(config_file)
+
+    def test_loads_dotenv_next_to_config_without_overriding_shell_env(
+        self, tmp_path, monkeypatch
+    ):
+        """Project .env values are loaded, while existing shell env values win."""
+        monkeypatch.delenv("DOTENV_ONLY_KEY", raising=False)
+        monkeypatch.setenv("SHELL_WINS_KEY", "sk-from-shell")
+        config_file = tmp_path / "gitbench.json"
+        config_file.write_text("{}")
+        (tmp_path / ".env").write_text(
+            "DOTENV_ONLY_KEY=sk-from-dotenv\n"
+            "SHELL_WINS_KEY=sk-from-dotenv\n"
+        )
+
+        load_config(config_file)
+
+        assert os.environ["DOTENV_ONLY_KEY"] == "sk-from-dotenv"
+        assert os.environ["SHELL_WINS_KEY"] == "sk-from-shell"
+
+    def test_missing_dotenv_is_allowed(self, tmp_path, monkeypatch):
+        """Missing .env files do not prevent config loading."""
+        monkeypatch.delenv("MISSING_DOTENV_KEY", raising=False)
+        config_file = tmp_path / "gitbench.json"
+        config_file.write_text("{}")
+
+        assert load_project_env(config_file) is False
+        assert load_config(config_file) == {}
 
 
 class TestResolveProfile:
@@ -121,8 +154,8 @@ class TestResolveProfile:
         assert "api_key" not in result
         assert "_api_key_env" not in result
 
-    def test_direct_api_key_in_config(self):
-        """Test that api_key set directly in config is preserved."""
+    def test_direct_api_key_in_config_is_rejected(self):
+        """Persisted api_key secrets are rejected."""
         config = {
             "models": {
                 "cloud": {
@@ -132,12 +165,11 @@ class TestResolveProfile:
                 }
             }
         }
-        result = resolve_profile(config, "cloud")
-        assert result["api_key"] == "sk-direct-key-123"
-        assert "_api_key_env" not in result
+        with pytest.raises(SystemExit, match="unsupported field 'api_key'"):
+            resolve_profile(config, "cloud")
 
-    def test_api_key_env_overrides_direct_api_key(self):
-        """Test that api_key_env takes precedence over direct api_key."""
+    def test_api_key_with_api_key_env_is_rejected(self):
+        """api_key is invalid even when api_key_env is also present."""
         config = {
             "models": {
                 "cloud": {
@@ -149,11 +181,29 @@ class TestResolveProfile:
             }
         }
         with patch.dict(os.environ, {"MY_API_KEY": "sk-from-env"}):
-            result = resolve_profile(config, "cloud")
-            assert result["api_key"] == "sk-from-env"
-            assert result["_api_key_env"] == "MY_API_KEY"
-            # Direct api_key should be overwritten by env var
-            assert "api_key" not in result or result.get("api_key") == "sk-from-env"
+            with pytest.raises(SystemExit, match="unsupported field 'api_key'"):
+                resolve_profile(config, "cloud")
+
+    def test_resolves_api_key_from_dotenv_loaded_by_config(self, tmp_path, monkeypatch):
+        """Resolving a profile can use values loaded from .env."""
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        config = {
+            "models": {
+                "cloud": {
+                    "model": "gpt-4o",
+                    "api_key_env": "OPENAI_API_KEY",
+                }
+            }
+        }
+        config_file = tmp_path / "gitbench.json"
+        config_file.write_text(json.dumps(config))
+        (tmp_path / ".env").write_text("OPENAI_API_KEY=sk-from-dotenv\n")
+
+        loaded = load_config(config_file)
+        result = resolve_profile(loaded, "cloud")
+
+        assert result["api_key"] == "sk-from-dotenv"
+        assert result["_api_key_env"] == "OPENAI_API_KEY"
 
     def test_explicit_provider_preserved(self):
         """Test that explicit provider field is preserved."""
