@@ -6,8 +6,10 @@ import time
 from gitbench.harness.benchmark import Benchmark
 from gitbench.harness.capacity import (
     RequestBudgetCoordinator,
+    CapacityInfo,
     derive_capacity_info,
     global_request_limit,
+    resolve_group_limits,
 )
 from gitbench.harness.runner import BenchmarkRunner
 from gitbench.harness.types import Fixture, ModelMessage, Score
@@ -146,6 +148,43 @@ def test_profile_request_limit_applies_when_group_has_no_limit():
 def test_global_request_limit_uses_config_before_fallback():
     assert global_request_limit({"concurrency": {"max_concurrent_requests": 4}}, fallback=8) == 4
     assert global_request_limit({}, fallback=8) == 8
+
+
+def test_duplicate_capacity_keys_default_to_one_request():
+    profile = {"base_url": "https://openrouter.ai/api/v1"}
+    infos = [
+        derive_capacity_info({}, profile, "minimax/minimax-m2.5:none"),
+        derive_capacity_info({}, profile, "minimax/minimax-m2.5:low"),
+        derive_capacity_info({}, profile, "minimax/minimax-m2.7:none"),
+    ]
+
+    limits = resolve_group_limits(infos)
+
+    assert limits["openrouter:minimax/minimax-m2.5"] == 1
+    assert limits["openrouter:minimax/minimax-m2.7"] is None
+
+
+def test_duplicate_capacity_keys_keep_configured_limit():
+    infos = [
+        CapacityInfo(
+            full_model="minimax/minimax-m2.5:low",
+            base_model_id="minimax/minimax-m2.5",
+            effort="low",
+            capacity_key="openrouter:minimax/minimax-m2.5",
+            request_limit=2,
+        ),
+        CapacityInfo(
+            full_model="minimax/minimax-m2.5:high",
+            base_model_id="minimax/minimax-m2.5",
+            effort="high",
+            capacity_key="openrouter:minimax/minimax-m2.5",
+            request_limit=2,
+        ),
+    ]
+
+    limits = resolve_group_limits(infos)
+
+    assert limits["openrouter:minimax/minimax-m2.5"] == 2
 
 
 def test_runner_gates_parallel_fixture_calls_by_group_budget():

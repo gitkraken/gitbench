@@ -611,6 +611,90 @@ class TestRunCommand:
         assert len(list(output_dir.glob("*.json"))) == 2
         assert len(jsonl_path.read_text().strip().split("\n")) == 2
 
+    def test_run_profile_model_workers_schedule_distinct_capacity_groups(self, runner, tmp_path):
+        """Profile model workers do not start multiple efforts for the same base model."""
+        active_by_group: dict[str, int] = {}
+        max_active_by_group: dict[str, int] = {}
+        max_total_active = 0
+        lock = threading.Lock()
+
+        def fake_run_all(self, benchmark_names, *, model_name="", fixture_workers=1, progress=None, progress_model_name=None):
+            nonlocal max_total_active
+            key = self._capacity_key
+            with lock:
+                active_by_group[key] = active_by_group.get(key, 0) + 1
+                max_active_by_group[key] = max(
+                    max_active_by_group.get(key, 0),
+                    active_by_group[key],
+                )
+                max_total_active = max(max_total_active, sum(active_by_group.values()))
+            try:
+                time.sleep(0.05)
+            finally:
+                with lock:
+                    active_by_group[key] -= 1
+
+            return {
+                "model": model_name,
+                "summary": {
+                    "total_benchmarks": len(benchmark_names),
+                    "total_fixtures": len(benchmark_names),
+                    "total_passed": len(benchmark_names),
+                    "overall_pass_at_k": 1.0,
+                },
+                "results": [
+                    {
+                        "benchmark": bench_name,
+                        "total": 1,
+                        "passed": 1,
+                        "pass_at_k": 1.0,
+                        "scores": [],
+                        "errors": 0,
+                    }
+                    for bench_name in benchmark_names
+                ],
+            }
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            config = {
+                "models": {
+                    "openrouter": {
+                        "models": [
+                            "minimax/minimax-m2.5:none",
+                            "minimax/minimax-m2.5:low",
+                            "minimax/minimax-m2.5:medium",
+                            "nvidia/nemotron-3-nano-30b-a3b:none",
+                            "mistralai/mistral-small-3.2:none",
+                            "deepseek/deepseek-v4-flash:none",
+                        ],
+                        "provider": "openai",
+                        "base_url": "https://openrouter.ai/api/v1",
+                    }
+                }
+            }
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch("gitbench.harness.runner.BenchmarkRunner.run_all", side_effect=fake_run_all, autospec=True):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--profile",
+                        "openrouter",
+                        "--model-workers",
+                        "4",
+                    ],
+                )
+
+        assert result.exit_code == 0
+        assert max_active_by_group["openrouter:minimax/minimax-m2.5"] == 1
+        assert max_total_active == 4
+
     def test_run_uses_profile_timeout_and_retry_when_cli_values_absent(self, runner, tmp_path):
         """Profile timeout/retry settings are passed to model clients."""
         from gitbench.harness.model import MockModelClient

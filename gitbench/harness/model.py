@@ -173,7 +173,17 @@ class OpenAIAdapter(ModelInterface):
 
         if self.reasoning_level:
             if _is_openrouter_base_url(self._base_url):
-                kwargs["reasoning"] = {"effort": self.reasoning_level}
+                extra_body = kwargs.get("extra_body")
+                if extra_body is None:
+                    extra_body = {}
+                elif not isinstance(extra_body, dict):
+                    raise TypeError(
+                        "extra_body must be a dict when OpenRouter reasoning is used"
+                    )
+                else:
+                    extra_body = dict(extra_body)
+                extra_body["reasoning"] = {"effort": self.reasoning_level}
+                kwargs["extra_body"] = extra_body
             else:
                 kwargs["reasoning_effort"] = self.reasoning_level
 

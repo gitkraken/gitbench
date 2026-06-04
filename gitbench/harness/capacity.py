@@ -6,7 +6,7 @@ import fnmatch
 import threading
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
-from typing import Any, Iterator
+from typing import Any, Iterable, Iterator
 
 from gitbench.harness.reasoning import parse_model_reasoning
 
@@ -125,6 +125,35 @@ def global_request_limit(
 ) -> int | None:
     """Return configured global request limit, or fallback when unset."""
     return _positive_int((config.get("concurrency") or {}).get("max_concurrent_requests")) or fallback
+
+
+def resolve_group_limits(infos: Iterable[CapacityInfo]) -> dict[str, int | None]:
+    """Resolve per-capacity-key request limits from configured run targets.
+
+    When multiple targets share a capacity key and no explicit limit was configured,
+    default that key to one concurrent request. This automatically serializes
+    effort variants of the same configured base model.
+    """
+    group_limits: dict[str, int | None] = {}
+    group_counts: dict[str, int] = {}
+
+    for info in infos:
+        group_counts[info.capacity_key] = group_counts.get(info.capacity_key, 0) + 1
+        if info.capacity_key not in group_limits:
+            group_limits[info.capacity_key] = info.request_limit
+        elif info.request_limit is not None:
+            existing = group_limits[info.capacity_key]
+            group_limits[info.capacity_key] = (
+                info.request_limit
+                if existing is None
+                else min(existing, info.request_limit)
+            )
+
+    for key, count in group_counts.items():
+        if count > 1 and group_limits.get(key) is None:
+            group_limits[key] = 1
+
+    return group_limits
 
 
 class RequestBudgetCoordinator:

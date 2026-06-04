@@ -44,7 +44,20 @@ class TestMockModelClient:
         client = MockModelClient(response="Expected output")
         messages = [ModelMessage(role="user", content="Hello")]
         result = client.generate(messages)
-        assert result == {"text": "Expected output", "usage": None}
+        assert result["text"] == "Expected output"
+        assert result["usage"] == {
+            "input_tokens": 50,
+            "output_tokens": 30,
+            "total_tokens": 80,
+            "reasoning_tokens": 20,
+            "cost": 0.0,
+        }
+        assert result["transcript"] == [
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Expected output"},
+        ]
+        assert isinstance(result["api_duration_ms"], float)
+        assert result["api_duration_ms"] > 0
 
     def test_generate_stores_messages(self):
         """Test that generate stores the messages for inspection."""
@@ -81,7 +94,12 @@ class TestMockModelClient:
         messages = [ModelMessage(role="user", content="Test")]
         # Should not raise, kwargs are ignored
         result = client.generate(messages, temperature=0.5, max_tokens=100)
-        assert result == {"text": "Output", "usage": None}
+        assert result["text"] == "Output"
+        assert result["transcript"] == [
+            {"role": "user", "content": "Test"},
+            {"role": "assistant", "content": "Output"},
+        ]
+        assert result["api_duration_ms"] > 0
 
     def test_accepts_timeout_and_retry(self):
         """Test that MockModelClient accepts timeout and retry_count params."""
@@ -137,7 +155,13 @@ class TestOllamaAdapter:
         messages = [ModelMessage(role="user", content="Generate a commit message")]
         result = adapter.generate(messages)
 
-        assert result == {"text": "fix: resolve null pointer", "usage": None}
+        assert result["text"] == "fix: resolve null pointer"
+        assert result["usage"] is None
+        assert result["transcript"] == [
+            {"role": "user", "content": "Generate a commit message"},
+            {"role": "assistant", "content": "fix: resolve null pointer"},
+        ]
+        assert result["api_duration_ms"] >= 0
         mock_urlopen.assert_called_once()
 
         # Verify the request was made to the correct URL
@@ -519,7 +543,8 @@ class TestOpenAIAdapterReasoning:
 
         call_kwargs = mock_client.chat.completions.create.call_args
         assert call_kwargs.kwargs["model"] == "baidu/cobuddy:free"
-        assert call_kwargs.kwargs["reasoning"] == {"effort": "high"}
+        assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"effort": "high"}
+        assert "reasoning" not in call_kwargs.kwargs
         assert "reasoning_effort" not in call_kwargs.kwargs
 
     @patch("openai.OpenAI")
@@ -543,12 +568,13 @@ class TestOpenAIAdapterReasoning:
 
         call_kwargs = mock_client.chat.completions.create.call_args
         assert call_kwargs.kwargs["model"] == "anthropic/claude-opus-4.7"
-        assert call_kwargs.kwargs["reasoning"] == {"effort": "max"}
+        assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"effort": "max"}
+        assert "reasoning" not in call_kwargs.kwargs
         assert "reasoning_effort" not in call_kwargs.kwargs
 
     @patch("openai.OpenAI")
     def test_generate_forwards_openrouter_reasoning_none(self, mock_openai_class):
-        """OpenRouter can explicitly disable reasoning."""
+        """OpenRouter receives none as an explicit reasoning effort."""
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.error = None
@@ -567,8 +593,53 @@ class TestOpenAIAdapterReasoning:
         adapter.generate(messages)
 
         call_kwargs = mock_client.chat.completions.create.call_args
-        assert call_kwargs.kwargs["reasoning"] == {"effort": "none"}
+        assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"effort": "none"}
+        assert "reasoning" not in call_kwargs.kwargs
         assert "reasoning_effort" not in call_kwargs.kwargs
+
+    @patch("openai.OpenAI")
+    def test_generate_preserves_openrouter_extra_body(self, mock_openai_class):
+        """OpenRouter reasoning merges with caller-provided extra_body."""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.error = None
+        mock_response.choices[0].message.content = "Output"
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_openai_class.return_value = mock_client
+
+        adapter = OpenAIAdapter(
+            model="baidu/cobuddy:free#high",
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+        )
+        adapter._client = mock_client
+
+        extra_body = {"provider": {"order": ["OpenAI"]}}
+        adapter.generate(
+            [ModelMessage(role="user", content="Hi")],
+            extra_body=extra_body,
+        )
+
+        call_kwargs = mock_client.chat.completions.create.call_args
+        assert call_kwargs.kwargs["extra_body"]["provider"] == {
+            "order": ["OpenAI"]
+        }
+        assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"effort": "high"}
+        assert extra_body == {"provider": {"order": ["OpenAI"]}}
+
+    def test_generate_rejects_openrouter_non_dict_extra_body(self):
+        """OpenRouter reasoning requires extra_body to remain mergeable."""
+        adapter = OpenAIAdapter(
+            model="baidu/cobuddy:free#high",
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+        )
+
+        with pytest.raises(TypeError, match="extra_body"):
+            adapter.generate(
+                [ModelMessage(role="user", content="Hi")],
+                extra_body="bad",
+            )
 
     @patch("openai.OpenAI")
     def test_generate_without_reasoning_omits_effort(self, mock_openai_class):
@@ -659,5 +730,17 @@ class TestMockModelClientReasoning:
         client = MockModelClient(response="Test")
         client.reasoning_level = "high"
         result = client.generate([ModelMessage(role="user", content="Hi")])
-        assert result == {"text": "Test", "usage": None}
+        assert result["text"] == "Test"
+        assert result["usage"] == {
+            "input_tokens": 50,
+            "output_tokens": 30,
+            "total_tokens": 80,
+            "reasoning_tokens": 20,
+            "cost": 0.0,
+        }
+        assert result["transcript"] == [
+            {"role": "user", "content": "Hi"},
+            {"role": "assistant", "content": "Test"},
+        ]
+        assert result["api_duration_ms"] > 0
         assert client.call_count == 1

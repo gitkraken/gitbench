@@ -8,7 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
 from contextlib import nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,6 +26,7 @@ from gitbench.harness.capacity import (
     derive_capacity_info,
     describe_request_budgets,
     global_request_limit,
+    resolve_group_limits,
 )
 from gitbench.harness.model import MockModelClient, OllamaAdapter, OpenAIAdapter, parse_model_name
 from gitbench.harness.reasoning import validate_model_list
@@ -1123,16 +1124,11 @@ def run(
     validate_model_list(all_models_to_validate)
 
     capacity_by_target: dict[tuple[int, int], CapacityInfo] = {}
-    group_limits: dict[str, int | None] = {}
     for run_index, (_profile_name, profile_conf, models_list) in enumerate(runs):
         for model_index, model_name in enumerate(models_list):
             info = derive_capacity_info(config, profile_conf, model_name)
             capacity_by_target[(run_index, model_index)] = info
-            existing = group_limits.get(info.capacity_key)
-            if existing is None:
-                group_limits[info.capacity_key] = info.request_limit
-            elif info.request_limit is not None:
-                group_limits[info.capacity_key] = min(existing, info.request_limit)
+    group_limits = resolve_group_limits(capacity_by_target.values())
 
     request_budget = RequestBudgetCoordinator(
         global_limit=global_request_limit(
@@ -1213,11 +1209,23 @@ def run(
             ordered_results: list[dict | None] = [None] * len(runs)
 
             with ThreadPoolExecutor(max_workers=worker_count) as executor:
-                future_to_run_index = {}
-                for run_index, (profile_name, profile_conf, models_to_run) in enumerate(runs):
-                    if not models_to_run:
-                        continue
+                future_to_run_index: dict = {}
+                active_group_counts: dict[str, int] = {}
+                pending_run_indices = [
+                    run_index
+                    for run_index, (_profile_name, _profile_conf, models_to_run) in enumerate(runs)
+                    if models_to_run
+                ]
 
+                def can_submit_run(run_index: int) -> bool:
+                    capacity_info = capacity_by_target[(run_index, 0)]
+                    limit = group_limits.get(capacity_info.capacity_key)
+                    if limit is None:
+                        return True
+                    return active_group_counts.get(capacity_info.capacity_key, 0) < limit
+
+                def submit_run(run_index: int) -> None:
+                    profile_name, profile_conf, models_to_run = runs[run_index]
                     current_model = models_to_run[0]
                     p_base_url = base_url or profile_conf.get("base_url")
                     p_api_key = profile_conf.get("api_key")
@@ -1232,9 +1240,8 @@ def run(
                             profile_name,
                             p_api_key_env,
                         )
-                        continue
+                        return
 
-                    profile_label = f"profile '{profile_name}'" if len(runs) > 1 else ""
                     model_client = get_model_client(
                         current_model,
                         timeout=p_timeout,
@@ -1259,10 +1266,33 @@ def run(
                         progress_model_name=progress_model_names_by_run[run_index][0],
                     )
                     future_to_run_index[future] = run_index
+                    active_group_counts[capacity_info.capacity_key] = (
+                        active_group_counts.get(capacity_info.capacity_key, 0) + 1
+                    )
 
-                for future in as_completed(future_to_run_index):
-                    run_index = future_to_run_index[future]
-                    ordered_results[run_index] = future.result()
+                while pending_run_indices or future_to_run_index:
+                    submitted_any = True
+                    while len(future_to_run_index) < worker_count and submitted_any:
+                        submitted_any = False
+                        for pending_run_index in list(pending_run_indices):
+                            if can_submit_run(pending_run_index):
+                                pending_run_indices.remove(pending_run_index)
+                                submit_run(pending_run_index)
+                                submitted_any = True
+                                break
+
+                    if not future_to_run_index:
+                        break
+
+                    done, _pending = wait(
+                        future_to_run_index,
+                        return_when=FIRST_COMPLETED,
+                    )
+                    for future in done:
+                        run_index = future_to_run_index.pop(future)
+                        capacity_info = capacity_by_target[(run_index, 0)]
+                        active_group_counts[capacity_info.capacity_key] -= 1
+                        ordered_results[run_index] = future.result()
 
             for run_index, model_result in enumerate(ordered_results):
                 if model_result is None:
@@ -1305,8 +1335,20 @@ def run(
                     logger.info("Running up to %d model(s) concurrently.", worker_count)
                     ordered_results: list[dict | None] = [None] * len(models_to_run)
                     with ThreadPoolExecutor(max_workers=worker_count) as executor:
-                        future_to_index = {}
-                        for index, current_model in enumerate(models_to_run):
+                        future_to_index: dict = {}
+                        active_group_counts: dict[str, int] = {}
+                        pending_indices = list(range(len(models_to_run)))
+
+                        def can_submit(index: int) -> bool:
+                            capacity_info = capacity_by_target[(run_index, index)]
+                            limit = group_limits.get(capacity_info.capacity_key)
+                            if limit is None:
+                                return True
+                            return active_group_counts.get(capacity_info.capacity_key, 0) < limit
+
+                        def submit_model(index: int) -> None:
+                            current_model = models_to_run[index]
+                            capacity_info = capacity_by_target[(run_index, index)]
                             model_client = get_model_client(
                                 current_model,
                                 timeout=p_timeout,
@@ -1315,7 +1357,6 @@ def run(
                                 api_key=p_api_key,
                                 provider=p_provider,
                             )
-                            capacity_info = capacity_by_target[(run_index, index)]
                             runner = BenchmarkRunner(
                                 _benchmark_registry,
                                 model_client,
@@ -1331,10 +1372,34 @@ def run(
                                 progress_model_name=progress_model_names[index],
                             )
                             future_to_index[future] = index
+                            active_group_counts[capacity_info.capacity_key] = (
+                                active_group_counts.get(capacity_info.capacity_key, 0)
+                                + 1
+                            )
 
-                        for future in as_completed(future_to_index):
-                            index = future_to_index[future]
-                            ordered_results[index] = future.result()
+                        while pending_indices or future_to_index:
+                            submitted_any = True
+                            while len(future_to_index) < worker_count and submitted_any:
+                                submitted_any = False
+                                for pending_index in list(pending_indices):
+                                    if can_submit(pending_index):
+                                        pending_indices.remove(pending_index)
+                                        submit_model(pending_index)
+                                        submitted_any = True
+                                        break
+
+                            if not future_to_index:
+                                break
+
+                            done, _pending = wait(
+                                future_to_index,
+                                return_when=FIRST_COMPLETED,
+                            )
+                            for future in done:
+                                index = future_to_index.pop(future)
+                                capacity_info = capacity_by_target[(run_index, index)]
+                                active_group_counts[capacity_info.capacity_key] -= 1
+                                ordered_results[index] = future.result()
 
                     for model_result in ordered_results:
                         if model_result is not None:

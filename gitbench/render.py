@@ -226,7 +226,7 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
                 "total_fixtures": 0,
                 "total_passed": 0,
                 "benchmarks": {},
-                "durations_ms": [],
+                "api_durations_ms": [],
             }
 
         model_data[model]["total_runs"] += 1
@@ -267,10 +267,13 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
                     "difficulty": score.get("difficulty"),
                     "tags": score.get("tags"),
                     "duration_ms": score.get("duration_ms"),
+                    "api_duration_ms": score.get("api_duration_ms"),
                 })
-                # Collect duration for model-level aggregation
-                if score.get("duration_ms") is not None:
-                    model_data[model]["durations_ms"].append(score["duration_ms"])
+                # Report runtime is successful API call latency, not fixture wall time.
+                if score.get("api_duration_ms") is not None:
+                    model_data[model]["api_durations_ms"].append(
+                        score["api_duration_ms"]
+                    )
 
     # Build summaries and matrix
     model_summaries = {}
@@ -328,7 +331,7 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
     # Build model runtime summaries
     model_runtimes: dict[str, dict] = {}
     for model, data in model_data.items():
-        durations = data.get("durations_ms", [])
+        durations = data.get("api_durations_ms", [])
         if durations:
             model_runtimes[model] = {
                 "total_ms": round(sum(durations), 2),
@@ -601,6 +604,7 @@ def _insert_report_data(conn: sqlite3.Connection, data: dict[str, Any]) -> None:
                         "total_tokens": result.get("total_tokens"),
                         "cost_usd": result.get("cost_usd"),
                         "duration_ms": result.get("duration_ms"),
+                        "api_duration_ms": result.get("api_duration_ms"),
                         "purpose": result.get("purpose"),
                         "difficulty": result.get("difficulty"),
                         "tags_json": _json_dumps(result.get("tags")),
@@ -612,12 +616,13 @@ def _insert_report_data(conn: sqlite3.Connection, data: dict[str, Any]) -> None:
         INSERT INTO fixture_results (
           model_name, benchmark_name, fixture_id, passed, similarity, error,
           model_output, reasoning_level, input_tokens, output_tokens, total_tokens,
-          cost_usd, duration_ms, purpose, difficulty, tags_json
+          cost_usd, duration_ms, api_duration_ms, purpose, difficulty, tags_json
         )
         VALUES (
           :model_name, :benchmark_name, :fixture_id, :passed, :similarity, :error,
           :model_output, :reasoning_level, :input_tokens, :output_tokens,
-          :total_tokens, :cost_usd, :duration_ms, :purpose, :difficulty, :tags_json
+          :total_tokens, :cost_usd, :duration_ms, :api_duration_ms, :purpose,
+          :difficulty, :tags_json
         )
         """,
         result_rows,

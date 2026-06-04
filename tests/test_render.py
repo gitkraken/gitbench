@@ -62,6 +62,26 @@ def _make_envelope(
     }
 
 
+def _make_envelope_with_scores(
+    scores,
+    model="mock",
+    bench="commit_messages",
+    timestamp="2026-04-25T13:00:00+00:00",
+):
+    """Build a run envelope using explicit fixture scores."""
+    total = len(scores)
+    passed = sum(1 for score in scores if score.get("passed"))
+    envelope = _make_envelope(
+        model=model,
+        bench=bench,
+        total=total,
+        passed=passed,
+        timestamp=timestamp,
+    )
+    envelope["results"][0]["scores"] = scores
+    return envelope
+
+
 class TestLoadRunsFromDir:
     """Tests for load_runs_from_dir."""
 
@@ -228,6 +248,118 @@ class TestAggregateRuns:
             for level in group["levels"]
         )
 
+    def test_model_runtimes_use_api_duration_ms(self):
+        """Test that model runtime totals are aggregated from API durations."""
+        runs = [
+            _make_envelope_with_scores(
+                [
+                    {
+                        "fixture_id": "f001",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 1000,
+                        "api_duration_ms": 100,
+                    },
+                    {
+                        "fixture_id": "f002",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 2000,
+                        "api_duration_ms": 200,
+                    },
+                    {
+                        "fixture_id": "f003",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 3000,
+                        "api_duration_ms": 300,
+                    },
+                ]
+            )
+        ]
+
+        data = aggregate_runs(runs)
+
+        assert data["model_runtimes"]["mock"] == {
+            "total_ms": 600,
+            "avg_ms": 200,
+            "min_ms": 100,
+            "max_ms": 300,
+            "fixture_count": 3,
+        }
+        assert (
+            data["fixtures"]["mock"]["commit_messages"][0]["api_duration_ms"]
+            == 100
+        )
+
+    def test_model_runtimes_exclude_null_api_duration_ms(self):
+        """Test that null and missing API durations do not count."""
+        runs = [
+            _make_envelope_with_scores(
+                [
+                    {
+                        "fixture_id": "f001",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 1000,
+                        "api_duration_ms": 100,
+                    },
+                    {
+                        "fixture_id": "f002",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 2000,
+                        "api_duration_ms": None,
+                    },
+                    {
+                        "fixture_id": "f003",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 3000,
+                    },
+                    {
+                        "fixture_id": "f004",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 4000,
+                        "api_duration_ms": 500,
+                    },
+                ]
+            )
+        ]
+
+        data = aggregate_runs(runs)
+
+        assert data["model_runtimes"]["mock"]["total_ms"] == 600
+        assert data["model_runtimes"]["mock"]["avg_ms"] == 300
+        assert data["model_runtimes"]["mock"]["fixture_count"] == 2
+
+    def test_model_runtimes_never_fall_back_to_duration_ms(self):
+        """Test that wall-clock durations are not used as runtime fallback."""
+        runs = [
+            _make_envelope_with_scores(
+                [
+                    {
+                        "fixture_id": "f001",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 1000,
+                    },
+                    {
+                        "fixture_id": "f002",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 2000,
+                        "api_duration_ms": None,
+                    },
+                ]
+            )
+        ]
+
+        data = aggregate_runs(runs)
+
+        assert "mock" not in data["model_runtimes"]
+
 
 class TestRenderJson:
     """Tests for render_json."""
@@ -340,6 +472,38 @@ class TestRenderJson:
         written = json.loads(output.read_text())
         assert len(written["runs_meta"]) == 2
         assert written["runs_meta"][0]["timestamp"] != written["runs_meta"][1]["timestamp"]
+
+    def test_writes_fixture_api_duration_ms(self, tmp_path):
+        """Test that render_json includes fixture API duration values."""
+        runs = [
+            _make_envelope_with_scores(
+                [
+                    {
+                        "fixture_id": "f001",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 1000,
+                        "api_duration_ms": 350.2,
+                    },
+                    {
+                        "fixture_id": "f002",
+                        "passed": True,
+                        "similarity": 1,
+                        "duration_ms": 2000,
+                    },
+                ]
+            )
+        ]
+        data = aggregate_runs(runs)
+        output = tmp_path / "results.json"
+
+        render_json(data, str(output))
+
+        written = json.loads(output.read_text())
+        fixtures = written["fixtures"]["mock"]["commit_messages"]
+        assert fixtures[0]["api_duration_ms"] == 350.2
+        assert fixtures[1]["api_duration_ms"] is None
+        assert written["model_runtimes"]["mock"]["total_ms"] == 350.2
 
 
 class TestAggregateRunsFixtureIndex:
@@ -497,6 +661,48 @@ class TestSqliteReportDb:
                 ).fetchone()[0]
                 == data["model_summaries"]["openai/gpt-5:medium"]["total_passed"]
             )
+
+    def test_writes_fixture_api_duration_to_database(self, tmp_path):
+        """Test that SQLite stores API duration without wall-time fallback."""
+        data = aggregate_runs(
+            [
+                _make_envelope_with_scores(
+                    [
+                        {
+                            "fixture_id": "f001",
+                            "passed": True,
+                            "similarity": 1,
+                            "duration_ms": 1000,
+                            "api_duration_ms": 123.4,
+                        },
+                        {
+                            "fixture_id": "f002",
+                            "passed": True,
+                            "similarity": 1,
+                            "duration_ms": 2000,
+                        },
+                    ]
+                )
+            ]
+        )
+        db_path = tmp_path / "gitbench.db"
+
+        write_sqlite_report_db(data, db_path)
+
+        with sqlite3.connect(db_path) as conn:
+            rows = conn.execute(
+                """
+                SELECT fixture_id, duration_ms, api_duration_ms
+                FROM fixture_results
+                ORDER BY fixture_id
+                """
+            ).fetchall()
+            runtime_total = conn.execute(
+                "SELECT total_ms FROM model_runtimes WHERE model_name = 'mock'"
+            ).fetchone()[0]
+
+        assert rows == [("f001", 1000, 123.4), ("f002", 2000, None)]
+        assert runtime_total == 123.4
 
     def test_rebuild_replaces_stale_data(self, tmp_path):
         """Test that an existing database is deleted and rebuilt."""
