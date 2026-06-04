@@ -105,11 +105,11 @@ React chart components that display a separator + explanatory footnote in their 
 
 #### Scenario: CostValueChart footnote is a fragment
 - **WHEN** hovering a bar in CostValueChart
-- **THEN** the tooltip footnote below the separator reads "API cost for 204-fixture run. — = local/Ollama"
+- **THEN** the tooltip footnote below the separator reads "API cost for 204-fixture run. - = local/Ollama"
 
 #### Scenario: RuntimeBarChart footnote includes latency caveat
 - **WHEN** hovering a bar in RuntimeBarChart
-- **THEN** the tooltip footnote below the separator reads "Wall-clock time. Includes API latency."
+- **THEN** the tooltip footnote below the separator reads "API call latency. Lower is faster."
 
 #### Scenario: TokenUsageChart footnote is a fragment
 - **WHEN** hovering a bar in TokenUsageChart
@@ -149,7 +149,7 @@ The BenchmarkHeatmap React component SHALL render `<td>` elements with `title` a
 - **THEN** the `title` attribute shows "No data available for [model] on [benchmark]"
 
 ### Requirement: Overview grouped metric charts use vertical range-whisker bars
-Overview grouped metric bar charts SHALL use a shared vertical chart language for pass rate, cost, runtime, and token usage. Each chart SHALL place provider/base-model groups on the X-axis and the metric value on the Y-axis. The provider-colored solid bar SHALL start at zero and end at the chart's representative effort value, computed as the median of deduped effort values for that group. A neutral range whisker SHALL show the full effort range from `minValue` to `maxValue`. Range whiskers SHALL NOT be described as error bars in user-facing copy or specs.
+Overview grouped metric bar charts SHALL use a shared vertical chart language for pass rate, cost, API time, and token usage. Each chart SHALL place provider/base-model groups on the X-axis and the metric value on the Y-axis. The provider-colored solid bar SHALL start at zero and end at the chart's representative effort value, computed as the median of deduped effort values for that group. A neutral range whisker SHALL show the full effort range from `minValue` to `maxValue`. Range whiskers SHALL NOT be described as error bars in user-facing copy or specs.
 
 #### Scenario: Solid bar shows representative value
 - **WHEN** a grouped metric row has deduped effort values `[72, 81, 85]`, `minValue=72`, and `maxValue=85`
@@ -227,18 +227,18 @@ The `PassRateBarChart` React component SHALL render a Recharts vertical bar char
 - **THEN** bars reflect pass rates from `model_summaries[model].pass_at_k` and the tooltip footnote reads "% of 204 fixtures passed"
 
 ### Requirement: RuntimeBarChart renders vertical range-whisker bar chart ranking models by speed
-The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = total runtime in seconds). Each solid bar SHALL represent one selected provider/base-model group's median deduped effort runtime from zero. A neutral range whisker SHALL visualize the range from the fastest effort runtime to the slowest effort runtime in that group. The median deduped effort runtime SHALL be the representative value used for sorting and bar prominence. The Y-axis domain SHALL start at 0 and include the slowest displayed effort runtime. Bars SHALL be color-coded by provider using the `getProviderColor()` palette. X-axis tick labels SHALL display the provider brand icon (via `ProviderIcon`) and the truncated base model name (max ~10 characters + ellipsis), rotated `-40` degrees. The component SHALL accept a `data` prop containing the full dataset and an optional selected group list for filtering. Chart height SHALL be fixed at 350 pixels. A provider legend SHALL be rendered below the chart card showing colored dots for each unique provider present. Model groups SHALL be sorted fastest-first by their median deduped effort runtime.
+The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = total API time in seconds). Each solid bar SHALL represent one selected provider/base-model group's median deduped effort API time from zero. A neutral range whisker SHALL visualize the range from the fastest effort API time to the slowest effort API time in that group. The median deduped effort API time SHALL be the representative value used for sorting and bar prominence. The Y-axis domain SHALL start at 0 and include the slowest displayed effort API time. Bars SHALL be color-coded by provider using the `getProviderColor()` palette. X-axis tick labels SHALL display the provider brand icon (via `ProviderIcon`) and the truncated base model name (max ~10 characters + ellipsis), rotated `-40` degrees. The component SHALL accept a `data` prop containing the full dataset and an optional selected group list for filtering. Chart height SHALL be fixed at 350 pixels. A provider legend SHALL be rendered below the chart card showing colored dots for each unique provider present. Model groups SHALL be sorted fastest-first by their median deduped effort API time.
 
 #### Scenario: Bars render for selected model groups
 - **WHEN** `RuntimeBarChart` receives selected groups `['anthropic/claude-opus-4.7', 'openai/gpt-oss-120b']`
-- **THEN** two vertical grouped bars are displayed with runtime range whiskers for the selected base models
+- **THEN** two vertical grouped bars are displayed with API-time range whiskers for the selected base models
 
 #### Scenario: Fastest median grouped model appears first
-- **WHEN** model groups have median effort runtimes [5000, 12000, 3000, 8000]
+- **WHEN** model groups have median effort API times [5000, 12000, 3000, 8000]
 - **THEN** bars appear from left to right in order: 3000, 5000, 8000, 12000
 
-#### Scenario: Effort range shown for runtime
-- **WHEN** `openai/gpt-5` has effort runtimes 45s, 70s, and 110s
+#### Scenario: Effort API-time range shown
+- **WHEN** `openai/gpt-5` has effort API times 45s, 70s, and 110s
 - **THEN** the `openai/gpt-5` solid bar extends from 0s to 70s and its range whisker spans 45s-110s
 
 #### Scenario: Colors reflect provider
@@ -264,4 +264,3 @@ The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart
 #### Scenario: Provider legend appears below the chart
 - **WHEN** the chart shows model groups from multiple providers
 - **THEN** a horizontal legend with colored dots and provider names appears below the chart card
-

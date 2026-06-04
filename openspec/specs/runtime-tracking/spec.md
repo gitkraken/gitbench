@@ -1,6 +1,6 @@
 ## Purpose
 
-Runtime tracking instruments the benchmark runner to capture per-fixture wall-clock duration and exposes it through the data pipeline for aggregation and visualization.
+Runtime tracking instruments the benchmark runner to capture per-fixture wall-clock duration and API call latency, then exposes API timing through the data pipeline for aggregation and visualization.
 ## Requirements
 ### Requirement: Runner captures per-fixture wall-clock duration
 The `BenchmarkRunner` SHALL measure wall-clock duration for each fixture execution using `time.perf_counter()`. The measurement SHALL span from immediately before `_run_fixture` begins until immediately after it returns (including setup, model call, scoring, and cleanup). The elapsed time SHALL be stored as milliseconds in a `duration_ms` field on the `Score` dataclass.
@@ -41,23 +41,28 @@ The `Score` dataclass SHALL have an optional `duration_ms: float | None` field w
 - **THEN** the returned `Score` has `duration_ms=1234.5`
 
 ### Requirement: Aggregation computes per-model runtime summaries
-The `aggregate_runs()` function in `render.py` SHALL compute runtime aggregates for each model from per-fixture `duration_ms` values. It SHALL output a `model_runtimes` dict in the aggregated data, keyed by model name, with fields `total_ms` (sum of all non-null fixture durations), `avg_ms` (mean non-null fixture duration), `min_ms`, `max_ms`, and `fixture_count` (number of fixtures with timing data).
+The `aggregate_runs()` function in `render.py` SHALL compute report runtime aggregates for each model from per-fixture `api_duration_ms` values. It SHALL output a `model_runtimes` dict in the aggregated data, keyed by model name, with fields `total_ms` (sum of all non-null fixture API durations), `avg_ms` (mean non-null fixture API duration), `min_ms`, `max_ms`, and `fixture_count` (number of fixtures with API timing data). Aggregation SHALL NOT fall back to wall-clock `duration_ms` when `api_duration_ms` is missing.
 
-#### Scenario: Runtime aggregated across fixtures
-- **WHEN** a model has 3 fixtures with `duration_ms` = [100.0, 200.0, 300.0]
+#### Scenario: Runtime aggregated across API durations
+- **WHEN** a model has 3 fixtures with `api_duration_ms` = [100.0, 200.0, 300.0]
 - **THEN** `model_runtimes[model]` has `total_ms=600.0`, `avg_ms=200.0`, `min_ms=100.0`, `max_ms=300.0`, `fixture_count=3`
 
-#### Scenario: Null durations excluded from aggregation
-- **WHEN** a model has 4 fixtures with `duration_ms` = [100.0, null, null, 500.0]
+#### Scenario: Null API durations excluded from aggregation
+- **WHEN** a model has 4 fixtures with `api_duration_ms` = [100.0, null, null, 500.0]
 - **THEN** `model_runtimes[model]` has `total_ms=600.0`, `avg_ms=300.0`, `fixture_count=2`
 
-#### Scenario: Model with no timing data excluded from model_runtimes
-- **WHEN** a model's fixtures all have `duration_ms=None`
+#### Scenario: Wall-clock durations are not used as fallback
+- **WHEN** a model's fixtures have `duration_ms` values but all `api_duration_ms` values are missing or null
+- **THEN** that model does NOT appear as a key in `model_runtimes`
+
+#### Scenario: Model with no API timing data excluded from model_runtimes
+- **WHEN** a model's fixtures all have `api_duration_ms=None`
 - **THEN** that model does NOT appear as a key in `model_runtimes`
 
 #### Scenario: model_runtimes included in render_json output
 - **WHEN** `render_json()` writes the aggregated data
 - **THEN** the JSON file contains a `"model_runtimes"` key at the top level
+- **AND** the values in `"model_runtimes"` represent API call latency aggregates
 
 ### Requirement: BenchmarkResult to_dict includes per-benchmark timing total
 The `BenchmarkResult.to_dict()` method SHALL compute and include a `total_duration_ms` field representing the sum of all non-null `duration_ms` values across the benchmark's scores.
@@ -89,4 +94,3 @@ The `Score` dataclass SHALL have an optional `api_duration_ms: float | None` fie
 #### Scenario: from_dict handles missing api_duration_ms
 - **WHEN** `Score.from_dict()` is called with a dict that has no `api_duration_ms` key
 - **THEN** the returned `Score` has `api_duration_ms=None`
-

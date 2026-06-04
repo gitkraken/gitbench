@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Conversational prose voice defines the tone and structure for explanatory web app copy.
+
+## Requirements
 
 ### Requirement: Prose uses conversational, emdash-free voice
 All explanatory prose in the web app (section blurbs, tooltip footnotes, empty states, About text) SHALL use a conversational tone. Sentences SHALL be short; fragments are permitted where conversationally natural. Emdashes SHALL NOT be used. Contractions (it's, don't, that's) SHALL be preferred over expanded forms (it is, do not, that is).
@@ -35,7 +39,7 @@ Section blurbs SHALL provide non-obvious context: caveats, insights, or orientat
 
 #### Scenario: Non-obvious context is preserved
 - **WHEN** navigating to the Overview page
-- **THEN** the "Runtime" chart section includes the caveat that wall-clock time includes API latency (non-obvious to users)
+- **THEN** the "API Time" chart section explains that the metric is API call latency, not full fixture setup or scoring time
 
 ### Requirement: One thought per sentence
 Each sentence in a blurb SHALL express a single thought. Compound sentences joined by "and" or "while" SHALL be split unless both clauses are under 8 words each.

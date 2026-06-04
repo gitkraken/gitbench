@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+JSON export defines the generated report data shape used by the web app and report APIs.
+
+## Requirements
 
 ### Requirement: render_json exports aggregated data to JSON file
 The `render.py` module SHALL provide a `render_json(data, output_path)` function that writes the aggregated data dict (from `aggregate_runs()`) as a formatted JSON file. The output SHALL include model summaries with cost aggregates (`total_cost_usd`, `avg_cost_usd`), benchmark summaries, the results matrix, per-fixture results with full model outputs (not truncated), fixture metadata (purpose, difficulty, tags, prompt, expected), cost data (`cost_usd`), and run history. The `"unknown"` model SHALL NOT appear in the output.
@@ -91,3 +95,22 @@ The `aggregate_runs()` function SHALL compute per-model `total_cost_usd` and `av
 #### Scenario: Model with no cost data
 - **WHEN** a model has no fixtures with valid cost data
 - **THEN** both `total_cost_usd` and `avg_cost_usd` are `null`
+
+### Requirement: JSON output includes fixture API duration
+The JSON output SHALL include fixture-level `api_duration_ms` in each aggregated fixture result when the source score contains API timing data. The field SHALL represent successful API call latency in milliseconds and SHALL remain distinct from wall-clock `duration_ms`.
+
+#### Scenario: Fixture API duration is in JSON
+- **WHEN** `results.json` is generated from a score with `api_duration_ms=350.2`
+- **THEN** the fixture result entry includes `"api_duration_ms": 350.2`
+
+#### Scenario: Missing fixture API duration remains null-compatible
+- **WHEN** `results.json` is generated from a score without `api_duration_ms`
+- **THEN** the fixture result entry does not substitute `duration_ms` for API time
+
+### Requirement: JSON runtime summaries represent API time
+The `"model_runtimes"` object in JSON output SHALL represent API-time aggregates computed from `api_duration_ms`, while keeping the existing summary shape of `total_ms`, `avg_ms`, `min_ms`, `max_ms`, and `fixture_count`.
+
+#### Scenario: model_runtimes uses API duration
+- **WHEN** a model has fixture scores with `api_duration_ms` values [20.0, 30.0] and `duration_ms` values [100.0, 100.0]
+- **THEN** `model_runtimes[model].total_ms` is `50.0`
+- **AND** it is not `200.0`
