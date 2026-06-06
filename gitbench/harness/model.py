@@ -158,6 +158,8 @@ class OpenAIAdapter(ModelInterface):
         Args:
             messages: List of ModelMessage objects.
             **kwargs: Additional parameters (temperature, max_tokens, etc.).
+                When ``structured_output_contract`` is provided (a
+                ``StructuredOutputContract``), JSON-schema mode is enabled.
 
         Returns:
             A dict with ``text`` and ``usage`` keys.
@@ -187,6 +189,18 @@ class OpenAIAdapter(ModelInterface):
             else:
                 kwargs["reasoning_effort"] = self.reasoning_level
 
+        # Extract structured-output contract from kwargs
+        structured_output_contract = kwargs.pop("structured_output_contract", None)
+        if structured_output_contract is not None:
+            kwargs["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": structured_output_contract.schema.get("title", "response"),
+                    "strict": True,
+                    "schema": structured_output_contract.schema,
+                },
+            }
+
         for attempt in range(1, self.retry_count + 1):
             try:
                 result: list[dict] = []
@@ -205,6 +219,20 @@ class OpenAIAdapter(ModelInterface):
                         )
                         text = _extract_openai_content(response)
                         usage = None
+                        parsed_payload = None
+                        raw_structured_output = None
+                        structured_error = None
+
+                        # If structured output was requested, parse the JSON response
+                        if structured_output_contract is not None:
+                            raw_structured_output = text
+                            try:
+                                parsed_payload = json.loads(text)
+                            except json.JSONDecodeError as e:
+                                structured_error = (
+                                    f"Failed to parse structured JSON response: {e}"
+                                )
+
                         try:
                             raw_usage = getattr(response, "usage", None)
                             if raw_usage is not None:
@@ -252,6 +280,9 @@ class OpenAIAdapter(ModelInterface):
                             "usage": usage,
                             "api_duration_ms": api_duration_ms,
                             "transcript": transcript,
+                            "parsed_payload": parsed_payload,
+                            "raw_structured_output": raw_structured_output,
+                            "structured_error": structured_error,
                         })
                     except Exception as e:
                         error.append(e)
@@ -347,7 +378,9 @@ class OllamaAdapter(ModelInterface):
 
         Args:
             messages: List of ModelMessage objects.
-            **kwargs: Additional parameters (ignored — Ollama options go in the request body).
+            **kwargs: Additional options. When ``structured_output_contract``
+                is provided, the Ollama ``format`` parameter is set to the
+                contract schema.
 
         Returns:
             A dict with ``text`` and ``usage`` keys.
@@ -364,11 +397,19 @@ class OllamaAdapter(ModelInterface):
             )
 
         ollama_messages = [msg.to_dict() for msg in messages]
-        request_body = json.dumps({
+
+        # Extract structured-output contract
+        structured_output_contract = kwargs.pop("structured_output_contract", None)
+
+        request_body_dict: dict[str, Any] = {
             "model": self.model,
             "messages": ollama_messages,
             "stream": False,
-        }).encode("utf-8")
+        }
+        if structured_output_contract is not None:
+            request_body_dict["format"] = structured_output_contract.schema
+
+        request_body = json.dumps(request_body_dict).encode("utf-8")
 
         url = f"{self.base_url}/api/chat"
         last_error: Exception | None = None
@@ -394,6 +435,19 @@ class OllamaAdapter(ModelInterface):
                             body = json.loads(resp.read().decode("utf-8"))
                             content = body.get("message", {}).get("content", "")
                             usage = None
+                            parsed_payload = None
+                            raw_structured_output = None
+                            structured_error = None
+
+                            if structured_output_contract is not None:
+                                raw_structured_output = content
+                                try:
+                                    parsed_payload = json.loads(content)
+                                except json.JSONDecodeError as e:
+                                    structured_error = (
+                                        f"Failed to parse structured Ollama JSON: {e}"
+                                    )
+
                             try:
                                 prompt_eval = body.get("prompt_eval_count")
                                 eval_count = body.get("eval_count")
@@ -434,6 +488,9 @@ class OllamaAdapter(ModelInterface):
                                 "usage": usage,
                                 "api_duration_ms": api_duration_ms,
                                 "transcript": transcript,
+                                "parsed_payload": parsed_payload,
+                                "raw_structured_output": raw_structured_output,
+                                "structured_error": structured_error,
                             })
                     except Exception as e:
                         error.append(e)
@@ -521,14 +578,17 @@ class MockModelClient(ModelInterface):
 
         Args:
             messages: List of ModelMessage objects (stored for inspection).
-            **kwargs: Additional parameters (ignored).
+            **kwargs: Additional parameters. When ``structured_output_contract``
+                is provided, the mock response is returned as-is (tests must
+                set_response to valid JSON for structured contract tests).
 
         Returns:
-            A dict with ``text``, ``usage``, ``transcript``, and
-            ``api_duration_ms`` keys.
+            A dict with ``text``, ``usage``, ``transcript``,
+            ``api_duration_ms``, and structured-output fields.
         """
         self.call_count += 1
         self.last_messages = messages
+        structured_output_contract = kwargs.pop("structured_output_contract", None)
 
         t_start = time.perf_counter()
         time.sleep(0.01)
@@ -545,11 +605,24 @@ class MockModelClient(ModelInterface):
             "cost": 0.0,
         }
 
+        parsed_payload = None
+        raw_structured_output = None
+        structured_error = None
+        if structured_output_contract is not None:
+            raw_structured_output = self.response
+            try:
+                parsed_payload = json.loads(self.response)
+            except json.JSONDecodeError as e:
+                structured_error = f"Failed to parse mock structured JSON: {e}"
+
         return {
             "text": self.response,
             "usage": usage,
             "transcript": transcript,
             "api_duration_ms": api_duration_ms,
+            "parsed_payload": parsed_payload,
+            "raw_structured_output": raw_structured_output,
+            "structured_error": structured_error,
         }
 
     def set_response(self, response: str) -> None:

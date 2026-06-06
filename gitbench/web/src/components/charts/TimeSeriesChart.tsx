@@ -12,10 +12,8 @@ import type { GitBenchData, RunMeta } from "@/lib/types";
 import { loadData } from "@/lib/load-data";
 import { modelsWithRepeatRuns } from "@/lib/history";
 import ModelSelector from "@/components/charts/ModelSelector";
-import {
-  expandGroupSelection,
-  groupIdsForData,
-} from "@/components/charts/model-groups";
+import OutputModeSelector from "@/components/charts/OutputModeSelector";
+import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 
 const COLORS = [
   "#B657FF",
@@ -30,19 +28,19 @@ const COLORS = [
 
 export default function TimeSeriesChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const { selectedGroups, setSelectedGroups, selectedModels: syncedSelectedModels, outputMode, setOutputMode, availableOutputModes } =
+    useSyncedModelSelection(data);
 
   useEffect(() => {
     loadData().then((d) => {
       setData(d);
-      setSelectedGroups(groupIdsForData(d));
     });
   }, []);
 
   if (!data) return <div>Loading...</div>;
 
   const repeatModels = modelsWithRepeatRuns(data.runs_meta);
-  const selectedModels = expandGroupSelection(selectedGroups, data).filter(
+  const selectedModels = syncedSelectedModels.filter(
     (model) => repeatModels.has(model),
   );
 
@@ -84,6 +82,13 @@ export default function TimeSeriesChart() {
           value={selectedGroups}
           onChange={setSelectedGroups}
         />
+        <div className="mt-2 flex justify-end">
+          <OutputModeSelector
+            value={outputMode}
+            onChange={setOutputMode}
+            availableModes={availableOutputModes}
+          />
+        </div>
       </div>
       <div
         className="card"

@@ -4,8 +4,9 @@ import { loadData } from "@/lib/load-data";
 import type { BenchmarkDetail } from "@/lib/report-store";
 import { loadBenchmark } from "@/lib/report-client";
 import ModelSelector from "@/components/charts/ModelSelector";
+import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
-import { deriveModelGroups } from "@/components/charts/model-groups";
+import { deriveModelGroups, type OutputMode } from "@/components/charts/model-groups";
 import { Badge } from "@/components/ui/badge";
 
 interface EffortColumn {
@@ -44,7 +45,8 @@ export default function FixtureComparisonTable({
   const [benchmarkData, setBenchmarkData] = useState<BenchmarkDetail | null>(
     null,
   );
-  const { selectedGroups, setSelectedGroups } = useSyncedModelSelection(data);
+  const { selectedGroups, setSelectedGroups, outputMode, setOutputMode, availableOutputModes } =
+    useSyncedModelSelection(data);
 
   useEffect(() => {
     Promise.all([loadData(), loadBenchmark(benchName)]).then(
@@ -63,7 +65,11 @@ export default function FixtureComparisonTable({
     );
     const result: EffortColumn[] = [];
     for (const group of groups) {
-      const sorted = sortByReasoningLevel(group.efforts);
+      const filteredEfforts =
+        outputMode === "both"
+          ? group.efforts
+          : group.efforts.filter((e) => e.outputMode === outputMode);
+      const sorted = sortByReasoningLevel(filteredEfforts);
       for (const effort of sorted) {
         result.push({
           modelName: effort.modelName,
@@ -74,7 +80,7 @@ export default function FixtureComparisonTable({
       }
     }
     return result;
-  }, [data, selectedGroups]);
+  }, [data, selectedGroups, outputMode]);
 
   // Group consecutive efforts with the same base model for colspan headers
   const columnGroups = useMemo((): ColumnGroup[] => {
@@ -113,6 +119,13 @@ export default function FixtureComparisonTable({
           value={selectedGroups}
           onChange={setSelectedGroups}
         />
+        <div className="mt-2 flex justify-end">
+          <OutputModeSelector
+            value={outputMode}
+            onChange={setOutputMode}
+            availableModes={availableOutputModes}
+          />
+        </div>
       </div>
       <div className="card overflow-x-auto p-5">
         <table className="data-table">

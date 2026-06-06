@@ -214,7 +214,7 @@ class TestRunCommand:
         with patch("gitbench.cli.check_git_availability", return_value=True):
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock"],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text"],
             )
             assert result.exit_code == 0
 
@@ -252,7 +252,7 @@ class TestRunCommand:
         with patch("gitbench.cli.check_git_availability", return_value=True):
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock", "--json-output", str(output_path)],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text", "--json-output", str(output_path)],
             )
             assert result.exit_code == 0
 
@@ -268,7 +268,7 @@ class TestRunCommand:
             with patch("gitbench.cli.check_git_availability", return_value=True):
                 result = runner.invoke(
                     cli,
-                    ["run", "--benchmark", "commit_messages", "--model", "mock"],
+                    ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text"],
             )
 
             assert result.exit_code == 0
@@ -292,6 +292,8 @@ class TestRunCommand:
                     "commit_messages",
                     "--model",
                     "mock",
+                    "--output-mode",
+                    "text",
                     "--json-output",
                     str(json_path),
                 ],
@@ -335,7 +337,7 @@ class TestRunCommand:
             with patch("gitbench.cli.check_git_availability", return_value=True):
                 result = runner.invoke(
                     cli,
-                    ["run", "--benchmark", "commit_messages", "--model", "mock"],
+                    ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text"],
                 )
 
             assert result.exit_code == 0
@@ -348,7 +350,7 @@ class TestRunCommand:
         with patch("gitbench.cli.check_git_availability", return_value=True):
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock", "--json-output", str(output_path)],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text", "--json-output", str(output_path)],
             )
 
         assert result.exit_code == 0
@@ -393,6 +395,8 @@ class TestRunCommand:
                     "commit_messages",
                     "--model",
                     "mock",
+                    "--output-mode",
+                    "text",
                     "--export",
                     "csv",
                     "--export-path",
@@ -412,7 +416,7 @@ class TestRunCommand:
         with patch("gitbench.cli.check_git_availability", return_value=True):
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock", "--verbose"],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text", "--verbose"],
             )
             assert result.exit_code == 0
             # Verbose output should mention per-fixture or similar
@@ -451,7 +455,7 @@ class TestRunCommand:
                  patch("gitbench.harness.runner.BenchmarkRunner.run_all", side_effect=fake_run_all, autospec=True):
                 result = runner.invoke(
                     cli,
-                    ["run", "--benchmark", "commit_messages", "--model", "mock"],
+                    ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text"],
                 )
 
             assert result.exit_code == 0
@@ -471,7 +475,7 @@ class TestRunCommand:
              patch("gitbench.harness.runner.BenchmarkRunner.run_all", side_effect=KeyboardInterrupt):
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock"],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text"],
             )
 
         assert result.exit_code != 0
@@ -482,7 +486,7 @@ class TestRunCommand:
         with patch("gitbench.cli.check_git_availability", return_value=False):
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock"],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text"],
             )
             assert result.exit_code == 1
             assert "Git" in result.output or "git" in result.output
@@ -494,7 +498,7 @@ class TestRunCommand:
         with patch("gitbench.cli.check_git_availability", return_value=True):
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-dir", str(output_dir)],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text", "--output-dir", str(output_dir)],
             )
             assert result.exit_code == 0
 
@@ -523,14 +527,14 @@ class TestRunCommand:
             # First run
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock", "--jsonl", str(jsonl_path)],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text", "--jsonl", str(jsonl_path)],
             )
             assert result.exit_code == 0
 
             # Second run (should append, not overwrite)
             result = runner.invoke(
                 cli,
-                ["run", "--benchmark", "commit_messages", "--model", "mock", "--jsonl", str(jsonl_path)],
+                ["run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text", "--jsonl", str(jsonl_path)],
             )
             assert result.exit_code == 0
 
@@ -556,7 +560,7 @@ class TestRunCommand:
             result = runner.invoke(
                 cli,
                 [
-                    "run", "--benchmark", "commit_messages", "--model", "mock",
+                    "run", "--benchmark", "commit_messages", "--model", "mock", "--output-mode", "text",
                     "--output-dir", str(output_dir),
                     "--jsonl", str(jsonl_path),
                 ],
@@ -567,6 +571,116 @@ class TestRunCommand:
             assert len(list(output_dir.glob("*.json"))) == 1
             assert jsonl_path.exists()
             assert len(jsonl_path.read_text().strip().split("\n")) == 1
+
+    def test_run_output_mode_both_writes_raw_mode_artifacts(self, runner, tmp_path):
+        """Explicit both mode writes one raw envelope per output mode."""
+        output_dir = tmp_path / "both-results"
+        jsonl_path = tmp_path / "both-results.jsonl"
+
+        with patch("gitbench.cli.check_git_availability", return_value=True):
+            result = runner.invoke(
+                cli,
+                [
+                    "run",
+                    "--benchmark",
+                    "commit_messages",
+                    "--model",
+                    "mock",
+                    "--output-mode",
+                    "both",
+                    "--output-dir",
+                    str(output_dir),
+                    "--jsonl",
+                    str(jsonl_path),
+                ],
+            )
+
+        assert result.exit_code == 0
+        files = sorted(output_dir.glob("*.json"))
+        assert len(files) == 2
+        file_payloads = [json.loads(path.read_text()) for path in files]
+        assert {payload["output_mode"] for payload in file_payloads} == {
+            "text",
+            "json_schema",
+        }
+        assert all("model_summaries" not in payload for payload in file_payloads)
+        assert any("_text_" in path.name for path in files)
+        assert any("_json_schema_" in path.name for path in files)
+
+        lines = [json.loads(line) for line in jsonl_path.read_text().strip().split("\n")]
+        assert {line["output_mode"] for line in lines} == {"text", "json_schema"}
+        assert all("results" in line and line["model"] == "mock" for line in lines)
+
+    def test_run_output_mode_both_model_workers_schedule_each_mode(self, runner, tmp_path):
+        """Both mode runs every model once per output mode when model workers are used."""
+        output_dir = tmp_path / "both-worker-results"
+        calls: list[tuple[str, str]] = []
+
+        def fake_run_all(self, benchmark_names, *, model_name="", fixture_workers=1, progress=None, progress_model_name=None):
+            calls.append((model_name, self._output_mode))
+            return {
+                "model": model_name,
+                "summary": {
+                    "total_benchmarks": len(benchmark_names),
+                    "total_fixtures": len(benchmark_names),
+                    "total_passed": len(benchmark_names),
+                    "overall_pass_at_k": 1.0,
+                },
+                "results": [
+                    {
+                        "benchmark": bench_name,
+                        "total": 1,
+                        "passed": 1,
+                        "pass_at_k": 1.0,
+                        "scores": [],
+                        "errors": 0,
+                    }
+                    for bench_name in benchmark_names
+                ],
+            }
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            config = {
+                "models": {
+                    "parallel": {
+                        "models": ["mock:low", "mock:high"],
+                    }
+                }
+            }
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch("gitbench.cli.BenchmarkRunner.run_all", autospec=True, side_effect=fake_run_all):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--profile",
+                        "parallel",
+                        "--model-workers",
+                        "2",
+                        "--output-mode",
+                        "both",
+                        "--output-dir",
+                        str(output_dir),
+                    ],
+                )
+
+        assert result.exit_code == 0
+        assert sorted(calls) == [
+            ("mock:high", "json_schema"),
+            ("mock:high", "text"),
+            ("mock:low", "json_schema"),
+            ("mock:low", "text"),
+        ]
+        files = sorted(output_dir.glob("*.json"))
+        assert len(files) == 4
+        modes = [json.loads(path.read_text())["output_mode"] for path in files]
+        assert modes.count("text") == 2
+        assert modes.count("json_schema") == 2
 
     def test_run_profile_models_with_model_workers(self, runner, tmp_path):
         """Test that multiple profile models can run with model workers."""
@@ -593,6 +707,8 @@ class TestRunCommand:
                         "commit_messages",
                         "--profile",
                         "parallel",
+                        "--output-mode",
+                        "text",
                         "--model-workers",
                         "2",
                         "--output-dir",
@@ -610,6 +726,210 @@ class TestRunCommand:
         assert all(item["model"] == "mock" for item in data)
         assert len(list(output_dir.glob("*.json"))) == 2
         assert len(jsonl_path.read_text().strip().split("\n")) == 2
+
+    def test_report_ingests_newly_produced_both_mode_raw_artifacts(self, runner, tmp_path):
+        """Report generation discovers same-timestamp raw text/json_schema artifacts."""
+        results_root = tmp_path / "gitbench-results"
+        run_dir = results_root / "20260606T010203Z"
+        run_dir.mkdir(parents=True)
+        timestamp = "2026-06-06T01:02:03+00:00"
+
+        def envelope(output_mode: str, passed: int) -> dict:
+            return {
+                "version": 1,
+                "schema_version": 1,
+                "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+                "timestamp": timestamp,
+                "git_sha": "abc123",
+                "model": "openai/gpt-test:high",
+                "profile": "(inline)",
+                "output_mode": output_mode,
+                "summary": {
+                    "total_benchmarks": 1,
+                    "total_fixtures": 1,
+                    "total_passed": passed,
+                    "overall_pass_at_k": float(passed),
+                },
+                "results": [
+                    {
+                        "benchmark": "commit_messages",
+                        "total": 1,
+                        "passed": passed,
+                        "pass_at_k": float(passed),
+                        "scores": [
+                            {
+                                "fixture_id": "f001",
+                                "passed": bool(passed),
+                                "similarity": float(passed),
+                                "model_output": "answer",
+                                "error": None,
+                                "output_mode": output_mode,
+                            }
+                        ],
+                        "errors": 0,
+                    }
+                ],
+            }
+
+        (run_dir / f"run_text_v{BENCHMARK_SUITE_VERSION}.json").write_text(
+            json.dumps(envelope("text", 1)),
+        )
+        (run_dir / f"run_json_schema_v{BENCHMARK_SUITE_VERSION}.json").write_text(
+            json.dumps(envelope("json_schema", 0)),
+        )
+        output_path = tmp_path / "report-results.json"
+
+        with patch("gitbench.render.write_sqlite_report_db"):
+            result = runner.invoke(
+                cli,
+                [
+                    "report",
+                    "--input-dir",
+                    str(results_root),
+                    "--output",
+                    str(output_path),
+                    "--no-build",
+                ],
+            )
+
+        assert result.exit_code == 0
+        data = json.loads(output_path.read_text())
+        assert data["model_summaries"]["openai/gpt-test:high"]["pass_at_k"] == 1.0
+        assert data["model_summaries"]["openai/gpt-test:high__json_schema"]["pass_at_k"] == 0.0
+
+    def test_report_preserves_aggregate_report_artifacts_with_real_model_data(self, runner, tmp_path):
+        """Already-aggregated report JSON remains usable as report input."""
+        results_root = tmp_path / "gitbench-results"
+        aggregate_dir = results_root / "20260605T231514Z"
+        flat_dir = results_root / "20260606T010428Z"
+        aggregate_dir.mkdir(parents=True)
+        flat_dir.mkdir(parents=True)
+
+        aggregate_payload = {
+            "models": [
+                {
+                    "name": "inclusionai/ling-2.6-flash:none",
+                    "provider": "inclusionai",
+                    "baseModel": "ling-2.6-flash",
+                    "reasoningLevel": "none",
+                    "output_mode": "text",
+                },
+                {
+                    "name": "inclusionai/ling-2.6-flash:none__json_schema",
+                    "provider": "inclusionai",
+                    "baseModel": "ling-2.6-flash",
+                    "reasoningLevel": "none",
+                    "output_mode": "json_schema",
+                },
+            ],
+            "benchmarks": ["commit_messages"],
+            "model_summaries": {
+                "inclusionai/ling-2.6-flash:none": {
+                    "total_runs": 1,
+                    "total_fixtures": 1,
+                    "total_passed": 1,
+                    "pass_at_k": 1.0,
+                    "total_cost_usd": None,
+                    "avg_cost_usd": None,
+                },
+                "inclusionai/ling-2.6-flash:none__json_schema": {
+                    "total_runs": 1,
+                    "total_fixtures": 1,
+                    "total_passed": 0,
+                    "pass_at_k": 0.0,
+                    "total_cost_usd": None,
+                    "avg_cost_usd": None,
+                },
+            },
+            "model_runtimes": {},
+            "matrix": {
+                "inclusionai/ling-2.6-flash:none": {
+                    "commit_messages": {
+                        "pass_at_k": 1.0,
+                        "total": 1,
+                        "passed": 1,
+                        "avg_similarity": 1.0,
+                    },
+                },
+                "inclusionai/ling-2.6-flash:none__json_schema": {
+                    "commit_messages": {
+                        "pass_at_k": 0.0,
+                        "total": 1,
+                        "passed": 0,
+                        "avg_similarity": 0.0,
+                    },
+                },
+            },
+            "fixtures": {},
+            "fixture_index": {},
+            "runs_meta": [
+                {
+                    "timestamp": "2026-06-05T23:20:42+00:00",
+                    "model": "inclusionai/ling-2.6-flash:none",
+                    "profile": "(inline)",
+                    "git_sha": "abc123",
+                    "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+                    "reasoning_level": "none",
+                    "output_mode": "text",
+                }
+            ],
+            "base_model_groups": [
+                {
+                    "provider": "inclusionai",
+                    "baseModel": "ling-2.6-flash",
+                    "levels": [
+                        {
+                            "level": "none",
+                            "modelName": "inclusionai/ling-2.6-flash:none",
+                            "pass_at_k": 1.0,
+                            "total_cost_usd": None,
+                        },
+                        {
+                            "level": "none",
+                            "modelName": "inclusionai/ling-2.6-flash:none__json_schema",
+                            "pass_at_k": 0.0,
+                            "total_cost_usd": None,
+                        },
+                    ],
+                }
+            ],
+        }
+        (aggregate_dir / f"results-v{BENCHMARK_SUITE_VERSION}.json").write_text(
+            json.dumps(aggregate_payload),
+        )
+
+        flat_no_model_payload = {
+            "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+            "benchmark": "commit_messages",
+            "total": 1,
+            "passed": 1,
+            "pass_at_k": 1.0,
+            "scores": [],
+            "errors": 0,
+        }
+        (flat_dir / f"results-v{BENCHMARK_SUITE_VERSION}.json").write_text(
+            json.dumps(flat_no_model_payload),
+        )
+        output_path = tmp_path / "report-results.json"
+
+        with patch("gitbench.render.write_sqlite_report_db"):
+            result = runner.invoke(
+                cli,
+                [
+                    "report",
+                    "--input-dir",
+                    str(results_root),
+                    "--output",
+                    str(output_path),
+                    "--no-build",
+                ],
+            )
+
+        assert result.exit_code == 0
+        data = json.loads(output_path.read_text())
+        assert "inclusionai/ling-2.6-flash:none" in data["model_summaries"]
+        assert "inclusionai/ling-2.6-flash:none__json_schema" in data["model_summaries"]
+        assert data["base_model_groups"][0]["provider"] == "inclusionai"
 
     def test_run_profile_model_workers_schedule_distinct_capacity_groups(self, runner, tmp_path):
         """Profile model workers do not start multiple efforts for the same base model."""
@@ -883,6 +1203,8 @@ class TestRunCommand:
                     [
                         "run",
                         "-a",
+                        "--output-mode",
+                        "text",
                         "--model-workers",
                         "2",
                     ],
@@ -2347,10 +2669,10 @@ class TestWriteOutputDir:
         paths = [write_output_dir(envelope, str(tmp_path)) for _ in range(4)]
         names = [p.name for p in paths]
 
-        assert names[0] == f"2026-04-25T13-30-00_mock_v{BENCHMARK_SUITE_VERSION}.json"
-        assert names[1] == f"2026-04-25T13-30-00_mock_v{BENCHMARK_SUITE_VERSION}_2.json"
-        assert names[2] == f"2026-04-25T13-30-00_mock_v{BENCHMARK_SUITE_VERSION}_3.json"
-        assert names[3] == f"2026-04-25T13-30-00_mock_v{BENCHMARK_SUITE_VERSION}_4.json"
+        assert names[0] == f"2026-04-25T13-30-00_mock_text_v{BENCHMARK_SUITE_VERSION}.json"
+        assert names[1] == f"2026-04-25T13-30-00_mock_text_v{BENCHMARK_SUITE_VERSION}_2.json"
+        assert names[2] == f"2026-04-25T13-30-00_mock_text_v{BENCHMARK_SUITE_VERSION}_3.json"
+        assert names[3] == f"2026-04-25T13-30-00_mock_text_v{BENCHMARK_SUITE_VERSION}_4.json"
 
         # All files exist
         for p in paths:

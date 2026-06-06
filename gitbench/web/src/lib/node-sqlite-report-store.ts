@@ -29,6 +29,11 @@ export function getReportStore(): ReportStore {
   return cachedStore;
 }
 
+/** Build a key that combines model name and output mode for lookups. */
+function modelModeKey(modelName: string, outputMode: string): string {
+  return outputMode === "text" ? modelName : `${modelName}__${outputMode}`;
+}
+
 export class NodeSqliteReportStore implements ReportStore {
   constructor(private readonly db: DatabaseSync) {}
 
@@ -43,7 +48,7 @@ export class NodeSqliteReportStore implements ReportStore {
       this.db
         .prepare(
           `
-          SELECT model_name, total_runs, total_fixtures, total_passed, pass_at_k,
+          SELECT model_name, output_mode, total_runs, total_fixtures, total_passed, pass_at_k,
                  total_cost_usd, avg_cost_usd
           FROM model_summaries
           `,
@@ -51,8 +56,9 @@ export class NodeSqliteReportStore implements ReportStore {
         .all()
         .map((row) => {
           const r = row as Record<string, number | string | null>;
+          const key = modelModeKey(String(r.model_name), String(r.output_mode));
           return [
-            String(r.model_name),
+            key,
             {
               total_runs: Number(r.total_runs),
               total_fixtures: Number(r.total_fixtures),
@@ -69,15 +75,16 @@ export class NodeSqliteReportStore implements ReportStore {
       this.db
         .prepare(
           `
-          SELECT model_name, total_ms, avg_ms, min_ms, max_ms, fixture_count
+          SELECT model_name, output_mode, total_ms, avg_ms, min_ms, max_ms, fixture_count
           FROM model_runtimes
           `,
         )
         .all()
         .map((row) => {
           const r = row as Record<string, number | string>;
+          const key = modelModeKey(String(r.model_name), String(r.output_mode));
           return [
-            String(r.model_name),
+            key,
             {
               total_ms: Number(r.total_ms),
               avg_ms: Number(r.avg_ms),
@@ -93,34 +100,35 @@ export class NodeSqliteReportStore implements ReportStore {
     for (const row of this.db
       .prepare(
         `
-        SELECT model_name, benchmark_name, pass_at_k, total, passed, avg_similarity
+        SELECT model_name, output_mode, benchmark_name, pass_at_k, total, passed, avg_similarity
         FROM benchmark_summaries
         `,
       )
       .all() as Record<string, number | string>[]) {
-      const model = String(row.model_name);
+      const key = modelModeKey(String(row.model_name), String(row.output_mode));
       const benchmark = String(row.benchmark_name);
-      matrix[model] = matrix[model] ?? {};
-      matrix[model][benchmark] = cellFromRow(row);
+      matrix[key] = matrix[key] ?? {};
+      matrix[key][benchmark] = cellFromRow(row);
     }
 
     const model_token_summaries = Object.fromEntries(
       this.db
         .prepare(
           `
-          SELECT model_name,
+          SELECT model_name, output_mode,
                  COALESCE(SUM(input_tokens), 0) AS input_tokens,
                  COALESCE(SUM(output_tokens), 0) AS output_tokens,
                  COALESCE(SUM(total_tokens), 0) AS total_tokens
           FROM fixture_results
-          GROUP BY model_name
+          GROUP BY model_name, output_mode
           `,
         )
         .all()
         .map((row) => {
           const r = row as Record<string, number | string>;
+          const key = modelModeKey(String(r.model_name), String(r.output_mode));
           return [
-            String(r.model_name),
+            key,
             {
               input_tokens: Number(r.input_tokens),
               output_tokens: Number(r.output_tokens),
@@ -149,9 +157,9 @@ export class NodeSqliteReportStore implements ReportStore {
       this.db
         .prepare(
           `
-          SELECT name, provider, base_model AS baseModel, reasoning_level AS reasoningLevel
+          SELECT name, provider, base_model AS baseModel, reasoning_level AS reasoningLevel, output_mode
           FROM models
-          ORDER BY name
+          ORDER BY name, output_mode
           `,
         )
         .all() as ModelInfo[]
@@ -162,10 +170,14 @@ export class NodeSqliteReportStore implements ReportStore {
     model: string,
     filters: ModelResultsFilters = {},
   ): { model: string; results: Record<string, FixtureResult[]> } | null {
-    if (!this.modelExists(model)) return null;
+    // Find the actual model_name + output_mode for the given composite key
+    const [modelName, outputMode] = this.resolveModelKey(model);
+    if (!modelName) return null;
+    const requestedOutputMode = filters.output_mode ?? outputMode;
+    if (!this.modelExists(modelName, requestedOutputMode)) return null;
 
-    const clauses = ["fr.model_name = ?"];
-    const params: (string | number)[] = [model];
+    const clauses = ["fr.model_name = ?", "fr.output_mode = ?"];
+    const params: (string | number)[] = [modelName, requestedOutputMode];
     if (filters.benchmark) {
       clauses.push("fr.benchmark_name = ?");
       params.push(filters.benchmark);
@@ -192,7 +204,10 @@ export class NodeSqliteReportStore implements ReportStore {
       )
       .all(...params) as Record<string, unknown>[];
 
-    return { model, results: groupResultsByBenchmark(rows, false) };
+    return {
+      model: modelModeKey(modelName, requestedOutputMode),
+      results: groupResultsByBenchmark(rows, false),
+    };
   }
 
   getBenchmark(benchmark: string): BenchmarkDetail | null {
@@ -201,15 +216,15 @@ export class NodeSqliteReportStore implements ReportStore {
       this.db
         .prepare(
           `
-          SELECT model_name AS model, pass_at_k, total, passed, avg_similarity
+          SELECT model_name, output_mode, pass_at_k, total, passed, avg_similarity
           FROM benchmark_summaries
           WHERE benchmark_name = ?
-          ORDER BY pass_at_k DESC, avg_similarity DESC, model_name
+          ORDER BY pass_at_k DESC, avg_similarity DESC, model_name, output_mode
           `,
         )
         .all(benchmark) as Record<string, number | string>[]
     ).map((row) => ({
-      model: String(row.model),
+      model: modelModeKey(String(row.model_name), String(row.output_mode)),
       ...cellFromRow(row),
     }));
 
@@ -245,15 +260,15 @@ export class NodeSqliteReportStore implements ReportStore {
       this.db
         .prepare(
           `
-          SELECT fr.*, fr.model_name AS model
+          SELECT fr.*
           FROM fixture_results fr
           WHERE fr.benchmark_name = ? AND fr.fixture_id = ?
-          ORDER BY fr.model_name
+          ORDER BY fr.model_name, fr.output_mode
           `,
         )
         .all(benchmark, fixtureId) as Record<string, unknown>[]
     ).map((row) => ({
-      model: String(row.model),
+      model: modelModeKey(String(row.model_name), String(row.output_mode)),
       ...fixtureResultFromRow(row, true),
     }));
     return { fixture, outputs };
@@ -264,7 +279,7 @@ export class NodeSqliteReportStore implements ReportStore {
       this.db
         .prepare(
           `
-          SELECT timestamp, model_name AS model, profile, git_sha,
+          SELECT timestamp, model_name AS model, output_mode, profile, git_sha,
                  benchmark_suite_version, reasoning_level
           FROM runs
           ORDER BY benchmark_suite_version, timestamp
@@ -292,15 +307,39 @@ export class NodeSqliteReportStore implements ReportStore {
         this.db
           .prepare(
             `
-            SELECT level, model_name AS modelName, pass_at_k, total_cost_usd
+            SELECT level, model_name AS modelName, output_mode, pass_at_k, total_cost_usd
             FROM base_model_group_levels
             WHERE group_id = ?
-            ORDER BY COALESCE(level, '')
+            ORDER BY COALESCE(level, ''), output_mode
             `,
           )
-          .all(group.id) as BaseModelGroup["levels"]
-      ),
+          .all(group.id) as (BaseModelGroup["levels"][number] & { output_mode: string })[]
+      ).map((level) => ({
+        level: level.level,
+        modelName: modelModeKey(level.modelName, level.output_mode),
+        pass_at_k: level.pass_at_k,
+        total_cost_usd: level.total_cost_usd,
+      })),
     }));
+  }
+
+  /** Resolve a composite model key back to (model_name, output_mode). */
+  private resolveModelKey(key: string): [string, string] | [null, null] {
+    // Check if the key ends with a known output_mode suffix
+    for (const suffix of ["__json_schema"]) {
+      if (key.endsWith(suffix)) {
+        const modelName = key.slice(0, -suffix.length);
+        const outputMode = suffix.slice(2); // remove "__"
+        if (this.modelExists(modelName, outputMode)) {
+          return [modelName, outputMode];
+        }
+      }
+    }
+    // Default: try as text mode
+    if (this.modelExists(key, "text")) {
+      return [key, "text"];
+    }
+    return [null, null];
   }
 
   private getFixtureIndex(benchmark?: string): Record<string, FixtureInfo> {
@@ -353,7 +392,7 @@ export class NodeSqliteReportStore implements ReportStore {
       SELECT *
       FROM fixture_results
       ${benchmark ? "WHERE benchmark_name = ?" : ""}
-      ORDER BY model_name, benchmark_name, fixture_id
+      ORDER BY model_name, output_mode, benchmark_name, fixture_id
     `;
     const rows = benchmark
       ? this.db.prepare(sql).all(benchmark)
@@ -361,7 +400,7 @@ export class NodeSqliteReportStore implements ReportStore {
 
     const grouped: Record<string, Record<string, FixtureResult[]>> = {};
     for (const row of rows as Record<string, unknown>[]) {
-      const model = String(row.model_name);
+      const model = modelModeKey(String(row.model_name), String(row.output_mode));
       const bench = String(row.benchmark_name);
       grouped[model] = grouped[model] ?? {};
       grouped[model][bench] = grouped[model][bench] ?? [];
@@ -370,9 +409,11 @@ export class NodeSqliteReportStore implements ReportStore {
     return grouped;
   }
 
-  private modelExists(model: string): boolean {
+  private modelExists(model: string, outputMode: string = "text"): boolean {
     return Boolean(
-      this.db.prepare("SELECT 1 FROM models WHERE name = ?").get(model),
+      this.db
+        .prepare("SELECT 1 FROM models WHERE name = ? AND output_mode = ?")
+        .get(model, outputMode),
     );
   }
 
@@ -442,6 +483,12 @@ function fixtureResultFromRow(
         ? null
         : String(row.difficulty),
     tags: parseJsonArray(row.tags_json),
+    output_mode: String(row.output_mode ?? "text"),
+    parsed_payload: typeof row.parsed_payload === "string" ? row.parsed_payload : null,
+    raw_structured_output:
+      typeof row.raw_structured_output === "string" ? row.raw_structured_output : null,
+    structured_error:
+      typeof row.structured_error === "string" ? row.structured_error : null,
   };
 }
 

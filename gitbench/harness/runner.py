@@ -9,9 +9,15 @@ from gitbench.harness.benchmark import Benchmark
 from gitbench.harness.capacity import RequestBudgetCoordinator
 from gitbench.harness.model import ModelInterface
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
+from gitbench.structured_output import (
+    contract_for_benchmark_fixture,
+    canonicalize,
+)
 from gitbench.version import BENCHMARK_SUITE_VERSION
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_OUTPUT_MODE = "both"
 
 
 class RunProgress(Protocol):
@@ -38,17 +44,20 @@ class BenchmarkRunner:
         *,
         request_budget: RequestBudgetCoordinator | None = None,
         capacity_key: str | None = None,
+        output_mode: str = DEFAULT_OUTPUT_MODE,
     ) -> None:
         """Initialise the runner.
 
         Args:
             registry: A mapping of benchmark name → class.
             model_client: The model adapter to call for generation.
+            output_mode: ``text``, ``json_schema``, or ``both`` (default).
         """
         self._registry = registry
         self._model_client = model_client
         self._request_budget = request_budget
         self._capacity_key = capacity_key
+        self._output_mode = output_mode
 
     def run_benchmark(
         self,
@@ -198,6 +207,7 @@ class BenchmarkRunner:
         model_result = {
             "model": model_name,
             "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+            "output_mode": self._output_mode,
             "summary": {
                 "total_benchmarks": len(results_list),
                 "total_fixtures": total_fixtures,
@@ -225,25 +235,77 @@ class BenchmarkRunner:
         executor = None
         score = None
         t_start = time.perf_counter()
+        benchmark_name = getattr(benchmark, "name", benchmark.__class__.__name__)
+        output_mode = self._output_mode
+
         try:
             executor, repo_path = benchmark.setup_fixture(fixture)
             diff = benchmark.get_diff(repo_path)
             prompt = benchmark.format_prompt(fixture, diff)
 
             messages = [ModelMessage(role="user", content=prompt)]
+
+            generate_kwargs: dict = {}
+            structured_output_contract = None
+            if output_mode == "json_schema":
+                structured_output_contract = contract_for_benchmark_fixture(
+                    fixture, benchmark_name
+                )
+                if structured_output_contract is not None:
+                    generate_kwargs["structured_output_contract"] = structured_output_contract
+                else:
+                    raise ValueError(
+                        f"No structured-output contract for fixture "
+                        f"{fixture.id} (benchmark {benchmark_name}, "
+                        f"scoring type {fixture.scoring.get('type')})"
+                    )
+
             if self._request_budget is not None and self._capacity_key is not None:
                 with self._request_budget.acquire(self._capacity_key):
-                    response = self._model_client.generate(messages)
+                    response = self._model_client.generate(messages, **generate_kwargs)
             else:
-                response = self._model_client.generate(messages)
+                response = self._model_client.generate(messages, **generate_kwargs)
 
             if isinstance(response, dict):
                 model_output = response.get("text", response.get("content", ""))
                 usage = response.get("usage")
+                parsed_payload = response.get("parsed_payload")
+                structured_error = response.get("structured_error")
             else:
                 model_output = str(response)
                 usage = None
-                response = {}  # type: ignore[assignment]
+                response = {}
+                parsed_payload = None
+                structured_error = None
+
+            # Canonicalize structured output before scoring
+            if output_mode == "json_schema" and parsed_payload is not None and structured_output_contract is not None:
+                try:
+                    model_output = canonicalize(parsed_payload, structured_output_contract)
+                except Exception as exc:
+                    structured_error = str(exc)
+                    model_output = ""
+
+            if structured_error:
+                score = Score(
+                    fixture_id=fixture.id,
+                    passed=False,
+                    similarity=0.0,
+                    model_output=model_output,
+                    error=structured_error,
+                    reasoning_level=getattr(
+                        self._model_client, "reasoning_level", None
+                    ),
+                    prompt=fixture.prompt,
+                    expected=fixture.expected,
+                    description=fixture.description,
+                )
+                # Attach structured-output fields
+                score._parsed_payload = parsed_payload
+                score._raw_structured_output = response.get("raw_structured_output")
+                score._structured_error = structured_error
+                score._output_mode = output_mode
+                return fixture.id, score
 
             score = benchmark.score(fixture, model_output, repo_path=repo_path)
             score.reasoning_level = getattr(
@@ -265,6 +327,13 @@ class BenchmarkRunner:
                 score.reasoning_tokens = usage.get("reasoning_tokens")
                 if usage.get("cost") is not None:
                     score.cost_usd = usage.get("cost")
+
+            # Attach structured-output fields
+            score._output_mode = output_mode
+            score._parsed_payload = parsed_payload
+            score._raw_structured_output = response.get("raw_structured_output")
+            score._structured_error = structured_error
+
             return fixture.id, score
         except Exception as exc:
             logger.error("Error processing fixture %s: %s", fixture.id, exc)

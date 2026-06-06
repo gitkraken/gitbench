@@ -30,6 +30,12 @@ Runs, scores, aggregate rows, API payloads, and UI data SHALL carry `output_mode
 
 Alternative considered: encode structured mode into the model name, such as `openai/gpt-4o:high+json`. This would avoid schema changes but would pollute model grouping, make text-vs-structured comparisons harder, and treat a run mode as a model identity.
 
+### Keep raw run input distinct from aggregate report output
+
+`gitbench report` SHALL only feed raw run envelopes or supported combined-run payloads into `aggregate_runs()`. If `gitbench run --output-mode both` writes an already-aggregated report JSON, report generation SHALL either load it through a dedicated aggregate-report path or ignore it during raw-run discovery. Aggregate JSON with top-level `models`, `model_summaries`, `matrix`, and `fixtures` MUST NOT be interpreted as the older combined-run format that nests model entries under `model` plus `results`.
+
+Report-time deduplication SHALL include `output_mode` in addition to suite version, timestamp, and model name. This prevents same-timestamp text and JSON-schema runs for the same model from collapsing before aggregation.
+
 ### Store concrete fixture contracts, generated from templates where practical
 
 Each fixture SHALL resolve to a concrete JSON Schema contract before a structured run starts. Most contracts can be generated from benchmark/scoring templates, but the generated contract is still fixture-specific and auditable.
@@ -74,6 +80,7 @@ When `Both` is selected, charts may expand each selected model effort into two v
 - Per-fixture schemas can drift from fixture intent -> Add an all-fixture audit and make missing/invalid contracts block structured runs.
 - UI charts can become visually crowded when `Both` doubles visible variants -> Default output mode to `Text`, provide explicit `Both`, and keep model detail comparison focused on one model/effort at a time.
 - Result schema changes can break older reports -> Treat missing `output_mode` as `text` during loading and aggregation.
+- Result artifact ambiguity can break new reports -> Keep raw run artifacts and aggregate report artifacts distinguishable, and add a regression that runs `gitbench report` against artifacts produced by `gitbench run --output-mode both`.
 - Report DB builder drift can occur because Python and JavaScript both write SQLite -> Update and test both builders for output-mode columns and structured payload fields.
 
 ## Migration Plan
@@ -84,5 +91,6 @@ When `Both` is selected, charts may expand each selected model effort into two v
 4. Extend result aggregation, JSON export, SQLite schema, and APIs.
 5. Update UI controls and comparison pages.
 6. Validate existing historical result files still render as text-mode data.
+7. Validate newly generated text/JSON-schema artifacts can regenerate `public/results.json`, `data/gitbench.db`, and a static web build without empty model identities or route generation failures.
 
 Rollback is straightforward before structured runs are generated: remove the new output-mode UI and ignore new fields. After structured runs exist, report loaders can still treat `json_schema` variants as separate rows or filter them out.

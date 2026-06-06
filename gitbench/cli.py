@@ -288,6 +288,7 @@ def build_run_envelope(
     model: str,
     profile: str,
     results: list[dict],
+    output_mode: str = "both",
 ) -> dict:
     """Wrap benchmark results in a metadata envelope for structured output.
 
@@ -295,6 +296,7 @@ def build_run_envelope(
         model: Model name used for this run.
         profile: Profile name (or '(inline)' if no profile).
         results: List of BenchmarkResult dicts.
+        output_mode: ``text``, ``json_schema``, or ``both`` (default).
 
     Returns:
         Dict with metadata envelope and results.
@@ -311,6 +313,7 @@ def build_run_envelope(
         "git_sha": _get_git_sha(),
         "model": model,
         "profile": profile,
+        "output_mode": output_mode,
         "summary": {
             "total_benchmarks": len(results),
             "total_fixtures": total_fixtures,
@@ -334,9 +337,10 @@ def _version_slug(version: str | None = None) -> str:
 def write_output_dir(envelope: dict, output_dir: str) -> Path:
     """Write a run envelope as a JSON file in the output directory.
 
-    Filename format: {YYYY-MM-DDTHH-MM-SS}_{model}_v{benchmark_suite_version}.json
-    If a collision exists (same timestamp + model + version within the same
-    second), appends _2, _3, etc. to avoid overwriting.
+    Filename format:
+    {YYYY-MM-DDTHH-MM-SS}_{model}_{output_mode}_v{benchmark_suite_version}.json
+    If a collision exists (same timestamp + model + mode + version within the
+    same second), appends _2, _3, etc. to avoid overwriting.
 
     Args:
         envelope: The run envelope dict.
@@ -350,8 +354,9 @@ def write_output_dir(envelope: dict, output_dir: str) -> Path:
 
     ts = envelope["timestamp"].replace(":", "-")[:19]  # YYYY-MM-DDTHH-MM-SS
     model = _sanitize_filename(envelope["model"])
+    output_mode = _sanitize_filename(envelope.get("output_mode", "text"))
     version = _version_slug(envelope.get("benchmark_suite_version"))
-    base = f"{ts}_{model}_v{version}"
+    base = f"{ts}_{model}_{output_mode}_v{version}"
 
     # Non-destructive: add counter suffix on collision
     candidate = dir_path / f"{base}.json"
@@ -1000,6 +1005,17 @@ def doctor(
     show_default=True,
     help="Number of fixtures to run concurrently within a benchmark.",
 )
+@click.option(
+    "--output-mode",
+    default="both",
+    type=click.Choice(["text", "json_schema", "both"], case_sensitive=True),
+    show_default=True,
+    help=(
+        "Output mode for model responses. Defaults to 'both' which runs every model "
+        "in text and JSON-schema modes producing separate raw run artifacts. "
+        "'text' is free-form mode. 'json_schema' enforces fixture-specific JSON Schema structured output."
+    ),
+)
 def run(
     run_all: bool,
     all_benchmarks_flag: bool,
@@ -1021,6 +1037,7 @@ def run(
     provider: str | None,
     model_workers: int,
     fixture_workers: int,
+    output_mode: str,
 ):
     """Run one or all benchmarks against the specified model."""
     run_log_path = configure_run_logging()
@@ -1064,6 +1081,16 @@ def run(
         json_output is None
         and _get_config_output_path(config, "json") is None
     )
+
+    # Resolve which output modes to run
+    if output_mode == "both":
+        modes_to_run = ["text", "json_schema"]
+    else:
+        modes_to_run = [output_mode]
+
+    # When running both modes, suppress stdout output (combined JSON goes to file)
+    if len(modes_to_run) > 1 and stdout_json_enabled:
+        stdout_json_enabled = False
 
     # Build the list of (profile_name, resolved_profile_dict, models_list) tuples to run
     runs: list[tuple[str, dict, list[str]]] = []
@@ -1159,254 +1186,97 @@ def run(
             f"Unknown benchmark: {unknown_benchmarks[0]}. Available: {available}"
         )
 
-    progress_display: RichProgressDisplay | None = None
-    try:
-        # Run each (profile, models) entry
-        all_profile_results: list[dict] = []
-        pending_outputs: list[tuple[str, dict]] = []
-        progress_model_names_by_run = _progress_model_names_for_runs(runs)
-        all_models_flat = [name for names in progress_model_names_by_run for name in names]
-        progress_display = RichProgressDisplay(
-            all_models_flat,
-            benchmarks_to_run,
-            verbose=verbose,
-        )
+    # Collect all run envelopes for combined aggregation when running "both"
+    all_mode_envelopes: list[dict] = []
 
-        def finish_model_result(model_result: dict) -> None:
-            summary = model_result["summary"]
-            logger.info(
-                "Model '%s' completed: %d/%d fixtures passed",
-                model_result["model"],
-                summary["total_passed"],
-                summary["total_fixtures"],
+    for output_mode in modes_to_run:
+        if len(modes_to_run) > 1:
+            click.echo(f"\n── Running in {output_mode} mode ──", err=True)
+        mode_json_output = resolved_json_output
+        progress_display: RichProgressDisplay | None = None
+        try:
+            # Run each (profile, models) entry
+            all_profile_results: list[dict] = []
+            pending_outputs: list[tuple[str, dict]] = []
+            progress_model_names_by_run = _progress_model_names_for_runs(runs)
+            all_models_flat = [name for names in progress_model_names_by_run for name in names]
+            progress_display = RichProgressDisplay(
+                all_models_flat,
+                benchmarks_to_run,
+                verbose=verbose,
             )
 
-        def append_pending_output(profile_name: str, model_result: dict) -> None:
-            envelope = build_run_envelope(
-                model=model_result["model"],
-                profile=profile_name,
-                results=model_result["results"],
-            )
-            pending_outputs.append((profile_name, envelope))
+            def finish_model_result(model_result: dict) -> None:
+                summary = model_result["summary"]
+                logger.info(
+                    "Model '%s' completed: %d/%d fixtures passed",
+                    model_result["model"],
+                    summary["total_passed"],
+                    summary["total_fixtures"],
+                )
 
-        def append_profile_result(profile_name: str, all_model_results: list[dict]) -> None:
-            profile_fixtures = sum(r["summary"]["total_fixtures"] for r in all_model_results)
-            profile_passed = sum(r["summary"]["total_passed"] for r in all_model_results)
-            all_profile_results.append({
-                "profile": profile_name,
-                "summary": {
-                    "total_models": len(all_model_results),
-                    "total_fixtures": profile_fixtures,
-                    "total_passed": profile_passed,
-                    "overall_pass_at_k": round(profile_passed / profile_fixtures, 4) if profile_fixtures > 0 else 0.0,
-                },
-                "models": all_model_results,
-            })
+            def append_pending_output(profile_name: str, model_result: dict) -> None:
+                envelope = build_run_envelope(
+                    model=model_result["model"],
+                    profile=profile_name,
+                    results=model_result["results"],
+                    output_mode=output_mode,
+                )
+                pending_outputs.append((profile_name, envelope))
 
-        if all_models and model_workers > 1 and total_models > 1:
-            worker_count = min(model_workers, total_models)
-            logger.info("Running up to %d model(s) concurrently.", worker_count)
-            ordered_results: list[dict | None] = [None] * len(runs)
+            def append_profile_result(profile_name: str, all_model_results: list[dict]) -> None:
+                profile_fixtures = sum(r["summary"]["total_fixtures"] for r in all_model_results)
+                profile_passed = sum(r["summary"]["total_passed"] for r in all_model_results)
+                all_profile_results.append({
+                    "profile": profile_name,
+                    "summary": {
+                        "total_models": len(all_model_results),
+                        "total_fixtures": profile_fixtures,
+                        "total_passed": profile_passed,
+                        "overall_pass_at_k": round(profile_passed / profile_fixtures, 4) if profile_fixtures > 0 else 0.0,
+                    },
+                    "models": all_model_results,
+                })
 
-            with ThreadPoolExecutor(max_workers=worker_count) as executor:
-                future_to_run_index: dict = {}
-                active_group_counts: dict[str, int] = {}
-                pending_run_indices = [
-                    run_index
-                    for run_index, (_profile_name, _profile_conf, models_to_run) in enumerate(runs)
-                    if models_to_run
-                ]
+            if all_models and model_workers > 1 and total_models > 1:
+                worker_count = min(model_workers, total_models)
+                logger.info("Running up to %d model(s) concurrently.", worker_count)
+                ordered_results: list[dict | None] = [None] * len(runs)
 
-                def can_submit_run(run_index: int) -> bool:
-                    capacity_info = capacity_by_target[(run_index, 0)]
-                    limit = group_limits.get(capacity_info.capacity_key)
-                    if limit is None:
-                        return True
-                    return active_group_counts.get(capacity_info.capacity_key, 0) < limit
+                with ThreadPoolExecutor(max_workers=worker_count) as executor:
+                    future_to_run_index: dict = {}
+                    active_group_counts: dict[str, int] = {}
+                    pending_run_indices = [
+                        run_index
+                        for run_index, (_profile_name, _profile_conf, models_to_run) in enumerate(runs)
+                        if models_to_run
+                    ]
 
-                def submit_run(run_index: int) -> None:
-                    profile_name, profile_conf, models_to_run = runs[run_index]
-                    current_model = models_to_run[0]
-                    p_base_url = base_url or profile_conf.get("base_url")
-                    p_api_key = profile_conf.get("api_key")
-                    p_provider = provider or profile_conf.get("provider")
-                    p_api_key_env = profile_conf.get("_api_key_env")
-                    p_timeout = _effective_timeout(profile_conf, timeout)
-                    p_retry_count = _effective_retry_count(profile_conf, retry_count)
-
-                    if not current_model.startswith("mock") and not p_api_key and p_api_key_env:
-                        logger.warning(
-                            "Skipping profile '%s': env var %s not set",
-                            profile_name,
-                            p_api_key_env,
-                        )
-                        return
-
-                    model_client = get_model_client(
-                        current_model,
-                        timeout=p_timeout,
-                        retry_count=p_retry_count,
-                        base_url=p_base_url,
-                        api_key=p_api_key,
-                        provider=p_provider,
-                    )
-                    capacity_info = capacity_by_target[(run_index, 0)]
-                    runner = BenchmarkRunner(
-                        _benchmark_registry,
-                        model_client,
-                        request_budget=request_budget,
-                        capacity_key=capacity_info.capacity_key,
-                    )
-                    future = executor.submit(
-                        runner.run_all,
-                        benchmarks_to_run,
-                        model_name=current_model,
-                        fixture_workers=fixture_workers,
-                        progress=progress_display,
-                        progress_model_name=progress_model_names_by_run[run_index][0],
-                    )
-                    future_to_run_index[future] = run_index
-                    active_group_counts[capacity_info.capacity_key] = (
-                        active_group_counts.get(capacity_info.capacity_key, 0) + 1
-                    )
-
-                while pending_run_indices or future_to_run_index:
-                    submitted_any = True
-                    while len(future_to_run_index) < worker_count and submitted_any:
-                        submitted_any = False
-                        for pending_run_index in list(pending_run_indices):
-                            if can_submit_run(pending_run_index):
-                                pending_run_indices.remove(pending_run_index)
-                                submit_run(pending_run_index)
-                                submitted_any = True
-                                break
-
-                    if not future_to_run_index:
-                        break
-
-                    done, _pending = wait(
-                        future_to_run_index,
-                        return_when=FIRST_COMPLETED,
-                    )
-                    for future in done:
-                        run_index = future_to_run_index.pop(future)
+                    def can_submit_run(run_index: int) -> bool:
                         capacity_info = capacity_by_target[(run_index, 0)]
-                        active_group_counts[capacity_info.capacity_key] -= 1
-                        ordered_results[run_index] = future.result()
+                        limit = group_limits.get(capacity_info.capacity_key)
+                        if limit is None:
+                            return True
+                        return active_group_counts.get(capacity_info.capacity_key, 0) < limit
 
-            for run_index, model_result in enumerate(ordered_results):
-                if model_result is None:
-                    continue
-                profile_name, _profile_conf, _models_to_run = runs[run_index]
-                finish_model_result(model_result)
-                append_pending_output(profile_name, model_result)
-                append_profile_result(profile_name, [model_result])
+                    def submit_run(run_index: int) -> None:
+                        profile_name, profile_conf, models_to_run = runs[run_index]
+                        current_model = models_to_run[0]
+                        p_base_url = base_url or profile_conf.get("base_url")
+                        p_api_key = profile_conf.get("api_key")
+                        p_provider = provider or profile_conf.get("provider")
+                        p_api_key_env = profile_conf.get("_api_key_env")
+                        p_timeout = _effective_timeout(profile_conf, timeout)
+                        p_retry_count = _effective_retry_count(profile_conf, retry_count)
 
-            all_model_results = [mr for mr in ordered_results if mr is not None]
-
-        else:
-            for run_index, (profile_name, profile_conf, models_to_run) in enumerate(runs):
-                p_base_url = base_url or profile_conf.get("base_url")
-                p_api_key = profile_conf.get("api_key")
-                p_provider = provider or profile_conf.get("provider")
-                p_api_key_env = profile_conf.get("_api_key_env")
-                p_timeout = _effective_timeout(profile_conf, timeout)
-                p_retry_count = _effective_retry_count(profile_conf, retry_count)
-
-                # Validate api_key
-                has_real_models = any(not m.startswith("mock") for m in models_to_run)
-                if has_real_models and not p_api_key and p_api_key_env:
-                    logger.warning(
-                        "Skipping profile '%s': env var %s not set",
-                        profile_name,
-                        p_api_key_env,
-                    )
-                    continue
-
-                profile_label = f"profile '{profile_name}'" if len(runs) > 1 else ""
-
-                all_model_results: list[dict] = []
-                progress_model_names = progress_model_names_by_run[run_index]
-
-                all_model_results: list[dict] = []
-
-                if model_workers > 1 and len(models_to_run) > 1:
-                    worker_count = min(model_workers, len(models_to_run))
-                    logger.info("Running up to %d model(s) concurrently.", worker_count)
-                    ordered_results: list[dict | None] = [None] * len(models_to_run)
-                    with ThreadPoolExecutor(max_workers=worker_count) as executor:
-                        future_to_index: dict = {}
-                        active_group_counts: dict[str, int] = {}
-                        pending_indices = list(range(len(models_to_run)))
-
-                        def can_submit(index: int) -> bool:
-                            capacity_info = capacity_by_target[(run_index, index)]
-                            limit = group_limits.get(capacity_info.capacity_key)
-                            if limit is None:
-                                return True
-                            return active_group_counts.get(capacity_info.capacity_key, 0) < limit
-
-                        def submit_model(index: int) -> None:
-                            current_model = models_to_run[index]
-                            capacity_info = capacity_by_target[(run_index, index)]
-                            model_client = get_model_client(
-                                current_model,
-                                timeout=p_timeout,
-                                retry_count=p_retry_count,
-                                base_url=p_base_url,
-                                api_key=p_api_key,
-                                provider=p_provider,
+                        if not current_model.startswith("mock") and not p_api_key and p_api_key_env:
+                            logger.warning(
+                                "Skipping profile '%s': env var %s not set",
+                                profile_name,
+                                p_api_key_env,
                             )
-                            runner = BenchmarkRunner(
-                                _benchmark_registry,
-                                model_client,
-                                request_budget=request_budget,
-                                capacity_key=capacity_info.capacity_key,
-                            )
-                            future = executor.submit(
-                                runner.run_all,
-                                benchmarks_to_run,
-                                model_name=current_model,
-                                fixture_workers=fixture_workers,
-                                progress=progress_display,
-                                progress_model_name=progress_model_names[index],
-                            )
-                            future_to_index[future] = index
-                            active_group_counts[capacity_info.capacity_key] = (
-                                active_group_counts.get(capacity_info.capacity_key, 0)
-                                + 1
-                            )
+                            return
 
-                        while pending_indices or future_to_index:
-                            submitted_any = True
-                            while len(future_to_index) < worker_count and submitted_any:
-                                submitted_any = False
-                                for pending_index in list(pending_indices):
-                                    if can_submit(pending_index):
-                                        pending_indices.remove(pending_index)
-                                        submit_model(pending_index)
-                                        submitted_any = True
-                                        break
-
-                            if not future_to_index:
-                                break
-
-                            done, _pending = wait(
-                                future_to_index,
-                                return_when=FIRST_COMPLETED,
-                            )
-                            for future in done:
-                                index = future_to_index.pop(future)
-                                capacity_info = capacity_by_target[(run_index, index)]
-                                active_group_counts[capacity_info.capacity_key] -= 1
-                                ordered_results[index] = future.result()
-
-                    for model_result in ordered_results:
-                        if model_result is not None:
-                            all_model_results.append(model_result)
-                            finish_model_result(model_result)
-                else:
-                    for index, current_model in enumerate(models_to_run):
                         model_client = get_model_client(
                             current_model,
                             timeout=p_timeout,
@@ -1415,177 +1285,355 @@ def run(
                             api_key=p_api_key,
                             provider=p_provider,
                         )
-                        capacity_info = capacity_by_target[(run_index, index)]
+                        capacity_info = capacity_by_target[(run_index, 0)]
                         runner = BenchmarkRunner(
                             _benchmark_registry,
                             model_client,
                             request_budget=request_budget,
                             capacity_key=capacity_info.capacity_key,
+                            output_mode=output_mode,
                         )
-                        model_result = runner.run_all(
+                        future = executor.submit(
+                            runner.run_all,
                             benchmarks_to_run,
                             model_name=current_model,
                             fixture_workers=fixture_workers,
                             progress=progress_display,
-                            progress_model_name=progress_model_names[index],
+                            progress_model_name=progress_model_names_by_run[run_index][0],
                         )
-                        all_model_results.append(model_result)
-                        finish_model_result(model_result)
+                        future_to_run_index[future] = run_index
+                        active_group_counts[capacity_info.capacity_key] = (
+                            active_group_counts.get(capacity_info.capacity_key, 0) + 1
+                        )
 
-                for model_result in all_model_results:
+                    while pending_run_indices or future_to_run_index:
+                        submitted_any = True
+                        while len(future_to_run_index) < worker_count and submitted_any:
+                            submitted_any = False
+                            for pending_run_index in list(pending_run_indices):
+                                if can_submit_run(pending_run_index):
+                                    pending_run_indices.remove(pending_run_index)
+                                    submit_run(pending_run_index)
+                                    submitted_any = True
+                                    break
+
+                        if not future_to_run_index:
+                            break
+
+                        done, _pending = wait(
+                            future_to_run_index,
+                            return_when=FIRST_COMPLETED,
+                        )
+                        for future in done:
+                            run_index = future_to_run_index.pop(future)
+                            capacity_info = capacity_by_target[(run_index, 0)]
+                            active_group_counts[capacity_info.capacity_key] -= 1
+                            ordered_results[run_index] = future.result()
+
+                for run_index, model_result in enumerate(ordered_results):
+                    if model_result is None:
+                        continue
+                    profile_name, _profile_conf, _models_to_run = runs[run_index]
+                    finish_model_result(model_result)
                     append_pending_output(profile_name, model_result)
+                    append_profile_result(profile_name, [model_result])
 
-                # Build per-profile output
-                if len(runs) == 1:
-                    # Single profile: keep backward-compat structure
-                    if run_all_benchmarks:
-                        # --all-benchmarks: summary + results wrapper
-                        if len(all_model_results) == 1:
-                            combined = dict(all_model_results[0])
-                            if "model" in combined:
-                                combined.pop("model")
-                            stamp_benchmark_suite_version(combined)
-                        else:
-                            grand_fixtures = sum(r["summary"]["total_fixtures"] for r in all_model_results)
-                            grand_passed = sum(r["summary"]["total_passed"] for r in all_model_results)
-                            combined = {
-                                "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
-                                "summary": {
-                                    "total_models": len(all_model_results),
-                                    "total_fixtures": grand_fixtures,
-                                    "total_passed": grand_passed,
-                                    "overall_pass_at_k": round(grand_passed / grand_fixtures, 4) if grand_fixtures > 0 else 0.0,
-                                },
-                                "models": all_model_results,
-                            }
+                all_model_results = [mr for mr in ordered_results if mr is not None]
+
+            else:
+                for run_index, (profile_name, profile_conf, models_to_run) in enumerate(runs):
+                    p_base_url = base_url or profile_conf.get("base_url")
+                    p_api_key = profile_conf.get("api_key")
+                    p_provider = provider or profile_conf.get("provider")
+                    p_api_key_env = profile_conf.get("_api_key_env")
+                    p_timeout = _effective_timeout(profile_conf, timeout)
+                    p_retry_count = _effective_retry_count(profile_conf, retry_count)
+
+                    # Validate api_key
+                    has_real_models = any(not m.startswith("mock") for m in models_to_run)
+                    if has_real_models and not p_api_key and p_api_key_env:
+                        logger.warning(
+                            "Skipping profile '%s': env var %s not set",
+                            profile_name,
+                            p_api_key_env,
+                        )
+                        continue
+
+                    profile_label = f"profile '{profile_name}'" if len(runs) > 1 else ""
+
+                    all_model_results: list[dict] = []
+                    progress_model_names = progress_model_names_by_run[run_index]
+
+                    all_model_results: list[dict] = []
+
+                    if model_workers > 1 and len(models_to_run) > 1:
+                        worker_count = min(model_workers, len(models_to_run))
+                        logger.info("Running up to %d model(s) concurrently.", worker_count)
+                        ordered_results: list[dict | None] = [None] * len(models_to_run)
+                        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+                            future_to_index: dict = {}
+                            active_group_counts: dict[str, int] = {}
+                            pending_indices = list(range(len(models_to_run)))
+
+                            def can_submit(index: int) -> bool:
+                                capacity_info = capacity_by_target[(run_index, index)]
+                                limit = group_limits.get(capacity_info.capacity_key)
+                                if limit is None:
+                                    return True
+                                return active_group_counts.get(capacity_info.capacity_key, 0) < limit
+
+                            def submit_model(index: int) -> None:
+                                current_model = models_to_run[index]
+                                capacity_info = capacity_by_target[(run_index, index)]
+                                model_client = get_model_client(
+                                    current_model,
+                                    timeout=p_timeout,
+                                    retry_count=p_retry_count,
+                                    base_url=p_base_url,
+                                    api_key=p_api_key,
+                                    provider=p_provider,
+                                )
+                                runner = BenchmarkRunner(
+                                    _benchmark_registry,
+                                    model_client,
+                                    request_budget=request_budget,
+                                    capacity_key=capacity_info.capacity_key,
+                                    output_mode=output_mode,
+                                )
+                                future = executor.submit(
+                                    runner.run_all,
+                                    benchmarks_to_run,
+                                    model_name=current_model,
+                                    fixture_workers=fixture_workers,
+                                    progress=progress_display,
+                                    progress_model_name=progress_model_names[index],
+                                )
+                                future_to_index[future] = index
+                                active_group_counts[capacity_info.capacity_key] = (
+                                    active_group_counts.get(capacity_info.capacity_key, 0)
+                                    + 1
+                                )
+
+                            while pending_indices or future_to_index:
+                                submitted_any = True
+                                while len(future_to_index) < worker_count and submitted_any:
+                                    submitted_any = False
+                                    for pending_index in list(pending_indices):
+                                        if can_submit(pending_index):
+                                            pending_indices.remove(pending_index)
+                                            submit_model(pending_index)
+                                            submitted_any = True
+                                            break
+
+                                if not future_to_index:
+                                    break
+
+                                done, _pending = wait(
+                                    future_to_index,
+                                    return_when=FIRST_COMPLETED,
+                                )
+                                for future in done:
+                                    index = future_to_index.pop(future)
+                                    capacity_info = capacity_by_target[(run_index, index)]
+                                    active_group_counts[capacity_info.capacity_key] -= 1
+                                    ordered_results[index] = future.result()
+
+                        for model_result in ordered_results:
+                            if model_result is not None:
+                                all_model_results.append(model_result)
+                                finish_model_result(model_result)
                     else:
-                        # Single benchmark: flat result(s)
-                        if len(all_model_results) == 1 and len(all_model_results[0]["results"]) == 1:
-                            # Single model, single benchmark: raw BenchmarkResult dict
-                            combined = all_model_results[0]["results"][0]
+                        for index, current_model in enumerate(models_to_run):
+                            model_client = get_model_client(
+                                current_model,
+                                timeout=p_timeout,
+                                retry_count=p_retry_count,
+                                base_url=p_base_url,
+                                api_key=p_api_key,
+                                provider=p_provider,
+                            )
+                            capacity_info = capacity_by_target[(run_index, index)]
+                            runner = BenchmarkRunner(
+                                _benchmark_registry,
+                                model_client,
+                                request_budget=request_budget,
+                                capacity_key=capacity_info.capacity_key,
+                                output_mode=output_mode,
+                            )
+                            model_result = runner.run_all(
+                                benchmarks_to_run,
+                                model_name=current_model,
+                                fixture_workers=fixture_workers,
+                                progress=progress_display,
+                                progress_model_name=progress_model_names[index],
+                            )
+                            all_model_results.append(model_result)
+                            finish_model_result(model_result)
+
+                    for model_result in all_model_results:
+                        append_pending_output(profile_name, model_result)
+
+                    # Build per-profile output
+                    if len(runs) == 1:
+                        # Single profile: keep backward-compat structure
+                        if run_all_benchmarks:
+                            # --all-benchmarks: summary + results wrapper
+                            if len(all_model_results) == 1:
+                                combined = dict(all_model_results[0])
+                                if "model" in combined:
+                                    combined.pop("model")
+                                stamp_benchmark_suite_version(combined)
+                            else:
+                                grand_fixtures = sum(r["summary"]["total_fixtures"] for r in all_model_results)
+                                grand_passed = sum(r["summary"]["total_passed"] for r in all_model_results)
+                                combined = {
+                                    "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+                                    "summary": {
+                                        "total_models": len(all_model_results),
+                                        "total_fixtures": grand_fixtures,
+                                        "total_passed": grand_passed,
+                                        "overall_pass_at_k": round(grand_passed / grand_fixtures, 4) if grand_fixtures > 0 else 0.0,
+                                    },
+                                    "models": all_model_results,
+                                }
                         else:
-                            # Single benchmark, multiple models: list of results with model key
-                            single_results = []
-                            for mr in all_model_results:
-                                for r in mr["results"]:
-                                    single_results.append({"model": mr["model"], **r})
-                            combined = single_results if len(single_results) > 1 else single_results[0]
-                        combined = stamp_benchmark_suite_version(combined)
-                else:
-                    # Multiple profiles: nest under profile name
-                    append_profile_result(profile_name, all_model_results)
+                            # Single benchmark: flat result(s)
+                            if len(all_model_results) == 1 and len(all_model_results[0]["results"]) == 1:
+                                # Single model, single benchmark: raw BenchmarkResult dict
+                                combined = all_model_results[0]["results"][0]
+                            else:
+                                # Single benchmark, multiple models: list of results with model key
+                                single_results = []
+                                for mr in all_model_results:
+                                    for r in mr["results"]:
+                                        single_results.append({"model": mr["model"], **r})
+                                combined = single_results if len(single_results) > 1 else single_results[0]
+                            combined = stamp_benchmark_suite_version(combined)
+                    else:
+                        # Multiple profiles: nest under profile name
+                        append_profile_result(profile_name, all_model_results)
 
-        progress_display.close()
+            progress_display.close()
 
-        # Collect all results for summary table (close() already printed summary)
-        all_results: list[dict] = []
-        for model_result in all_model_results:
-            for r in model_result.get("results", []):
-                all_results.append(r)
+            # Collect all results for summary table (close() already printed summary)
+            all_results: list[dict] = []
+            for model_result in all_model_results:
+                for r in model_result.get("results", []):
+                    all_results.append(r)
 
-        for _profile_name, envelope in pending_outputs:
-            if output_dir:
-                written = write_output_dir(envelope, output_dir)
+            for _profile_name, envelope in pending_outputs:
+                if output_dir:
+                    written = write_output_dir(envelope, output_dir)
+                    click.echo(f"  Saved: {written}", err=True)
+
+                if jsonl_path:
+                    written = write_jsonl(envelope, jsonl_path)
+                    click.echo(f"  Appended: {written}", err=True)
+
+                # Collect for cross-mode aggregation when running "both"
+                all_mode_envelopes.append(envelope)
+
+            if len(runs) > 1:
+                grand_fixtures = sum(p["summary"]["total_fixtures"] for p in all_profile_results)
+                grand_passed = sum(p["summary"]["total_passed"] for p in all_profile_results)
+                grand_models = sum(p["summary"]["total_models"] for p in all_profile_results)
+                combined = {
+                    "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+                    "summary": {
+                        "total_profiles": len(all_profile_results),
+                        "total_models": grand_models,
+                        "total_fixtures": grand_fixtures,
+                        "total_passed": grand_passed,
+                        "overall_pass_at_k": round(grand_passed / grand_fixtures, 4) if grand_fixtures > 0 else 0.0,
+                    },
+                    "profiles": all_profile_results,
+                }
+
+            # ── Build run envelope (shared by exports + HTML) ──────────────────────────
+            # Compute profile name before building envelope
+            if len(runs) == 1:
+                _profile_name_for_env = runs[0][0]
+            elif all_profile_results:
+                _profile_name_for_env = "(multi-profile)"
+            else:
+                _profile_name_for_env = "(unknown)"
+
+            if all_model_results:
+                _envelope = build_run_envelope(
+                    model=all_model_results[0]["model"],
+                    profile=_profile_name_for_env,
+                    results=[
+                        r
+                        for mr in all_model_results
+                        for r in mr.get("results", [])
+                    ],
+                    output_mode=output_mode,
+                )
+            else:
+                _envelope = build_run_envelope(
+                    model="unknown",
+                    profile=_profile_name_for_env,
+                    results=[],
+                    output_mode=output_mode,
+                )
+
+            # ── Export files ────────────────────────────────────────────────────────
+
+            if export_list:
+                for export_file_format in export_list:
+                    try:
+                        export_func = FORMAT_REGISTRY[export_file_format]
+                        if export_path:
+                            target_path = export_path
+                        else:
+                            ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+                            model_name = all_model_results[0]["model"] if all_model_results else "unknown"
+                            safe_model = _sanitize_filename(model_name)
+                            ext = export_file_format  # csv → .csv, json → .json
+                            version = _version_slug(BENCHMARK_SUITE_VERSION)
+                            target_path = f"gitbench_export_{safe_model}_v{version}_{ts}.{ext}"
+                        content = export_func(_envelope)
+                        write_text_file(target_path, content)
+                        click.echo(f"  Exported: {target_path}", err=True)
+                    except KeyError:
+                        available = get_available_formats()
+                        click.echo(
+                            f"Unknown export format: '{export_file_format}'. "
+                            f"Available: {', '.join(available)}",
+                            err=True,
+                        )
+                        sys.exit(1)
+
+            # Write per-mode combined JSON only when running a single mode.
+            # For "both" mode, aggregation happens after all modes complete.
+            if len(modes_to_run) == 1:
+                output_json = json.dumps(combined, indent=2)
+                write_text_file(mode_json_output, output_json)
+                click.echo(f"\nJSON results written to: {mode_json_output}", err=True)
+
+                if stdout_json_enabled:
+                    click.echo(output_json)
+
+        except Exception as e:
+            if progress_display is not None:
+                progress_display.close()
+            logger.exception("Benchmark failed in %s mode", output_mode)
+            click.echo(f"Error in {output_mode} mode: {e}", err=True)
+            if len(modes_to_run) == 1:
+                sys.exit(1)
+            # Continue to next mode when running both
+        finally:
+            if progress_display is not None:
+                progress_display.close()
+
+    # For explicit "both" mode, --output-dir/--jsonl already received one raw
+    # run envelope per model/mode.  Keep the default results-v*.json path raw as
+    # well so `gitbench report` can ingest newly produced artifacts directly.
+    if len(modes_to_run) > 1 and all_mode_envelopes:
+        if not output_dir and not jsonl_path:
+            for envelope in all_mode_envelopes:
+                written = write_output_dir(envelope, str(Path(resolved_json_output).parent))
                 click.echo(f"  Saved: {written}", err=True)
-
-            if jsonl_path:
-                written = write_jsonl(envelope, jsonl_path)
-                click.echo(f"  Appended: {written}", err=True)
-
-        if len(runs) > 1:
-            grand_fixtures = sum(p["summary"]["total_fixtures"] for p in all_profile_results)
-            grand_passed = sum(p["summary"]["total_passed"] for p in all_profile_results)
-            grand_models = sum(p["summary"]["total_models"] for p in all_profile_results)
-            combined = {
-                "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
-                "summary": {
-                    "total_profiles": len(all_profile_results),
-                    "total_models": grand_models,
-                    "total_fixtures": grand_fixtures,
-                    "total_passed": grand_passed,
-                    "overall_pass_at_k": round(grand_passed / grand_fixtures, 4) if grand_fixtures > 0 else 0.0,
-                },
-                "profiles": all_profile_results,
-            }
-
-        # ── Build run envelope (shared by exports + HTML) ──────────────────────────
-        # Compute profile name before building envelope
-        if len(runs) == 1:
-            _profile_name_for_env = runs[0][0]
-        elif all_profile_results:
-            _profile_name_for_env = "(multi-profile)"
-        else:
-            _profile_name_for_env = "(unknown)"
-
-        if all_model_results:
-            _envelope = build_run_envelope(
-                model=all_model_results[0]["model"],
-                profile=_profile_name_for_env,
-                results=[
-                    r
-                    for mr in all_model_results
-                    for r in mr.get("results", [])
-                ],
-            )
-        else:
-            _envelope = build_run_envelope(
-                model="unknown",
-                profile=_profile_name_for_env,
-                results=[],
-            )
-
-        # ── Export files ────────────────────────────────────────────────────────
-
-        if export_list:
-            for export_file_format in export_list:
-                try:
-                    export_func = FORMAT_REGISTRY[export_file_format]
-                    if export_path:
-                        target_path = export_path
-                    else:
-                        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-                        model_name = all_model_results[0]["model"] if all_model_results else "unknown"
-                        safe_model = _sanitize_filename(model_name)
-                        ext = export_file_format  # csv → .csv, json → .json
-                        version = _version_slug(BENCHMARK_SUITE_VERSION)
-                        target_path = f"gitbench_export_{safe_model}_v{version}_{ts}.{ext}"
-                    content = export_func(_envelope)
-                    write_text_file(target_path, content)
-                    click.echo(f"  Exported: {target_path}", err=True)
-                except KeyError:
-                    available = get_available_formats()
-                    click.echo(
-                        f"Unknown export format: '{export_file_format}'. "
-                        f"Available: {', '.join(available)}",
-                        err=True,
-                    )
-                    sys.exit(1)
-
-        output_json = json.dumps(combined, indent=2)
-
-        # Resolve effective profile name for the envelope (last single-profile result)
-        if len(runs) == 1:
-            _profile_name_for_env = runs[0][0]
-        elif all_profile_results:
-            _profile_name_for_env = "(multi-profile)"
-        else:
-            _profile_name_for_env = "(unknown)"
-
-        write_text_file(resolved_json_output, output_json)
-        click.echo(f"\nJSON results written to: {resolved_json_output}", err=True)
-
-        if stdout_json_enabled:
-            click.echo(output_json)
-
-    except Exception as e:
-        if progress_display is not None:
-            progress_display.close()
-        logger.exception("Benchmark failed")
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
-    finally:
-        if progress_display is not None:
-            progress_display.close()
 
 
 @cli.command("list")
@@ -1710,9 +1758,11 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
 
     from gitbench.render import (
         aggregate_runs,
+        load_aggregate_report,
         load_runs_from_combined,
         load_runs_from_dir,
         load_runs_from_jsonl,
+        merge_aggregate_reports,
         render_json,
         write_sqlite_report_db,
     )
@@ -1723,9 +1773,10 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
     json_output = output_path or str(web_dir / "public" / "results.json")
 
     runs: list[dict] = []
+    aggregate_reports: list[dict] = []
 
-    # 1. Try combined format (default output of `gitbench run -a`)
-    #    Loads results-v*.json from every timestamped subdirectory
+    # 1. Try combined or raw run JSON from every timestamped subdirectory.
+    #    Generated aggregate report JSON is ignored by load_runs_from_combined().
     combined_runs_loaded = False
     if not input_file:
         try:
@@ -1734,7 +1785,12 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
                 any_loaded = False
                 for subdir in sorted(dir_path.iterdir()):
                     if subdir.is_dir():
-                        for f in sorted(subdir.glob("results-v*.json")):
+                        for f in sorted(subdir.glob("*.json")):
+                            aggregate_report = load_aggregate_report(str(f))
+                            if aggregate_report:
+                                click.echo(f"Loaded aggregate report data from {f}", err=True)
+                                aggregate_reports.append(aggregate_report)
+                                continue
                             combined_runs = load_runs_from_combined(str(f))
                             if combined_runs:
                                 click.echo(f"Loaded {len(combined_runs)} run(s) from {f}", err=True)
@@ -1765,12 +1821,12 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
         except FileNotFoundError as e:
             raise click.ClickException(str(e))
 
-    if not runs:
+    if not runs and not aggregate_reports:
         raise click.ClickException(
             "No valid run data found. Run 'gitbench run -a' first or provide --input-dir/--input."
         )
 
-    # Deduplicate by version + timestamp + model
+    # Deduplicate by version + timestamp + model + output mode
     seen = set()
     unique_runs = []
     for r in runs:
@@ -1778,15 +1834,23 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
             r.get("benchmark_suite_version", ""),
             r.get("timestamp", ""),
             r.get("model", ""),
+            r.get("output_mode", "text"),
         )
         if key not in seen:
             seen.add(key)
             unique_runs.append(r)
     runs = sorted(unique_runs, key=_run_sort_key)
 
-    click.echo(f"Aggregating {len(runs)} unique run(s)...", err=True)
+    click.echo(
+        f"Aggregating {len(runs)} unique run(s)"
+        f" and {len(aggregate_reports)} aggregate report file(s)...",
+        err=True,
+    )
 
-    data = aggregate_runs(runs)
+    data_sources = aggregate_reports.copy()
+    if runs:
+        data_sources.append(aggregate_runs(runs))
+    data = merge_aggregate_reports(data_sources)
     render_json(data, json_output)
     click.echo(f"JSON data written to: {json_output}", err=True)
     db_output = web_dir / "data" / "gitbench.db"
@@ -1800,7 +1864,7 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
     if dev:
         click.echo("Starting Astro dev server...", err=True)
         subprocess.run(
-            ["npx", "astro", "dev"],
+            ["pnpm", "dev"],
             cwd=str(web_dir),
         )
         return
@@ -1809,12 +1873,12 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
     if not web_dir.exists():
         raise click.ClickException(
             f"Web directory not found: {web_dir}. "
-            f"Run 'npm install' in gitbench/web/ first."
+            f"Run 'pnpm install' in gitbench/web/ first."
         )
 
     click.echo("Building Astro site...", err=True)
     result = subprocess.run(
-        ["npm", "run", "build"],
+        ["pnpm", "build"],
         cwd=str(web_dir),
         capture_output=True,
         text=True,
@@ -1841,7 +1905,7 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
 
         threading.Thread(target=_launch_preview, daemon=True).start()
         subprocess.run(
-            ["npx", "astro", "preview"],
+            ["pnpm", "preview"],
             cwd=str(web_dir),
         )
 

@@ -93,7 +93,28 @@ function normalizeData(data) {
     }
   }
 
+  // Normalize models: strip __json_schema suffix and set output_mode
+  for (const model of data.models) {
+    if (model.name && model.name.endsWith("__json_schema")) {
+      model.output_mode = "json_schema";
+      model.name = model.name.slice(0, -"__json_schema".length);
+    } else if (!model.output_mode) {
+      model.output_mode = "text";
+    }
+  }
+
   return data;
+}
+
+/** Derive (model_name, output_mode) from a composite key. */
+function deriveModelMode(compositeKey) {
+  if (compositeKey.endsWith("__json_schema")) {
+    return {
+      model_name: compositeKey.slice(0, -"__json_schema".length),
+      output_mode: "json_schema",
+    };
+  }
+  return { model_name: compositeKey, output_mode: "text" };
 }
 
 function insertReportData(db, data) {
@@ -101,9 +122,9 @@ function insertReportData(db, data) {
   try {
     insertMany(
       db,
-      `INSERT INTO models (name, provider, base_model, reasoning_level)
-       VALUES (:name, :provider, :baseModel, :reasoningLevel)`,
-      data.models,
+      `INSERT INTO models (name, provider, base_model, reasoning_level, output_mode)
+       VALUES (:name, :provider, :baseModel, :reasoningLevel, :output_mode)`,
+      data.models.map((m) => ({ ...m, output_mode: m.output_mode ?? "text" })),
     );
 
     insertMany(
@@ -115,15 +136,15 @@ function insertReportData(db, data) {
     insertMany(
       db,
       `INSERT INTO model_summaries (
-         model_name, total_runs, total_fixtures, total_passed, pass_at_k,
+         model_name, output_mode, total_runs, total_fixtures, total_passed, pass_at_k,
          total_cost_usd, avg_cost_usd
        )
        VALUES (
-         :model_name, :total_runs, :total_fixtures, :total_passed, :pass_at_k,
+         :model_name, :output_mode, :total_runs, :total_fixtures, :total_passed, :pass_at_k,
          :total_cost_usd, :avg_cost_usd
        )`,
       Object.entries(data.model_summaries).map(([modelName, summary]) => ({
-        model_name: modelName,
+        ...deriveModelMode(modelName),
         ...summary,
       })),
     );
@@ -131,11 +152,11 @@ function insertReportData(db, data) {
     insertMany(
       db,
       `INSERT INTO model_runtimes (
-         model_name, total_ms, avg_ms, min_ms, max_ms, fixture_count
+         model_name, output_mode, total_ms, avg_ms, min_ms, max_ms, fixture_count
        )
-       VALUES (:model_name, :total_ms, :avg_ms, :min_ms, :max_ms, :fixture_count)`,
+       VALUES (:model_name, :output_mode, :total_ms, :avg_ms, :min_ms, :max_ms, :fixture_count)`,
       Object.entries(data.model_runtimes).map(([modelName, runtime]) => ({
-        model_name: modelName,
+        ...deriveModelMode(modelName),
         ...runtime,
       })),
     );
@@ -143,14 +164,14 @@ function insertReportData(db, data) {
     insertMany(
       db,
       `INSERT INTO benchmark_summaries (
-         model_name, benchmark_name, pass_at_k, total, passed, avg_similarity
+         model_name, output_mode, benchmark_name, pass_at_k, total, passed, avg_similarity
        )
        VALUES (
-         :model_name, :benchmark_name, :pass_at_k, :total, :passed, :avg_similarity
+         :model_name, :output_mode, :benchmark_name, :pass_at_k, :total, :passed, :avg_similarity
        )`,
       Object.entries(data.matrix).flatMap(([modelName, byBenchmark]) =>
         Object.entries(byBenchmark ?? {}).map(([benchmarkName, cell]) => ({
-          model_name: modelName,
+          ...deriveModelMode(modelName),
           benchmark_name: benchmarkName,
           ...cell,
         })),
@@ -191,20 +212,22 @@ function insertReportData(db, data) {
     insertMany(
       db,
       `INSERT INTO fixture_results (
-         model_name, benchmark_name, fixture_id, passed, similarity, error,
+         model_name, output_mode, benchmark_name, fixture_id, passed, similarity, error,
          model_output, reasoning_level, input_tokens, output_tokens, total_tokens,
-         cost_usd, duration_ms, api_duration_ms, purpose, difficulty, tags_json
+         cost_usd, duration_ms, api_duration_ms, purpose, difficulty, tags_json,
+         parsed_payload, raw_structured_output, structured_error
        )
        VALUES (
-         :model_name, :benchmark_name, :fixture_id, :passed, :similarity, :error,
+         :model_name, :output_mode, :benchmark_name, :fixture_id, :passed, :similarity, :error,
          :model_output, :reasoning_level, :input_tokens, :output_tokens,
          :total_tokens, :cost_usd, :duration_ms, :api_duration_ms, :purpose,
-         :difficulty, :tags_json
+         :difficulty, :tags_json, :parsed_payload, :raw_structured_output, :structured_error
        )`,
       Object.entries(data.fixtures).flatMap(([modelName, byBenchmark]) =>
         Object.entries(byBenchmark ?? {}).flatMap(([benchmarkName, results]) =>
           (results ?? []).map((result) => ({
-            model_name: modelName,
+            ...deriveModelMode(modelName),
+            output_mode: result.output_mode ?? deriveModelMode(modelName).output_mode,
             benchmark_name: benchmarkName,
             fixture_id: result.fixture_id ?? "",
             passed: result.passed ? 1 : 0,
@@ -221,6 +244,13 @@ function insertReportData(db, data) {
             purpose: result.purpose ?? null,
             difficulty: result.difficulty ?? null,
             tags_json: jsonArray(result.tags),
+            parsed_payload: result.parsed_payload != null
+              ? (typeof result.parsed_payload === "string"
+                ? result.parsed_payload
+                : JSON.stringify(result.parsed_payload))
+              : null,
+            raw_structured_output: result.raw_structured_output ?? null,
+            structured_error: result.structured_error ?? null,
           })),
         ),
       ),
@@ -229,14 +259,21 @@ function insertReportData(db, data) {
     insertMany(
       db,
       `INSERT INTO runs (
-         timestamp, model_name, profile, git_sha, benchmark_suite_version,
+         timestamp, model_name, output_mode, profile, git_sha, benchmark_suite_version,
          reasoning_level
        )
        VALUES (
-         :timestamp, :model, :profile, :git_sha, :benchmark_suite_version,
+         :timestamp, :model, :output_mode, :profile, :git_sha, :benchmark_suite_version,
          :reasoning_level
        )`,
-      data.runs_meta,
+      data.runs_meta.map((r) => {
+        const { model_name, output_mode } = deriveModelMode(r.model ?? "");
+        return {
+          ...r,
+          model: model_name,
+          output_mode: r.output_mode ?? output_mode,
+        };
+      }),
     );
 
     const insertGroup = db.prepare(
@@ -244,17 +281,18 @@ function insertReportData(db, data) {
     );
     const insertLevel = db.prepare(
       `INSERT INTO base_model_group_levels (
-         group_id, level, model_name, pass_at_k, total_cost_usd
+         group_id, level, model_name, output_mode, pass_at_k, total_cost_usd
        )
-       VALUES (?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?)`,
     );
     for (const group of data.base_model_groups) {
       const { lastInsertRowid } = insertGroup.run(group.provider ?? "", group.baseModel ?? "");
       for (const level of group.levels ?? []) {
         insertLevel.run(
           lastInsertRowid,
-          level.level ?? null,
-          level.modelName ?? "",
+          (level.level ?? "").replace(/__json_schema$/, "") || null,
+          deriveModelMode(level.modelName ?? "").model_name,
+          level.output_mode ?? deriveModelMode(level.modelName ?? "").output_mode,
           level.pass_at_k ?? 0,
           level.total_cost_usd ?? null,
         );

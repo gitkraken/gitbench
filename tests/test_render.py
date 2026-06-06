@@ -8,6 +8,7 @@ import pytest
 from gitbench.render import (
     REPORT_SCHEMA_PATH,
     aggregate_runs,
+    load_runs_from_combined,
     load_runs_from_dir,
     load_runs_from_jsonl,
     render_json,
@@ -135,6 +136,62 @@ class TestLoadRunsFromDir:
         runs = load_runs_from_dir(str(tmp_path))
         assert [r["benchmark_suite_version"] for r in runs] == ["0.1.0", "0.1.0", "0.2.0"]
         assert runs[0]["timestamp"] < runs[1]["timestamp"]
+
+
+class TestLoadRunsFromCombined:
+    """Tests for loading legacy combined and raw report input files."""
+
+    def test_loads_raw_run_envelope(self, tmp_path):
+        run = _make_envelope(model="openai/gpt-test:high")
+        path = tmp_path / f"results-v{BENCHMARK_SUITE_VERSION}.json"
+        path.write_text(json.dumps(run))
+
+        runs = load_runs_from_combined(str(path))
+
+        assert len(runs) == 1
+        assert runs[0]["model"] == "openai/gpt-test:high"
+        assert runs[0]["results"][0]["benchmark"] == "commit_messages"
+
+    def test_ignores_aggregate_report_json(self, tmp_path):
+        aggregate = aggregate_runs([_make_envelope(model="openai/gpt-test:high")])
+        path = tmp_path / f"results-v{BENCHMARK_SUITE_VERSION}.json"
+        path.write_text(json.dumps(aggregate))
+
+        runs = load_runs_from_combined(str(path))
+
+        assert runs == []
+
+    def test_loads_same_timestamp_modes_without_empty_model_identity(self, tmp_path):
+        combined = {
+            "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+            "profile": "(inline)",
+            "models": [
+                {
+                    "model": "openai/gpt-test:high",
+                    "results": _make_envelope(
+                        model="openai/gpt-test:high",
+                        passed=1,
+                    )["results"],
+                },
+                {
+                    "model": "openai/gpt-test:high",
+                    "output_mode": "json_schema",
+                    "results": _make_envelope(
+                        model="openai/gpt-test:high",
+                        passed=0,
+                    )["results"],
+                },
+            ],
+        }
+        path = tmp_path / f"results-v{BENCHMARK_SUITE_VERSION}.json"
+        path.write_text(json.dumps(combined))
+
+        runs = load_runs_from_combined(str(path))
+
+        assert len(runs) == 2
+        assert {run["model"] for run in runs} == {"openai/gpt-test:high"}
+        assert {run["output_mode"] for run in runs} == {"text", "json_schema"}
+        assert "" not in {run["model"] for run in runs}
 
 
 class TestLoadRunsFromJsonl:
@@ -359,6 +416,90 @@ class TestAggregateRuns:
         data = aggregate_runs(runs)
 
         assert "mock" not in data["model_runtimes"]
+
+
+    def test_output_mode_defaults_to_text(self):
+        """Test that missing output_mode defaults to 'text'."""
+        runs = [_make_envelope(model="gpt-4o")]
+        data = aggregate_runs(runs)
+
+        model = next(m for m in data["models"] if m["name"] == "gpt-4o")
+        assert model["output_mode"] == "text"
+
+    def test_text_and_json_schema_remain_separate_variants(self):
+        """Test that text and json_schema runs for same model are separate variants."""
+        text_env = _make_envelope(model="gpt-4o", passed=10, timestamp="2026-04-25T13:00:00+00:00")
+        text_env["output_mode"] = "text"
+        json_env = _make_envelope(model="gpt-4o", passed=8, timestamp="2026-04-25T14:00:00+00:00")
+        json_env["output_mode"] = "json_schema"
+
+        data = aggregate_runs([text_env, json_env])
+
+        # Two model entries for the same base model
+        model_names = [m["name"] for m in data["models"]]
+        assert "gpt-4o" in model_names  # text mode keeps original name
+        assert "gpt-4o__json_schema" in model_names  # json_schema gets suffix
+
+        # Different pass rates
+        assert data["model_summaries"]["gpt-4o"]["total_passed"] == 10
+        assert data["model_summaries"]["gpt-4o__json_schema"]["total_passed"] == 8
+
+        # Separate matrix entries
+        assert data["matrix"]["gpt-4o"]["commit_messages"]["passed"] == 10
+        assert data["matrix"]["gpt-4o__json_schema"]["commit_messages"]["passed"] == 8
+
+    def test_output_mode_text_and_json_schema_have_separate_model_summaries(self):
+        """Test that model summaries don't merge across output modes."""
+        text_env = _make_envelope(model="gpt-4o", passed=12, total=12)
+        text_env["output_mode"] = "text"
+        json_env = _make_envelope(model="gpt-4o", passed=6, total=12)
+        json_env["output_mode"] = "json_schema"
+
+        data = aggregate_runs([text_env, json_env])
+
+        assert "gpt-4o" in data["model_summaries"]
+        assert "gpt-4o__json_schema" in data["model_summaries"]
+        assert data["model_summaries"]["gpt-4o"]["pass_at_k"] == 1.0
+        assert data["model_summaries"]["gpt-4o__json_schema"]["pass_at_k"] == 0.5
+
+    def test_output_mode_in_runs_meta(self):
+        """Test that runs_meta includes output_mode for each run."""
+        text_env = _make_envelope(model="gpt-4o", timestamp="2026-04-25T13:00:00+00:00")
+        text_env["output_mode"] = "text"
+        json_env = _make_envelope(model="gpt-4o", timestamp="2026-04-25T14:00:00+00:00")
+        json_env["output_mode"] = "json_schema"
+
+        data = aggregate_runs([text_env, json_env])
+
+        modes = {r["output_mode"] for r in data["runs_meta"]}
+        assert modes == {"text", "json_schema"}
+
+    def test_output_mode_base_model_groups_preserve_variants(self):
+        """Test that base model groups contain both output mode variants."""
+        text_env = _make_envelope(model="openai/gpt-5:medium", passed=10)
+        text_env["output_mode"] = "text"
+        json_env = _make_envelope(model="openai/gpt-5:medium", passed=7)
+        json_env["output_mode"] = "json_schema"
+
+        data = aggregate_runs([text_env, json_env])
+
+        groups = [g for g in data["base_model_groups"] if g["provider"] == "openai"]
+        assert len(groups) == 1
+        levels = groups[0]["levels"]
+        model_names = {l["modelName"] for l in levels}
+        assert "openai/gpt-5:medium" in model_names
+        assert "openai/gpt-5:medium__json_schema" in model_names
+
+    def test_text_mode_excludes_suffix_in_model_name(self):
+        """Test that text mode models use the original name without '__text' suffix."""
+        text_env = _make_envelope(model="gpt-4o", passed=10)
+        text_env["output_mode"] = "text"
+
+        data = aggregate_runs([text_env])
+
+        model_names = [m["name"] for m in data["models"]]
+        assert "gpt-4o" in model_names
+        assert "gpt-4o__text" not in model_names
 
 
 class TestRenderJson:

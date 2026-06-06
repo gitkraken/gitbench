@@ -3,6 +3,7 @@ import type { GitBenchData } from "@/lib/types";
 import { loadHeatmapChart, type HeatmapChartData } from "@/lib/report-client";
 import { modelPath } from "@/lib/routes";
 import ModelSelector from "@/components/charts/ModelSelector";
+import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import { Badge } from "@/components/ui/badge";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 
@@ -37,7 +38,7 @@ export default function BenchmarkHeatmap() {
       base_model_groups: data.base_model_groups,
     };
   }, [data]);
-  const { selectedGroups, setSelectedGroups, selectedModels } =
+  const { selectedGroups, setSelectedGroups, selectedModels, outputMode, setOutputMode, availableOutputModes } =
     useSyncedModelSelection(selectionData);
 
   useEffect(() => {
@@ -56,6 +57,13 @@ export default function BenchmarkHeatmap() {
           value={selectedGroups}
           onChange={setSelectedGroups}
         />
+        <div className="mt-2 flex justify-end">
+          <OutputModeSelector
+            value={outputMode}
+            onChange={setOutputMode}
+            availableModes={availableOutputModes}
+          />
+        </div>
       </div>
       <div className="card overflow-x-auto p-5">
         <table className="data-table">

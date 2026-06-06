@@ -120,6 +120,13 @@ class FixtureLoader:
         difficulty = data.get("difficulty", "")
         tags = data.get("tags", [])
 
+        # Parse optional structured-output contract
+        structured_output = None
+        so_data = data.get("structured_output")
+        if so_data and isinstance(so_data, dict):
+            from gitbench.harness.types import StructuredOutputContract
+            structured_output = StructuredOutputContract.from_dict(so_data)
+
         # Soft validation: warn if metadata fields are missing
         missing = [f for f in METADATA_FIELDS if f not in data]
         if missing:
@@ -163,6 +170,7 @@ class FixtureLoader:
             purpose=purpose,
             difficulty=difficulty,
             tags=tags,
+            structured_output=structured_output,
         )
 
     def load_dir(self, dirpath: str) -> list[Fixture]:

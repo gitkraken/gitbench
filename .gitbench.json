@@ -257,6 +257,24 @@
       ],
       "base_url": "https://openrouter.ai/api/v1",
       "api_key_env": "OPENROUTER_API_KEY"
+    },
+
+    "openrouter-demo": {
+      "model": [
+        "ibm-granite/granite-4.1-8b:none",
+        "ibm-granite/granite-4.1-8b:low",
+        "ibm-granite/granite-4.1-8b:medium",
+        "ibm-granite/granite-4.1-8b:high",
+        "ibm-granite/granite-4.1-8b:xhigh",
+
+        "inclusionai/ling-2.6-flash:none",
+        "inclusionai/ling-2.6-flash:low",
+        "inclusionai/ling-2.6-flash:medium",
+        "inclusionai/ling-2.6-flash:high",
+        "inclusionai/ling-2.6-flash:xhigh"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
     }
   },
   "disabledModels": []

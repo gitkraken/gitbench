@@ -3,6 +3,11 @@ import Layout from "@/components/Layout.astro";
 import FixtureCard from "@/components/fixtures/FixtureCard.astro";
 import { loadDataSync } from "@/lib/data";
 import { modelLevelPath } from "@/lib/routes";
+import {
+  computeModeComparison,
+  jsonSchemaModelName,
+} from "@/lib/model-comparison";
+import { getReportStore } from "@/lib/node-sqlite-report-store";
 import type { GitBenchData, FixtureResult, BaseModelGroup } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,18 +22,42 @@ export function getStaticPaths() {
     props: any;
   }[] = [];
   for (const g of data.base_model_groups) {
+    // Group levels by normalized level (strip __json_schema suffix)
+    const levelMap = new Map<
+      string,
+      { textModelName: string | null; jsonModelName: string | null }
+    >();
     for (const l of g.levels) {
+      const lvl = l.level || "default";
+      const normLevel = lvl.replace(/__json_schema$/, "");
+      if (!levelMap.has(normLevel)) {
+        levelMap.set(normLevel, { textModelName: null, jsonModelName: null });
+      }
+      const entry = levelMap.get(normLevel)!;
+      if (
+        lvl.endsWith("__json_schema") ||
+        l.modelName.endsWith("__json_schema")
+      ) {
+        entry.jsonModelName = l.modelName;
+      } else {
+        entry.textModelName = l.modelName;
+      }
+    }
+    for (const [normLevel, { textModelName, jsonModelName }] of levelMap) {
+      const primaryModelName = textModelName || jsonModelName;
+      if (!primaryModelName) continue;
       paths.push({
         params: {
           provider: g.provider,
           model: g.baseModel,
-          level: l.level || "default",
+          level: normLevel,
         },
         props: {
           provider: g.provider,
           baseModel: g.baseModel,
-          level: l.level || "default",
-          modelName: l.modelName,
+          level: normLevel,
+          modelName: primaryModelName,
+          jsonModelName: jsonModelName || null,
           group: g,
           data,
         },
@@ -38,14 +67,16 @@ export function getStaticPaths() {
   return paths;
 }
 
-const { provider, baseModel, level, modelName, group, data } = Astro.props as {
-  provider: string;
-  baseModel: string;
-  level: string;
-  modelName: string;
-  group: BaseModelGroup;
-  data: GitBenchData;
-};
+const { provider, baseModel, level, modelName, jsonModelName, group, data } =
+  Astro.props as {
+    provider: string;
+    baseModel: string;
+    level: string;
+    modelName: string;
+    jsonModelName: string | null;
+    group: BaseModelGroup;
+    data: GitBenchData;
+  };
 
 const summary = data.model_summaries[modelName];
 if (!summary) {
@@ -53,15 +84,63 @@ if (!summary) {
 }
 
 const passRate = Math.round(summary.pass_at_k * 1000) / 10;
-const encodedModelName = encodeURIComponent(modelName);
+const encodedModelGroup = encodeURIComponent(`${provider}/${baseModel}`);
 const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
 
-// Collect all fixture results for this model
+// Check if both modes exist for comparison
+const hasComparison =
+  jsonModelName != null && data.model_summaries[jsonModelName] != null;
+
+// Collect all fixture results for this model (text mode as primary)
 const allFixtures: (FixtureResult & { benchmark: string })[] = [];
 for (const bench of data.benchmarks) {
   const results = data.fixtures[modelName]?.[bench] || [];
   for (const r of results) {
     allFixtures.push({ ...r, benchmark: bench });
+  }
+}
+
+// Compute text-vs-structured comparison when both modes exist
+let comparison: import("@/lib/model-comparison").ModeComparison | null = null;
+if (hasComparison) {
+  try {
+    const store = getReportStore();
+    comparison = computeModeComparison(store, modelName, jsonModelName!);
+  } catch {
+    // Fall back to summary-only comparison if DB not available
+    const textSummary = data.model_summaries[modelName];
+    const jsonSummary = data.model_summaries[jsonModelName];
+    if (textSummary && jsonSummary) {
+      comparison = {
+        textModelName: modelName,
+        jsonModelName: jsonModelName,
+        textPassRate: textSummary.pass_at_k,
+        jsonPassRate: jsonSummary.pass_at_k,
+        passRateDelta: jsonSummary.pass_at_k - textSummary.pass_at_k,
+        gained: 0,
+        lost: 0,
+        unchangedPass: 0,
+        unchangedFail: 0,
+        totalFixtures: 0,
+        benchmarkDeltas: [],
+        changedFixtures: [],
+      };
+      for (const bench of data.benchmarks) {
+        const tc = data.matrix[modelName]?.[bench];
+        const jc = data.matrix[jsonModelName]?.[bench];
+        if (tc && jc) {
+          comparison.benchmarkDeltas.push({
+            benchmark: bench,
+            textPassRate: tc.pass_at_k,
+            jsonPassRate: jc.pass_at_k,
+            delta: jc.pass_at_k - tc.pass_at_k,
+          });
+        }
+      }
+      comparison.benchmarkDeltas.sort(
+        (a, b) => Math.abs(b.delta) - Math.abs(a.delta),
+      );
+    }
   }
 }
 
@@ -116,33 +195,40 @@ for (const bench of data.benchmarks) {
     </div>
   </div>
 
-  <!-- Reasoning level tab bar -->
+  <!-- Reasoning level tab bar (de-duplicated by normalized level) -->
   <div class="flex gap-1.5 flex-wrap mb-6">
     {
-      group.levels
+      Array.from(
+        new Map(
+          group.levels.map((l) => {
+            const lvl = l.level || "default";
+            const normLevel = lvl.replace(/__json_schema$/, "");
+            return [normLevel, normLevel];
+          }),
+        ).values(),
+      )
         .sort((a, b) => {
-          const aOrder = REASONING_LEVEL_ORDER[a.level || ""] ?? 99;
-          const bOrder = REASONING_LEVEL_ORDER[b.level || ""] ?? 99;
+          const aOrder = REASONING_LEVEL_ORDER[a] ?? 99;
+          const bOrder = REASONING_LEVEL_ORDER[b] ?? 99;
           return aOrder - bOrder;
         })
-        .map((l) => {
-        const lvl = l.level || "default";
-        const isCurrent = lvl === level;
-        const href = modelLevelPath(provider, baseModel, lvl);
-        return (
-          <a
-            href={href}
-            data-effort-link
-            class={`no-underline px-3 py-1.5 rounded-md font-mono text-[0.7rem] transition-colors ${
-              isCurrent
-                ? "bg-accent text-white"
-                : "bg-(--color-card) text-(--color-text-mid) hover:text-(--color-text)"
-            }`}
-          >
-            {l.level || "default"}
-          </a>
-        );
-      })
+        .map((lvl) => {
+          const isCurrent = lvl === level;
+          const href = modelLevelPath(provider, baseModel, lvl);
+          return (
+            <a
+              href={href}
+              data-effort-link
+              class={`no-underline px-3 py-1.5 rounded-md font-mono text-[0.7rem] transition-colors ${
+                isCurrent
+                  ? "bg-accent text-white"
+                  : "bg-(--color-card) text-(--color-text-mid) hover:text-(--color-text)"
+              }`}
+            >
+              {lvl}
+            </a>
+          );
+        })
     }
   </div>
 
@@ -176,7 +262,7 @@ for (const bench of data.benchmarks) {
         {hasCost && <span>${totalCost.toFixed(8)}</span>}
       </div>
     </div>
-    <a href={`/compare?with=${encodedModelName}`}>
+    <a href={`/compare?with=${encodedModelGroup}`}>
       <Button
         variant="outline"
         size="sm"
@@ -187,6 +273,172 @@ for (const bench of data.benchmarks) {
       </Button>
     </a>
   </div>
+
+  <!-- Text vs JSON Schema Comparison -->
+  {
+    comparison && (
+      <section class="mb-8">
+        <div class="section-label">
+          <span>Text vs JSON Schema Comparison</span>
+        </div>
+
+        <div class="card p-5">
+          {/* Aggregate delta */}
+          <div class="flex gap-4 items-center flex-wrap mb-4">
+            <div class="text-xs font-mono text-(--color-text-dim)">
+              Pass Rate Delta
+            </div>
+            <Badge
+              variant="outline"
+              className={`font-mono text-sm ${
+                comparison.passRateDelta > 0
+                  ? "bg-pass-bg text-pass border-pass-border"
+                  : comparison.passRateDelta < 0
+                    ? "bg-fail-bg text-fail border-(--color-fail-border)"
+                    : "bg-(--color-card) text-(--color-text-mid) border-border"
+              }`}
+            >
+              {comparison.passRateDelta >= 0 ? "+" : ""}
+              {Math.round(comparison.passRateDelta * 1000) / 10}%
+            </Badge>
+            <span class="font-mono text-[0.68rem] text-(--color-text-dim) opacity-60">
+              Text: {Math.round(comparison.textPassRate * 1000) / 10}% &rarr;
+              JSON: {Math.round(comparison.jsonPassRate * 1000) / 10}%
+            </span>
+          </div>
+
+          {/* Agreement counts */}
+          <div class="grid grid-cols-4 gap-3 mb-5">
+            <div class="bg-pass-bg/30 rounded-md p-3 text-center">
+              <div class="text-lg font-bold text-pass">
+                +{comparison.gained}
+              </div>
+              <div class="text-[0.6rem] font-mono text-pass opacity-70">
+                Gained
+              </div>
+              <div class="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                JSON pass / text fail
+              </div>
+            </div>
+            <div class="bg-fail-bg/30 rounded-md p-3 text-center">
+              <div class="text-lg font-bold text-fail">
+                &minus;{comparison.lost}
+              </div>
+              <div class="text-[0.6rem] font-mono text-fail opacity-70">
+                Lost
+              </div>
+              <div class="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                Text pass / JSON fail
+              </div>
+            </div>
+            <div class="bg-(--color-card) rounded-md p-3 text-center">
+              <div class="text-lg font-bold text-(--color-text-mid)">
+                {comparison.unchangedPass}
+              </div>
+              <div class="text-[0.6rem] font-mono text-(--color-text-dim)">
+                Unchanged Pass
+              </div>
+              <div class="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                Both pass
+              </div>
+            </div>
+            <div class="bg-(--color-card) rounded-md p-3 text-center">
+              <div class="text-lg font-bold text-(--color-text-dim)">
+                {comparison.unchangedFail}
+              </div>
+              <div class="text-[0.6rem] font-mono text-(--color-text-dim)">
+                Unchanged Fail
+              </div>
+              <div class="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                Both fail
+              </div>
+            </div>
+          </div>
+
+          {/* Per-benchmark deltas */}
+          {comparison.benchmarkDeltas.length > 0 && (
+            <>
+              <div class="text-xs font-mono text-(--color-text-dim) mb-2">
+                Benchmark Deltas
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left font-mono text-[0.68rem]">
+                  <thead>
+                    <tr class="text-(--color-text-dim) border-b border-border">
+                      <th class="pb-1.5 pr-3 font-normal">Benchmark</th>
+                      <th class="pb-1.5 pr-3 font-normal text-right">Text</th>
+                      <th class="pb-1.5 pr-3 font-normal text-right">JSON</th>
+                      <th class="pb-1.5 font-normal text-right">Delta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparison.benchmarkDeltas.map((bd) => (
+                      <tr class="border-b border-(--color-border-dim)">
+                        <td class="py-1.5 pr-3">
+                          <a
+                            href={`/benchmarks/${bd.benchmark}`}
+                            class="text-accent hover:underline"
+                          >
+                            {bd.benchmark}
+                          </a>
+                        </td>
+                        <td class="py-1.5 pr-3 text-right">
+                          {Math.round(bd.textPassRate * 1000) / 10}%
+                        </td>
+                        <td class="py-1.5 pr-3 text-right">
+                          {Math.round(bd.jsonPassRate * 1000) / 10}%
+                        </td>
+                        <td
+                          class={`py-1.5 text-right font-medium ${
+                            bd.delta > 0
+                              ? "text-pass"
+                              : bd.delta < 0
+                                ? "text-fail"
+                                : "text-(--color-text-dim)"
+                          }`}
+                        >
+                          {bd.delta >= 0 ? "+" : ""}
+                          {Math.round(bd.delta * 1000) / 10}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Changed fixture links */}
+          {comparison.changedFixtures.length > 0 && (
+            <>
+              <div class="text-xs font-mono text-(--color-text-dim) mt-4 mb-2">
+                Changed Fixtures ({comparison.changedFixtures.length})
+              </div>
+              <div class="flex gap-1.5 flex-wrap">
+                {comparison.changedFixtures.map((cf) => {
+                  const passedInJson = cf.jsonPassed;
+                  const statusLabel = passedInJson ? "+gain" : "-loss";
+                  const statusCls = passedInJson
+                    ? "text-pass border-pass-border/30"
+                    : "text-fail border-(--color-fail-border)/30";
+                  return (
+                    <a
+                      href={`/fixtures/${cf.benchmark}/${cf.fixtureId}`}
+                      class={`no-underline px-2 py-1 rounded-md border font-mono text-[0.65rem] transition-colors hover:border-(--color-border-accent) ${statusCls} bg-(--color-card)`}
+                      title={`${cf.benchmark}/${cf.fixtureId}: text=${cf.textPassed ? "pass" : "fail"}, json=${cf.jsonPassed ? "pass" : "fail"}`}
+                    >
+                      {cf.fixtureId}
+                      <span class="opacity-50 ml-1">{statusLabel}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    )
+  }
 
   <section>
     <div class="section-label">

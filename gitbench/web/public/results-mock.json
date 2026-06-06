@@ -1,0 +1,393 @@
+{
+  "models": [
+    {
+      "name": "openai/gpt-5:high",
+      "provider": "openai",
+      "baseModel": "gpt-5",
+      "reasoningLevel": "high",
+      "output_mode": "text"
+    },
+    {
+      "name": "openai/gpt-5:high__json_schema",
+      "provider": "openai",
+      "baseModel": "gpt-5",
+      "reasoningLevel": "high",
+      "output_mode": "json_schema"
+    }
+  ],
+  "benchmarks": [
+    "commit_messages"
+  ],
+  "model_summaries": {
+    "openai/gpt-5:high": {
+      "total_runs": 1,
+      "total_fixtures": 4,
+      "total_passed": 3,
+      "pass_at_k": 0.75,
+      "total_cost_usd": null,
+      "avg_cost_usd": null
+    },
+    "openai/gpt-5:high__json_schema": {
+      "total_runs": 1,
+      "total_fixtures": 4,
+      "total_passed": 3,
+      "pass_at_k": 0.75,
+      "total_cost_usd": null,
+      "avg_cost_usd": null
+    }
+  },
+  "model_runtimes": {
+    "openai/gpt-5:high": {
+      "total_ms": 100,
+      "avg_ms": 25.0,
+      "min_ms": 25,
+      "max_ms": 25,
+      "fixture_count": 4
+    },
+    "openai/gpt-5:high__json_schema": {
+      "total_ms": 100,
+      "avg_ms": 25.0,
+      "min_ms": 25,
+      "max_ms": 25,
+      "fixture_count": 4
+    }
+  },
+  "matrix": {
+    "openai/gpt-5:high": {
+      "commit_messages": {
+        "pass_at_k": 0.75,
+        "total": 4,
+        "passed": 3,
+        "avg_similarity": 0.7575
+      }
+    },
+    "openai/gpt-5:high__json_schema": {
+      "commit_messages": {
+        "pass_at_k": 0.75,
+        "total": 4,
+        "passed": 3,
+        "avg_similarity": 0.73
+      }
+    }
+  },
+  "fixtures": {
+    "openai/gpt-5:high": {
+      "commit_messages": [
+        {
+          "fixture_id": "f001",
+          "passed": true,
+          "similarity": 0.95,
+          "error": null,
+          "model_output": "text output for f001",
+          "reasoning_level": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null,
+          "cost_usd": null,
+          "purpose": null,
+          "difficulty": null,
+          "tags": null,
+          "duration_ms": 50,
+          "api_duration_ms": 25,
+          "output_mode": "text",
+          "parsed_payload": null,
+          "raw_structured_output": null,
+          "structured_error": null
+        },
+        {
+          "fixture_id": "f002",
+          "passed": true,
+          "similarity": 0.9,
+          "error": null,
+          "model_output": "text output for f002",
+          "reasoning_level": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null,
+          "cost_usd": null,
+          "purpose": null,
+          "difficulty": null,
+          "tags": null,
+          "duration_ms": 50,
+          "api_duration_ms": 25,
+          "output_mode": "text",
+          "parsed_payload": null,
+          "raw_structured_output": null,
+          "structured_error": null
+        },
+        {
+          "fixture_id": "f003",
+          "passed": false,
+          "similarity": 0.3,
+          "error": null,
+          "model_output": "text output for f003",
+          "reasoning_level": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null,
+          "cost_usd": null,
+          "purpose": null,
+          "difficulty": null,
+          "tags": null,
+          "duration_ms": 50,
+          "api_duration_ms": 25,
+          "output_mode": "text",
+          "parsed_payload": null,
+          "raw_structured_output": null,
+          "structured_error": null
+        },
+        {
+          "fixture_id": "f004",
+          "passed": true,
+          "similarity": 0.88,
+          "error": null,
+          "model_output": "text output for f004",
+          "reasoning_level": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null,
+          "cost_usd": null,
+          "purpose": null,
+          "difficulty": null,
+          "tags": null,
+          "duration_ms": 50,
+          "api_duration_ms": 25,
+          "output_mode": "text",
+          "parsed_payload": null,
+          "raw_structured_output": null,
+          "structured_error": null
+        }
+      ]
+    },
+    "openai/gpt-5:high__json_schema": {
+      "commit_messages": [
+        {
+          "fixture_id": "f001",
+          "passed": true,
+          "similarity": 0.95,
+          "error": null,
+          "model_output": "canonical output for f001",
+          "reasoning_level": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null,
+          "cost_usd": null,
+          "purpose": null,
+          "difficulty": null,
+          "tags": null,
+          "duration_ms": 50,
+          "api_duration_ms": 25,
+          "output_mode": "json_schema",
+          "parsed_payload": {
+            "commit": "fix: resolve bug"
+          },
+          "raw_structured_output": "{\"commit\": \"fix: resolve bug\"}",
+          "structured_error": null
+        },
+        {
+          "fixture_id": "f002",
+          "passed": true,
+          "similarity": 0.92,
+          "error": null,
+          "model_output": "canonical output for f002",
+          "reasoning_level": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null,
+          "cost_usd": null,
+          "purpose": null,
+          "difficulty": null,
+          "tags": null,
+          "duration_ms": 50,
+          "api_duration_ms": 25,
+          "output_mode": "json_schema",
+          "parsed_payload": {
+            "commit": "feat: add feature"
+          },
+          "raw_structured_output": "{\"commit\": \"feat: add feature\"}",
+          "structured_error": null
+        },
+        {
+          "fixture_id": "f003",
+          "passed": true,
+          "similarity": 0.85,
+          "error": null,
+          "model_output": "canonical output for f003",
+          "reasoning_level": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null,
+          "cost_usd": null,
+          "purpose": null,
+          "difficulty": null,
+          "tags": null,
+          "duration_ms": 50,
+          "api_duration_ms": 25,
+          "output_mode": "json_schema",
+          "parsed_payload": {
+            "commit": "chore: cleanup"
+          },
+          "raw_structured_output": "{\"commit\": \"chore: cleanup\"}",
+          "structured_error": null
+        },
+        {
+          "fixture_id": "f004",
+          "passed": false,
+          "similarity": 0.2,
+          "error": null,
+          "model_output": "canonical output for f004",
+          "reasoning_level": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "total_tokens": null,
+          "cost_usd": null,
+          "purpose": null,
+          "difficulty": null,
+          "tags": null,
+          "duration_ms": 50,
+          "api_duration_ms": 25,
+          "output_mode": "json_schema",
+          "parsed_payload": {
+            "commit": "bad"
+          },
+          "raw_structured_output": "{\"commit\": \"bad\"}",
+          "structured_error": null
+        }
+      ]
+    }
+  },
+  "fixture_index": {
+    "commit_messages/f001": {
+      "id": "f001",
+      "benchmark": "commit_messages",
+      "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').",
+      "expected": "Add hello.txt with greeting message",
+      "description": "Single file added",
+      "setup": [
+        "git init",
+        "git config user.email 'test@test.com'",
+        "git config user.name 'Test User'",
+        "echo 'Hello, World!' > hello.txt",
+        "git add hello.txt"
+      ],
+      "purpose": "Tests ability to generate a concise commit message for a single new file addition (hello.txt). Evaluates basic commit message generation from a trivial diff.",
+      "difficulty": "trivial",
+      "tags": [
+        "commit-message",
+        "single-file",
+        "add",
+        "basic"
+      ]
+    },
+    "commit_messages/f002": {
+      "id": "f002",
+      "benchmark": "commit_messages",
+      "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').",
+      "expected": "Add initial project files",
+      "description": "Multiple files added",
+      "setup": [
+        "git init",
+        "git config user.email 'test@test.com'",
+        "git config user.name 'Test User'",
+        "echo 'config' > config.py",
+        "echo 'main' > main.py",
+        "echo 'utils' > utils.py",
+        "git add config.py main.py utils.py"
+      ],
+      "purpose": "Tests ability to generate a commit message summarizing multiple new files (config.py, main.py, utils.py). Evaluates grouping related file additions.",
+      "difficulty": "easy",
+      "tags": [
+        "commit-message",
+        "multi-file",
+        "add",
+        "summarization"
+      ]
+    },
+    "commit_messages/f003": {
+      "id": "f003",
+      "benchmark": "commit_messages",
+      "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Rename').",
+      "expected": "Rename oldname.txt to newname.txt",
+      "description": "File renamed",
+      "setup": [
+        "git init",
+        "git config user.email 'test@test.com'",
+        "git config user.name 'Test User'",
+        "echo 'old content' > oldname.txt",
+        "git add oldname.txt",
+        "git commit -m 'Initial commit'",
+        "git mv oldname.txt newname.txt"
+      ],
+      "purpose": "Tests ability to generate a commit message for a file rename. Evaluates recognizing rename operations in diffs.",
+      "difficulty": "easy",
+      "tags": [
+        "commit-message",
+        "rename",
+        "file-operations"
+      ]
+    },
+    "commit_messages/f004": {
+      "id": "f004",
+      "benchmark": "commit_messages",
+      "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Remove').",
+      "expected": "Remove redundant.txt",
+      "description": "File deleted",
+      "setup": [
+        "git init",
+        "git config user.email 'test@test.com'",
+        "git config user.name 'Test User'",
+        "echo 'to be deleted' > redundant.txt",
+        "git add redundant.txt",
+        "git commit -m 'Add file'",
+        "git rm redundant.txt"
+      ],
+      "purpose": "Tests ability to generate a commit message for a file deletion. Evaluates handling of removal operations.",
+      "difficulty": "easy",
+      "tags": [
+        "commit-message",
+        "deletion",
+        "remove"
+      ]
+    }
+  },
+  "runs_meta": [
+    {
+      "timestamp": "2026-06-04T12:00:00+00:00",
+      "model": "openai/gpt-5:high",
+      "profile": "test",
+      "git_sha": "abc123",
+      "benchmark_suite_version": "0.1.0",
+      "reasoning_level": "high",
+      "output_mode": "text"
+    },
+    {
+      "timestamp": "2026-06-04T13:00:00+00:00",
+      "model": "openai/gpt-5:high",
+      "profile": "test",
+      "git_sha": "abc123",
+      "benchmark_suite_version": "0.1.0",
+      "reasoning_level": "high",
+      "output_mode": "json_schema"
+    }
+  ],
+  "base_model_groups": [
+    {
+      "provider": "openai",
+      "baseModel": "gpt-5",
+      "levels": [
+        {
+          "level": "high",
+          "modelName": "openai/gpt-5:high",
+          "pass_at_k": 0.75,
+          "total_cost_usd": null
+        },
+        {
+          "level": "high__json_schema",
+          "modelName": "openai/gpt-5:high__json_schema",
+          "pass_at_k": 0.75,
+          "total_cost_usd": null
+        }
+      ]
+    }
+  ]
+}

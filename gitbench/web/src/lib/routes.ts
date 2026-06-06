@@ -6,13 +6,43 @@ export function modelNameFromSlug(slug: string): string {
   return decodeURIComponent(slug.replace(/~/g, "%"));
 }
 
-// Legacy/comparison URL helper — use modelLevelPath() for new nested routes
+function encodeRouteSegment(value: string): string {
+  return encodeURIComponent(value);
+}
+
+function stripOutputModeSuffix(modelName: string): string {
+  return modelName.endsWith("__json_schema")
+    ? modelName.slice(0, -"__json_schema".length)
+    : modelName;
+}
+
 export function modelPath(modelName: string): string {
-  return `/models/${modelSlug(modelName)}`;
+  const cleanName = stripOutputModeSuffix(modelName);
+  let provider = cleanName;
+  let baseModel = cleanName;
+  let level = "default";
+
+  if (cleanName.includes("/")) {
+    const slashIndex = cleanName.indexOf("/");
+    const rest = cleanName.slice(slashIndex + 1);
+    provider = cleanName.slice(0, slashIndex);
+    baseModel = rest;
+    if (rest.includes(":")) {
+      const parts = rest.split(":");
+      level = parts.pop() || "default";
+      baseModel = parts.join(":");
+    } else if (rest.includes("#")) {
+      const parts = rest.split("#");
+      level = parts.pop() || "default";
+      baseModel = parts.join("#");
+    }
+  }
+
+  return modelLevelPath(provider, baseModel, level);
 }
 
 export function modelGroupPath(provider: string, baseModel: string): string {
-  return `/models/${provider}/${baseModel}/`;
+  return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(baseModel)}/`;
 }
 
 export function modelLevelPath(
@@ -20,5 +50,5 @@ export function modelLevelPath(
   baseModel: string,
   level: string
 ): string {
-  return `/models/${provider}/${baseModel}/${level}/`;
+  return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(baseModel)}/${encodeRouteSegment(level)}/`;
 }

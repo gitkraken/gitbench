@@ -11,9 +11,12 @@ We need to compare the same models across text and schema-enforced JSON modes wi
 - Add run-time output modes for normal text and schema-enforced JSON output.
 - Preserve both the canonical text used by existing scorers and the raw/parsed structured payload returned by the provider.
 - Record output mode in run envelopes, score payloads, aggregate JSON, SQLite report data, report APIs, and history metadata.
+- Keep raw run artifacts and aggregated report artifacts distinguishable so `gitbench report` can regenerate the web data from newly produced text/JSON-schema runs without misreading aggregate JSON as raw run input.
 - Update report grouping so text and structured runs for the same model/reasoning level are separate result variants but remain comparable under the same provider/base-model group.
 - Add UI controls to filter or show both output modes next to the model selector.
 - Add model detail comparisons for text vs structured JSON mode, including aggregate deltas, benchmark deltas, and per-fixture gain/loss rows.
+- Change the default output mode from `text` to `both` so every benchmark run produces paired text and JSON-schema results by default. Text-mode runs remain possible by passing `--output-mode text` explicitly.
+- Add output-mode toggle controls to every chart on every page (Quadrant Comparison, Benchmark Heatmap, Fixture Comparison Table, Time Series) for consistent visual coverage, synced globally via localStorage.
 
 ## Capabilities
 
@@ -33,6 +36,6 @@ We need to compare the same models across text and schema-enforced JSON modes wi
 
 - Python harness: fixture loading/types, model adapters, benchmark runner, score serialization, CLI run options, result doctoring/rerun handling, and fixture self-checking.
 - Providers: OpenAI-compatible structured outputs via JSON Schema response format, OpenRouter-compatible forwarding, Ollama schema forwarding through native format support where available.
-- Report generation: aggregate keying, JSON output, SQLite schema, Python and JavaScript DB builders, store abstraction, and API filter validation.
-- Web UI: data types, model grouping helpers, model selector controls, comparison charts, model detail pages, fixture drilldowns, and history views.
-- Tests: fixture contract validation across all 204 fixtures, provider request serialization, canonicalization/scoring behavior, aggregation isolation by output mode, report API coverage, and UI route/component behavior.
+- Report generation: aggregate keying, JSON output, raw-vs-aggregate artifact ingestion, SQLite schema, Python and JavaScript DB builders, store abstraction, and API filter validation.
+- Web UI: data types, model grouping helpers, model selector controls, comparison charts, model detail pages, fixture drilldowns, history views, and route/link behavior.
+- Tests: fixture contract validation across all 204 fixtures, provider request serialization, canonicalization/scoring behavior, aggregation isolation by output mode, report ingestion from newly generated artifacts, report API coverage, UI route/component behavior, and static build coverage.

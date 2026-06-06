@@ -5,6 +5,25 @@ from typing import Any
 
 
 @dataclass
+class StructuredOutputContract:
+    """A fixture-level structured-output contract for JSON-schema runs."""
+
+    schema: dict[str, Any]
+    primary_path: str
+    canonicalize: str = "string"
+    display_label: str = ""
+
+    def to_dict(self) -> dict:
+        """Convert to dict for serialization."""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "StructuredOutputContract":
+        """Create from dict."""
+        return cls(**{k: v for k, v in data.items() if k in ("schema", "primary_path", "canonicalize", "display_label")})
+
+
+@dataclass
 class ModelMessage:
     """A message in a model conversation."""
 
@@ -34,15 +53,23 @@ class Fixture:
     purpose: str = ""       # What Git skill this tests and why it matters
     difficulty: str = ""    # One of: trivial, easy, medium, hard, expert
     tags: list[str] = field(default_factory=list)  # Searchable keywords
+    structured_output: StructuredOutputContract | None = None  # JSON-schema contract
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
-        return asdict(self)
+        result = asdict(self)
+        if result.get("structured_output") is None:
+            del result["structured_output"]
+        return result
 
     @classmethod
     def from_dict(cls, data: dict) -> "Fixture":
         """Create from dictionary."""
-        return cls(**data)
+        contract_data = data.pop("structured_output", None)
+        fixture = cls(**data)
+        if contract_data:
+            fixture.structured_output = StructuredOutputContract.from_dict(contract_data)
+        return fixture
 
 
 @dataclass
@@ -70,6 +97,11 @@ class Score:
     expected: str | None = None
     description: str | None = None
     duration_ms: float | None = None
+    # Structured-output fields (attached at runtime, not in default serialization)
+    _output_mode: str | None = field(default=None, repr=False)
+    _parsed_payload: dict | None = field(default=None, repr=False)
+    _raw_structured_output: str | None = field(default=None, repr=False)
+    _structured_error: str | None = field(default=None, repr=False)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
@@ -82,9 +114,22 @@ class Score:
             "prompt", "expected", "description",
             "duration_ms",
         )
-        for field in none_fields:
-            if result.get(field) is None:
-                del result[field]
+        for field_name in none_fields:
+            if result.get(field_name) is None:
+                del result[field_name]
+        # Remove private underscore-prefixed fields leaked by asdict()
+        for key in list(result.keys()):
+            if key.startswith("_"):
+                del result[key]
+        # Include structured-output fields under clean names when present
+        if self._output_mode is not None:
+            result["output_mode"] = self._output_mode
+        if self._parsed_payload is not None:
+            result["parsed_payload"] = self._parsed_payload
+        if self._raw_structured_output is not None:
+            result["raw_structured_output"] = self._raw_structured_output
+        if self._structured_error is not None:
+            result["structured_error"] = self._structured_error
         return result
 
     @classmethod
@@ -92,7 +137,21 @@ class Score:
         """Create from dictionary."""
         kwargs = dict(data)
         kwargs.setdefault("duration_ms", None)
-        return cls(**kwargs)
+        # Extract structured-output fields if present in serialized form
+        output_mode = kwargs.pop("output_mode", None)
+        parsed_payload = kwargs.pop("parsed_payload", None)
+        raw_structured_output = kwargs.pop("raw_structured_output", None)
+        structured_error = kwargs.pop("structured_error", None)
+        score = cls(**kwargs)
+        if output_mode is not None:
+            score._output_mode = output_mode
+        if parsed_payload is not None:
+            score._parsed_payload = parsed_payload
+        if raw_structured_output is not None:
+            score._raw_structured_output = raw_structured_output
+        if structured_error is not None:
+            score._structured_error = structured_error
+        return score
 
 
 @dataclass

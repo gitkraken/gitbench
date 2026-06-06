@@ -5,6 +5,7 @@ export interface ModelInfo {
   provider: string;
   baseModel: string;
   reasoningLevel: string | null;
+  output_mode: string;
 }
 
 export interface BaseModelGroupLevel {
@@ -52,6 +53,10 @@ export interface FixtureResult {
   purpose: string | null;
   difficulty: string | null;
   tags: string[] | null;
+  output_mode: string;
+  parsed_payload: string | null;
+  raw_structured_output: string | null;
+  structured_error: string | null;
 }
 
 export interface ModelRuntimeSummary {
@@ -87,6 +92,7 @@ export interface RunMeta {
   git_sha: string;
   benchmark_suite_version: string;
   reasoning_level: string;
+  output_mode: string;
 }
 
 export interface GitBenchData {

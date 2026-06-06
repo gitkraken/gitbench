@@ -17,6 +17,7 @@ import { modelGroupPath } from "@/lib/routes";
 import { getProviderColor } from "@/lib/provider-colors";
 import ProviderIcon from "@/components/ProviderIcon";
 import ModelSelector from "@/components/charts/ModelSelector";
+import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 import {
   costMetric,
@@ -28,6 +29,7 @@ import {
   type MetricEffort,
   type MetricExtractor,
   type ModelGroup,
+  type OutputMode,
 } from "@/components/charts/model-groups";
 import {
   formatCompactDecimal,
@@ -153,26 +155,33 @@ function buildPoints(
   selectedGroups: string[],
   xMetric: MetricDefinition,
   yMetric: MetricDefinition,
+  outputMode: OutputMode,
 ): QuadrantPoint[] {
   const groups = deriveModelGroups(data);
   const selected = new Set(sanitizeGroupSelection(selectedGroups, groups));
   const candidates = groups
     .filter((group) => selected.has(group.id))
     .map((group) => {
+      const filteredEfforts =
+        outputMode === "both"
+          ? group.efforts
+          : group.efforts.filter((e) => e.outputMode === outputMode);
       const xByModel = new Map(
-        metricValueForGroup(group, data, xMetric).map((effort) => [
-          effort.modelName,
-          effort,
-        ]),
+        metricValueForGroup(
+          { ...group, efforts: filteredEfforts },
+          data,
+          xMetric,
+        ).map((effort) => [effort.modelName, effort]),
       );
       const yByModel = new Map(
-        metricValueForGroup(group, data, yMetric).map((effort) => [
-          effort.modelName,
-          effort,
-        ]),
+        metricValueForGroup(
+          { ...group, efforts: filteredEfforts },
+          data,
+          yMetric,
+        ).map((effort) => [effort.modelName, effort]),
       );
 
-      return group.efforts
+      return filteredEfforts
         .map((effort) => {
           const x = xByModel.get(effort.modelName);
           const y = yByModel.get(effort.modelName);
@@ -333,7 +342,8 @@ export default function QuadrantComparisonChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
   const [xMetricKey, setXMetricKey] = useState<MetricKey>("cost");
   const [yMetricKey, setYMetricKey] = useState<MetricKey>("passRate");
-  const { selectedGroups, setSelectedGroups } = useSyncedModelSelection(data);
+  const { selectedGroups, setSelectedGroups, outputMode, setOutputMode, availableOutputModes } =
+    useSyncedModelSelection(data);
 
   useEffect(() => {
     loadQuadrantChart().then(setData);
@@ -344,8 +354,8 @@ export default function QuadrantComparisonChart() {
 
   const chartData = useMemo(() => {
     if (!data) return [];
-    return buildPoints(data, selectedGroups, xMetric, yMetric);
-  }, [data, selectedGroups, xMetric, yMetric]);
+    return buildPoints(data, selectedGroups, xMetric, yMetric, outputMode);
+  }, [data, selectedGroups, xMetric, yMetric, outputMode]);
 
   const xDomain = useMemo(
     () => domainFor(chartData.map((point) => point.x)),
@@ -395,6 +405,13 @@ export default function QuadrantComparisonChart() {
             value={selectedGroups}
             onChange={setSelectedGroups}
           />
+          <div className="mt-2 flex justify-end">
+            <OutputModeSelector
+              value={outputMode}
+              onChange={setOutputMode}
+              availableModes={availableOutputModes}
+            />
+          </div>
         </div>
       </div>
 

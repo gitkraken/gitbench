@@ -4,6 +4,7 @@ export interface ModelResultsFilters {
   benchmark?: string;
   difficulty?: string;
   tag?: string;
+  output_mode?: string;
 }
 
 export interface BenchmarkDetail {

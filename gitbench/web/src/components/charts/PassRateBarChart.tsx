@@ -3,11 +3,14 @@ import type { GitBenchData } from "@/lib/types";
 import { loadPassRateChart } from "@/lib/report-client";
 import ProviderIcon from "@/components/ProviderIcon";
 import ModelSelector from "@/components/charts/ModelSelector";
+import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 import {
   buildGroupedMetricRows,
   passRateMetric,
   benchPassRateMetric,
+  getAvailableOutputModes,
+  writeStoredOutputMode,
 } from "@/components/charts/model-groups";
 import {
   VerticalGroupedMetricChart,
@@ -22,7 +25,13 @@ interface PassRateBarChartProps {
 
 export default function PassRateBarChart({ benchmarkName }: PassRateBarChartProps = {}) {
   const [data, setData] = useState<GitBenchData | null>(null);
-  const { selectedGroups, setSelectedGroups } = useSyncedModelSelection(data);
+  const {
+    selectedGroups,
+    setSelectedGroups,
+    outputMode,
+    setOutputMode,
+    availableOutputModes,
+  } = useSyncedModelSelection(data);
 
   useEffect(() => {
     loadPassRateChart(benchmarkName).then(setData);
@@ -38,8 +47,9 @@ export default function PassRateBarChart({ benchmarkName }: PassRateBarChartProp
       selectedGroups,
       extractor,
       "median",
+      outputMode,
     ).sort((a, b) => b.representativeValue - a.representativeValue);
-  }, [data, selectedGroups, benchmarkName]);
+  }, [data, selectedGroups, outputMode, benchmarkName]);
 
   const yDomain = useMemo(
     () => zeroAnchoredDomain(chartData, [0, 100], { ceiling: 100 }),
@@ -60,11 +70,21 @@ export default function PassRateBarChart({ benchmarkName }: PassRateBarChartProp
 
   return (
     <div>
-      <div className="max-w-xs ml-auto w-full mb-3">
-        <ModelSelector
-          data={data}
-          value={selectedGroups}
-          onChange={setSelectedGroups}
+      <div className="max-w-xs ml-auto w-full mb-3 flex items-center gap-3">
+        <div className="flex-1">
+          <ModelSelector
+            data={data}
+            value={selectedGroups}
+            onChange={setSelectedGroups}
+          />
+        </div>
+        <OutputModeSelector
+          value={outputMode}
+          onChange={(mode) => {
+            setOutputMode(mode);
+            writeStoredOutputMode(mode);
+          }}
+          availableModes={availableOutputModes}
         />
       </div>
       <VerticalGroupedMetricChart

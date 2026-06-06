@@ -12,12 +12,16 @@ import {
 import type { GitBenchData } from "@/lib/types";
 import { loadData } from "@/lib/load-data";
 import ModelSelector from "@/components/charts/ModelSelector";
+import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import ScatterPlot from "@/components/charts/ScatterPlot";
 import { Badge } from "@/components/ui/badge";
 import {
   deriveModelGroups,
-  expandGroupSelection,
+  expandGroupSelectionWithMode,
   sanitizeGroupSelection,
+  readStoredOutputMode,
+  writeStoredOutputMode,
+  type OutputMode,
 } from "@/components/charts/model-groups";
 
 const COLORS = [
@@ -40,6 +44,7 @@ function getColor(passRate: number): string {
 export default function ComparePage() {
   const [data, setData] = useState<GitBenchData | null>(null);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [outputMode, setOutputMode] = useState<OutputMode>(readStoredOutputMode());
 
   useEffect(() => {
     loadData().then((d) => {
@@ -54,7 +59,7 @@ export default function ComparePage() {
   }, []);
 
   if (!data) return <div>Loading...</div>;
-  const selectedModels = expandGroupSelection(selectedGroups, data);
+  const selectedModels = expandGroupSelectionWithMode(selectedGroups, data, outputMode);
 
   const overallData = selectedModels
     .map((name) => {
@@ -80,11 +85,23 @@ export default function ComparePage() {
 
   return (
     <div>
-      <div className="max-w-xs ml-auto w-full mb-6">
-        <ModelSelector
-          data={data}
-          initialSelected={selectedGroups}
-          onChange={setSelectedGroups}
+      <div className="max-w-xs ml-auto w-full mb-6 flex items-center gap-3">
+        <div className="flex-1">
+          <ModelSelector
+            data={data}
+            initialSelected={selectedGroups}
+            onChange={setSelectedGroups}
+          />
+        </div>
+        <OutputModeSelector
+          value={outputMode}
+          onChange={(mode) => {
+            setOutputMode(mode);
+            writeStoredOutputMode(mode);
+          }}
+          availableModes={
+            new Set(data.models.map((m) => m.output_mode ?? "text"))
+          }
         />
       </div>
 

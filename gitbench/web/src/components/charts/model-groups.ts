@@ -2,8 +2,8 @@ import type {
   BaseModelGroup,
   GitBenchData,
   ModelInfo,
-} from "@/lib/types";
-import { compareReasoningLevels } from "@/lib/sort-orders";
+} from "../../lib/types.ts";
+import { compareReasoningLevels } from "../../lib/sort-orders.ts";
 
 export type ModelGroupId = string;
 
@@ -13,6 +13,7 @@ export interface ModelGroupEffort {
   provider: string;
   baseModel: string;
   reasoningLevel: string | null;
+  outputMode: string;
   passRate: number | null;
   totalCostUsd: number | null;
 }
@@ -58,6 +59,20 @@ function median(values: number[]): number {
     : values[medianIndex];
 }
 
+function modelVariantKey(modelName: string, outputMode: string): string {
+  return outputMode === "text" ? modelName : `${modelName}__${outputMode}`;
+}
+
+function outputModeFromVariantKey(modelName: string): string {
+  return modelName.endsWith("__json_schema") ? "json_schema" : "text";
+}
+
+function cleanModelName(modelName: string): string {
+  return modelName.endsWith("__json_schema")
+    ? modelName.slice(0, -"__json_schema".length)
+    : modelName;
+}
+
 function compareReasoningEfforts(a: MetricEffort, b: MetricEffort): number {
   return compareReasoningLevels(
     String(a.reasoningLevel ?? ""),
@@ -76,14 +91,17 @@ function effortFromModelInfo(
   model: ModelInfo,
   data: GitBenchData
 ): ModelGroupEffort {
-  const summary = data.model_summaries[model.name];
+  const outputMode = model.output_mode ?? "text";
+  const modelName = modelVariantKey(model.name, outputMode);
+  const summary = data.model_summaries[modelName];
   const groupId = modelGroupId(model.provider, model.baseModel);
   return {
     groupId,
-    modelName: model.name,
+    modelName,
     provider: model.provider,
     baseModel: model.baseModel,
     reasoningLevel: model.reasoningLevel,
+    outputMode,
     passRate: summary?.pass_at_k ?? null,
     totalCostUsd: summary?.total_cost_usd ?? null,
   };
@@ -94,7 +112,13 @@ function effortFromGroupLevel(
   level: BaseModelGroup["levels"][number],
   data: GitBenchData
 ): ModelGroupEffort {
-  const modelInfo = data.models.find((model) => model.name === level.modelName);
+  const outputMode = outputModeFromVariantKey(level.modelName);
+  const baseModelName = cleanModelName(level.modelName);
+  const modelInfo = data.models.find(
+    (model) =>
+      model.name === baseModelName &&
+      (model.output_mode ?? "text") === outputMode,
+  );
   const summary = data.model_summaries[level.modelName];
   const provider = modelInfo?.provider ?? group.provider;
   const baseModel = modelInfo?.baseModel ?? group.baseModel;
@@ -104,6 +128,7 @@ function effortFromGroupLevel(
     provider,
     baseModel,
     reasoningLevel: modelInfo?.reasoningLevel ?? level.level,
+    outputMode,
     passRate: summary?.pass_at_k ?? level.pass_at_k ?? null,
     totalCostUsd: summary?.total_cost_usd ?? level.total_cost_usd ?? null,
   };
@@ -238,7 +263,8 @@ export function buildGroupedMetricRows(
   data: GitBenchData,
   selectedGroupIds: string[],
   extractor: MetricExtractor,
-  representative: RepresentativeMetric
+  representative: RepresentativeMetric,
+  outputMode?: OutputMode,
 ): GroupedMetricRow[] {
   const selected = new Set(
     sanitizeGroupSelection(selectedGroupIds, deriveModelGroups(data))
@@ -247,6 +273,10 @@ export function buildGroupedMetricRows(
     .filter((group) => selected.has(group.id))
     .map((group) => {
       const efforts = group.efforts
+        .filter((effort) => {
+          if (!outputMode || outputMode === "both") return true;
+          return effort.outputMode === outputMode;
+        })
         .map((effort) => extractor(effort, data))
         .filter((effort): effort is MetricEffort => effort !== null)
         .sort(compareReasoningEfforts);
@@ -280,4 +310,55 @@ export function buildGroupedMetricRows(
       };
     })
     .filter((row): row is GroupedMetricRow => row !== null);
+}
+
+export type OutputMode = "text" | "json_schema" | "both";
+
+const OUTPUT_MODE_STORAGE_KEY = "gitbench-output-mode";
+
+export function getAvailableOutputModes(data: GitBenchData): Set<string> {
+  return new Set(data.models.map((m) => m.output_mode ?? "text"));
+}
+
+export function filterEffortsByOutputMode(
+  efforts: ModelGroupEffort[],
+  mode: OutputMode,
+): ModelGroupEffort[] {
+  if (mode === "both") return efforts;
+  return efforts.filter((e) => e.outputMode === mode);
+}
+
+export function readStoredOutputMode(): OutputMode {
+  try {
+    const stored = window.localStorage.getItem(OUTPUT_MODE_STORAGE_KEY);
+    if (stored === "text" || stored === "json_schema" || stored === "both") {
+      return stored;
+    }
+  } catch {
+    // ignore
+  }
+  return "text";
+}
+
+export function writeStoredOutputMode(mode: OutputMode): void {
+  window.localStorage.setItem(OUTPUT_MODE_STORAGE_KEY, mode);
+}
+
+/**
+ * Expand group selection to model names, optionally filtering by output mode.
+ * When mode is "both", all variants are included.
+ */
+export function expandGroupSelectionWithMode(
+  selection: string[],
+  data: GitBenchData,
+  outputMode: OutputMode = "text",
+): string[] {
+  const groups = deriveModelGroups(data);
+  const selectedGroups = new Set(sanitizeGroupSelection(selection, groups));
+  return groups
+    .filter((group) => selectedGroups.has(group.id))
+    .flatMap((group) => {
+      const filtered = filterEffortsByOutputMode(group.efforts, outputMode);
+      return filtered.map((effort) => effort.modelName);
+    });
 }

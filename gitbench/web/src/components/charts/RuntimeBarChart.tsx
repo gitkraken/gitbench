@@ -3,10 +3,12 @@ import type { GitBenchData } from "@/lib/types";
 import { loadRuntimeChart } from "@/lib/report-client";
 import ProviderIcon from "@/components/ProviderIcon";
 import ModelSelector from "@/components/charts/ModelSelector";
+import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 import {
   buildGroupedMetricRows,
   runtimeMetric,
+  writeStoredOutputMode,
 } from "@/components/charts/model-groups";
 import {
   VerticalGroupedMetricChart,
@@ -32,7 +34,13 @@ function formatAxis(seconds: number): string {
 
 export default function RuntimeBarChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
-  const { selectedGroups, setSelectedGroups } = useSyncedModelSelection(data);
+  const {
+    selectedGroups,
+    setSelectedGroups,
+    outputMode,
+    setOutputMode,
+    availableOutputModes,
+  } = useSyncedModelSelection(data);
 
   useEffect(() => {
     loadRuntimeChart().then(setData);
@@ -45,8 +53,9 @@ export default function RuntimeBarChart() {
       selectedGroups,
       runtimeMetric,
       "median",
+      outputMode,
     ).sort((a, b) => a.representativeValue - b.representativeValue);
-  }, [data, selectedGroups]);
+  }, [data, selectedGroups, outputMode]);
 
   const yDomain = useMemo(
     () => zeroAnchoredDomain(chartData, [0, 1]),
@@ -57,11 +66,21 @@ export default function RuntimeBarChart() {
 
   return (
     <div>
-      <div className="max-w-xs ml-auto w-full mb-3">
-        <ModelSelector
-          data={data}
-          value={selectedGroups}
-          onChange={setSelectedGroups}
+      <div className="max-w-xs ml-auto w-full mb-3 flex items-center gap-3">
+        <div className="flex-1">
+          <ModelSelector
+            data={data}
+            value={selectedGroups}
+            onChange={setSelectedGroups}
+          />
+        </div>
+        <OutputModeSelector
+          value={outputMode}
+          onChange={(mode) => {
+            setOutputMode(mode);
+            writeStoredOutputMode(mode);
+          }}
+          availableModes={availableOutputModes}
         />
       </div>
       {chartData.length === 0 ? (

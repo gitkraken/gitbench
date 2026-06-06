@@ -2,13 +2,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { GitBenchData } from "@/lib/types";
 import {
   deriveModelGroups,
-  expandGroupSelection,
+  expandGroupSelectionWithMode,
   sanitizeGroupSelection,
+  getAvailableOutputModes,
+  readStoredOutputMode,
+  writeStoredOutputMode,
   type ModelGroup,
+  type OutputMode,
 } from "@/components/charts/model-groups";
 
 const STORAGE_KEY = "gitbench-model-selection";
 const EVENT_NAME = "model-selection-changed";
+const OUTPUT_MODE_EVENT_NAME = "output-mode-changed";
 
 function arraysEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
@@ -37,8 +42,15 @@ function writeSelection(selection: string[]): void {
 
 export function useSyncedModelSelection(data: GitBenchData | null) {
   const [selectedGroups, setSelectedGroupsState] = useState<string[]>([]);
+  const [outputMode, setOutputModeState] = useState<OutputMode>(readStoredOutputMode());
   const selectedRef = useRef<string[]>([]);
+  const outputModeRef = useRef<OutputMode>(outputMode);
   const groupsRef = useRef<ModelGroup[]>([]);
+
+  // Derive selected models based on groups + output mode
+  const selectedModels = data
+    ? expandGroupSelectionWithMode(selectedGroups, data, outputMode)
+    : [];
 
   useEffect(() => {
     const groups = data ? deriveModelGroups(data) : [];
@@ -69,6 +81,16 @@ export function useSyncedModelSelection(data: GitBenchData | null) {
     window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: next }));
   }, []);
 
+  const setOutputMode = useCallback((mode: OutputMode) => {
+    if (outputModeRef.current === mode) return;
+    outputModeRef.current = mode;
+    setOutputModeState(mode);
+    writeStoredOutputMode(mode);
+    window.dispatchEvent(
+      new CustomEvent(OUTPUT_MODE_EVENT_NAME, { detail: mode }),
+    );
+  }, []);
+
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail;
@@ -89,9 +111,27 @@ export function useSyncedModelSelection(data: GitBenchData | null) {
     return () => window.removeEventListener(EVENT_NAME, handler);
   }, []);
 
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const mode = (event as CustomEvent).detail;
+      if (mode !== "text" && mode !== "json_schema" && mode !== "both") return;
+      if (outputModeRef.current === mode) return;
+
+      outputModeRef.current = mode;
+      setOutputModeState(mode);
+      writeStoredOutputMode(mode);
+    };
+
+    window.addEventListener(OUTPUT_MODE_EVENT_NAME, handler);
+    return () => window.removeEventListener(OUTPUT_MODE_EVENT_NAME, handler);
+  }, []);
+
   return {
     selectedGroups,
     setSelectedGroups,
-    selectedModels: data ? expandGroupSelection(selectedGroups, data) : [],
+    selectedModels,
+    outputMode,
+    setOutputMode,
+    availableOutputModes: data ? getAvailableOutputModes(data) : new Set<string>(),
   };
 }

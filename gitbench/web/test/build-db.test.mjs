@@ -37,28 +37,63 @@ test("build-db creates a queryable SQLite database from results JSON", () => {
     try {
       assert.equal(
         db.prepare("SELECT COUNT(*) AS count FROM models").get().count,
-        1,
+        2,
       );
       assert.equal(
         db.prepare("SELECT COUNT(*) AS count FROM fixture_results").get().count,
-        2,
+        4,
       );
       assert.equal(db.prepare("PRAGMA integrity_check").get().integrity_check, "ok");
       assert.deepEqual(db.prepare("PRAGMA foreign_key_check").all(), []);
       assert.deepEqual(
         db
           .prepare(
-            `SELECT fixture_id, duration_ms, api_duration_ms
+            `SELECT fixture_id, output_mode, duration_ms, api_duration_ms
              FROM fixture_results
-             ORDER BY fixture_id`,
+             ORDER BY output_mode, fixture_id`,
           )
           .all()
           .map((row) => ({ ...row })),
         [
-          { fixture_id: "f001", duration_ms: 25, api_duration_ms: 12.5 },
-          { fixture_id: "f002", duration_ms: 40, api_duration_ms: null },
+          { fixture_id: "f001", output_mode: "json_schema", duration_ms: 30, api_duration_ms: 15.0 },
+          { fixture_id: "f002", output_mode: "json_schema", duration_ms: 50, api_duration_ms: 25.0 },
+          { fixture_id: "f001", output_mode: "text", duration_ms: 25, api_duration_ms: 12.5 },
+          { fixture_id: "f002", output_mode: "text", duration_ms: 40, api_duration_ms: null },
         ],
       );
+
+      // Verify output_mode is stored in all relevant tables
+      const modelOutputModes = db
+        .prepare("SELECT name, output_mode FROM models ORDER BY output_mode")
+        .all()
+        .map((row) => ({ ...row }));
+      assert.deepEqual(modelOutputModes, [
+        { name: "openai/gpt-test:high", output_mode: "json_schema" },
+        { name: "openai/gpt-test:high", output_mode: "text" },
+      ]);
+
+      // Verify structured-output payload fields are stored
+      const jsonPayload = db
+        .prepare(
+          `SELECT parsed_payload, raw_structured_output, structured_error
+           FROM fixture_results
+           WHERE output_mode = 'json_schema' AND fixture_id = 'f001'`,
+        )
+        .get();
+      assert.equal(jsonPayload.parsed_payload, '{"commit":"fix fixture"}');
+      assert.equal(jsonPayload.raw_structured_output, '{"commit":"fix fixture"}');
+      assert.equal(jsonPayload.structured_error, null);
+
+      // Text mode has null structured fields
+      const textPayload = db
+        .prepare(
+          `SELECT parsed_payload, raw_structured_output, structured_error
+           FROM fixture_results
+           WHERE output_mode = 'text' AND fixture_id = 'f001'`,
+        )
+        .get();
+      assert.equal(textPayload.parsed_payload, null);
+      assert.equal(textPayload.raw_structured_output, null);
 
       const schema = readFileSync(path.resolve("data/schema.sql"), "utf8");
       assert.match(schema, /idx_benchmark_summaries_leaderboard/);
@@ -78,11 +113,27 @@ function makeResults() {
         provider: "openai",
         baseModel: "gpt-test",
         reasoningLevel: "high",
+        output_mode: "text",
+      },
+      {
+        name: "openai/gpt-test:high__json_schema",
+        provider: "openai",
+        baseModel: "gpt-test",
+        reasoningLevel: "high",
+        output_mode: "json_schema",
       },
     ],
     benchmarks: ["commit_messages"],
     model_summaries: {
       "openai/gpt-test:high": {
+        total_runs: 1,
+        total_fixtures: 2,
+        total_passed: 2,
+        pass_at_k: 1,
+        total_cost_usd: 0.01,
+        avg_cost_usd: 0.01,
+      },
+      "openai/gpt-test:high__json_schema": {
         total_runs: 1,
         total_fixtures: 2,
         total_passed: 2,
@@ -99,6 +150,13 @@ function makeResults() {
         max_ms: 12.5,
         fixture_count: 1,
       },
+      "openai/gpt-test:high__json_schema": {
+        total_ms: 15.0,
+        avg_ms: 15.0,
+        min_ms: 15.0,
+        max_ms: 15.0,
+        fixture_count: 1,
+      },
     },
     matrix: {
       "openai/gpt-test:high": {
@@ -107,6 +165,14 @@ function makeResults() {
           total: 2,
           passed: 2,
           avg_similarity: 0.95,
+        },
+      },
+      "openai/gpt-test:high__json_schema": {
+        commit_messages: {
+          pass_at_k: 1,
+          total: 2,
+          passed: 2,
+          avg_similarity: 0.90,
         },
       },
     },
@@ -129,6 +195,10 @@ function makeResults() {
             purpose: "purpose",
             difficulty: "easy",
             tags: ["basic"],
+            output_mode: "text",
+            parsed_payload: null,
+            raw_structured_output: null,
+            structured_error: null,
           },
           {
             fixture_id: "f002",
@@ -145,6 +215,56 @@ function makeResults() {
             purpose: "purpose",
             difficulty: "easy",
             tags: ["basic"],
+            output_mode: "text",
+            parsed_payload: null,
+            raw_structured_output: null,
+            structured_error: null,
+          },
+        ],
+      },
+      "openai/gpt-test:high__json_schema": {
+        commit_messages: [
+          {
+            fixture_id: "f001",
+            passed: true,
+            similarity: 0.90,
+            error: null,
+            model_output: "canonical text",
+            reasoning_level: "high",
+            input_tokens: 10,
+            output_tokens: 5,
+            total_tokens: 15,
+            cost_usd: 0.01,
+            duration_ms: 30,
+            api_duration_ms: 15.0,
+            purpose: "purpose",
+            difficulty: "easy",
+            tags: ["basic"],
+            output_mode: "json_schema",
+            parsed_payload: { commit: "fix fixture" },
+            raw_structured_output: '{"commit":"fix fixture"}',
+            structured_error: null,
+          },
+          {
+            fixture_id: "f002",
+            passed: true,
+            similarity: 0.90,
+            error: null,
+            model_output: "canonical text",
+            reasoning_level: "high",
+            input_tokens: 10,
+            output_tokens: 5,
+            total_tokens: 15,
+            cost_usd: 0.01,
+            duration_ms: 50,
+            api_duration_ms: 25.0,
+            purpose: "purpose",
+            difficulty: "easy",
+            tags: ["basic"],
+            output_mode: "json_schema",
+            parsed_payload: { commit: "fix thing" },
+            raw_structured_output: '{"commit":"fix thing"}',
+            structured_error: null,
           },
         ],
       },
@@ -177,6 +297,16 @@ function makeResults() {
       {
         timestamp: "2026-01-01T00:00:00Z",
         model: "openai/gpt-test:high",
+        output_mode: "text",
+        profile: "default",
+        git_sha: "abc123",
+        benchmark_suite_version: "0.1.0",
+        reasoning_level: "high",
+      },
+      {
+        timestamp: "2026-01-01T01:00:00Z",
+        model: "openai/gpt-test:high",
+        output_mode: "json_schema",
         profile: "default",
         git_sha: "abc123",
         benchmark_suite_version: "0.1.0",
@@ -191,6 +321,12 @@ function makeResults() {
           {
             level: "high",
             modelName: "openai/gpt-test:high",
+            pass_at_k: 1,
+            total_cost_usd: 0.01,
+          },
+          {
+            level: "high",
+            modelName: "openai/gpt-test:high__json_schema",
             pass_at_k: 1,
             total_cost_usd: 0.01,
           },

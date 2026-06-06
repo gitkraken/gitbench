@@ -15,16 +15,28 @@ const sortedRuns = [...data.runs_meta].sort((a, b) =>
   b.timestamp.localeCompare(a.timestamp),
 );
 
-// Compute deltas from previous run of same model
+// Compute deltas from previous run of same model AND output_mode
 const runsWithDelta = sortedRuns.map((run, idx) => {
-  const prev = sortedRuns.slice(idx + 1).find((r) => r.model === run.model);
-  const summary = data.model_summaries[run.model];
-  const prevSummary = prev ? data.model_summaries[prev.model] : null;
+  const prev = sortedRuns.slice(idx + 1).find(
+    (r) => r.model === run.model && r.output_mode === run.output_mode,
+  );
+  const modelKey = run.output_mode !== "text"
+    ? `${run.model}__${run.output_mode}`
+    : run.model;
+  const summary = data.model_summaries[modelKey];
+  const prevModelKey = prev && prev.output_mode !== "text"
+    ? `${prev.model}__${prev.output_mode}`
+    : prev?.model ?? "";
+  const prevSummary = prev ? data.model_summaries[prevModelKey] : null;
   const delta =
     prevSummary && summary
       ? Math.round((summary.pass_at_k - prevSummary.pass_at_k) * 10000) / 100
       : null;
-  return { ...run, delta };
+  const modelInfo = data.models.find((m) => m.name === modelKey);
+  const compareSelection = modelInfo
+    ? `${modelInfo.provider}/${modelInfo.baseModel}`
+    : modelKey;
+  return { ...run, delta, modelKey, compareSelection };
 });
 ---
 
@@ -48,6 +60,7 @@ const runsWithDelta = sortedRuns.map((run, idx) => {
           <tr>
             <th>Timestamp</th>
             <th>Model</th>
+            <th>Mode</th>
             <th>Profile</th>
             <th>Reasoning</th>
             <th>Pass</th>
@@ -65,7 +78,8 @@ const runsWithDelta = sortedRuns.map((run, idx) => {
                 : "—";
               const sha = run.git_sha ? run.git_sha.slice(0, 8) : "—";
               const rl = run.reasoning_level || "—";
-              const summary = data.model_summaries[run.model];
+              const mode = run.output_mode || "text";
+              const summary = data.model_summaries[run.modelKey];
               const passRate = summary
                 ? Math.round(summary.pass_at_k * 1000) / 10
                 : 0;
@@ -89,6 +103,9 @@ const runsWithDelta = sortedRuns.map((run, idx) => {
                     >
                       {run.model}
                     </a>
+                  </td>
+                  <td class="font-mono text-[0.68rem] text-(--color-text-dim)">
+                    {mode === "text" ? "Text" : "JSON"}
                   </td>
                   <td class="font-mono text-[0.68rem] text-(--color-text-dim)">
                     {run.profile || "—"}
@@ -120,7 +137,7 @@ const runsWithDelta = sortedRuns.map((run, idx) => {
                   </td>
                   <td>
                     <a
-                      href={`/compare?with=${encodeURIComponent(run.model)}`}
+                      href={`/compare?with=${encodeURIComponent(run.compareSelection)}`}
                       class="font-mono text-[0.6rem] text-accent no-underline"
                     >
                       Compare

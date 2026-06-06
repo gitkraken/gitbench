@@ -6,26 +6,45 @@ import { Copy } from "lucide-react";
 
 interface Props {
   modelName: string;
+  outputMode?: string;
   passed: boolean;
   similarity: number;
   output: string;
   error: string | null;
   inputTokens?: number | null;
   outputTokens?: number | null;
+  parsedPayload?: string | null;
+  rawStructuredOutput?: string | null;
+  structuredError?: string | null;
 }
 
 const {
   modelName,
+  outputMode = "text",
   passed,
   similarity,
   output,
   error,
   inputTokens,
   outputTokens,
+  parsedPayload,
+  rawStructuredOutput,
+  structuredError,
 } = Astro.props;
 const passColor = passed
   ? "bg-pass-bg text-pass border-pass-border"
   : "bg-fail-bg text-fail border-(--color-fail-border)";
+
+const isJsonMode = outputMode === "json_schema";
+const displayPayload = parsedPayload
+  ? (() => {
+      try {
+        return JSON.stringify(JSON.parse(parsedPayload), null, 2);
+      } catch {
+        return parsedPayload;
+      }
+    })()
+  : null;
 ---
 
 <div class="card p-5">
@@ -70,6 +89,49 @@ const passColor = passed
   >
     {output || "(empty output)"}
   </div>
+  {
+    isJsonMode && (
+      <div class="mt-3">
+        <div class="flex items-center gap-2 mb-2">
+          <Badge
+            variant="outline"
+            class="font-mono text-[0.55rem] border-(--color-accent) text-(--color-accent)"
+          >
+            JSON Schema
+          </Badge>
+          <span class="font-mono text-[0.6rem] text-(--color-text-dim)">
+            Structured Output
+          </span>
+        </div>
+        {
+          displayPayload && (
+            <div class="bg-(--color-surface) border border-border rounded-lg p-4 font-mono text-xs text-(--color-text-mid) whitespace-pre-wrap wrap-break-word leading-relaxed max-h-[300px] overflow-y-auto">
+              {displayPayload}
+            </div>
+          )
+        }
+        {
+          !displayPayload && rawStructuredOutput && (
+            <div class="bg-(--color-surface) border border-border rounded-lg p-4 font-mono text-xs text-(--color-text-dim) whitespace-pre-wrap wrap-break-word leading-relaxed max-h-[300px] overflow-y-auto opacity-60">
+              (raw) {rawStructuredOutput}
+            </div>
+          )
+        }
+      </div>
+    )
+  }
+  {
+    structuredError && (
+      <div class="mt-2 p-3 bg-(--color-fail-bg) border border-(--color-fail-border) rounded-lg">
+        <div class="font-mono text-[0.6rem] text-fail font-semibold mb-1">
+          Structured Output Error
+        </div>
+        <div class="font-mono text-[0.65rem] text-(--color-text-dim)">
+          {structuredError}
+        </div>
+      </div>
+    )
+  }
   {
     error && (
       <div class="mt-2 font-mono text-[0.65rem] text-fail">

@@ -32,12 +32,16 @@ const setupCommands = fi.setup ?? [];
 // Collect all model outputs for this fixture
 const modelOutputs: {
   model: string;
+  outputMode: string;
   passed: boolean;
   similarity: number;
   output: string;
   error: string | null;
   inputTokens: number | null;
   outputTokens: number | null;
+  parsedPayload: string | null;
+  rawStructuredOutput: string | null;
+  structuredError: string | null;
 }[] = [];
 for (const m of data.models) {
   const results = data.fixtures[m.name]?.[fi.benchmark] || [];
@@ -45,12 +49,22 @@ for (const m of data.models) {
   if (fr) {
     modelOutputs.push({
       model: m.name,
+      outputMode: (fr as any).output_mode || "text",
       passed: fr.passed,
       similarity: Math.round(fr.similarity * 1000) / 10,
       output: fr.model_output,
       error: fr.error,
       inputTokens: fr.input_tokens,
       outputTokens: fr.output_tokens,
+      parsedPayload: typeof (fr as any).parsed_payload === "string"
+        ? (fr as any).parsed_payload
+        : null,
+      rawStructuredOutput: typeof (fr as any).raw_structured_output === "string"
+        ? (fr as any).raw_structured_output
+        : null,
+      structuredError: typeof (fr as any).structured_error === "string"
+        ? (fr as any).structured_error
+        : null,
     });
   }
 }
@@ -148,12 +162,16 @@ modelOutputs.sort((a, b) => b.similarity - a.similarity);
         modelOutputs.map((mo) => (
           <ModelOutputCard
             modelName={mo.model}
+            outputMode={mo.outputMode}
             passed={mo.passed}
             similarity={mo.similarity}
             output={mo.output}
             error={mo.error}
             inputTokens={mo.inputTokens}
             outputTokens={mo.outputTokens}
+            parsedPayload={mo.parsedPayload}
+            rawStructuredOutput={mo.rawStructuredOutput}
+            structuredError={mo.structuredError}
           />
         ))
       }

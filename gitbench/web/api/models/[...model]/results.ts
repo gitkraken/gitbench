@@ -7,6 +7,7 @@ export default function handler(req: any, res: any) {
     "benchmark",
     "difficulty",
     "tag",
+    "output_mode",
   ]));
   if (unsupported) {
     json(res, 400, { error: `Unsupported query parameter: ${unsupported}` });
