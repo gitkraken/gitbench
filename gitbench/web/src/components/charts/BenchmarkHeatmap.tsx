@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { GitBenchData } from "@/lib/types";
 import { loadHeatmapChart, type HeatmapChartData } from "@/lib/report-client";
 import { modelPath } from "@/lib/routes";
-import ModelSelector from "@/components/charts/ModelSelector";
-import OutputModeSelector from "@/components/charts/OutputModeSelector";
+import ModelOutputControls from "@/components/charts/ModelOutputControls";
 import { Badge } from "@/components/ui/badge";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 
@@ -51,20 +50,14 @@ export default function BenchmarkHeatmap() {
 
   return (
     <div>
-      <div className="max-w-xs ml-auto w-full mb-3">
-        <ModelSelector
-          data={selectionData}
-          value={selectedGroups}
-          onChange={setSelectedGroups}
-        />
-        <div className="mt-2 flex justify-end">
-          <OutputModeSelector
-            value={outputMode}
-            onChange={setOutputMode}
-            availableModes={availableOutputModes}
-          />
-        </div>
-      </div>
+      <ModelOutputControls
+        data={selectionData}
+        selectedGroups={selectedGroups}
+        onSelectedGroupsChange={setSelectedGroups}
+        outputMode={outputMode}
+        onOutputModeChange={setOutputMode}
+        availableOutputModes={availableOutputModes}
+      />
       <div className="card overflow-x-auto p-5">
         <table className="data-table">
           <thead>

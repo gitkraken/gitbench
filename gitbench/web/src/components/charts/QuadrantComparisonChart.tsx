@@ -404,19 +404,19 @@ export default function QuadrantComparisonChart() {
           }}
           exclude={xMetricKey}
         />
-        <div className="min-w-0">
-          <ModelSelector
-            data={data}
-            value={selectedGroups}
-            onChange={setSelectedGroups}
-          />
-          <div className="mt-2 flex justify-end">
-            <OutputModeSelector
-              value={outputMode}
-              onChange={setOutputMode}
-              availableModes={availableOutputModes}
+        <div className="min-w-0 flex items-center gap-3">
+          <div className="flex-1">
+            <ModelSelector
+              data={data}
+              value={selectedGroups}
+              onChange={setSelectedGroups}
             />
           </div>
+          <OutputModeSelector
+            value={outputMode}
+            onChange={setOutputMode}
+            availableModes={availableOutputModes}
+          />
         </div>
       </div>
 

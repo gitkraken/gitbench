@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GitBenchData } from "@/lib/types";
 import { loadRuntimeChart } from "@/lib/report-client";
 import ProviderIcon from "@/components/ProviderIcon";
-import ModelSelector from "@/components/charts/ModelSelector";
-import OutputModeSelector from "@/components/charts/OutputModeSelector";
+import ModelOutputControls from "@/components/charts/ModelOutputControls";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 import {
   buildGroupedMetricRows,
@@ -67,23 +66,17 @@ export default function RuntimeBarChart() {
 
   return (
     <div>
-      <div className="max-w-xs ml-auto w-full mb-3 flex items-center gap-3">
-        <div className="flex-1">
-          <ModelSelector
-            data={data}
-            value={selectedGroups}
-            onChange={setSelectedGroups}
-          />
-        </div>
-        <OutputModeSelector
-          value={outputMode}
-          onChange={(mode) => {
-            setOutputMode(mode);
-            writeStoredOutputMode(mode);
-          }}
-          availableModes={availableOutputModes}
-        />
-      </div>
+      <ModelOutputControls
+        data={data}
+        selectedGroups={selectedGroups}
+        onSelectedGroupsChange={setSelectedGroups}
+        outputMode={outputMode}
+        onOutputModeChange={(mode) => {
+          setOutputMode(mode);
+          writeStoredOutputMode(mode);
+        }}
+        availableOutputModes={availableOutputModes}
+      />
       {chartData.length === 0 ? (
         <div className="card p-8 text-center">
           <div className="font-display text-base text-(--text-dim) mb-1">

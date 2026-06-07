@@ -11,8 +11,7 @@ import {
 import type { GitBenchData, RunMeta } from "@/lib/types";
 import { loadData } from "@/lib/load-data";
 import { modelsWithRepeatRuns } from "@/lib/history";
-import ModelSelector from "@/components/charts/ModelSelector";
-import OutputModeSelector from "@/components/charts/OutputModeSelector";
+import ModelOutputControls from "@/components/charts/ModelOutputControls";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 
 const COLORS = [
@@ -76,20 +75,14 @@ export default function TimeSeriesChart() {
 
   return (
     <div>
-      <div className="max-w-xs ml-auto w-full mb-3">
-        <ModelSelector
-          data={data}
-          value={selectedGroups}
-          onChange={setSelectedGroups}
-        />
-        <div className="mt-2 flex justify-end">
-          <OutputModeSelector
-            value={outputMode}
-            onChange={setOutputMode}
-            availableModes={availableOutputModes}
-          />
-        </div>
-      </div>
+      <ModelOutputControls
+        data={data}
+        selectedGroups={selectedGroups}
+        onSelectedGroupsChange={setSelectedGroups}
+        outputMode={outputMode}
+        onOutputModeChange={setOutputMode}
+        availableOutputModes={availableOutputModes}
+      />
       <div
         className="card"
       >
