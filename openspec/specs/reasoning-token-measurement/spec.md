@@ -59,3 +59,15 @@ The `BenchmarkRunner._run_fixture()` method SHALL extract `reasoning_tokens` fro
 - **WHEN** `_run_fixture()` receives a response with `usage=None`
 - **THEN** `score.reasoning_tokens` is `None`
 
+### Requirement: Token summaries include reasoning tokens
+
+The model token summaries query in `node-sqlite-report-store.ts` SHALL include `COALESCE(SUM(reasoning_tokens), 0) AS reasoning_tokens` alongside the existing `input_tokens`, `output_tokens`, and `total_tokens` aggregations. The `ModelTokenSummary` type SHALL include a `reasoning_tokens: number` field.
+
+#### Scenario: Reasoning tokens aggregated per model
+- **WHEN** a model has 3 fixture results with reasoning_tokens [50, null, 100]
+- **THEN** the model's token summary has `reasoning_tokens: 150`
+
+#### Scenario: Model with no reasoning data
+- **WHEN** a model has no fixture results with non-null reasoning_tokens
+- **THEN** the model's token summary has `reasoning_tokens: 0`
+

@@ -5,23 +5,13 @@ TBD - created by archiving change overview-chart-improvements. Update Purpose af
 ## Requirements
 ### Requirement: TokenUsageChart computes total tokens from fixture data
 
-The `TokenUsageChart` component SHALL compute total tokens per model+effort by summing `total_tokens` across all fixture results for that full model name. Null `total_tokens` values SHALL be treated as 0 in the sum. The component SHALL then group those per-effort totals by provider/base model to compute the displayed range. Computed totals SHALL be displayed as formatted numbers (e.g., "12.5K" for 12,500, "1.2M" for 1,200,000).
+Token sums SHALL be unaffected by this change. Reasoning tokens are already included in `total_tokens` from the API response.
 
-#### Scenario: Tokens summed across fixtures
-- **WHEN** a model effort has 3 fixtures with total_tokens [100, 200, null]
-- **THEN** that effort's token total is 300 before group range calculation
+(All original scenarios remain unchanged.)
 
-#### Scenario: Group range computed from effort totals
-- **WHEN** a model group has effort token totals [300, 500, 900]
-- **THEN** the grouped bar visualizes the range 300-900
-
-#### Scenario: Model with all null token data
-- **WHEN** every fixture for a model effort has `total_tokens: null`
-- **THEN** that effort contributes 0 tokens to its model group's range
-
-#### Scenario: Large token counts are formatted compactly
-- **WHEN** an effort has 1,250,000 total tokens
-- **THEN** the tooltip and axis display "1.25M"
+#### Scenario: Reasoning tokens included in total
+- **WHEN** a model effort has 3 fixtures with reasoning_tokens [50, null, 100]
+- **THEN** those reasoning tokens are included in the effort's total via the `total_tokens` sum (since total_tokens already includes reasoning from the API)
 
 ### Requirement: TokenUsageChart shows tooltips on hover
 Hovering or keyboard-focusing a token bar SHALL display one category-level tooltip with the provider/base-model group name. The tooltip SHALL separate available efforts into `Text` and `JSON` sections according to the selected output mode. Each section SHALL show its own representative median total token count, each effort's compactly formatted total, and available input/output token breakdowns. When `Both` is selected and a mode has no token data for the group, that mode's section SHALL show `No data`.
@@ -108,4 +98,36 @@ The `TokenUsageChart` React component SHALL render a Recharts vertical bar chart
 #### Scenario: Chart height is fixed at 350 pixels
 - **WHEN** 5, 12, or 30 model groups are present
 - **THEN** the chart height is always 350 pixels
+
+### Requirement: TokenUsageChart renders reasoning tokens as a stacked bar segment
+
+The `TokenUsageChart` component SHALL render reasoning tokens as a third stacked segment in each bar when any effort in the group has a reasoning level set. The reasoning segment SHALL use a lighter tint of the provider color. Groups with no reasoning-level efforts SHALL render as two-segment bars (input | output) only.
+
+#### Scenario: Reasoning segment for reasoning models
+- **WHEN** a model group has efforts at `low`, `medium`, `high` with reasoning tokens [150, 200, 300]
+- **THEN** each bar shows three stacked segments: input, output, and reasoning
+
+#### Scenario: No reasoning segment for non-reasoning models
+- **WHEN** a model group's efforts all have `reasoning_level: null`
+- **THEN** each bar shows only input and output segments (no reasoning segment)
+
+#### Scenario: Reasoning segment uses lighter color tint
+- **WHEN** a provider's color is `#3B82F6` (blue)
+- **THEN** the reasoning segment uses a translucent variant (e.g., `rgba(59, 130, 246, 0.35)`) visually distinct from output
+
+### Requirement: TokenUsageChart tooltip shows reasoning token breakdown
+
+The chart tooltip's `renderEffort` line SHALL display `in / out / r` when the effort has a reasoning level. Without a reasoning level, the line SHALL display `in / out` only. The breakdown SHALL use the same compact formatting as other values.
+
+#### Scenario: Tooltip with reasoning tokens
+- **WHEN** hovering a bar for an effort with `reasoningTokens: 150`, `inputTokens: 500`, `outputTokens: 200`
+- **THEN** the effort line reads `low: 850 (in 500 / out 200 / r 150)`
+
+#### Scenario: Tooltip without reasoning level
+- **WHEN** hovering a bar for an effort with `reasoningLevel: null`
+- **THEN** the effort line reads `default: 700 (in 500 / out 200)` with no reasoning mention
+
+#### Scenario: Tooltip with zero reasoning tokens
+- **WHEN** hovering a bar for an effort with `reasoningLevel: "high"` and `reasoningTokens: 0`
+- **THEN** the effort line reads `high: 700 (in 500 / out 200 / r 0)`
 

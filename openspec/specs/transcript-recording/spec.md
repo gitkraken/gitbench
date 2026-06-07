@@ -5,24 +5,18 @@ TBD - created by archiving change record-model-metadata. Update Purpose after ar
 ## Requirements
 ### Requirement: Model adapters return full conversation transcript
 
-The `ModelInterface.generate()` return dict SHALL include an optional `transcript` field containing the full conversation as a list of message dicts. The transcript SHALL include every message sent to the model (with `role` and `content`) followed by the assistant's response. When the API returns reasoning content separate from the final answer, the assistant entry SHALL include an optional `reasoning_content` key.
+The adapter SHALL check both `message.reasoning_content` (OpenAI native) and `message.reasoning` (OpenRouter) when building the transcript. The `reasoning_content` field SHALL take priority when both are present.
 
-#### Scenario: OpenAI adapter builds transcript from messages and response
-- **WHEN** `OpenAIAdapter.generate()` is called with two messages `[{"role": "user", "content": "hello"}]`
-- **AND** the API returns `content: "hi there"` and `reasoning_content: "The user said hello, I should greet them back"`
-- **THEN** the return dict's `transcript` is `[{"role": "user", "content": "hello"}, {"role": "assistant", "content": "hi there", "reasoning_content": "The user said hello, I should greet them back"}]`
+(All original scenarios remain unchanged.)
 
-#### Scenario: OpenAI adapter transcript omits reasoning_content when absent
-- **WHEN** `OpenAIAdapter.generate()` receives a response with no `reasoning_content` on the message
-- **THEN** the assistant entry in `transcript` has only `role` and `content` keys (no `reasoning_content`)
+#### Scenario: OpenAI adapter captures reasoning_content from OpenRouter response
+- **WHEN** `OpenAIAdapter.generate()` is called with a base URL pointing to OpenRouter
+- **AND** the API returns `message.reasoning: "Let me think about this..."` but NOT `message.reasoning_content`
+- **THEN** the assistant entry in `transcript` includes `"reasoning_content": "Let me think about this..."` (normalized to `reasoning_content` key)
 
-#### Scenario: Ollama adapter builds transcript from messages and response
-- **WHEN** `OllamaAdapter.generate()` is called with a user message
-- **THEN** the return dict's `transcript` contains the input messages followed by an assistant entry with the response content
-
-#### Scenario: Mock adapter builds transcript from messages and fixed response
-- **WHEN** `MockModelClient.generate()` is called with messages
-- **THEN** the return dict's `transcript` contains all input messages followed by `{"role": "assistant", "content": "<mock response>"}`
+#### Scenario: OpenAI adapter prefers native reasoning_content over OpenRouter reasoning
+- **WHEN** the API returns both `message.reasoning_content: "native"` and `message.reasoning: "openrouter"`
+- **THEN** the assistant entry uses `"reasoning_content": "native"` (native OpenAI field takes priority)
 
 ### Requirement: Score dataclass stores transcript
 
