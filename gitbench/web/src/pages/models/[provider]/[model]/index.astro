@@ -24,6 +24,14 @@ const { provider, baseModel, group, data } = Astro.props as {
 
 // Capitalize provider name for display
 const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+
+// Split levels into text and json_schema groups
+const textLevels = group.levels.filter((l) => {
+  return !l.modelName.endsWith("__json_schema");
+});
+const jsonLevels = group.levels.filter((l) => {
+  return l.modelName.endsWith("__json_schema");
+});
 ---
 
 <Layout title={`${providerName} / ${baseModel}`}>
@@ -37,57 +45,139 @@ const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
     </div>
   </div>
 
-  <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+  <!-- Text Output -->
+  <section class="mb-8">
+    <div class="section-label">
+      <span>Text Output ({textLevels.length})</span>
+    </div>
     {
-      group.levels
-        .sort((a, b) => {
-          const aOrder = REASONING_LEVEL_ORDER[a.level || ""] ?? 99;
-          const bOrder = REASONING_LEVEL_ORDER[b.level || ""] ?? 99;
-          return aOrder - bOrder;
-        })
-        .map((l) => {
-        const passRate = Math.round(l.pass_at_k * 1000) / 10;
-        const passCls =
-          l.pass_at_k >= 0.8 ? "pass" : l.pass_at_k < 0.5 ? "fail" : "warn";
-        const passColor =
-          l.pass_at_k >= 0.8
-            ? "bg-pass-bg text-pass border-pass-border"
-            : l.pass_at_k < 0.5
-              ? "bg-fail-bg text-fail border-(--color-fail-border)"
-              : "bg-warn-bg text-(--color-warn) border-(--color-warn-border)";
-        const levelLabel = l.level || "default";
-        const href = modelLevelPath(provider, baseModel, l.level || "default");
-        const summary = data.model_summaries[l.modelName];
+      textLevels.length > 0 ? (
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+          {
+            textLevels
+              .sort((a, b) => {
+                const aOrder =
+                  REASONING_LEVEL_ORDER[a.level || ""] ?? 99;
+                const bOrder =
+                  REASONING_LEVEL_ORDER[b.level || ""] ?? 99;
+                return aOrder - bOrder;
+              })
+              .map((l) => {
+                const passRate = Math.round(l.pass_at_k * 1000) / 10;
+                const passColor =
+                  l.pass_at_k >= 0.8
+                    ? "bg-pass-bg text-pass border-pass-border"
+                    : l.pass_at_k < 0.5
+                      ? "bg-fail-bg text-fail border-(--color-fail-border)"
+                      : "bg-warn-bg text-(--color-warn) border-(--color-warn-border)";
+                const levelLabel = l.level || "default";
+                const href = modelLevelPath(provider, baseModel, l.level || "default");
+                const summary = data.model_summaries[l.modelName];
 
-        return (
-          <a href={href} class="no-underline">
-            <div class="card p-5 cursor-pointer transition-colors hover:border-(--color-border-accent)">
-              <div class="text-xs font-mono text-(--color-text-dim) mb-2">
-                {levelLabel}
-              </div>
-              <div class="flex gap-2 items-center flex-wrap mb-3">
-                <Badge
-                  variant="outline"
-                  className={`font-mono text-xs ${passColor}`}
-                >
-                  {passRate}%
-                </Badge>
-              </div>
-              {summary && (
-                <div class="font-mono text-[0.65rem] text-(--color-text-dim)">
-                  {summary.total_passed} / {summary.total_fixtures} fixtures ·{" "}
-                  {summary.total_runs} run(s)
-                  {summary.total_cost_usd != null && (
-                    <span class="block mt-1 opacity-70">
-                      Total cost: ${summary.total_cost_usd.toFixed(6)}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </a>
-        );
-      })
+                return (
+                  <a href={href} class="no-underline">
+                    <div class="card p-5 cursor-pointer transition-colors hover:border-(--color-border-accent)">
+                      <div class="text-xs font-mono text-(--color-text-dim) mb-2">
+                        {levelLabel}
+                      </div>
+                      <div class="flex gap-2 items-center flex-wrap mb-3">
+                        <Badge
+                          variant="outline"
+                          className={`font-mono text-xs ${passColor}`}
+                        >
+                          {passRate}%
+                        </Badge>
+                      </div>
+                      {summary && (
+                        <div class="font-mono text-[0.65rem] text-(--color-text-dim)">
+                          {summary.total_passed} / {summary.total_fixtures} fixtures ·{" "}
+                          {summary.total_runs} run(s)
+                          {summary.total_cost_usd != null && (
+                            <span class="block mt-1 opacity-70">
+                              Total cost: ${summary.total_cost_usd.toFixed(6)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </a>
+                );
+              })
+          }
+        </div>
+      ) : (
+        <p class="text-sm text-(--color-text-dim) font-mono">
+          No text output variants for this model.
+        </p>
+      )
     }
-  </div>
+  </section>
+
+  <!-- JSON Schema Output -->
+  {
+    jsonLevels.length > 0 && (
+      <section class="mb-8">
+        <div class="section-label">
+          <span>JSON Schema Output ({jsonLevels.length})</span>
+        </div>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+          {
+            jsonLevels
+              .sort((a, b) => {
+                const aOrder =
+                  REASONING_LEVEL_ORDER[
+                    (a.level || "").replace(/__json_schema$/, "")
+                  ] ?? 99;
+                const bOrder =
+                  REASONING_LEVEL_ORDER[
+                    (b.level || "").replace(/__json_schema$/, "")
+                  ] ?? 99;
+                return aOrder - bOrder;
+              })
+              .map((l) => {
+                const passRate = Math.round(l.pass_at_k * 1000) / 10;
+                const passColor =
+                  l.pass_at_k >= 0.8
+                    ? "bg-pass-bg text-pass border-pass-border"
+                    : l.pass_at_k < 0.5
+                      ? "bg-fail-bg text-fail border-(--color-fail-border)"
+                      : "bg-warn-bg text-(--color-warn) border-(--color-warn-border)";
+                const levelLabel = l.level || "default";
+                const href = modelLevelPath(provider, baseModel, l.level || "default");
+                const summary = data.model_summaries[l.modelName];
+
+                return (
+                  <a href={href} class="no-underline">
+                    <div class="card p-5 cursor-pointer transition-colors hover:border-(--color-border-accent)">
+                      <div class="text-xs font-mono text-(--color-text-dim) mb-2">
+                        {levelLabel}
+                      </div>
+                      <div class="flex gap-2 items-center flex-wrap mb-3">
+                        <Badge
+                          variant="outline"
+                          className={`font-mono text-xs ${passColor}`}
+                        >
+                          {passRate}%
+                        </Badge>
+                      </div>
+                      {summary && (
+                        <div class="font-mono text-[0.65rem] text-(--color-text-dim)">
+                          {summary.total_passed} / {summary.total_fixtures} fixtures ·{" "}
+                          {summary.total_runs} run(s)
+                          {summary.total_cost_usd != null && (
+                            <span class="block mt-1 opacity-70">
+                              Total cost: ${summary.total_cost_usd.toFixed(6)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </a>
+                );
+              })
+          }
+        </div>
+      </section>
+    )
+  }
 </Layout>

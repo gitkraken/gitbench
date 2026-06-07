@@ -45,11 +45,10 @@ const LEVEL_ORDER = REASONING_LEVEL_ORDER;
             <div>
               <h3 class="text-base font-semibold text-(--color-text) mb-3">{group.baseModel}</h3>
 
+              <div class="text-[0.65rem] font-mono text-(--color-text-dim) mb-2">Text Output</div>
               <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
-                {group.levels.sort((a, b) => (LEVEL_ORDER[a.level || 'none'] ?? 99) - (LEVEL_ORDER[b.level || 'none'] ?? 99)).map(l => {
+                {group.levels.filter(l => !l.modelName.endsWith('__json_schema')).sort((a, b) => (LEVEL_ORDER[a.level || 'none'] ?? 99) - (LEVEL_ORDER[b.level || 'none'] ?? 99)).map(l => {
                   const passRate = Math.round(l.pass_at_k * 1000) / 10;
-                  const passCls = l.pass_at_k >= 0.8 ? 'pass'
-                    : l.pass_at_k < 0.5 ? 'fail' : 'warn';
                   const passColor = l.pass_at_k >= 0.8
                     ? 'bg-pass-bg text-pass border-pass-border'
                     : l.pass_at_k < 0.5
@@ -71,6 +70,36 @@ const LEVEL_ORDER = REASONING_LEVEL_ORDER;
                   );
                 })}
               </div>
+
+              {group.levels.some(l => l.modelName.endsWith('__json_schema')) && (
+                <>
+                  <div class="text-[0.65rem] font-mono text-(--color-text-dim) mt-3 mb-2">JSON Schema</div>
+                  <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
+                    {group.levels.filter(l => l.modelName.endsWith('__json_schema')).sort((a, b) => (LEVEL_ORDER[(a.level || 'none').replace(/__json_schema$/, '')] ?? 99) - (LEVEL_ORDER[(b.level || 'none').replace(/__json_schema$/, '')] ?? 99)).map(l => {
+                      const passRate = Math.round(l.pass_at_k * 1000) / 10;
+                      const passColor = l.pass_at_k >= 0.8
+                        ? 'bg-pass-bg text-pass border-pass-border'
+                        : l.pass_at_k < 0.5
+                          ? 'bg-fail-bg text-fail border-(--color-fail-border)'
+                          : 'bg-warn-bg text-(--color-warn) border-(--color-warn-border)';
+                      const href = modelLevelPath(provider, group.baseModel, l.level || 'default');
+
+                      return (
+                        <a href={href} class="no-underline">
+                          <div class="bg-neutral-700 rounded-md border border-[#3E3E3E] p-2 transition-colors hover:border-(--color-border-accent) cursor-pointer">
+                            <div class="flex items-center justify-between gap-2">
+                              <span class="text-xs font-mono text-(--color-text-dim)">{l.level || 'default'}</span>
+                              <Badge variant="outline" className={`font-mono text-[0.6rem] px-1.5 min-w-[2.8rem] text-center ${passColor}`}>
+                                {passRate}%
+                              </Badge>
+                            </div>
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
