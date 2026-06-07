@@ -1,7 +1,15 @@
 import { useMemo, type ReactNode } from "react";
 import ProviderIcon from "@/components/ProviderIcon";
 import { getProviderColor } from "@/lib/provider-colors";
-import type { GroupedMetricRow } from "@/components/charts/model-groups";
+import {
+  outputModeLabel,
+  visibleOutputModes,
+  type ConcreteOutputMode,
+  type GroupedMetricModeSummary,
+  type GroupedMetricRow,
+  type MetricEffort,
+  type OutputMode,
+} from "@/components/charts/model-groups";
 import { modelGroupPath } from "@/lib/routes";
 import {
   Bar,
@@ -29,12 +37,81 @@ export function horizontalChartBarSize(rowCount: number): number {
   const rowHeight = HORIZONTAL_CHART_INNER_HEIGHT / rows;
   return Math.max(
     3,
-    Math.min(28, Math.floor(rowHeight - HORIZONTAL_CHART_ROW_GAP)),
+    Math.min(28, Math.floor(rowHeight - HORIZONTAL_CHART_ROW_GAP))
   );
 }
 
-export function verticalChartBarSize(rowCount: number): number {
-  return Math.max(12, Math.min(28, 400 / Math.max(1, rowCount)));
+export function verticalChartBarSize(
+  rowCount: number,
+  seriesCount = 1
+): number {
+  const categoryWidth = Math.max(12, Math.min(28, 400 / Math.max(1, rowCount)));
+  if (seriesCount === 1) return categoryWidth;
+  return Math.max(6, Math.floor((categoryWidth - 2) / seriesCount));
+}
+
+export function getOutputModeBarStyle(
+  baseColor: string,
+  outputMode: ConcreteOutputMode
+) {
+  return outputMode === "text"
+    ? {
+        fill: baseColor,
+        fillOpacity: 0.92,
+        stroke: baseColor,
+        strokeWidth: 0,
+      }
+    : {
+        fill: baseColor,
+        fillOpacity: 0.28,
+        stroke: baseColor,
+        strokeWidth: 1.5,
+      };
+}
+
+export function OutputModeLegend({ outputMode }: { outputMode: OutputMode }) {
+  if (outputMode !== "both") return null;
+  const legendColor = "var(--accent)";
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 14,
+        justifyContent: "center",
+        marginTop: 8,
+        fontSize: 10,
+        fontFamily: "var(--font-mono)",
+        color: "var(--text-dim)",
+      }}
+    >
+      {visibleOutputModes(outputMode).map((mode) => {
+        const style = getOutputModeBarStyle(legendColor, mode);
+        return (
+          <span
+            key={mode}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+          >
+            <span
+              style={{
+                width: 12,
+                height: 8,
+                borderRadius: 2,
+                backgroundColor: style.fill,
+                opacity: style.fillOpacity,
+                border:
+                  style.strokeWidth > 0
+                    ? `${style.strokeWidth}px solid ${style.stroke}`
+                    : "none",
+                boxSizing: "border-box",
+              }}
+            />
+            {outputModeLabel(mode)}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 export function providerLegend(rows: GroupedMetricRow[]) {
@@ -170,17 +247,15 @@ export function HorizontalGroupTick({ x, y, payload, rowMap }: TickProps) {
 }
 
 export function rowMap(rows: GroupedMetricRow[]) {
-  return rows.reduce(
-    (acc, row) => {
-      acc[row.id] = row;
-      return acc;
-    },
-    {} as Record<string, GroupedMetricRow>,
-  );
+  return rows.reduce((acc, row) => {
+    acc[row.id] = row;
+    return acc;
+  }, {} as Record<string, GroupedMetricRow>);
 }
 
 interface VerticalGroupedMetricChartProps {
   rows: GroupedMetricRow[];
+  outputMode: OutputMode;
   yDomain: [number, number];
   yTickFormatter: (value: number) => string;
   renderTooltip: (entry: GroupedMetricRow) => ReactNode;
@@ -188,11 +263,14 @@ interface VerticalGroupedMetricChartProps {
 
 export function VerticalGroupedMetricChart({
   rows,
+  outputMode,
   yDomain,
   yTickFormatter,
   renderTooltip,
 }: VerticalGroupedMetricChartProps) {
   const rowsById = useMemo(() => rowMap(rows), [rows]);
+  const visibleModes = visibleOutputModes(outputMode);
+  const seriesCount = visibleModes.length;
 
   return (
     <>
@@ -202,6 +280,8 @@ export function VerticalGroupedMetricChart({
             data={rows}
             layout="horizontal"
             margin={{ top: 12, right: 20, left: 0, bottom: 58 }}
+            barGap={2}
+            barCategoryGap="24%"
           >
             <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
             <XAxis
@@ -227,32 +307,57 @@ export function VerticalGroupedMetricChart({
               axisLine={false}
               tickLine={false}
             />
-            <Bar
-              dataKey="representativeValue"
-              radius={[4, 4, 0, 0]}
-              barSize={verticalChartBarSize(rows.length)}
-              cursor="pointer"
-              onClick={(entry: any) => {
-                if (entry?.provider && entry?.baseModel) {
-                  window.location.href = modelGroupPath(
-                    entry.provider,
-                    entry.baseModel,
-                  );
-                }
-              }}
-            >
-              {rows.map((entry) => (
-                <Cell key={entry.id} fill={getProviderColor(entry.provider)} />
-              ))}
-              <ErrorBar
-                dataKey="rangeWhisker"
-                width={9}
-                stroke="rgba(229,232,238,0.76)"
-                strokeWidth={1.7}
-                isAnimationActive={false}
-              />
-            </Bar>
+            {visibleModes.map((mode) => {
+              const dataKey =
+                mode === "text"
+                  ? "textRepresentativeValue"
+                  : "jsonRepresentativeValue";
+              const whiskerKey =
+                mode === "text" ? "textRangeWhisker" : "jsonRangeWhisker";
+              return (
+                <Bar
+                  key={mode}
+                  dataKey={dataKey}
+                  name={outputModeLabel(mode)}
+                  barSize={verticalChartBarSize(rows.length, seriesCount)}
+                  cursor="pointer"
+                  isAnimationActive={false}
+                  onClick={(entry: any) => {
+                    if (entry?.provider && entry?.baseModel) {
+                      window.location.href = modelGroupPath(
+                        entry.provider,
+                        entry.baseModel
+                      );
+                    }
+                  }}
+                >
+                  {rows.map((entry) => {
+                    const style = getOutputModeBarStyle(
+                      getProviderColor(entry.provider),
+                      mode
+                    );
+                    return (
+                      <Cell
+                        key={`${entry.id}-${mode}`}
+                        fill={style.fill}
+                        fillOpacity={style.fillOpacity}
+                        stroke={style.stroke}
+                        strokeWidth={style.strokeWidth}
+                      />
+                    );
+                  })}
+                  <ErrorBar
+                    dataKey={whiskerKey}
+                    width={seriesCount === 1 ? 9 : 7}
+                    stroke="rgba(229,232,238,0.76)"
+                    strokeWidth={1.7}
+                    isAnimationActive={false}
+                  />
+                </Bar>
+              );
+            })}
             <Tooltip
+              shared
               cursor={{ fill: "rgba(255,255,255,0.04)" }}
               content={({ active, label }: any) => {
                 if (!active || !label) return null;
@@ -265,6 +370,65 @@ export function VerticalGroupedMetricChart({
         </ResponsiveContainer>
       </div>
       <ProviderLegend rows={rows} />
+      <OutputModeLegend outputMode={outputMode} />
+    </>
+  );
+}
+
+export function GroupedMetricTooltipSections({
+  entry,
+  outputMode,
+  formatRepresentative,
+  renderEffort,
+}: {
+  entry: GroupedMetricRow;
+  outputMode: OutputMode;
+  formatRepresentative: (value: number) => ReactNode;
+  renderEffort: (
+    effort: MetricEffort,
+    summary: GroupedMetricModeSummary
+  ) => ReactNode;
+}) {
+  return (
+    <>
+      {visibleOutputModes(outputMode).map((mode) => {
+        const summary = entry.modes[mode];
+        return (
+          <div key={mode} style={{ marginTop: 7 }}>
+            <div
+              style={{
+                color: "var(--text)",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+              }}
+            >
+              {outputModeLabel(mode)}
+            </div>
+            {summary ? (
+              <>
+                <div
+                  style={{
+                    color: "var(--text-mid)",
+                    fontSize: 10,
+                    marginBottom: 2,
+                  }}
+                >
+                  Median: {formatRepresentative(summary.representativeValue)}
+                </div>
+                {summary.efforts.map((effort) => (
+                  <div key={effort.modelName}>
+                    {renderEffort(effort, summary)}
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div style={{ color: "var(--text-dim)" }}>No data</div>
+            )}
+          </div>
+        );
+      })}
     </>
   );
 }
@@ -272,7 +436,7 @@ export function VerticalGroupedMetricChart({
 export function paddedDomain(
   rows: GroupedMetricRow[],
   fallback: [number, number],
-  options: { floor?: number; ceiling?: number; paddingRatio?: number } = {},
+  options: { floor?: number; ceiling?: number; paddingRatio?: number } = {}
 ): [number, number] {
   if (rows.length === 0) return fallback;
   const min = Math.min(...rows.map((row) => row.minValue));
@@ -290,7 +454,7 @@ export function paddedDomain(
 export function zeroAnchoredDomain(
   rows: GroupedMetricRow[],
   fallback: [number, number],
-  options: { ceiling?: number; paddingRatio?: number } = {},
+  options: { ceiling?: number; paddingRatio?: number } = {}
 ): [number, number] {
   if (rows.length === 0) return fallback;
   if (options.ceiling != null) return [0, options.ceiling];
@@ -304,7 +468,7 @@ export function zeroAnchoredDomain(
 
 export function formatCompactDecimal(
   value: number,
-  maxFractionDigits = 2,
+  maxFractionDigits = 2
 ): string {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,

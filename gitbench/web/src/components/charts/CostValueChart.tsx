@@ -11,6 +11,7 @@ import {
   writeStoredOutputMode,
 } from "@/components/charts/model-groups";
 import {
+  GroupedMetricTooltipSections,
   VerticalGroupedMetricChart,
   formatCompactDecimal,
   tooltipStyle,
@@ -44,13 +45,13 @@ export default function CostValueChart() {
       selectedGroups,
       costMetric,
       "median",
-      outputMode,
-    ).sort((a, b) => a.representativeValue - b.representativeValue);
+      outputMode
+    ).sort((a, b) => a.sortValue - b.sortValue);
   }, [data, selectedGroups, outputMode]);
 
   const yDomain = useMemo(
     () => zeroAnchoredDomain(chartData, [0, 1]),
-    [chartData],
+    [chartData]
   );
 
   if (!data) return <div>Loading...</div>;
@@ -87,6 +88,7 @@ export default function CostValueChart() {
       ) : (
         <VerticalGroupedMetricChart
           rows={chartData}
+          outputMode={outputMode}
           yDomain={yDomain}
           yTickFormatter={formatCost}
           renderTooltip={(entry) => (
@@ -103,21 +105,20 @@ export default function CostValueChart() {
                 <ProviderIcon provider={entry.provider} size={14} />
                 {entry.provider}/{entry.baseModel}
               </div>
-              {entry.efforts.map((effort) => (
-                <div
-                  key={effort.modelName}
-                  style={{ color: "var(--text-dim)" }}
-                >
-                  {effort.reasoningLevel ?? "default"}:{" "}
-                  {formatCost(effort.value)}
-                  {effort.passRate != null
-                    ? `, pass ${(effort.passRate * 100).toFixed(1)}%`
-                    : ""}
-                  {effort.value === entry.representativeValue
-                    ? " (median)"
-                    : ""}
-                </div>
-              ))}
+              <GroupedMetricTooltipSections
+                entry={entry}
+                outputMode={outputMode}
+                formatRepresentative={formatCost}
+                renderEffort={(effort) => (
+                  <span style={{ color: "var(--text-dim)" }}>
+                    {effort.reasoningLevel ?? "default"}:{" "}
+                    {formatCost(effort.value)}
+                    {effort.passRate != null
+                      ? `, pass ${(effort.passRate * 100).toFixed(1)}%`
+                      : ""}
+                  </span>
+                )}
+              />
               <div
                 style={{
                   borderTop: "1px solid rgba(255,255,255,0.06)",

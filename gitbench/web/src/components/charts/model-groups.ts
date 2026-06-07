@@ -6,6 +6,10 @@ import type {
 import { compareReasoningLevels } from "../../lib/sort-orders.ts";
 
 export type ModelGroupId = string;
+export type OutputMode = "text" | "json_schema" | "both";
+export type ConcreteOutputMode = Exclude<OutputMode, "both">;
+
+const JSON_SCHEMA_SUFFIX = "__json_schema";
 
 export interface ModelGroupEffort {
   groupId: ModelGroupId;
@@ -33,16 +37,37 @@ export interface MetricEffort extends ModelGroupEffort {
   fixtureCount?: number;
 }
 
+export interface GroupedMetricModeSummary {
+  outputMode: ConcreteOutputMode;
+  efforts: MetricEffort[];
+  minValue: number;
+  maxValue: number;
+  representativeValue: number;
+  rangeWhisker: [number, number];
+}
+
 export interface GroupedMetricRow {
   id: ModelGroupId;
   name: ModelGroupId;
   provider: string;
   baseModel: string;
   efforts: MetricEffort[];
+  modes: Partial<Record<ConcreteOutputMode, GroupedMetricModeSummary>>;
+  textRepresentativeValue: number | null;
+  jsonRepresentativeValue: number | null;
+  textRangeWhisker: [number, number] | null;
+  jsonRangeWhisker: [number, number] | null;
   minValue: number;
   maxValue: number;
   representativeValue: number;
-  rangeWhisker: [number, number];
+  sortValue: number;
+}
+
+export interface ModelVariantPair {
+  id: string;
+  label: string;
+  textModelName?: string;
+  jsonModelName?: string;
 }
 
 export type MetricExtractor = (
@@ -63,21 +88,55 @@ function modelVariantKey(modelName: string, outputMode: string): string {
   return outputMode === "text" ? modelName : `${modelName}__${outputMode}`;
 }
 
-function outputModeFromVariantKey(modelName: string): string {
-  return modelName.endsWith("__json_schema") ? "json_schema" : "text";
+export function splitModelVariantKey(modelName: string): {
+  canonicalModelName: string;
+  outputMode: ConcreteOutputMode;
+} {
+  return modelName.endsWith(JSON_SCHEMA_SUFFIX)
+    ? {
+        canonicalModelName: modelName.slice(0, -JSON_SCHEMA_SUFFIX.length),
+        outputMode: "json_schema",
+      }
+    : { canonicalModelName: modelName, outputMode: "text" };
+}
+
+export function canonicalModelVariantKey(modelName: string): string {
+  return splitModelVariantKey(modelName).canonicalModelName;
+}
+
+export function pairModelVariants(modelNames: string[]): ModelVariantPair[] {
+  const pairs = new Map<string, ModelVariantPair>();
+  for (const modelName of modelNames) {
+    const { canonicalModelName, outputMode } = splitModelVariantKey(modelName);
+    const pair = pairs.get(canonicalModelName) ?? {
+      id: canonicalModelName,
+      label: canonicalModelName,
+    };
+    if (outputMode === "text") {
+      pair.textModelName = modelName;
+    } else {
+      pair.jsonModelName = modelName;
+    }
+    pairs.set(canonicalModelName, pair);
+  }
+  return Array.from(pairs.values());
+}
+
+function outputModeFromVariantKey(modelName: string): ConcreteOutputMode {
+  return splitModelVariantKey(modelName).outputMode;
 }
 
 function cleanModelName(modelName: string): string {
-  return modelName.endsWith("__json_schema")
-    ? modelName.slice(0, -"__json_schema".length)
-    : modelName;
+  return canonicalModelVariantKey(modelName);
 }
 
 function compareReasoningEfforts(a: MetricEffort, b: MetricEffort): number {
-  return compareReasoningLevels(
-    String(a.reasoningLevel ?? ""),
-    String(b.reasoningLevel ?? ""),
-  ) || a.modelName.localeCompare(b.modelName);
+  return (
+    compareReasoningLevels(
+      String(a.reasoningLevel ?? ""),
+      String(b.reasoningLevel ?? "")
+    ) || a.modelName.localeCompare(b.modelName)
+  );
 }
 
 export function modelGroupId(
@@ -117,7 +176,7 @@ function effortFromGroupLevel(
   const modelInfo = data.models.find(
     (model) =>
       model.name === baseModelName &&
-      (model.output_mode ?? "text") === outputMode,
+      (model.output_mode ?? "text") === outputMode
   );
   const summary = data.model_summaries[level.modelName];
   const provider = modelInfo?.provider ?? group.provider;
@@ -216,7 +275,10 @@ export function passRateMetric(effort: ModelGroupEffort): MetricEffort | null {
 }
 
 export function benchPassRateMetric(benchName: string): MetricExtractor {
-  return (effort: ModelGroupEffort, data: GitBenchData): MetricEffort | null => {
+  return (
+    effort: ModelGroupEffort,
+    data: GitBenchData
+  ): MetricEffort | null => {
     const cell = data.matrix[effort.modelName]?.[benchName];
     if (!cell) return null;
     return { ...effort, value: cell.pass_at_k * 100 };
@@ -264,7 +326,7 @@ export function buildGroupedMetricRows(
   selectedGroupIds: string[],
   extractor: MetricExtractor,
   representative: RepresentativeMetric,
-  outputMode?: OutputMode,
+  outputMode?: OutputMode
 ): GroupedMetricRow[] {
   const selected = new Set(
     sanitizeGroupSelection(selectedGroupIds, deriveModelGroups(data))
@@ -272,47 +334,99 @@ export function buildGroupedMetricRows(
   return deriveModelGroups(data)
     .filter((group) => selected.has(group.id))
     .map((group) => {
-      const efforts = group.efforts
-        .filter((effort) => {
-          if (!outputMode || outputMode === "both") return true;
-          return effort.outputMode === outputMode;
-        })
-        .map((effort) => extractor(effort, data))
-        .filter((effort): effort is MetricEffort => effort !== null)
-        .sort(compareReasoningEfforts);
-      if (efforts.length === 0) return null;
-      const values = efforts
-        .map((effort) => effort.value)
-        .sort((a, b) => a - b);
-      const uniqueValues = Array.from(new Set(values));
-      const minValue = values[0];
-      const maxValue = values[values.length - 1];
-      const medianValue = median(uniqueValues);
-      const representativeValue =
-        representative === "min"
-          ? minValue
-          : representative === "max"
+      const visibleModes = visibleOutputModes(outputMode ?? "both");
+      const modes: Partial<
+        Record<ConcreteOutputMode, GroupedMetricModeSummary>
+      > = {};
+
+      for (const mode of visibleModes) {
+        const efforts = group.efforts
+          .filter((effort) => effort.outputMode === mode)
+          .map((effort) => extractor(effort, data))
+          .filter((effort): effort is MetricEffort => effort !== null)
+          .sort(compareReasoningEfforts);
+        if (efforts.length === 0) continue;
+
+        const values = efforts
+          .map((effort) => effort.value)
+          .sort((a, b) => a - b);
+        const uniqueValues = Array.from(new Set(values));
+        const minValue = values[0];
+        const maxValue = values[values.length - 1];
+        const medianValue = median(uniqueValues);
+        const representativeValue =
+          representative === "min"
+            ? minValue
+            : representative === "max"
             ? maxValue
             : medianValue;
-      return {
+        modes[mode] = {
+          outputMode: mode,
+          efforts,
+          minValue,
+          maxValue,
+          representativeValue,
+          rangeWhisker: [
+            representativeValue - minValue,
+            maxValue - representativeValue,
+          ],
+        };
+      }
+
+      const summaries = visibleModes
+        .map((mode) => modes[mode])
+        .filter(
+          (summary): summary is GroupedMetricModeSummary =>
+            summary !== undefined
+        );
+      if (summaries.length === 0) return null;
+
+      const row = {
         id: group.id,
         name: group.id,
         provider: group.provider,
         baseModel: group.baseModel,
-        efforts,
-        minValue,
-        maxValue,
-        representativeValue,
-        rangeWhisker: [
-          representativeValue - minValue,
-          maxValue - representativeValue,
-        ] as [number, number],
+        efforts: summaries.flatMap((summary) => summary.efforts),
+        modes,
+        textRepresentativeValue: modes.text?.representativeValue ?? null,
+        jsonRepresentativeValue: modes.json_schema?.representativeValue ?? null,
+        textRangeWhisker: modes.text?.rangeWhisker ?? null,
+        jsonRangeWhisker: modes.json_schema?.rangeWhisker ?? null,
+        minValue: Math.min(...summaries.map((summary) => summary.minValue)),
+        maxValue: Math.max(...summaries.map((summary) => summary.maxValue)),
+        representativeValue: 0,
+        sortValue: 0,
       };
+      row.sortValue = getGroupedMetricSortValue(
+        row as GroupedMetricRow,
+        outputMode ?? "both"
+      );
+      row.representativeValue = row.sortValue;
+      return row;
     })
     .filter((row): row is GroupedMetricRow => row !== null);
 }
 
-export type OutputMode = "text" | "json_schema" | "both";
+export function visibleOutputModes(
+  outputMode: OutputMode
+): ConcreteOutputMode[] {
+  return outputMode === "both" ? ["text", "json_schema"] : [outputMode];
+}
+
+export function outputModeLabel(outputMode: ConcreteOutputMode): string {
+  return outputMode === "text" ? "Text" : "JSON";
+}
+
+export function getGroupedMetricSortValue(
+  row: GroupedMetricRow,
+  outputMode: OutputMode
+): number {
+  const values = visibleOutputModes(outputMode)
+    .map((mode) => row.modes[mode]?.representativeValue)
+    .filter((value): value is number => value !== undefined);
+  if (values.length === 0) return 0;
+  return values.reduce((total, value) => total + value, 0) / values.length;
+}
 
 const OUTPUT_MODE_STORAGE_KEY = "gitbench-output-mode";
 
@@ -322,7 +436,7 @@ export function getAvailableOutputModes(data: GitBenchData): Set<string> {
 
 export function filterEffortsByOutputMode(
   efforts: ModelGroupEffort[],
-  mode: OutputMode,
+  mode: OutputMode
 ): ModelGroupEffort[] {
   if (mode === "both") return efforts;
   return efforts.filter((e) => e.outputMode === mode);
@@ -351,7 +465,7 @@ export function writeStoredOutputMode(mode: OutputMode): void {
 export function expandGroupSelectionWithMode(
   selection: string[],
   data: GitBenchData,
-  outputMode: OutputMode = "text",
+  outputMode: OutputMode = "text"
 ): string[] {
   const groups = deriveModelGroups(data);
   const selectedGroups = new Set(sanitizeGroupSelection(selection, groups));

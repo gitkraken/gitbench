@@ -9,10 +9,10 @@ import {
   buildGroupedMetricRows,
   passRateMetric,
   benchPassRateMetric,
-  getAvailableOutputModes,
   writeStoredOutputMode,
 } from "@/components/charts/model-groups";
 import {
+  GroupedMetricTooltipSections,
   VerticalGroupedMetricChart,
   formatCompactDecimal,
   tooltipStyle,
@@ -23,7 +23,9 @@ interface PassRateBarChartProps {
   benchmarkName?: string;
 }
 
-export default function PassRateBarChart({ benchmarkName }: PassRateBarChartProps = {}) {
+export default function PassRateBarChart({
+  benchmarkName,
+}: PassRateBarChartProps = {}) {
   const [data, setData] = useState<GitBenchData | null>(null);
   const {
     selectedGroups,
@@ -47,13 +49,13 @@ export default function PassRateBarChart({ benchmarkName }: PassRateBarChartProp
       selectedGroups,
       extractor,
       "median",
-      outputMode,
-    ).sort((a, b) => b.representativeValue - a.representativeValue);
+      outputMode
+    ).sort((a, b) => b.sortValue - a.sortValue);
   }, [data, selectedGroups, outputMode, benchmarkName]);
 
   const yDomain = useMemo(
     () => zeroAnchoredDomain(chartData, [0, 100], { ceiling: 100 }),
-    [chartData],
+    [chartData]
   );
 
   const fixtureCount = useMemo(() => {
@@ -61,8 +63,8 @@ export default function PassRateBarChart({ benchmarkName }: PassRateBarChartProp
     return Math.max(
       0,
       ...Object.values(data.matrix).map(
-        (byBenchmark) => byBenchmark[benchmarkName]?.total ?? 0,
-      ),
+        (byBenchmark) => byBenchmark[benchmarkName]?.total ?? 0
+      )
     );
   }, [data, benchmarkName]);
 
@@ -89,6 +91,7 @@ export default function PassRateBarChart({ benchmarkName }: PassRateBarChartProp
       </div>
       <VerticalGroupedMetricChart
         rows={chartData}
+        outputMode={outputMode}
         yDomain={yDomain}
         yTickFormatter={(value) => `${formatCompactDecimal(value, 2)}%`}
         renderTooltip={(entry) => (
@@ -105,13 +108,17 @@ export default function PassRateBarChart({ benchmarkName }: PassRateBarChartProp
               <ProviderIcon provider={entry.provider} size={14} />
               {entry.provider}/{entry.baseModel}
             </div>
-            {entry.efforts.map((effort) => (
-              <div key={effort.modelName} style={{ color: "var(--text-dim)" }}>
-                {effort.reasoningLevel ?? "default"}:{" "}
-                {effort.value.toFixed(1)}%
-                {effort.value === entry.representativeValue ? " (median)" : ""}
-              </div>
-            ))}
+            <GroupedMetricTooltipSections
+              entry={entry}
+              outputMode={outputMode}
+              formatRepresentative={(value) => `${value.toFixed(1)}%`}
+              renderEffort={(effort) => (
+                <span style={{ color: "var(--text-dim)" }}>
+                  {effort.reasoningLevel ?? "default"}:{" "}
+                  {effort.value.toFixed(1)}%
+                </span>
+              )}
+            />
             <div
               style={{
                 borderTop: "1px solid rgba(255,255,255,0.06)",

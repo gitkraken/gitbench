@@ -11,6 +11,7 @@ import {
   writeStoredOutputMode,
 } from "@/components/charts/model-groups";
 import {
+  GroupedMetricTooltipSections,
   VerticalGroupedMetricChart,
   formatCompactDecimal,
   tooltipStyle,
@@ -53,13 +54,13 @@ export default function RuntimeBarChart() {
       selectedGroups,
       runtimeMetric,
       "median",
-      outputMode,
-    ).sort((a, b) => a.representativeValue - b.representativeValue);
+      outputMode
+    ).sort((a, b) => a.sortValue - b.sortValue);
   }, [data, selectedGroups, outputMode]);
 
   const yDomain = useMemo(
     () => zeroAnchoredDomain(chartData, [0, 1]),
-    [chartData],
+    [chartData]
   );
 
   if (!data) return <div>Loading...</div>;
@@ -95,6 +96,7 @@ export default function RuntimeBarChart() {
       ) : (
         <VerticalGroupedMetricChart
           rows={chartData}
+          outputMode={outputMode}
           yDomain={yDomain}
           yTickFormatter={formatAxis}
           renderTooltip={(entry) => (
@@ -111,21 +113,20 @@ export default function RuntimeBarChart() {
                 <ProviderIcon provider={entry.provider} size={14} />
                 {entry.provider}/{entry.baseModel}
               </div>
-              {entry.efforts.map((effort) => (
-                <div
-                  key={effort.modelName}
-                  style={{ color: "var(--text-dim)" }}
-                >
-                  {effort.reasoningLevel ?? "default"}:{" "}
-                  {formatRuntime(effort.value)} API time
-                  {effort.avgMs
-                    ? `, avg API ${(effort.avgMs / 1000).toFixed(1)}s`
-                    : ""}
-                  {effort.value === entry.representativeValue
-                    ? " (median)"
-                    : ""}
-                </div>
-              ))}
+              <GroupedMetricTooltipSections
+                entry={entry}
+                outputMode={outputMode}
+                formatRepresentative={formatRuntime}
+                renderEffort={(effort) => (
+                  <span style={{ color: "var(--text-dim)" }}>
+                    {effort.reasoningLevel ?? "default"}:{" "}
+                    {formatRuntime(effort.value)} API time
+                    {effort.avgMs != null
+                      ? `, avg API ${(effort.avgMs / 1000).toFixed(1)}s`
+                      : ""}
+                  </span>
+                )}
+              />
               <div
                 style={{
                   borderTop: "1px solid rgba(255,255,255,0.06)",

@@ -11,6 +11,7 @@ import {
   writeStoredOutputMode,
 } from "@/components/charts/model-groups";
 import {
+  GroupedMetricTooltipSections,
   VerticalGroupedMetricChart,
   formatCompactDecimal,
   tooltipStyle,
@@ -45,13 +46,13 @@ export default function TokenUsageChart() {
       selectedGroups,
       tokenMetric,
       "median",
-      outputMode,
-    ).sort((a, b) => a.representativeValue - b.representativeValue);
+      outputMode
+    ).sort((a, b) => a.sortValue - b.sortValue);
   }, [data, selectedGroups, outputMode]);
 
   const yDomain = useMemo(
     () => zeroAnchoredDomain(chartData, [0, 1]),
-    [chartData],
+    [chartData]
   );
   const allZero =
     chartData.length === 0 || chartData.every((row) => row.maxValue === 0);
@@ -89,6 +90,7 @@ export default function TokenUsageChart() {
       ) : (
         <VerticalGroupedMetricChart
           rows={chartData}
+          outputMode={outputMode}
           yDomain={yDomain}
           yTickFormatter={formatTokens}
           renderTooltip={(entry) => (
@@ -105,23 +107,22 @@ export default function TokenUsageChart() {
                 <ProviderIcon provider={entry.provider} size={14} />
                 {entry.provider}/{entry.baseModel}
               </div>
-              {entry.efforts.map((effort) => (
-                <div
-                  key={effort.modelName}
-                  style={{ color: "var(--text-dim)" }}
-                >
-                  {effort.reasoningLevel ?? "default"}:{" "}
-                  {formatTokens(effort.value)}
-                  {effort.inputTokens || effort.outputTokens
-                    ? `, in ${formatTokens(
-                        effort.inputTokens ?? 0,
-                      )} / out ${formatTokens(effort.outputTokens ?? 0)}`
-                    : ""}
-                  {effort.value === entry.representativeValue
-                    ? " (median)"
-                    : ""}
-                </div>
-              ))}
+              <GroupedMetricTooltipSections
+                entry={entry}
+                outputMode={outputMode}
+                formatRepresentative={formatTokens}
+                renderEffort={(effort) => (
+                  <span style={{ color: "var(--text-dim)" }}>
+                    {effort.reasoningLevel ?? "default"}:{" "}
+                    {formatTokens(effort.value)}
+                    {effort.inputTokens || effort.outputTokens
+                      ? `, in ${formatTokens(
+                          effort.inputTokens ?? 0
+                        )} / out ${formatTokens(effort.outputTokens ?? 0)}`
+                      : ""}
+                  </span>
+                )}
+              />
               <div
                 style={{
                   borderTop: "1px solid rgba(255,255,255,0.06)",

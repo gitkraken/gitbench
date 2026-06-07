@@ -13,6 +13,11 @@ import type { GitBenchData } from "@/lib/types";
 import { loadData } from "@/lib/load-data";
 import { loadModelResults } from "@/lib/report-client";
 import { Badge } from "@/components/ui/badge";
+import {
+  deriveModelGroups,
+  outputModeLabel,
+  splitModelVariantKey,
+} from "@/components/charts/model-groups";
 
 interface Props {
   modelA?: string;
@@ -36,8 +41,11 @@ export default function ScatterPlot({ modelA, modelB }: Props) {
   useEffect(() => {
     loadData().then((d) => {
       setData(d);
-      if (!modelA) setA(d.models[0]?.name || "");
-      if (!modelB) setB(d.models[1]?.name || d.models[0]?.name || "");
+      const modelNames = deriveModelGroups(d).flatMap((group) =>
+        group.efforts.map((effort) => effort.modelName)
+      );
+      if (!modelA) setA(modelNames[0] || "");
+      if (!modelB) setB(modelNames[1] || modelNames[0] || "");
     });
   }, []);
 
@@ -55,7 +63,7 @@ export default function ScatterPlot({ modelA, modelB }: Props) {
           }
           return next;
         });
-      },
+      }
     );
   }, [a, b, modelResults]);
 
@@ -102,7 +110,15 @@ export default function ScatterPlot({ modelA, modelB }: Props) {
     else bOnly++;
   }
 
-  const modelNames = data.models.map((m) => m.name);
+  const modelNames = deriveModelGroups(data).flatMap((group) =>
+    group.efforts.map((effort) => effort.modelName)
+  );
+  const modelLabel = (modelName: string) => {
+    const variant = splitModelVariantKey(modelName);
+    return `${variant.canonicalModelName} (${outputModeLabel(
+      variant.outputMode
+    )})`;
+  };
 
   return (
     <div>
@@ -116,7 +132,7 @@ export default function ScatterPlot({ modelA, modelB }: Props) {
           >
             {modelNames.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {modelLabel(m)}
               </option>
             ))}
           </select>
@@ -130,16 +146,14 @@ export default function ScatterPlot({ modelA, modelB }: Props) {
           >
             {modelNames.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {modelLabel(m)}
               </option>
             ))}
           </select>
         </label>
       </div>
 
-      <div
-        className="card mb-4"
-      >
+      <div className="card mb-4">
         <ResponsiveContainer width="100%" height={340}>
           <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
             <CartesianGrid stroke="rgba(255,255,255,0.04)" />

@@ -21,21 +21,27 @@ import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 import {
   costMetric,
-  deriveModelGroups,
+  outputModeLabel,
   passRateMetric,
   runtimeMetric,
-  sanitizeGroupSelection,
   tokenMetric,
-  type MetricEffort,
   type MetricExtractor,
-  type ModelGroup,
   type OutputMode,
+  visibleOutputModes,
 } from "@/components/charts/model-groups";
 import {
   formatCompactDecimal,
   tooltipStyle,
   truncateName,
 } from "@/components/charts/grouped-chart-ui";
+import {
+  buildQuadrantPoints,
+  pairQuadrantPoints,
+  quadrantPairForPoint,
+  rankQuadrantPoints,
+  type QuadrantPoint,
+  type QuadrantPointPair,
+} from "@/components/charts/quadrant-data";
 
 type MetricKey = "passRate" | "cost" | "tokens" | "runtime";
 
@@ -46,21 +52,6 @@ interface MetricDefinition {
   better: "higher" | "lower";
   extractor: MetricExtractor;
   format: (value: number) => string;
-}
-
-interface QuadrantPoint {
-  id: string;
-  provider: string;
-  baseModel: string;
-  modelName: string;
-  reasoningLevel: string | null;
-  x: number;
-  y: number;
-  xRaw: number;
-  yRaw: number;
-  xScore: number;
-  yScore: number;
-  compositeScore: number;
 }
 
 function formatCost(value: number): string {
@@ -117,19 +108,8 @@ const METRICS: MetricDefinition[] = [
 ];
 
 const metricByKey = Object.fromEntries(
-  METRICS.map((metric) => [metric.key, metric]),
+  METRICS.map((metric) => [metric.key, metric])
 ) as Record<MetricKey, MetricDefinition>;
-
-function normalize(
-  value: number,
-  min: number,
-  max: number,
-  better: MetricDefinition["better"],
-) {
-  if (max === min) return 0.5;
-  const ratio = (value - min) / (max - min);
-  return better === "higher" ? ratio : 1 - ratio;
-}
 
 function domainFor(values: number[]): [number, number] {
   if (values.length === 0) return [0, 1];
@@ -138,105 +118,6 @@ function domainFor(values: number[]): [number, number] {
   if (min === max) return [Math.max(0, min - 1), max + 1];
   const padding = Math.max((max - min) * 0.12, Math.abs(max) * 0.04, 1e-6);
   return [Math.max(0, min - padding), max + padding];
-}
-
-function metricValueForGroup(
-  group: ModelGroup,
-  data: GitBenchData,
-  metric: MetricDefinition,
-): MetricEffort[] {
-  return group.efforts
-    .map((effort) => metric.extractor(effort, data))
-    .filter((effort): effort is MetricEffort => effort !== null);
-}
-
-function buildPoints(
-  data: GitBenchData,
-  selectedGroups: string[],
-  xMetric: MetricDefinition,
-  yMetric: MetricDefinition,
-  outputMode: OutputMode,
-): QuadrantPoint[] {
-  const groups = deriveModelGroups(data);
-  const selected = new Set(sanitizeGroupSelection(selectedGroups, groups));
-  const candidates = groups
-    .filter((group) => selected.has(group.id))
-    .map((group) => {
-      const filteredEfforts =
-        outputMode === "both"
-          ? group.efforts
-          : group.efforts.filter((e) => e.outputMode === outputMode);
-      const xByModel = new Map(
-        metricValueForGroup(
-          { ...group, efforts: filteredEfforts },
-          data,
-          xMetric,
-        ).map((effort) => [effort.modelName, effort]),
-      );
-      const yByModel = new Map(
-        metricValueForGroup(
-          { ...group, efforts: filteredEfforts },
-          data,
-          yMetric,
-        ).map((effort) => [effort.modelName, effort]),
-      );
-
-      return filteredEfforts
-        .map((effort) => {
-          const x = xByModel.get(effort.modelName);
-          const y = yByModel.get(effort.modelName);
-          if (!x || !y) return null;
-          return {
-            id: group.id,
-            provider: group.provider,
-            baseModel: group.baseModel,
-            modelName: effort.modelName,
-            reasoningLevel: effort.reasoningLevel,
-            xRaw: x.value,
-            yRaw: y.value,
-          };
-        })
-        .filter(
-          (
-            point,
-          ): point is Omit<
-            QuadrantPoint,
-            "x" | "y" | "xScore" | "yScore" | "compositeScore"
-          > => point !== null,
-        );
-    })
-    .flat();
-
-  if (candidates.length === 0) return [];
-
-  const xValues = candidates.map((point) => point.xRaw);
-  const yValues = candidates.map((point) => point.yRaw);
-  const xMin = Math.min(...xValues);
-  const xMax = Math.max(...xValues);
-  const yMin = Math.min(...yValues);
-  const yMax = Math.max(...yValues);
-
-  const bestByGroup = new Map<string, QuadrantPoint>();
-  for (const candidate of candidates) {
-    const xScore = normalize(candidate.xRaw, xMin, xMax, xMetric.better);
-    const yScore = normalize(candidate.yRaw, yMin, yMax, yMetric.better);
-    const point = {
-      ...candidate,
-      x: candidate.xRaw,
-      y: candidate.yRaw,
-      xScore,
-      yScore,
-      compositeScore: (xScore + yScore) / 2,
-    };
-    const previous = bestByGroup.get(point.id);
-    if (!previous || point.compositeScore > previous.compositeScore) {
-      bestByGroup.set(point.id, point);
-    }
-  }
-
-  return Array.from(bestByGroup.values()).sort(
-    (a, b) => b.compositeScore - a.compositeScore,
-  );
 }
 
 function ProviderDotLegend({ points }: { points: QuadrantPoint[] }) {
@@ -248,7 +129,7 @@ function ProviderDotLegend({ points }: { points: QuadrantPoint[] }) {
         }
         return seen;
       }, new Map<string, string>())
-      .values(),
+      .values()
   );
 
   if (providers.length === 0) return null;
@@ -264,6 +145,88 @@ function ProviderDotLegend({ points }: { points: QuadrantPoint[] }) {
           {provider}
         </span>
       ))}
+    </div>
+  );
+}
+
+function QuadrantModeLegend({ outputMode }: { outputMode: OutputMode }) {
+  if (outputMode !== "both") return null;
+  return (
+    <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-2 font-mono text-[0.625rem] text-(--text-dim)">
+      <span className="inline-flex items-center gap-1.5">
+        <span className="h-2.5 w-2.5 rounded-full bg-(--accent)" />
+        Text
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="h-3 w-3 rounded-full border-2 border-(--accent) bg-(--accent)/20" />
+        JSON
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="h-px w-4 bg-white/35" />
+        Mode pair
+      </span>
+    </div>
+  );
+}
+
+function QuadrantPairTooltip({
+  pair,
+  outputMode,
+  xMetric,
+  yMetric,
+}: {
+  pair: QuadrantPointPair;
+  outputMode: OutputMode;
+  xMetric: MetricDefinition;
+  yMetric: MetricDefinition;
+}) {
+  return (
+    <div style={tooltipStyle}>
+      <div
+        style={{
+          color: "var(--text)",
+          marginBottom: 4,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <ProviderIcon provider={pair.provider} size={14} />
+        {pair.provider}/{pair.baseModel}
+      </div>
+      {visibleOutputModes(outputMode).map((mode) => {
+        const point = mode === "text" ? pair.text : pair.json;
+        return (
+          <div key={mode} style={{ marginTop: 7 }}>
+            <div
+              style={{
+                color: "var(--text)",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+              }}
+            >
+              {outputModeLabel(mode)}
+            </div>
+            {point ? (
+              <>
+                <div style={{ color: "var(--text-dim)" }}>
+                  effort: {point.reasoningLevel ?? "default"}
+                </div>
+                <div style={{ color: "var(--text-dim)" }}>
+                  {xMetric.shortLabel}: {xMetric.format(point.xRaw)}
+                </div>
+                <div style={{ color: "var(--text-dim)" }}>
+                  {yMetric.shortLabel}: {yMetric.format(point.yRaw)}
+                </div>
+              </>
+            ) : (
+              <div style={{ color: "var(--text-dim)" }}>No data</div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -301,18 +264,25 @@ function MetricSelect({
   );
 }
 
-function PointShape(props: any) {
-  const { cx, cy, payload } = props;
+function PointShape({ cx, cy, payload, onFocusPair, onBlurPair }: any) {
   if (cx == null || cy == null || !payload) return null;
+  const color = getProviderColor(payload.provider);
+  const isJson = payload.outputMode === "json_schema";
+  const isCoincidentJson = isJson && payload.coincident;
   return (
     <g
       role="button"
       tabIndex={0}
       style={{ cursor: "pointer" }}
+      aria-label={`${payload.provider}/${payload.baseModel} ${outputModeLabel(
+        payload.outputMode
+      )}`}
+      onFocus={() => onFocusPair?.(payload.pairId)}
+      onBlur={() => onBlurPair?.()}
       onClick={() => {
         window.location.href = modelGroupPath(
           payload.provider,
-          payload.baseModel,
+          payload.baseModel
         );
       }}
       onKeyDown={(event) => {
@@ -320,7 +290,7 @@ function PointShape(props: any) {
           event.preventDefault();
           window.location.href = modelGroupPath(
             payload.provider,
-            payload.baseModel,
+            payload.baseModel
           );
         }
       }}
@@ -328,11 +298,11 @@ function PointShape(props: any) {
       <circle
         cx={cx}
         cy={cy}
-        r={8}
-        fill={getProviderColor(payload.provider)}
-        fillOpacity={0.92}
-        stroke="rgba(255,255,255,0.72)"
-        strokeWidth={1.5}
+        r={isCoincidentJson ? 11 : 8}
+        fill={isCoincidentJson ? "none" : color}
+        fillOpacity={isJson ? 0.24 : 0.92}
+        stroke={isJson ? color : "rgba(255,255,255,0.72)"}
+        strokeWidth={isJson ? 2.2 : 1.5}
       />
     </g>
   );
@@ -342,8 +312,14 @@ export default function QuadrantComparisonChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
   const [xMetricKey, setXMetricKey] = useState<MetricKey>("cost");
   const [yMetricKey, setYMetricKey] = useState<MetricKey>("passRate");
-  const { selectedGroups, setSelectedGroups, outputMode, setOutputMode, availableOutputModes } =
-    useSyncedModelSelection(data);
+  const [focusedPairId, setFocusedPairId] = useState<string | null>(null);
+  const {
+    selectedGroups,
+    setSelectedGroups,
+    outputMode,
+    setOutputMode,
+    availableOutputModes,
+  } = useSyncedModelSelection(data);
 
   useEffect(() => {
     loadQuadrantChart().then(setData);
@@ -354,20 +330,49 @@ export default function QuadrantComparisonChart() {
 
   const chartData = useMemo(() => {
     if (!data) return [];
-    return buildPoints(data, selectedGroups, xMetric, yMetric, outputMode);
+    return buildQuadrantPoints(
+      data,
+      selectedGroups,
+      xMetric,
+      yMetric,
+      outputMode
+    );
   }, [data, selectedGroups, xMetric, yMetric, outputMode]);
+  const pointPairs = useMemo(() => pairQuadrantPoints(chartData), [chartData]);
+  const jsonPoints = useMemo(
+    () =>
+      pointPairs.flatMap((pair) =>
+        pair.json ? [{ ...pair.json, coincident: pair.coincident }] : []
+      ),
+    [pointPairs]
+  );
+  const textPoints = useMemo(
+    () =>
+      pointPairs.flatMap((pair) =>
+        pair.text ? [{ ...pair.text, coincident: pair.coincident }] : []
+      ),
+    [pointPairs]
+  );
+  const rankedPoints = useMemo(
+    () => rankQuadrantPoints(chartData, 6),
+    [chartData]
+  );
+  const focusedPair = useMemo(
+    () => pointPairs.find((pair) => pair.id === focusedPairId),
+    [pointPairs, focusedPairId]
+  );
 
   const xDomain = useMemo(
     () => domainFor(chartData.map((point) => point.x)),
-    [chartData],
+    [chartData]
   );
   const yDomain = useMemo(
     () => domainFor(chartData.map((point) => point.y)),
-    [chartData],
+    [chartData]
   );
   const xMid = useMemo(() => (xDomain[0] + xDomain[1]) / 2, [xDomain]);
   const yMid = useMemo(() => (yDomain[0] + yDomain[1]) / 2, [yDomain]);
-  const best = chartData[0];
+  const best = rankedPoints[0];
 
   if (!data) return <div>Loading...</div>;
 
@@ -426,7 +431,7 @@ export default function QuadrantComparisonChart() {
         </div>
       ) : (
         <>
-          <div className="card">
+          <div className="card relative">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-3 px-1">
               <div className="font-mono text-xs text-(--text-mid)">
                 Optimal quadrant:{" "}
@@ -443,10 +448,21 @@ export default function QuadrantComparisonChart() {
                   href={modelGroupPath(best.provider, best.baseModel)}
                 >
                   <ProviderIcon provider={best.provider} size={14} />
-                  Best blend: {best.baseModel}
+                  Best blend: {best.baseModel} (
+                  {outputModeLabel(best.outputMode)})
                 </a>
               ) : null}
             </div>
+            {focusedPair ? (
+              <div className="absolute right-5 top-12 z-10">
+                <QuadrantPairTooltip
+                  pair={focusedPair}
+                  outputMode={outputMode}
+                  xMetric={xMetric}
+                  yMetric={yMetric}
+                />
+              </div>
+            ) : null}
             <ResponsiveContainer width="100%" height={430}>
               <ScatterChart
                 margin={{ top: 18, right: 30, left: 16, bottom: 36 }}
@@ -469,6 +485,20 @@ export default function QuadrantComparisonChart() {
                   stroke="rgba(255,255,255,0.16)"
                   strokeDasharray="4 4"
                 />
+                {pointPairs.map((pair) =>
+                  pair.text && pair.json && !pair.coincident ? (
+                    <ReferenceLine
+                      key={pair.id}
+                      segment={[
+                        { x: pair.text.x, y: pair.text.y },
+                        { x: pair.json.x, y: pair.json.y },
+                      ]}
+                      stroke="rgba(229,232,238,0.34)"
+                      strokeWidth={1.4}
+                      ifOverflow="extendDomain"
+                    />
+                  ) : null
+                )}
                 <XAxis
                   type="number"
                   dataKey="x"
@@ -524,39 +554,50 @@ export default function QuadrantComparisonChart() {
                     const point = payload?.[0]?.payload as
                       | QuadrantPoint
                       | undefined;
-                    if (!active || !point) return null;
+                    const pair = point
+                      ? quadrantPairForPoint(pointPairs, point)
+                      : undefined;
+                    if (!active || !pair) return null;
                     return (
-                      <div style={tooltipStyle}>
-                        <div
-                          style={{
-                            color: "var(--text)",
-                            marginBottom: 4,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                          }}
-                        >
-                          <ProviderIcon provider={point.provider} size={14} />
-                          {point.provider}/{point.baseModel}
-                        </div>
-                        <div style={{ color: "var(--text-dim)" }}>
-                          effort: {point.reasoningLevel ?? "default"}
-                        </div>
-                        <div style={{ color: "var(--text-dim)" }}>
-                          {xMetric.shortLabel}: {xMetric.format(point.x)}
-                        </div>
-                        <div style={{ color: "var(--text-dim)" }}>
-                          {yMetric.shortLabel}: {yMetric.format(point.y)}
-                        </div>
-                      </div>
+                      <QuadrantPairTooltip
+                        pair={pair}
+                        outputMode={outputMode}
+                        xMetric={xMetric}
+                        yMetric={yMetric}
+                      />
                     );
                   }}
                 />
-                <Scatter data={chartData} shape={<PointShape />} />
+                {jsonPoints.length > 0 ? (
+                  <Scatter
+                    name="JSON"
+                    data={jsonPoints}
+                    isAnimationActive={false}
+                    shape={
+                      <PointShape
+                        onFocusPair={setFocusedPairId}
+                        onBlurPair={() => setFocusedPairId(null)}
+                      />
+                    }
+                  />
+                ) : null}
+                {textPoints.length > 0 ? (
+                  <Scatter
+                    name="Text"
+                    data={textPoints}
+                    isAnimationActive={false}
+                    shape={
+                      <PointShape
+                        onFocusPair={setFocusedPairId}
+                        onBlurPair={() => setFocusedPairId(null)}
+                      />
+                    }
+                  />
+                ) : null}
               </ScatterChart>
             </ResponsiveContainer>
             <div className="mt-2 grid gap-2 border-t border-(--border) pt-3 sm:grid-cols-2 lg:grid-cols-3">
-              {chartData.slice(0, 6).map((point, index) => (
+              {rankedPoints.map((point, index) => (
                 <a
                   key={point.id}
                   href={modelGroupPath(point.provider, point.baseModel)}
@@ -567,7 +608,8 @@ export default function QuadrantComparisonChart() {
                   </span>
                   <ProviderIcon provider={point.provider} size={14} />
                   <span className="truncate">
-                    {truncateName(point.baseModel, 24)}
+                    {truncateName(point.baseModel, 20)} (
+                    {outputModeLabel(point.outputMode)})
                   </span>
                   <span className="ml-auto font-mono text-(--text-dim)">
                     {formatCompactDecimal(point.compositeScore * 100, 0)}
@@ -577,6 +619,7 @@ export default function QuadrantComparisonChart() {
             </div>
           </div>
           <ProviderDotLegend points={chartData} />
+          <QuadrantModeLegend outputMode={outputMode} />
         </>
       )}
     </div>
