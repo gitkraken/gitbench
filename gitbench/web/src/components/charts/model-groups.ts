@@ -33,8 +33,10 @@ export interface MetricEffort extends ModelGroupEffort {
   value: number;
   inputTokens?: number;
   outputTokens?: number;
+  reasoningTokens?: number;
   avgMs?: number;
   fixtureCount?: number;
+  reasoningLevel?: string | null;
 }
 
 export interface GroupedMetricModeSummary {
@@ -61,6 +63,13 @@ export interface GroupedMetricRow {
   maxValue: number;
   representativeValue: number;
   sortValue: number;
+  textInputTokens?: number;
+  textOutputTokens?: number;
+  textReasoningTokens?: number;
+  jsonInputTokens?: number;
+  jsonOutputTokens?: number;
+  jsonReasoningTokens?: number;
+  hasReasoningData?: boolean;
 }
 
 export interface ModelVariantPair {
@@ -318,6 +327,7 @@ export function tokenMetric(
     value: tokens.total_tokens,
     inputTokens: tokens.input_tokens,
     outputTokens: tokens.output_tokens,
+    reasoningTokens: tokens.reasoning_tokens,
   };
 }
 
