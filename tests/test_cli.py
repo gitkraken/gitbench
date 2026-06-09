@@ -517,12 +517,10 @@ class TestRunCommand:
         assert result.exit_code == 0
         model_client.generate.assert_called_once()
 
-    def test_runtime_reasoning_violation_exits_nonzero_after_preflight(
+    def test_runtime_reasoning_violation_is_recorded_after_preflight(
         self, runner, tmp_path
     ):
-        """A runtime none violation is fatal and produces no result artifact."""
-        from gitbench.harness.model import ReasoningDisableError
-
+        """A runtime none violation is a failed fixture, not a fatal run error."""
         config = {
             "models": {
                 "openrouter": {
@@ -539,6 +537,46 @@ class TestRunCommand:
         }
         output_path = tmp_path / "results.json"
 
+        def failed_run_all(
+            self,
+            benchmark_names,
+            *,
+            model_name="",
+            fixture_workers=1,
+            progress=None,
+            progress_model_name=None,
+        ):
+            return {
+                "model": model_name,
+                "benchmark_suite_version": "test",
+                "output_mode": "text",
+                "summary": {
+                    "total_benchmarks": 1,
+                    "total_fixtures": 1,
+                    "total_passed": 0,
+                    "overall_pass_at_k": 0.0,
+                },
+                "results": [{
+                    "benchmark": benchmark_names[0],
+                    "total": 1,
+                    "passed": 0,
+                    "pass_at_k": 0.0,
+                    "errors": 1,
+                    "scores": [{
+                        "fixture_id": "f1",
+                        "passed": False,
+                        "similarity": 0.0,
+                        "model_output": "",
+                        "error": (
+                            "Model 'vendor/model:none' violated the "
+                            "reasoning_level=none invariant: provider reported "
+                            "1 reasoning token(s)"
+                        ),
+                        "reasoning_level": "none",
+                    }],
+                }],
+            }
+
         with runner.isolated_filesystem(temp_dir=tmp_path):
             with open("gitbench.json", "w") as f:
                 json.dump(config, f)
@@ -552,11 +590,8 @@ class TestRunCommand:
                  patch("gitbench.cli._run_reasoning_preflights") as preflight, \
                  patch(
                      "gitbench.harness.runner.BenchmarkRunner.run_all",
-                     side_effect=ReasoningDisableError(
-                         "vendor/model:none",
-                         "provider reported 1 reasoning token(s)",
-                         reasoning_tokens=1,
-                     ),
+                     side_effect=failed_run_all,
+                     autospec=True,
                  ):
                 result = runner.invoke(
                     cli,
@@ -573,17 +608,15 @@ class TestRunCommand:
                     ],
                 )
 
-        assert result.exit_code == 1
-        assert "Fatal reasoning-disable violation" in result.output
-        assert not output_path.exists()
+        assert result.exit_code == 0
+        assert "Fatal reasoning-disable violation" not in result.output
+        assert output_path.exists()
         preflight.assert_called_once()
 
-    def test_concurrent_runtime_violation_stops_new_model_scheduling(
+    def test_concurrent_runtime_violation_does_not_stop_model_scheduling(
         self, runner, tmp_path
     ):
-        """A fatal target prevents queued model targets from starting."""
-        from gitbench.harness.model import ReasoningDisableError
-
+        """A failed none fixture does not prevent queued targets from running."""
         config = {
             "models": {
                 "openrouter": {
@@ -621,11 +654,16 @@ class TestRunCommand:
             started.append(model_name)
             if model_name == "vendor/a:none":
                 assert second_started.wait(timeout=1)
-                raise ReasoningDisableError(
+                result = TestRunCommand._successful_model_result(
                     model_name,
-                    "provider reported 1 reasoning token(s)",
-                    reasoning_tokens=1,
+                    benchmark_names,
                 )
+                result["summary"]["total_passed"] = 0
+                result["summary"]["overall_pass_at_k"] = 0.0
+                result["results"][0]["passed"] = 0
+                result["results"][0]["pass_at_k"] = 0.0
+                result["results"][0]["errors"] = 1
+                return result
             second_started.set()
             time.sleep(0.05)
             return TestRunCommand._successful_model_result(
@@ -664,10 +702,12 @@ class TestRunCommand:
                     ],
                 )
 
-        assert result.exit_code == 1
-        assert "vendor/a:none" in started
-        assert "vendor/b:high" in started
-        assert "vendor/c:high" not in started
+        assert result.exit_code == 0
+        assert set(started) == {
+            "vendor/a:none",
+            "vendor/b:high",
+            "vendor/c:high",
+        }
         preflight.assert_called_once()
 
     def test_run_requires_benchmark_option(self, runner):
@@ -3293,8 +3333,8 @@ class TestRunnerReasoningLevel:
         _, score = runner._run_fixture(FakeBench(), fixture)
         assert score.reasoning_level is None
 
-    def test_runner_propagates_reasoning_disable_error_without_score(self):
-        """Fatal reasoning violations bypass ordinary failed-score conversion."""
+    def test_runner_records_reasoning_disable_error_as_failed_score(self):
+        """Runtime reasoning violations become ordinary failed scores."""
         from gitbench.harness.model import ReasoningDisableError
         from gitbench.harness.runner import BenchmarkRunner
         from gitbench.harness.types import Fixture
@@ -3335,11 +3375,19 @@ class TestRunnerReasoningLevel:
 
         benchmark_runner = BenchmarkRunner({"fake": FakeBench}, FatalClient())
 
-        with pytest.raises(ReasoningDisableError):
-            benchmark_runner.run_all(["fake"], model_name="vendor/model:none")
+        result = benchmark_runner.run_all(
+            ["fake"],
+            model_name="vendor/model:none",
+        )
 
-    def test_parallel_runner_stops_scheduling_after_reasoning_violation(self):
-        """Parallel fixtures cancel queued work after the first fatal response."""
+        assert result["summary"]["total_fixtures"] == 1
+        assert result["summary"]["total_passed"] == 0
+        score = result["results"][0]["scores"][0]
+        assert score["reasoning_level"] == "none"
+        assert "provider reported 1 reasoning token(s)" in score["error"]
+
+    def test_parallel_runner_continues_after_reasoning_violation(self):
+        """Parallel fixtures keep scheduling after a failed none response."""
         from gitbench.harness.model import ReasoningDisableError
         from gitbench.harness.runner import BenchmarkRunner
         from gitbench.harness.types import Fixture, Score
@@ -3403,10 +3451,13 @@ class TestRunnerReasoningLevel:
         client = CoordinatedClient()
         benchmark_runner = BenchmarkRunner({"fake": FakeBench}, client)
 
-        with pytest.raises(ReasoningDisableError):
-            benchmark_runner.run_benchmark("fake", fixture_workers=2)
+        result = benchmark_runner.run_benchmark("fake", fixture_workers=2)
 
-        assert client.call_count == 2
+        assert client.call_count == 5
+        assert result.total == 5
+        assert result.passed == 4
+        assert result.errors == 1
+        assert "provider reported 1 reasoning token(s)" in result.scores[0].error
 
 
 class TestRunnerSelectedFixtures:

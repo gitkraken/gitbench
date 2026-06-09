@@ -189,8 +189,6 @@ class BenchmarkRunner:
                     progress_model_name=progress_model_name,
                 )
                 results_list.append(result.to_dict())
-            except ReasoningDisableError:
-                raise
             except Exception as exc:
                 logger.error(
                     "Benchmark '%s' failed: %s", bench_name, exc,
@@ -233,8 +231,9 @@ class BenchmarkRunner:
     def _run_fixture(self, benchmark: Benchmark, fixture: Fixture) -> tuple[int, Score]:
         """Run a single fixture through the full lifecycle.
 
-        Returns ``(fixture.id, score)``. Ordinary errors are captured in the
-        returned :class:`Score`; fatal reasoning-disable violations propagate.
+        Returns ``(fixture.id, score)``. Runtime errors, including reasoning
+        violations after preflight, are captured in the returned
+        :class:`Score`.
         """
         executor = None
         score = None
@@ -339,8 +338,27 @@ class BenchmarkRunner:
             score._structured_error = structured_error
 
             return fixture.id, score
-        except ReasoningDisableError:
-            raise
+        except ReasoningDisableError as exc:
+            logger.error(
+                "Reasoning-disable violation for fixture %s: %s",
+                fixture.id,
+                exc,
+            )
+            score = Score(
+                fixture_id=fixture.id,
+                passed=False,
+                similarity=0.0,
+                model_output="",
+                error=str(exc),
+                reasoning_level=getattr(
+                    self._model_client, "reasoning_level", None
+                ),
+                reasoning_tokens=exc.reasoning_tokens,
+                prompt=fixture.prompt,
+                expected=fixture.expected,
+                description=fixture.description,
+            )
+            return fixture.id, score
         except Exception as exc:
             logger.error("Error processing fixture %s: %s", fixture.id, exc)
             score = Score(
@@ -403,12 +421,7 @@ class BenchmarkRunner:
                 completed: list[tuple[int, int, Score]] = []
                 for future in done:
                     idx = future_map.pop(future)
-                    try:
-                        fixture_id, score = future.result()
-                    except ReasoningDisableError:
-                        for pending_future in future_map:
-                            pending_future.cancel()
-                        raise
+                    fixture_id, score = future.result()
                     completed.append((idx, fixture_id, score))
 
                 for idx, fixture_id, score in completed:

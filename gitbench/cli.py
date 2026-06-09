@@ -1883,13 +1883,7 @@ def run(
                             run_index = future_to_run_index.pop(future)
                             capacity_info = capacity_by_target[(run_index, 0)]
                             active_group_counts[capacity_info.capacity_key] -= 1
-                            try:
-                                ordered_results[run_index] = future.result()
-                            except ReasoningDisableError:
-                                pending_run_indices.clear()
-                                for pending_future in future_to_run_index:
-                                    pending_future.cancel()
-                                raise
+                            ordered_results[run_index] = future.result()
 
                 for run_index, model_result in enumerate(ordered_results):
                     if model_result is None:
@@ -2000,13 +1994,7 @@ def run(
                                     index = future_to_index.pop(future)
                                     capacity_info = capacity_by_target[(run_index, index)]
                                     active_group_counts[capacity_info.capacity_key] -= 1
-                                    try:
-                                        ordered_results[index] = future.result()
-                                    except ReasoningDisableError:
-                                        pending_indices.clear()
-                                        for pending_future in future_to_index:
-                                            pending_future.cancel()
-                                        raise
+                                    ordered_results[index] = future.result()
 
                         for model_result in ordered_results:
                             if model_result is not None:
@@ -2187,15 +2175,6 @@ def run(
                 if stdout_json_enabled:
                     click.echo(output_json)
 
-        except ReasoningDisableError as e:
-            if progress_display is not None:
-                progress_display.close()
-            logger.exception(
-                "Fatal reasoning-disable violation in %s mode",
-                output_mode,
-            )
-            click.echo(f"Fatal reasoning-disable violation: {e}", err=True)
-            sys.exit(1)
         except Exception as e:
             if progress_display is not None:
                 progress_display.close()
