@@ -2,16 +2,16 @@
 
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from typing import Protocol
 
 from gitbench.harness.benchmark import Benchmark
 from gitbench.harness.capacity import RequestBudgetCoordinator
-from gitbench.harness.model import ModelInterface
+from gitbench.harness.model import ModelInterface, ReasoningDisableError
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
 from gitbench.structured_output import (
-    contract_for_benchmark_fixture,
     canonicalize,
+    contract_for_benchmark_fixture,
 )
 from gitbench.version import BENCHMARK_SUITE_VERSION
 
@@ -45,6 +45,7 @@ class BenchmarkRunner:
         request_budget: RequestBudgetCoordinator | None = None,
         capacity_key: str | None = None,
         output_mode: str = DEFAULT_OUTPUT_MODE,
+        model_generate_kwargs: dict | None = None,
     ) -> None:
         """Initialise the runner.
 
@@ -58,6 +59,7 @@ class BenchmarkRunner:
         self._request_budget = request_budget
         self._capacity_key = capacity_key
         self._output_mode = output_mode
+        self._model_generate_kwargs = dict(model_generate_kwargs or {})
 
     def run_benchmark(
         self,
@@ -187,6 +189,8 @@ class BenchmarkRunner:
                     progress_model_name=progress_model_name,
                 )
                 results_list.append(result.to_dict())
+            except ReasoningDisableError:
+                raise
             except Exception as exc:
                 logger.error(
                     "Benchmark '%s' failed: %s", bench_name, exc,
@@ -229,8 +233,8 @@ class BenchmarkRunner:
     def _run_fixture(self, benchmark: Benchmark, fixture: Fixture) -> tuple[int, Score]:
         """Run a single fixture through the full lifecycle.
 
-        Returns ``(fixture.id, score)``.  Never raises — errors are captured
-        in the returned :class:`Score`.
+        Returns ``(fixture.id, score)``. Ordinary errors are captured in the
+        returned :class:`Score`; fatal reasoning-disable violations propagate.
         """
         executor = None
         score = None
@@ -245,7 +249,7 @@ class BenchmarkRunner:
 
             messages = [ModelMessage(role="user", content=prompt)]
 
-            generate_kwargs: dict = {}
+            generate_kwargs = dict(self._model_generate_kwargs)
             structured_output_contract = None
             if output_mode == "json_schema":
                 structured_output_contract = contract_for_benchmark_fixture(
@@ -335,6 +339,8 @@ class BenchmarkRunner:
             score._structured_error = structured_error
 
             return fixture.id, score
+        except ReasoningDisableError:
+            raise
         except Exception as exc:
             logger.error("Error processing fixture %s: %s", fixture.id, exc)
             score = Score(
@@ -370,29 +376,54 @@ class BenchmarkRunner:
     ) -> list[Score]:
         """Run fixtures in parallel, preserving fixture order in the output."""
         ordered_scores: list[Score | None] = [None] * len(fixtures)
-        ordered_ids = [f.id for f in fixtures]
+        executor = ThreadPoolExecutor(max_workers=workers)
+        future_map: dict[Future, int] = {}
+        next_index = 0
 
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_map = {
-                executor.submit(self._run_fixture, benchmark, f): i
-                for i, f in enumerate(fixtures)
-            }
-            for future in as_completed(future_map):
-                idx = future_map[future]
-                fixture_id, score = future.result()
-                ordered_scores[idx] = score
-                if progress:
-                    progress.fixture_finished(
-                        model_name, benchmark_name, score.passed,
-                        fixture_id=fixture_id,
-                        similarity=score.similarity,
-                    )
+        def submit_next() -> bool:
+            nonlocal next_index
+            if next_index >= len(fixtures):
+                return False
+            index = next_index
+            next_index += 1
+            future_map[
+                executor.submit(self._run_fixture, benchmark, fixtures[index])
+            ] = index
+            return True
 
-        fixture_index = {fid: i for i, fid in enumerate(ordered_ids)}
-        return [
-            ordered_scores[fixture_index[s.fixture_id]]
-            for s in ordered_scores if s is not None
-        ]
+        try:
+            for _ in range(min(workers, len(fixtures))):
+                submit_next()
+
+            while future_map:
+                done, _pending = wait(
+                    future_map,
+                    return_when=FIRST_COMPLETED,
+                )
+                completed: list[tuple[int, int, Score]] = []
+                for future in done:
+                    idx = future_map.pop(future)
+                    try:
+                        fixture_id, score = future.result()
+                    except ReasoningDisableError:
+                        for pending_future in future_map:
+                            pending_future.cancel()
+                        raise
+                    completed.append((idx, fixture_id, score))
+
+                for idx, fixture_id, score in completed:
+                    ordered_scores[idx] = score
+                    if progress:
+                        progress.fixture_finished(
+                            model_name, benchmark_name, score.passed,
+                            fixture_id=fixture_id,
+                            similarity=score.similarity,
+                        )
+                    submit_next()
+        finally:
+            executor.shutdown(wait=True, cancel_futures=True)
+
+        return [score for score in ordered_scores if score is not None]
 
     def _run_fixtures_sequential(
         self,

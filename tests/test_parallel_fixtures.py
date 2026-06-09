@@ -12,7 +12,6 @@ import subprocess
 import sys
 import time
 from collections import Counter
-from pathlib import Path
 
 import pytest
 
@@ -27,7 +26,15 @@ def run_gitbench(args: list[str]) -> tuple[int, str, float]:
     """Run gitbench and return exit code, stdout, and wall time in seconds."""
     t0 = time.monotonic()
     result = subprocess.run(
-        [sys.executable, "-m", "gitbench.cli", "run"] + args,
+        [
+            sys.executable,
+            "-m",
+            "gitbench.cli",
+            "run",
+            "--output-mode",
+            "text",
+        ]
+        + args,
         capture_output=True,
         text=True,
         timeout=120,

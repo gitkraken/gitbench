@@ -5,20 +5,20 @@ setup:
 - git config user.email 'test@test.com'
 - git config user.name 'Test User'
 - mkdir -p src
+- "echo 'def helper(): pass' > src/utils.py"
+- "echo 'def formatter(): pass' > src/formatters.py"
+- "echo 'def formatter(): pass' > src/util_helpers.py"
 - echo 'from utils import helper' > src/main.py
-- git add src/main.py
+- git add src
 - git commit -m 'Import helper from utils'
 - echo 'from helpers import helper' > src/main.py
 - git add src/main.py
 - git commit -m 'Update import path'
-- 'echo ''from utils import helper
-
-  from helpers import formatter'' > src/main.py'
+- printf '\nfrom formatters import formatter\n' >> src/main.py
 - git add src/main.py
 - git commit -m 'Add formatter import'
-- 'echo ''from utils import helper
-
-  from util_helpers import formatter'' > src/main.py'
+- sed 's/from formatters import formatter/from util_helpers import formatter/' src/main.py > src/main.py.tmp
+- mv src/main.py.tmp src/main.py
 - git add src/main.py
 - git commit -m 'Fix formatter import'
 prompt: There is an import error in src/main.py. The module 'helpers' does not exist.
@@ -27,6 +27,10 @@ prompt: There is an import error in src/main.py. The module 'helpers' does not e
 expected: Update import path
 scoring:
   type: exact_match
+  self_check:
+    command: >-
+      test "$(git log --format= -p -- src/main.py | grep -c '^+from helpers import')" -eq 1 &&
+      git blame --line-porcelain -L 1,1 -- src/main.py | sed -n 's/^summary //p'
 purpose: Tests ability to trace a broken import path across multiple module-rename
   commits. Requires navigating intertwined import changes to find the original error.
 difficulty: medium

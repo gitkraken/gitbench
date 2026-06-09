@@ -56,8 +56,8 @@ class TestCacheIO:
 
     def test_corrupt_cache_returns_none(self, tmp_cache_dir):
         """Corrupt JSON returns None."""
-        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        CACHE_FILE.write_text("not json")
+        tmp_cache_dir.parent.mkdir(parents=True, exist_ok=True)
+        tmp_cache_dir.write_text("not json")
         assert _load_cache() is None
 
 
@@ -138,18 +138,71 @@ class TestFetchModelCapabilities:
 class TestLoadEffortMatrix:
     """Tests for load_effort_matrix."""
 
-    def test_loads_bundled_matrix(self):
-        """The shipped matrix should load and return a usable dict."""
-        matrix = load_effort_matrix()
+    def test_loads_bundled_matrix(self, tmp_path, monkeypatch):
+        """The matrix should load as a dict."""
+        import gitbench.harness.capabilities as mod
+
+        test_matrix = tmp_path / "test_matrix.json"
+        test_matrix.write_text(json.dumps({
+            "_preflight_version": 1,
+            "_comment": "test",
+            "models": {
+                "gpt-4o": {"mappings": {"high": "high", "xhigh": "xhigh"}}
+            }
+        }))
+
+        with monkeypatch.context() as m:
+            m.setattr(mod, "_EFFORT_MATRIX_PATH", str(test_matrix))
+            matrix = load_effort_matrix()
+
         assert isinstance(matrix, dict)
-        assert len(matrix) > 0
-        # Check some known entries
-        assert "gpt-4o" in matrix
-        assert "high" in matrix["gpt-4o"]
-        assert "claude-opus-4.7" in matrix
-        assert "max" in matrix["claude-opus-4.7"]
-        assert "gpt-5" in matrix
-        assert "max" in matrix["gpt-5"]
+        assert matrix["gpt-4o"] == {"high": "high", "xhigh": "xhigh"}
+
+    def test_entry_has_mappings_dict(self, monkeypatch, tmp_path):
+        """An entry with 'mappings' key is loaded correctly."""
+        import gitbench.harness.capabilities as mod
+
+        test_matrix = tmp_path / "test_matrix.json"
+        test_matrix.write_text(json.dumps({
+            "_preflight_version": 1,
+            "_comment": "test",
+            "models": {
+                "deepseek-v4-flash": {
+                    "mappings": {
+                        "high": "high",
+                        "xhigh": "xhigh",
+                        "low": "high"
+                    }
+                }
+            }
+        }))
+
+        with monkeypatch.context() as m:
+            m.setattr(mod, "_EFFORT_MATRIX_PATH", str(test_matrix))
+            matrix = load_effort_matrix()
+
+        assert matrix["deepseek-v4-flash"] == {
+            "high": "high",
+            "xhigh": "xhigh",
+            "low": "high",
+        }
+
+    @pytest.mark.parametrize("model_id", ["deepseek-v4-flash", "deepseek-v4-pro"])
+    def test_empty_matrix_has_no_entries(self, model_id, tmp_path, monkeypatch):
+        """An empty matrix file returns no entries."""
+        import gitbench.harness.capabilities as mod
+
+        test_matrix = tmp_path / "test_matrix.json"
+        test_matrix.write_text(json.dumps({
+            "_preflight_version": 1,
+            "_comment": "test",
+            "models": {}
+        }))
+
+        with monkeypatch.context() as m:
+            m.setattr(mod, "_EFFORT_MATRIX_PATH", str(test_matrix))
+            matrix = load_effort_matrix()
+        assert matrix == {}
 
     def test_missing_file_returns_empty(self, monkeypatch):
         """Missing file returns empty dict."""
@@ -278,16 +331,22 @@ class TestValidateModels:
             caps = {
                 "reasoning_models": {"openai/gpt-4o", "anthropic/claude-opus-4.7"},
                 "effort_matrix": {
-                    "gpt-4o": ["minimal", "low", "medium", "high", "xhigh"],
-                    "claude-opus-4.7": [
-                        "none",
-                        "minimal",
-                        "low",
-                        "medium",
-                        "high",
-                        "xhigh",
-                        "max",
-                    ],
+                    "gpt-4o": {
+                        "minimal": "minimal",
+                        "low": "low",
+                        "medium": "medium",
+                        "high": "high",
+                        "xhigh": "xhigh",
+                    },
+                    "claude-opus-4.7": {
+                        "none": "none",
+                        "minimal": "minimal",
+                        "low": "low",
+                        "medium": "medium",
+                        "high": "high",
+                        "xhigh": "xhigh",
+                        "max": "max",
+                    },
                 },
                 "fetched_at": "2026-01-01T00:00:00Z",
             }
@@ -334,28 +393,30 @@ class TestValidateModels:
         assert "invalid reasoning level" in errors[0].lower()
         assert "ultra" in errors[0]
 
-    def test_unsupported_level_reported(self):
-        """Supported by OpenRouter but not in effort matrix."""
+    def test_undocumented_level_warns_not_errors(self):
+        """Undocumented level for matrix-known model warns but passes."""
         with self._mock_resolve_capabilities():
             errors = validate_models(["openai/gpt-4o#max"])
-        assert len(errors) == 1
-        assert "does not support" in errors[0]
-        assert "max" in errors[0]
+        assert errors == []
 
-    def test_no_reasoning_support(self):
-        """Model not in reasoning_models set is flagged."""
+    def test_no_reasoning_support_warns(self):
+        """Model not in reasoning_models set warns but passes."""
         with self._mock_resolve_capabilities():
             errors = validate_models(["some-other/model#high"])
-        assert len(errors) == 1
-        assert "does not support reasoning" in errors[0].lower()
+        assert errors == []
 
     def test_multiple_errors_collected(self):
-        """All invalid models are reported, not just first."""
+        """All invalid models are reported, not just first.
+
+        ``openai/gpt-4o#max`` is no longer an error — the matrix only has
+        verified mappings up to xhigh so max warns rather than rejects.
+        ``some-other/model#high`` also warns (not in API reasoning set).
+        """
         with self._mock_resolve_capabilities():
             errors = validate_models(
                 ["openai/gpt-4o#ultra", "some-other/model#high", "openai/gpt-4o#max"]
             )
-        assert len(errors) == 3
+        assert len(errors) == 1  # only 'ultra' is invalid vocabulary
 
     def test_mixed_valid_and_invalid(self):
         """Valid models don't mask invalid ones."""
@@ -363,8 +424,7 @@ class TestValidateModels:
             errors = validate_models(
                 ["openai/gpt-4o#high", "unknown#high", "anthropic/claude-opus-4.7:max"]
             )
-        assert len(errors) == 1
-        assert "does not support reasoning" in errors[0].lower()
+        assert errors == []
 
     def test_ollama_model_warns_not_errors(self):
         """Ollama models get warning, not error."""
@@ -380,11 +440,11 @@ class TestValidateModels:
             )
         assert errors == []
 
-    def test_openrouter_model_still_validated_strictly(self):
-        """OpenRouter models (no provider=ollama) are strictly validated."""
+    def test_openrouter_model_undocumented_level_warns(self):
+        """OpenRouter models with undocumented level warn but pass."""
         caps = {
             "reasoning_models": {"openai/gpt-4o"},
-            "effort_matrix": {"gpt-4o": ["low", "medium"]},
+            "effort_matrix": {"gpt-4o": {"low": "low", "medium": "medium"}},
             "fetched_at": "2026-01-01T00:00:00Z",
         }
         with self._mock_resolve_capabilities(caps):
@@ -392,8 +452,7 @@ class TestValidateModels:
                 ["openai/gpt-4o#high"],
                 profile_configs=[{"provider": "openai"}],
             )
-        assert len(errors) == 1
-        assert "does not support" in errors[0]
+        assert errors == []
 
     def test_fetch_failure_returns_error(self):
         """When resolve_capabilities fails, an error is returned."""
@@ -411,9 +470,45 @@ class TestValidateModels:
         """Models with provider/gpt-4o find matrix entry for gpt-4o."""
         caps = {
             "reasoning_models": {"openai/gpt-4o"},
-            "effort_matrix": {"gpt-4o": ["low", "medium", "high", "xhigh"]},
+            "effort_matrix": {
+                "gpt-4o": {
+                    "low": "low",
+                    "medium": "medium",
+                    "high": "high",
+                    "xhigh": "xhigh",
+                }
+            },
             "fetched_at": "2026-01-01T00:00:00Z",
         }
         with self._mock_resolve_capabilities(caps):
             errors = validate_models(["openai/gpt-4o#high"])
         assert errors == []
+
+    @pytest.mark.parametrize("model_id", ["deepseek-v4-flash", "deepseek-v4-pro"])
+    @pytest.mark.parametrize("level", ["none", "minimal", "low", "medium"])
+    def test_deepseek_v4_warns_undocumented_efforts(self, model_id, level):
+        """Unverified DeepSeek V4 efforts warn but pass static validation."""
+        caps = {
+            "reasoning_models": {f"deepseek/{model_id}"},
+            "effort_matrix": {
+                model_id: {"high": "high", "xhigh": "xhigh"}
+            },
+            "fetched_at": "2026-01-01T00:00:00Z",
+        }
+        with self._mock_resolve_capabilities(caps):
+            errors = validate_models([f"deepseek/{model_id}:{level}"])
+        assert errors == []
+
+    @pytest.mark.parametrize("model_id", ["deepseek-v4-flash", "deepseek-v4-pro"])
+    @pytest.mark.parametrize("level", ["high", "xhigh"])
+    def test_deepseek_v4_accepts_verified_efforts(self, model_id, level):
+        """Verified DeepSeek V4 efforts pass static validation."""
+        caps = {
+            "reasoning_models": {f"deepseek/{model_id}"},
+            "effort_matrix": {
+                model_id: {"high": "high", "xhigh": "xhigh"}
+            },
+            "fetched_at": "2026-01-01T00:00:00Z",
+        }
+        with self._mock_resolve_capabilities(caps):
+            assert validate_models([f"deepseek/{model_id}:{level}"]) == []

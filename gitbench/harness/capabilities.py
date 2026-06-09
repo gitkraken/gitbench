@@ -28,6 +28,7 @@ OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
 OPENROUTER_PARAM = "supported_parameters=reasoning"
 
 _EFFORT_MATRIX_PATH = Path(__file__).parent.parent / "data" / "effort_matrix.json"
+_EFFORT_MATRIX_VERSION = 1
 
 
 def _load_cache() -> dict[str, Any] | None:
@@ -111,12 +112,16 @@ def fetch_model_capabilities() -> dict[str, Any]:
     return result
 
 
-def load_effort_matrix() -> dict[str, list[str]]:
-    """Load the shipped effort matrix from the package data directory.
+def load_effort_matrix() -> dict[str, dict[str, str]]:
+    """Load the verified effort matrix from the package data directory.
+
+    The matrix is populated by Responses API preflights and maps each
+    model to a dict of ``{requested_effort: effective_effort}``.
 
     Returns:
-        Dict mapping normalized model ID (without provider prefix) to
-        list of valid effort level strings.
+        Dict mapping normalized model ID to effort mapping dict.
+        Returns empty dict when the file is missing, malformed, or
+        was written by an older preflight version.
     """
     try:
         with open(_EFFORT_MATRIX_PATH, "r") as f:
@@ -125,11 +130,45 @@ def load_effort_matrix() -> dict[str, list[str]]:
         logger.warning("Could not load effort matrix: %s", exc)
         return {}
 
-    matrix: dict[str, list[str]] = {}
+    # Version check — invalidate stale caches when preflight logic changes
+    stored_version = data.get("_preflight_version", 0)
+    if stored_version != _EFFORT_MATRIX_VERSION:
+        logger.info(
+            "Effort matrix version changed (%d → %d); "
+            "discarding stale cached entries.",
+            stored_version,
+            _EFFORT_MATRIX_VERSION,
+        )
+        return {}
+
+    matrix: dict[str, dict[str, str]] = {}
     for model_id, entry in data.get("models", {}).items():
-        if isinstance(entry, dict) and "levels" in entry:
-            matrix[model_id] = entry["levels"]
+        if isinstance(entry, dict) and "mappings" in entry:
+            matrix[model_id] = entry["mappings"]
     return matrix
+
+
+def save_effort_mapping(
+    model_id: str,
+    requested: str,
+    effective: str,
+) -> None:
+    """Persist a verified effort mapping to the matrix file."""
+    try:
+        with open(_EFFORT_MATRIX_PATH, "r") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = {"_comment": "", "_preflight_version": _EFFORT_MATRIX_VERSION, "models": {}}
+
+    data["_preflight_version"] = _EFFORT_MATRIX_VERSION
+    models = data.get("models", {})
+    if model_id not in models:
+        models[model_id] = {"mappings": {}}
+    models[model_id]["mappings"][requested] = effective
+    data["models"] = models
+
+    with open(_EFFORT_MATRIX_PATH, "w") as f:
+        json.dump(data, f, indent=2)
 
 
 def resolve_capabilities() -> dict[str, Any]:
@@ -264,13 +303,17 @@ def validate_models(
         # the model supports reasoning at those levels).  Only consult the API
         # for models NOT in the matrix.
         normalized = _normalize_model(base)
-        matrix_levels = effort_matrix.get(normalized)
-        if matrix_levels is not None:
-            # Model is in the effort matrix — check level directly
-            if level not in matrix_levels:
-                errors.append(
-                    f"Model '{base}' does not support effort level '{level}'. "
-                    f"Supported levels: {', '.join(matrix_levels)}."
+        model_mappings = effort_matrix.get(normalized)
+        if model_mappings is not None:
+            # Model has verified mappings from an earlier preflight.
+            # Skip the API reasoning-support check — we know it works.
+            if level not in model_mappings:
+                logger.warning(
+                    "Model '%s' with effort '%s' has not been verified "
+                    "via preflight. The provider may map this to the "
+                    "nearest supported level.",
+                    base,
+                    level,
                 )
             continue
 
@@ -283,9 +326,17 @@ def validate_models(
                         "liquid"]:
             candidates.add(f"{prefix}/{normalized}")
         if not any(c in reasoning_models for c in candidates):
-            errors.append(
-                f"Model '{base}' does not support reasoning. "
-                f"Requested effort '{level}' cannot be honored."
+            # API doesn't list this model as reasoning-capable, but the
+            # matrix is the authority now (populated by Responses API
+            # preflight).  Warn instead of blocking — for 'none' it's
+            # harmless, and for other efforts the preflight will
+            # determine actual support.
+            logger.warning(
+                "Model '%s' is not listed as reasoning-capable by the "
+                "OpenRouter API. Requested effort '%s' may not be honored. "
+                "The effort preflight will verify at runtime.",
+                base,
+                level,
             )
             continue
 

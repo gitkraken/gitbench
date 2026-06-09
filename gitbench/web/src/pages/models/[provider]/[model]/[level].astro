@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { GitCompare } from "lucide-react";
 import ProviderIcon from "@/components/ProviderIcon.tsx";
 import { REASONING_LEVEL_ORDER, DIFFICULTY_ORDER } from "@/lib/sort-orders";
+import { formatAggregateTokenUsage } from "@/lib/token-usage";
 
 export function getStaticPaths() {
   const data = loadDataSync();
@@ -169,6 +170,7 @@ const passColor =
 let totalInputTokens = 0;
 let totalOutputTokens = 0;
 let totalReasoningTokens = 0;
+let hasReasoningTelemetry = false;
 let totalCost = 0;
 let hasCost = false;
 for (const bench of data.benchmarks) {
@@ -176,7 +178,10 @@ for (const bench of data.benchmarks) {
   for (const r of results) {
     totalInputTokens += r.input_tokens || 0;
     totalOutputTokens += r.output_tokens || 0;
-    totalReasoningTokens += r.reasoning_tokens || 0;
+    if (r.reasoning_tokens != null) {
+      totalReasoningTokens += r.reasoning_tokens;
+      hasReasoningTelemetry = true;
+    }
     if (r.cost_usd != null) {
       totalCost += r.cost_usd;
       hasCost = true;
@@ -185,6 +190,12 @@ for (const bench of data.benchmarks) {
 }
 
 const hasReasoningLevel = level && level !== "default";
+const aggregateTokenLabel = formatAggregateTokenUsage(
+  totalInputTokens,
+  totalOutputTokens,
+  hasReasoningLevel ? level : null,
+  hasReasoningTelemetry ? totalReasoningTokens : null,
+);
 ---
 
 <Layout title={`${providerName} / ${baseModel} / ${level || "default"}`}>
@@ -256,14 +267,10 @@ const hasReasoningLevel = level && level !== "default";
         class="font-mono text-[0.68rem] text-(--color-text-dim) opacity-60 mt-1"
       >
         {
-          (totalInputTokens > 0 || totalOutputTokens > 0) && (
+          (totalInputTokens > 0 || totalOutputTokens > 0) &&
+          aggregateTokenLabel && (
             <span class="mr-3">
-              {totalInputTokens.toLocaleString()} in /{" "}
-              {totalOutputTokens.toLocaleString()} out{" "}
-              {hasReasoningLevel
-                ? `/ ${totalReasoningTokens.toLocaleString()} reasoning`
-                : ""}{" "}
-              tokens
+              {aggregateTokenLabel}
             </span>
           )
         }

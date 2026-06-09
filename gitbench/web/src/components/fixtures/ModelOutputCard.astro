@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { modelPath } from "@/lib/routes";
+import { formatCompactTokenUsage } from "@/lib/token-usage";
 import { Copy } from "lucide-react";
 
 interface Props {
@@ -49,6 +50,12 @@ const displayPayload = parsedPayload
       }
     })()
   : null;
+const tokenBadge = formatCompactTokenUsage(
+  inputTokens,
+  outputTokens,
+  reasoningLevel,
+  reasoningTokens,
+);
 ---
 
 <div class="card p-5">
@@ -70,13 +77,9 @@ const displayPayload = parsedPayload
         {similarity}%
       </span>
       {
-        inputTokens != null && outputTokens != null && (
+        tokenBadge && (
           <span class="font-mono text-[0.6rem] px-1.5 py-0.5 bg-(--color-surface) border border-border rounded text-(--color-text-dim)">
-            {inputTokens}→{outputTokens}{
-              reasoningLevel
-                ? `(+${reasoningTokens != null ? reasoningTokens : "N/A"}r)`
-                : ""
-            }
+            {tokenBadge}
           </span>
         )
       }

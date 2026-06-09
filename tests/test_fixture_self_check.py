@@ -2,6 +2,7 @@
 
 import subprocess
 
+from gitbench.benchmarks.blame_forensics import BlameForensicsBenchmark
 from gitbench.fixture_self_check import check_fixture
 from gitbench.harness.types import Fixture
 
@@ -106,3 +107,51 @@ def test_self_check_reports_git_derived_expected_mismatch(tmp_path):
     issues = check_fixture(fixture, repo_path=str(repo))
 
     assert [issue.code for issue in issues] == ["derived-expected-mismatch"]
+
+
+def test_blame_f010_has_one_broken_import_and_preserves_introducing_blame():
+    benchmark = BlameForensicsBenchmark()
+    fixture = next(
+        fixture
+        for fixture in benchmark.load_fixtures()
+        if fixture.id == "f010"
+    )
+    executor, repo_path = benchmark.setup_fixture(fixture)
+
+    try:
+        assert check_fixture(fixture, repo_path=repo_path) == []
+
+        broken_additions = subprocess.run(
+            [
+                "git",
+                "log",
+                "--format=",
+                "-p",
+                "--",
+                "src/main.py",
+            ],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.count("+from helpers import")
+        blame = subprocess.run(
+            [
+                "git",
+                "blame",
+                "--line-porcelain",
+                "-L",
+                "1,1",
+                "--",
+                "src/main.py",
+            ],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+        assert broken_additions == 1
+        assert "summary Update import path" in blame
+    finally:
+        executor.cleanup()

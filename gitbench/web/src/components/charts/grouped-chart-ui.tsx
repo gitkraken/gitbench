@@ -271,7 +271,11 @@ export function VerticalGroupedMetricChart({
   const rowsById = useMemo(() => rowMap(rows), [rows]);
   const visibleModes = visibleOutputModes(outputMode);
   const seriesCount = visibleModes.length;
-  const anyReasoningData = rows.some((r) => r.hasReasoningData);
+  const hasTokenSegments = rows.some(
+    (row) =>
+      row.textInputTokens !== undefined ||
+      row.jsonInputTokens !== undefined
+  );
 
   return (
     <>
@@ -308,21 +312,27 @@ export function VerticalGroupedMetricChart({
               axisLine={false}
               tickLine={false}
             />
-            {anyReasoningData
+            {hasTokenSegments
               ? visibleModes.flatMap((mode) => {
                   const inKey =
                     mode === "text" ? "textInputTokens" : "jsonInputTokens";
                   const outKey =
-                    mode === "text" ? "textOutputTokens" : "jsonOutputTokens";
+                    mode === "text"
+                      ? "textVisibleOutputTokens"
+                      : "jsonVisibleOutputTokens";
                   const reasonKey =
                     mode === "text"
                       ? "textReasoningTokens"
                       : "jsonReasoningTokens";
                   const stackId = `tokens-${mode}`;
-                  const baseColor = getProviderColor(
-                    rows[0]?.provider ?? ""
+                  const whiskerKey =
+                    mode === "text" ? "textRangeWhisker" : "jsonRangeWhisker";
+                  const modeHasReasoningData = rows.some((row) =>
+                    mode === "text"
+                      ? row.textHasReasoningData
+                      : row.jsonHasReasoningData
                   );
-                  return [
+                  const bars = [
                     <Bar
                       key={`${mode}-in`}
                       dataKey={inKey}
@@ -342,7 +352,7 @@ export function VerticalGroupedMetricChart({
                     <Bar
                       key={`${mode}-out`}
                       dataKey={outKey}
-                      name={`${outputModeLabel(mode)} Out`}
+                      name={`${outputModeLabel(mode)} Visible output`}
                       stackId={stackId}
                       barSize={verticalChartBarSize(rows.length, 1)}
                       isAnimationActive={false}
@@ -354,11 +364,23 @@ export function VerticalGroupedMetricChart({
                           fillOpacity={0.55}
                         />
                       ))}
+                      {!modeHasReasoningData && (
+                        <ErrorBar
+                          dataKey={whiskerKey}
+                          width={9}
+                          stroke="rgba(229,232,238,0.76)"
+                          strokeWidth={1.7}
+                          isAnimationActive={false}
+                        />
+                      )}
                     </Bar>,
-                    <Bar
+                  ];
+                  if (modeHasReasoningData) {
+                    bars.push(
+                      <Bar
                       key={`${mode}-reason`}
                       dataKey={reasonKey}
-                      name={`${outputModeLabel(mode)} Reason`}
+                      name={`${outputModeLabel(mode)} Reasoning within output`}
                       stackId={stackId}
                       barSize={verticalChartBarSize(rows.length, 1)}
                       isAnimationActive={false}
@@ -372,8 +394,17 @@ export function VerticalGroupedMetricChart({
                           strokeWidth={0.5}
                         />
                       ))}
-                    </Bar>,
-                  ];
+                      <ErrorBar
+                        dataKey={whiskerKey}
+                        width={9}
+                        stroke="rgba(229,232,238,0.76)"
+                        strokeWidth={1.7}
+                        isAnimationActive={false}
+                      />
+                      </Bar>
+                    );
+                  }
+                  return bars;
                 })
               : visibleModes.map((mode) => {
                   const dataKey =

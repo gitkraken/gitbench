@@ -184,6 +184,10 @@ test("summary returns compact report data without full model output", () => {
       summary.model_token_summaries["openai/gpt-test:high__json_schema"].total_tokens,
       15,
     );
+    assert.equal(
+      summary.model_token_summaries["openai/gpt-test:high"].reasoning_tokens,
+      null,
+    );
     assert.equal(summary.model_runtimes["openai/gpt-test:high"].total_ms, 12.5);
     assert.equal(
       summary.model_runtimes["openai/gpt-test:high__json_schema"].total_ms,

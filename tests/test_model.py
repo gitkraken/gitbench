@@ -12,6 +12,7 @@ from gitbench.harness.model import (
     ModelResponseError,
     OllamaAdapter,
     OpenAIAdapter,
+    ReasoningDisableError,
     parse_model_name,
 )
 from gitbench.harness.types import ModelMessage
@@ -501,6 +502,40 @@ class TestOpenAIAdapterReasoning:
         assert adapter._full_model == "gpt-4o"
 
     @patch("openai.OpenAI")
+    def test_generate_forwards_first_party_reasoning_none(self, mock_openai_class):
+        """First-party OpenAI receives none as reasoning_effort."""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            error=None,
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content="Output",
+                        reasoning_content=None,
+                        reasoning=None,
+                    )
+                )
+            ],
+            usage=SimpleNamespace(
+                prompt_tokens=10,
+                completion_tokens=5,
+                total_tokens=15,
+                completion_tokens_details=SimpleNamespace(reasoning_tokens=0),
+                cost=None,
+            ),
+        )
+        mock_openai_class.return_value = mock_client
+
+        adapter = OpenAIAdapter(model="gpt-5.4#none", api_key="test-key")
+        adapter._client = mock_client
+
+        adapter.generate([ModelMessage(role="user", content="Hi")])
+
+        call_kwargs = mock_client.chat.completions.create.call_args
+        assert call_kwargs.kwargs["reasoning_effort"] == "none"
+        assert "extra_body" not in call_kwargs.kwargs
+
+    @patch("openai.OpenAI")
     def test_generate_forwards_reasoning_as_effort(self, mock_openai_class):
         """reasoning_level is forwarded as reasoning_effort."""
         mock_client = MagicMock()
@@ -574,12 +609,27 @@ class TestOpenAIAdapterReasoning:
 
     @patch("openai.OpenAI")
     def test_generate_forwards_openrouter_reasoning_none(self, mock_openai_class):
-        """OpenRouter receives none as an explicit reasoning effort."""
+        """OpenRouter receives none as an explicit disabled configuration."""
         mock_client = MagicMock()
-        mock_response = MagicMock()
-        mock_response.error = None
-        mock_response.choices[0].message.content = "Output"
-        mock_client.chat.completions.create.return_value = mock_response
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            error=None,
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content="Output",
+                        reasoning_content=None,
+                        reasoning=None,
+                    )
+                )
+            ],
+            usage=SimpleNamespace(
+                prompt_tokens=10,
+                completion_tokens=5,
+                total_tokens=15,
+                completion_tokens_details=SimpleNamespace(reasoning_tokens=0),
+                cost=None,
+            ),
+        )
         mock_openai_class.return_value = mock_client
 
         adapter = OpenAIAdapter(
@@ -593,7 +643,7 @@ class TestOpenAIAdapterReasoning:
         adapter.generate(messages)
 
         call_kwargs = mock_client.chat.completions.create.call_args
-        assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"effort": "none"}
+        assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"enabled": False}
         assert "reasoning" not in call_kwargs.kwargs
         assert "reasoning_effort" not in call_kwargs.kwargs
 
@@ -626,6 +676,221 @@ class TestOpenAIAdapterReasoning:
         }
         assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"effort": "high"}
         assert extra_body == {"provider": {"order": ["OpenAI"]}}
+
+    @patch("openai.OpenAI")
+    def test_generate_openrouter_none_preserves_extra_body(self, mock_openai_class):
+        """OpenRouter none merges disablement without mutating caller routing."""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            error=None,
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content="Output",
+                        reasoning_content=None,
+                        reasoning=None,
+                    )
+                )
+            ],
+            usage=SimpleNamespace(
+                prompt_tokens=10,
+                completion_tokens=5,
+                total_tokens=15,
+                completion_tokens_details=SimpleNamespace(reasoning_tokens=0),
+                cost=None,
+            ),
+        )
+        mock_openai_class.return_value = mock_client
+        adapter = OpenAIAdapter(
+            model="baidu/cobuddy:free#none",
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+        )
+        adapter._client = mock_client
+        extra_body = {"provider": {"order": ["OpenAI"]}}
+
+        adapter.generate(
+            [ModelMessage(role="user", content="Hi")],
+            extra_body=extra_body,
+        )
+
+        sent_extra_body = (
+            mock_client.chat.completions.create.call_args.kwargs["extra_body"]
+        )
+        assert sent_extra_body == {
+            "provider": {"order": ["OpenAI"]},
+            "reasoning": {"enabled": False},
+        }
+        assert extra_body == {"provider": {"order": ["OpenAI"]}}
+
+    @pytest.mark.parametrize("reasoning_content", [None, "", "   "])
+    @patch("openai.OpenAI")
+    def test_generate_none_accepts_explicit_zero_reasoning(
+        self, mock_openai_class, reasoning_content
+    ):
+        """None accepts explicit zero tokens and empty reasoning content."""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            error=None,
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content="Output",
+                        reasoning_content=reasoning_content,
+                        reasoning=None,
+                    )
+                )
+            ],
+            usage=SimpleNamespace(
+                prompt_tokens=10,
+                completion_tokens=5,
+                total_tokens=15,
+                completion_tokens_details=SimpleNamespace(reasoning_tokens=0),
+                cost=None,
+            ),
+        )
+        mock_openai_class.return_value = mock_client
+        adapter = OpenAIAdapter(
+            model="baidu/cobuddy:free#none",
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+        )
+        adapter._client = mock_client
+
+        result = adapter.generate([ModelMessage(role="user", content="Hi")])
+
+        assert result["usage"]["reasoning_tokens"] == 0
+
+    @patch("openai.OpenAI")
+    def test_generate_none_rejects_reasoning_tokens(self, mock_openai_class):
+        """None rejects non-zero reasoning telemetry."""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            error=None,
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content="Output",
+                        reasoning_content=None,
+                        reasoning=None,
+                    )
+                )
+            ],
+            usage=SimpleNamespace(
+                prompt_tokens=10,
+                completion_tokens=5,
+                total_tokens=15,
+                completion_tokens_details=SimpleNamespace(reasoning_tokens=3),
+                cost=None,
+            ),
+        )
+        mock_openai_class.return_value = mock_client
+        adapter = OpenAIAdapter(
+            model="baidu/cobuddy:free#none",
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+            retry_count=3,
+        )
+        adapter._client = mock_client
+
+        with pytest.raises(ReasoningDisableError, match="3 reasoning token"):
+            adapter.generate([ModelMessage(role="user", content="Hi")])
+        assert mock_client.chat.completions.create.call_count == 1
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("reasoning_content", "hidden chain"),
+            ("reasoning", "normalized chain"),
+            ("reasoning_details", [{"text": "normalized chain"}]),
+        ],
+    )
+    @patch("openai.OpenAI")
+    def test_generate_none_rejects_reasoning_content(
+        self, mock_openai_class, field, value
+    ):
+        """None rejects non-empty provider reasoning fields."""
+        mock_client = MagicMock()
+        message = {
+            "content": "Output",
+            "reasoning_content": None,
+            "reasoning": None,
+            "reasoning_details": None,
+        }
+        message[field] = value
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            error=None,
+            choices=[
+                SimpleNamespace(message=SimpleNamespace(**message))
+            ],
+            usage=SimpleNamespace(
+                prompt_tokens=10,
+                completion_tokens=5,
+                total_tokens=15,
+                completion_tokens_details=SimpleNamespace(reasoning_tokens=0),
+                cost=None,
+            ),
+        )
+        mock_openai_class.return_value = mock_client
+        adapter = OpenAIAdapter(
+            model="baidu/cobuddy:free#none",
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+        )
+        adapter._client = mock_client
+
+        with pytest.raises(ReasoningDisableError, match="reasoning content"):
+            adapter.generate([ModelMessage(role="user", content="Hi")])
+
+    @pytest.mark.parametrize(
+        "usage",
+        [
+            None,
+            SimpleNamespace(
+                prompt_tokens=10,
+                completion_tokens=5,
+                total_tokens=15,
+                completion_tokens_details=None,
+                cost=None,
+            ),
+            SimpleNamespace(
+                prompt_tokens=10,
+                completion_tokens=5,
+                total_tokens=15,
+                completion_tokens_details=SimpleNamespace(reasoning_tokens=None),
+                cost=None,
+            ),
+        ],
+    )
+    @patch("openai.OpenAI")
+    def test_generate_none_rejects_missing_reasoning_telemetry(
+        self, mock_openai_class, usage
+    ):
+        """None fails closed when zero reasoning cannot be verified."""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = SimpleNamespace(
+            error=None,
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(
+                        content="Output",
+                        reasoning_content=None,
+                        reasoning=None,
+                    )
+                )
+            ],
+            usage=usage,
+        )
+        mock_openai_class.return_value = mock_client
+        adapter = OpenAIAdapter(
+            model="baidu/cobuddy:free#none",
+            api_key="test-key",
+            base_url="https://openrouter.ai/api/v1",
+        )
+        adapter._client = mock_client
+
+        with pytest.raises(ReasoningDisableError, match="could not be verified"):
+            adapter.generate([ModelMessage(role="user", content="Hi")])
 
     def test_generate_rejects_openrouter_non_dict_extra_body(self):
         """OpenRouter reasoning requires extra_body to remain mergeable."""

@@ -290,50 +290,47 @@ Run history SHALL identify the output mode for each run and SHALL compare deltas
 - **THEN** only prior text-mode runs for the same model are considered
 
 ### Requirement: Model Detail page displays reasoning token count
+The Model Detail page SHALL display total reasoning tokens alongside input and provider-reported total output tokens when the model has a reasoning level. The label SHALL make clear that reasoning tokens are included within total output rather than additional to it. When the model does not have a reasoning level, reasoning tokens SHALL be omitted from the display.
 
-The Model Detail page SHALL display total reasoning tokens alongside input and output tokens when the model has a reasoning level. When the model does not have a reasoning level, reasoning tokens SHALL be omitted from the display.
-
-#### Scenario: Reasoning tokens shown for reasoning model
-- **WHEN** navigating to a model detail page for `o3-mini#high` with 1,500 total reasoning tokens across all fixtures
-- **THEN** the stats line reads "127 in / 16 out / 1,500 reasoning tokens" or similar
+#### Scenario: Reasoning tokens shown as included output
+- **WHEN** a model detail page has 127 input tokens, 166 total output tokens, and 150 reasoning tokens
+- **THEN** the stats line SHALL identify 166 as total output and 150 as reasoning included within that output
 
 #### Scenario: No reasoning tokens for non-reasoning model
 - **WHEN** navigating to a model detail page for `granite-4.1-8b` with no reasoning level
-- **THEN** the stats line reads "127 in / 16 out tokens" with no reasoning mention
+- **THEN** the stats line SHALL show input and output tokens with no reasoning mention
 
 #### Scenario: Reasoning model with zero reasoning tokens
-- **WHEN** navigating to a model detail page for a model with `reasoning_level: "high"` but all reasoning_tokens are 0
-- **THEN** the stats line reads "127 in / 16 out / 0 reasoning tokens"
+- **WHEN** navigating to a model detail page for a model with `reasoning_level: "high"` but all reasoning tokens are 0
+- **THEN** the stats line SHALL identify 0 reasoning tokens within total output
 
 ### Requirement: ModelOutputCard displays reasoning tokens in compact badge
-
-The `ModelOutputCard` component SHALL display reasoning tokens in its inline token badge when the fixture result includes a reasoning level. The format SHALL be `{input}→{output}(+{reasoning}r)` where the `(+{reasoning}r)` portion is only present when reasoning level is set.
+The `ModelOutputCard` component SHALL display provider-reported output and reasoning tokens in its inline token badge when the fixture result includes a reasoning level. The badge SHALL state that reasoning belongs to output and SHALL not use additive `(+Nr)` notation.
 
 #### Scenario: Reasoning tokens in output card badge
-- **WHEN** a fixture result has `input_tokens: 127`, `output_tokens: 16`, `reasoning_tokens: 150`, and `reasoning_level: "high"`
-- **THEN** the token badge reads "127→16(+150r)"
+- **WHEN** a fixture result has `input_tokens: 127`, `output_tokens: 166`, `reasoning_tokens: 150`, and `reasoning_level: "high"`
+- **THEN** the token badge SHALL read `127 in → 166 out (150 reasoning)` or an equivalently explicit compact label
 
 #### Scenario: No reasoning portion without reasoning level
 - **WHEN** a fixture result has `input_tokens: 127`, `output_tokens: 16`, and `reasoning_level: null`
-- **THEN** the token badge reads "127→16"
+- **THEN** the token badge SHALL show 127 input and 16 output tokens without a reasoning portion
 
-#### Scenario: Reasoning level set but reasoning_tokens is null
+#### Scenario: Reasoning level set but reasoning tokens are unavailable
 - **WHEN** a fixture result has `reasoning_level: "high"` but `reasoning_tokens: null`
-- **THEN** the token badge reads "127→16(+N/A)"
+- **THEN** the token badge SHALL identify reasoning as unavailable without implying an additive token count
 
 ### Requirement: FixtureCard displays reasoning tokens when present
-
-The `FixtureCard` component SHALL display a third column for reasoning tokens when the fixture result includes a reasoning level. Without a reasoning level, the card SHALL retain its existing two-column (Input | Output) layout.
+The `FixtureCard` component SHALL display a third token column when the fixture result includes a reasoning level. The output column SHALL be labeled as total output and the reasoning column SHALL be presented as a subset of that output. Without a reasoning level, the card SHALL retain its existing two-column input/output layout.
 
 #### Scenario: FixtureCard with reasoning data
-- **WHEN** a fixture card renders for a result with `input_tokens: 127`, `output_tokens: 16`, `reasoning_tokens: 150`, and `reasoning_level: "high"`
-- **THEN** the card shows three columns: Input (127), Output (16), Reason (150)
+- **WHEN** a fixture card renders with input 127, total output 166, and reasoning 150
+- **THEN** the card SHALL show Input (127), Total output (166), and Reasoning within output (150)
 
 #### Scenario: FixtureCard without reasoning level
-- **WHEN** a fixture card renders for a result with `reasoning_level: null`
-- **THEN** the card shows two columns: Input and Output only
+- **WHEN** a fixture card renders with `reasoning_level: null`
+- **THEN** the card SHALL show two columns: Input and Output
 
-#### Scenario: FixtureCard with reasoning level but null reasoning_tokens
-- **WHEN** a fixture card renders with `reasoning_level: "high"` and `reasoning_tokens: null`
-- **THEN** the Reason column shows "N/A"
+#### Scenario: FixtureCard with unavailable reasoning count
+- **WHEN** a fixture card renders with a reasoning level but `reasoning_tokens: null`
+- **THEN** the reasoning column SHALL show `N/A`
 

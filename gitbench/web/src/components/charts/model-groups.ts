@@ -3,6 +3,7 @@ import type {
   GitBenchData,
   ModelInfo,
 } from "../../lib/types.ts";
+import { decomposeOutputTokens } from "../../lib/token-usage.ts";
 import { compareReasoningLevels } from "../../lib/sort-orders.ts";
 
 export type ModelGroupId = string;
@@ -33,7 +34,8 @@ export interface MetricEffort extends ModelGroupEffort {
   value: number;
   inputTokens?: number;
   outputTokens?: number;
-  reasoningTokens?: number;
+  visibleOutputTokens?: number | null;
+  reasoningTokens?: number | null;
   avgMs?: number;
   fixtureCount?: number;
   reasoningLevel?: string | null;
@@ -64,11 +66,13 @@ export interface GroupedMetricRow {
   representativeValue: number;
   sortValue: number;
   textInputTokens?: number;
-  textOutputTokens?: number;
+  textVisibleOutputTokens?: number;
   textReasoningTokens?: number;
+  textHasReasoningData?: boolean;
   jsonInputTokens?: number;
-  jsonOutputTokens?: number;
+  jsonVisibleOutputTokens?: number;
   jsonReasoningTokens?: number;
+  jsonHasReasoningData?: boolean;
   hasReasoningData?: boolean;
 }
 
@@ -321,14 +325,96 @@ export function tokenMetric(
     input_tokens: 0,
     output_tokens: 0,
     total_tokens: 0,
+    reasoning_tokens: null,
   };
+  const decomposition = decomposeOutputTokens(
+    tokens.output_tokens,
+    tokens.reasoning_tokens,
+  );
   return {
     ...effort,
     value: tokens.total_tokens,
     inputTokens: tokens.input_tokens,
-    outputTokens: tokens.output_tokens,
-    reasoningTokens: tokens.reasoning_tokens,
+    outputTokens: decomposition.totalOutputTokens ?? undefined,
+    visibleOutputTokens: decomposition.visibleOutputTokens,
+    reasoningTokens: decomposition.reasoningTokens,
   };
+}
+
+function closestRepresentativeEffort(
+  summary: GroupedMetricModeSummary,
+): MetricEffort {
+  return summary.efforts.reduce((closest, effort) => {
+    const distance = Math.abs(effort.value - summary.representativeValue);
+    const closestDistance = Math.abs(
+      closest.value - summary.representativeValue,
+    );
+    if (distance < closestDistance) return effort;
+    if (distance === closestDistance && effort.value < closest.value) {
+      return effort;
+    }
+    return closest;
+  });
+}
+
+function applyTokenSegments(
+  row: GroupedMetricRow,
+  mode: ConcreteOutputMode,
+): void {
+  const summary = row.modes[mode];
+  if (!summary) return;
+
+  const representative = closestRepresentativeEffort(summary);
+  summary.representativeValue = representative.value;
+  summary.rangeWhisker = [
+    representative.value - summary.minValue,
+    summary.maxValue - representative.value,
+  ];
+
+  const inputTokens = representative.inputTokens ?? 0;
+  const visibleOutputTokens = representative.visibleOutputTokens ?? 0;
+  const reasoningTokens = representative.reasoningTokens ?? 0;
+  const hasReasoningData =
+    representative.reasoningLevel != null &&
+    representative.reasoningTokens != null;
+
+  if (mode === "text") {
+    row.textRepresentativeValue = representative.value;
+    row.textRangeWhisker = summary.rangeWhisker;
+    row.textInputTokens = inputTokens;
+    row.textVisibleOutputTokens = visibleOutputTokens;
+    row.textReasoningTokens = reasoningTokens;
+    row.textHasReasoningData = hasReasoningData;
+  } else {
+    row.jsonRepresentativeValue = representative.value;
+    row.jsonRangeWhisker = summary.rangeWhisker;
+    row.jsonInputTokens = inputTokens;
+    row.jsonVisibleOutputTokens = visibleOutputTokens;
+    row.jsonReasoningTokens = reasoningTokens;
+    row.jsonHasReasoningData = hasReasoningData;
+  }
+  row.hasReasoningData = row.hasReasoningData || hasReasoningData;
+}
+
+export function buildTokenUsageRows(
+  data: GitBenchData,
+  selectedGroupIds: string[],
+  outputMode: OutputMode,
+): GroupedMetricRow[] {
+  const rows = buildGroupedMetricRows(
+    data,
+    selectedGroupIds,
+    tokenMetric,
+    "median",
+    outputMode,
+  );
+  for (const row of rows) {
+    applyTokenSegments(row, "text");
+    applyTokenSegments(row, "json_schema");
+    row.sortValue = getGroupedMetricSortValue(row, outputMode);
+    row.representativeValue = row.sortValue;
+  }
+  return rows;
 }
 
 export function buildGroupedMetricRows(

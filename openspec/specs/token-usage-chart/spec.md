@@ -100,34 +100,40 @@ The `TokenUsageChart` React component SHALL render a Recharts vertical bar chart
 - **THEN** the chart height is always 350 pixels
 
 ### Requirement: TokenUsageChart renders reasoning tokens as a stacked bar segment
+The `TokenUsageChart` component SHALL render reasoning tokens as a stacked decomposition of provider-reported output when the representative effort has reasoning data. Each representative bar SHALL stack input tokens, derived visible output tokens, and reasoning tokens so the full stack equals the representative effort's `total_tokens`. The reasoning segment SHALL use a lighter tint of the provider color. Groups with no reasoning data SHALL render input and output only.
 
-The `TokenUsageChart` component SHALL render reasoning tokens as a third stacked segment in each bar when any effort in the group has a reasoning level set. The reasoning segment SHALL use a lighter tint of the provider color. Groups with no reasoning-level efforts SHALL render as two-segment bars (input | output) only.
+#### Scenario: Reasoning stack does not double-count output
+- **WHEN** the representative effort has input 500, provider output 200, reasoning 150, and total 700
+- **THEN** the bar SHALL stack 500 input, 50 visible output, and 150 reasoning to a height of 700
 
-#### Scenario: Reasoning segment for reasoning models
-- **WHEN** a model group has efforts at `low`, `medium`, `high` with reasoning tokens [150, 200, 300]
-- **THEN** each bar shows three stacked segments: input, output, and reasoning
+#### Scenario: Representative effort supplies stack segments
+- **WHEN** a mode contains multiple effort levels and its median representative is `medium`
+- **THEN** the bar segments SHALL use the `medium` effort's token decomposition rather than sums across all effort levels
 
-#### Scenario: No reasoning segment for non-reasoning models
-- **WHEN** a model group's efforts all have `reasoning_level: null`
-- **THEN** each bar shows only input and output segments (no reasoning segment)
+#### Scenario: No reasoning segment for non-reasoning data
+- **WHEN** a representative effort has no reasoning token data
+- **THEN** its bar SHALL render input and provider output segments with no reasoning segment
 
 #### Scenario: Reasoning segment uses lighter color tint
-- **WHEN** a provider's color is `#3B82F6` (blue)
-- **THEN** the reasoning segment uses a translucent variant (e.g., `rgba(59, 130, 246, 0.35)`) visually distinct from output
+- **WHEN** a provider's color is `#3B82F6`
+- **THEN** the reasoning segment SHALL use a translucent variant visually distinct from visible output
+
+#### Scenario: Inconsistent provider counts are clamped
+- **WHEN** a representative effort reports more reasoning tokens than output tokens
+- **THEN** the visible-output segment SHALL be zero and the chart SHALL not render a negative segment
 
 ### Requirement: TokenUsageChart tooltip shows reasoning token breakdown
-
-The chart tooltip's `renderEffort` line SHALL display `in / out / r` when the effort has a reasoning level. Without a reasoning level, the line SHALL display `in / out` only. The breakdown SHALL use the same compact formatting as other values.
+The chart tooltip's effort line SHALL display provider total output and reasoning as an included subset when reasoning data exists. It MAY also display derived visible output, but SHALL not present reasoning as additional to provider output. Without reasoning data, the line SHALL display input and output only.
 
 #### Scenario: Tooltip with reasoning tokens
-- **WHEN** hovering a bar for an effort with `reasoningTokens: 150`, `inputTokens: 500`, `outputTokens: 200`
-- **THEN** the effort line reads `low: 850 (in 500 / out 200 / r 150)`
+- **WHEN** an effort has input 500, provider output 200, reasoning 150, and total 700
+- **THEN** the tooltip SHALL show total 700 and communicate that the 200 output includes 150 reasoning
 
-#### Scenario: Tooltip without reasoning level
-- **WHEN** hovering a bar for an effort with `reasoningLevel: null`
-- **THEN** the effort line reads `default: 700 (in 500 / out 200)` with no reasoning mention
+#### Scenario: Tooltip without reasoning data
+- **WHEN** an effort has input 500, output 200, and no reasoning token data
+- **THEN** the tooltip SHALL read `in 500 / out 200` or equivalent with no reasoning mention
 
 #### Scenario: Tooltip with zero reasoning tokens
-- **WHEN** hovering a bar for an effort with `reasoningLevel: "high"` and `reasoningTokens: 0`
-- **THEN** the effort line reads `high: 700 (in 500 / out 200 / r 0)`
+- **WHEN** an effort has a reasoning level, provider output 200, and `reasoning_tokens: 0`
+- **THEN** the tooltip SHALL identify zero reasoning within the 200 output tokens
 

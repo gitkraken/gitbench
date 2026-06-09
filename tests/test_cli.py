@@ -16,6 +16,8 @@ from gitbench.cli import (
     DEFAULT_DOCTOR_TIMEOUT,
     DEFAULT_JSON_OUTPUT_PATH,
     DEFAULT_RETRY_COUNT,
+    MockModelClient,
+    _discover_reasoning_preflight_targets,
     _doctor_progress_label,
     _effective_doctor_timeout,
     _effective_retry_count,
@@ -158,6 +160,67 @@ class TestGetModelClient:
         assert client.retry_count == 2
 
 
+class TestReasoningPreflightDiscovery:
+    """Tests for OpenRouter none-target discovery and deduplication."""
+
+    def test_deduplicates_matching_effective_routing_identity(self):
+        profile = {
+            "provider": "openai",
+            "base_url": "https://openrouter.ai/api/v1",
+            "extra_body": {"provider": {"order": ["DeepSeek"]}},
+        }
+        runs = [
+            ("first", profile, ["deepseek/model:none"]),
+            ("second", dict(profile), ["deepseek/model:none"]),
+        ]
+
+        targets = _discover_reasoning_preflight_targets(
+            runs,
+            base_url_override=None,
+            provider_override=None,
+            timeout_override=None,
+            retry_count_override=None,
+        )
+
+        assert len(targets) == 1
+        assert targets[0].base_model == "deepseek/model"
+        assert targets[0].extra_body == {
+            "provider": {"order": ["DeepSeek"]}
+        }
+
+    def test_routing_configuration_is_part_of_identity(self):
+        runs = [
+            (
+                "first",
+                {
+                    "provider": "openai",
+                    "base_url": "https://openrouter.ai/api/v1",
+                    "extra_body": {"provider": {"order": ["DeepSeek"]}},
+                },
+                ["deepseek/model:none"],
+            ),
+            (
+                "second",
+                {
+                    "provider": "openai",
+                    "base_url": "https://openrouter.ai/api/v1",
+                    "extra_body": {"provider": {"order": ["Together"]}},
+                },
+                ["deepseek/model:none"],
+            ),
+        ]
+
+        targets = _discover_reasoning_preflight_targets(
+            runs,
+            base_url_override=None,
+            provider_override=None,
+            timeout_override=None,
+            retry_count_override=None,
+        )
+
+        assert len(targets) == 2
+
+
 class TestModelRetryPolicy:
     """Tests for CLI/profile timeout and retry resolution."""
 
@@ -202,6 +265,420 @@ class TestListCommand:
 
 class TestRunCommand:
     """Tests for the run command."""
+
+    @staticmethod
+    def _successful_model_result(model_name, benchmark_names):
+        results = [
+            {
+                "benchmark": bench_name,
+                "total": 1,
+                "passed": 1,
+                "pass_at_k": 1.0,
+                "scores": [],
+                "errors": 0,
+            }
+            for bench_name in benchmark_names
+        ]
+        return {
+            "model": model_name,
+            "summary": {
+                "total_benchmarks": len(results),
+                "total_fixtures": len(results),
+                "total_passed": len(results),
+                "overall_pass_at_k": 1.0,
+            },
+            "results": results,
+        }
+
+    def test_run_preflights_openrouter_none_before_benchmarks(
+        self, runner, tmp_path
+    ):
+        """A verified none canary runs once before benchmark orchestration."""
+        config = {
+            "models": {
+                "openrouter": {
+                    "models": ["vendor/model:none"],
+                    "provider": "openai",
+                    "base_url": "https://openrouter.ai/api/v1",
+                    "extra_body": {"provider": {"order": ["Vendor"]}},
+                }
+            }
+        }
+        caps = {
+            "reasoning_models": {"vendor/model"},
+            "effort_matrix": {"model": ["none"]},
+            "fetched_at": "2026-01-01T00:00:00Z",
+        }
+        preflight_client = MagicMock()
+        preflight_client.generate.return_value = {
+            "text": "OK",
+            "usage": {"reasoning_tokens": 0},
+        }
+
+        def fake_run_all(
+            self,
+            benchmark_names,
+            *,
+            model_name="",
+            fixture_workers=1,
+            progress=None,
+            progress_model_name=None,
+        ):
+            return TestRunCommand._successful_model_result(
+                model_name,
+                benchmark_names,
+            )
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch(
+                     "gitbench.harness.capabilities.resolve_capabilities",
+                     return_value=caps,
+                 ), \
+                 patch(
+                     "gitbench.cli.get_model_client",
+                     return_value=preflight_client,
+                 ), \
+                 patch(
+                     "gitbench.harness.runner.BenchmarkRunner.run_all",
+                     side_effect=fake_run_all,
+                     autospec=True,
+                 ) as run_all:
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--profile",
+                        "openrouter",
+                        "--output-mode",
+                        "text",
+                    ],
+                )
+
+        assert result.exit_code == 0
+        preflight_client.generate.assert_called_once()
+        canary_kwargs = preflight_client.generate.call_args.kwargs
+        assert canary_kwargs["max_tokens"] == 16
+        assert canary_kwargs["extra_body"] == {
+            "provider": {"order": ["Vendor"]}
+        }
+        run_all.assert_called_once()
+
+    @pytest.mark.parametrize(
+        ("preflight_error", "expected"),
+        [
+            (
+                "reasoning",
+                "provider reported 2 reasoning token(s)",
+            ),
+            (
+                "missing",
+                "could not be verified",
+            ),
+            (
+                "rejected",
+                "unsupported reasoning control",
+            ),
+        ],
+    )
+    def test_run_preflight_failure_aborts_before_benchmark_call(
+        self, runner, tmp_path, preflight_error, expected
+    ):
+        """Violated, unverifiable, or rejected none targets fail closed."""
+        from gitbench.harness.model import ReasoningDisableError
+
+        config = {
+            "models": {
+                "openrouter": {
+                    "models": ["vendor/model:none"],
+                    "provider": "openai",
+                    "base_url": "https://openrouter.ai/api/v1",
+                }
+            }
+        }
+        caps = {
+            "reasoning_models": {"vendor/model"},
+            "effort_matrix": {"model": ["none"]},
+            "fetched_at": "2026-01-01T00:00:00Z",
+        }
+        if preflight_error == "reasoning":
+            error = ReasoningDisableError(
+                "vendor/model:none",
+                "provider reported 2 reasoning token(s)",
+                reasoning_tokens=2,
+            )
+        elif preflight_error == "missing":
+            error = ReasoningDisableError(
+                "vendor/model:none",
+                "provider response did not report reasoning token usage, so "
+                "reasoning disablement could not be verified",
+            )
+        else:
+            error = RuntimeError("unsupported reasoning control")
+        preflight_client = MagicMock()
+        preflight_client.generate.side_effect = error
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch(
+                     "gitbench.harness.capabilities.resolve_capabilities",
+                     return_value=caps,
+                 ), \
+                 patch(
+                     "gitbench.cli.get_model_client",
+                     return_value=preflight_client,
+                 ), \
+                 patch(
+                     "gitbench.harness.runner.BenchmarkRunner.run_all"
+                 ) as run_all:
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--profile",
+                        "openrouter",
+                        "--output-mode",
+                        "text",
+                    ],
+                )
+
+        assert result.exit_code == 1
+        assert expected in result.output
+        assert "Benchmark fixtures were not started" in result.output
+        run_all.assert_not_called()
+
+    def test_run_deduplicates_duplicate_none_preflights(self, runner, tmp_path):
+        """Duplicate model entries share one canary for the routing identity."""
+        config = {
+            "models": {
+                "openrouter": {
+                    "models": ["vendor/model:none", "vendor/model:none"],
+                    "provider": "openai",
+                    "base_url": "https://openrouter.ai/api/v1",
+                }
+            }
+        }
+        caps = {
+            "reasoning_models": {"vendor/model"},
+            "effort_matrix": {"model": ["none"]},
+            "fetched_at": "2026-01-01T00:00:00Z",
+        }
+        model_client = MagicMock()
+        model_client.generate.return_value = {
+            "text": "OK",
+            "usage": {"reasoning_tokens": 0},
+        }
+
+        def fake_run_all(
+            self,
+            benchmark_names,
+            *,
+            model_name="",
+            fixture_workers=1,
+            progress=None,
+            progress_model_name=None,
+        ):
+            return TestRunCommand._successful_model_result(
+                model_name,
+                benchmark_names,
+            )
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch(
+                     "gitbench.harness.capabilities.resolve_capabilities",
+                     return_value=caps,
+                 ), \
+                 patch("gitbench.cli.get_model_client", return_value=model_client), \
+                 patch(
+                     "gitbench.harness.runner.BenchmarkRunner.run_all",
+                     side_effect=fake_run_all,
+                     autospec=True,
+                 ):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--profile",
+                        "openrouter",
+                        "--output-mode",
+                        "text",
+                    ],
+                )
+
+        assert result.exit_code == 0
+        model_client.generate.assert_called_once()
+
+    def test_runtime_reasoning_violation_exits_nonzero_after_preflight(
+        self, runner, tmp_path
+    ):
+        """A runtime none violation is fatal and produces no result artifact."""
+        from gitbench.harness.model import ReasoningDisableError
+
+        config = {
+            "models": {
+                "openrouter": {
+                    "models": ["vendor/model:none"],
+                    "provider": "openai",
+                    "base_url": "https://openrouter.ai/api/v1",
+                }
+            }
+        }
+        caps = {
+            "reasoning_models": {"vendor/model"},
+            "effort_matrix": {"model": ["none"]},
+            "fetched_at": "2026-01-01T00:00:00Z",
+        }
+        output_path = tmp_path / "results.json"
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch(
+                     "gitbench.harness.capabilities.resolve_capabilities",
+                     return_value=caps,
+                 ), \
+                 patch("gitbench.cli._run_reasoning_preflights") as preflight, \
+                 patch(
+                     "gitbench.harness.runner.BenchmarkRunner.run_all",
+                     side_effect=ReasoningDisableError(
+                         "vendor/model:none",
+                         "provider reported 1 reasoning token(s)",
+                         reasoning_tokens=1,
+                     ),
+                 ):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--profile",
+                        "openrouter",
+                        "--output-mode",
+                        "text",
+                        "--json-output",
+                        str(output_path),
+                    ],
+                )
+
+        assert result.exit_code == 1
+        assert "Fatal reasoning-disable violation" in result.output
+        assert not output_path.exists()
+        preflight.assert_called_once()
+
+    def test_concurrent_runtime_violation_stops_new_model_scheduling(
+        self, runner, tmp_path
+    ):
+        """A fatal target prevents queued model targets from starting."""
+        from gitbench.harness.model import ReasoningDisableError
+
+        config = {
+            "models": {
+                "openrouter": {
+                    "models": [
+                        "vendor/a:none",
+                        "vendor/b:high",
+                        "vendor/c:high",
+                    ],
+                    "provider": "openai",
+                    "base_url": "https://openrouter.ai/api/v1",
+                }
+            }
+        }
+        caps = {
+            "reasoning_models": {"vendor/a", "vendor/b", "vendor/c"},
+            "effort_matrix": {
+                "a": ["none"],
+                "b": ["high"],
+                "c": ["high"],
+            },
+            "fetched_at": "2026-01-01T00:00:00Z",
+        }
+        started: list[str] = []
+        second_started = threading.Event()
+
+        def fake_run_all(
+            self,
+            benchmark_names,
+            *,
+            model_name="",
+            fixture_workers=1,
+            progress=None,
+            progress_model_name=None,
+        ):
+            started.append(model_name)
+            if model_name == "vendor/a:none":
+                assert second_started.wait(timeout=1)
+                raise ReasoningDisableError(
+                    model_name,
+                    "provider reported 1 reasoning token(s)",
+                    reasoning_tokens=1,
+                )
+            second_started.set()
+            time.sleep(0.05)
+            return TestRunCommand._successful_model_result(
+                model_name,
+                benchmark_names,
+            )
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("gitbench.json", "w") as f:
+                json.dump(config, f)
+
+            with patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch(
+                     "gitbench.harness.capabilities.resolve_capabilities",
+                     return_value=caps,
+                 ), \
+                 patch("gitbench.cli._run_reasoning_preflights") as preflight, \
+                 patch(
+                     "gitbench.harness.runner.BenchmarkRunner.run_all",
+                     side_effect=fake_run_all,
+                     autospec=True,
+                 ):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--profile",
+                        "openrouter",
+                        "--model-workers",
+                        "2",
+                        "--output-mode",
+                        "text",
+                    ],
+                )
+
+        assert result.exit_code == 1
+        assert "vendor/a:none" in started
+        assert "vendor/b:high" in started
+        assert "vendor/c:high" not in started
+        preflight.assert_called_once()
 
     def test_run_requires_benchmark_option(self, runner):
         """Test that run command requires --benchmark option."""
@@ -985,7 +1462,7 @@ class TestRunCommand:
                             "minimax/minimax-m2.5:medium",
                             "nvidia/nemotron-3-nano-30b-a3b:none",
                             "mistralai/mistral-small-3.2:none",
-                            "deepseek/deepseek-v4-flash:none",
+                            "deepseek/deepseek-v4-flash:high",
                         ],
                         "provider": "openai",
                         "base_url": "https://openrouter.ai/api/v1",
@@ -997,6 +1474,7 @@ class TestRunCommand:
 
             with patch("gitbench.cli.check_git_availability", return_value=True), \
                  patch("gitbench.cli._benchmark_registry", {"commit_messages": object()}), \
+                 patch("gitbench.cli._run_reasoning_preflights"), \
                  patch("gitbench.harness.runner.BenchmarkRunner.run_all", side_effect=fake_run_all, autospec=True), \
                  patch("gitbench.harness.capabilities.resolve_capabilities", return_value={
                      "reasoning_models": {
@@ -1009,7 +1487,7 @@ class TestRunCommand:
                          "minimax-m2.5": ["none", "minimal", "low", "medium", "high", "xhigh"],
                          "nemotron-3-nano-30b-a3b": ["none", "minimal", "low", "medium", "high", "xhigh"],
                          "mistral-small-3.2": ["none", "minimal", "low", "medium", "high", "xhigh"],
-                         "deepseek-v4-flash": ["none", "minimal", "low", "medium", "high", "xhigh"],
+                         "deepseek-v4-flash": ["high", "xhigh"],
                      },
                      "fetched_at": "2026-01-01T00:00:00Z",
                  }):
@@ -2825,6 +3303,121 @@ class TestRunnerReasoningLevel:
         _, score = runner._run_fixture(FakeBench(), fixture)
         assert score.reasoning_level is None
 
+    def test_runner_propagates_reasoning_disable_error_without_score(self):
+        """Fatal reasoning violations bypass ordinary failed-score conversion."""
+        from gitbench.harness.model import ReasoningDisableError
+        from gitbench.harness.runner import BenchmarkRunner
+        from gitbench.harness.types import Fixture
+
+        class FatalClient:
+            reasoning_level = "none"
+
+            def generate(self, messages, **kwargs):
+                raise ReasoningDisableError(
+                    "vendor/model:none",
+                    "provider reported 1 reasoning token(s)",
+                    reasoning_tokens=1,
+                )
+
+        class FakeBench:
+            name = "fake"
+
+            def load_fixtures(self):
+                return [
+                    Fixture(
+                        id="f1",
+                        description="test",
+                        setup=[],
+                        prompt="",
+                        expected="",
+                        scoring={"type": "exact_match", "threshold": 1.0},
+                    )
+                ]
+
+            def setup_fixture(self, fixture):
+                return None, None
+
+            def get_diff(self, repo_path):
+                return ""
+
+            def format_prompt(self, fixture, diff):
+                return ""
+
+        benchmark_runner = BenchmarkRunner({"fake": FakeBench}, FatalClient())
+
+        with pytest.raises(ReasoningDisableError):
+            benchmark_runner.run_all(["fake"], model_name="vendor/model:none")
+
+    def test_parallel_runner_stops_scheduling_after_reasoning_violation(self):
+        """Parallel fixtures cancel queued work after the first fatal response."""
+        from gitbench.harness.model import ReasoningDisableError
+        from gitbench.harness.runner import BenchmarkRunner
+        from gitbench.harness.types import Fixture, Score
+
+        class CoordinatedClient:
+            reasoning_level = "none"
+
+            def __init__(self):
+                self.call_count = 0
+                self.lock = threading.Lock()
+                self.second_started = threading.Event()
+
+            def generate(self, messages, **kwargs):
+                with self.lock:
+                    self.call_count += 1
+                    call_number = self.call_count
+                if call_number == 1:
+                    assert self.second_started.wait(timeout=1)
+                    raise ReasoningDisableError(
+                        "vendor/model:none",
+                        "provider reported 1 reasoning token(s)",
+                        reasoning_tokens=1,
+                    )
+                self.second_started.set()
+                time.sleep(0.05)
+                return {"text": "ok", "usage": {"reasoning_tokens": 0}}
+
+        class FakeBench:
+            name = "fake"
+
+            def load_fixtures(self):
+                return [
+                    Fixture(
+                        id=f"f{index}",
+                        description="test",
+                        setup=[],
+                        prompt="",
+                        expected="",
+                        scoring={"type": "exact_match", "threshold": 1.0},
+                    )
+                    for index in range(5)
+                ]
+
+            def setup_fixture(self, fixture):
+                return None, None
+
+            def get_diff(self, repo_path):
+                return ""
+
+            def format_prompt(self, fixture, diff):
+                return ""
+
+            def score(self, fixture, output, repo_path=None):
+                return Score(
+                    fixture_id=fixture.id,
+                    passed=True,
+                    similarity=1.0,
+                    model_output=output,
+                )
+
+        client = CoordinatedClient()
+        benchmark_runner = BenchmarkRunner({"fake": FakeBench}, client)
+
+        with pytest.raises(ReasoningDisableError):
+            benchmark_runner.run_benchmark("fake", fixture_workers=2)
+
+        assert client.call_count == 2
+
 
 class TestRunnerSelectedFixtures:
     """Tests for internal selected fixture execution."""
@@ -2925,8 +3518,8 @@ class TestValidationGate:
                 )
             assert result.exit_code == 0
 
-    def test_run_with_invalid_model_fails_gate(self, runner):
-        """Invalid model-effort combo aborts before API calls."""
+    def test_run_undocumented_level_passes_with_warning(self, runner):
+        """Undocumented levels for known models now pass (warning logged)."""
         caps = {
             "reasoning_models": {"openai/gpt-4o-mini"},
             "effort_matrix": {
@@ -2941,13 +3534,52 @@ class TestValidationGate:
 
             from unittest.mock import patch
             with patch("gitbench.cli.check_git_availability", return_value=True), \
-                 patch("gitbench.harness.capabilities.resolve_capabilities", return_value=caps):
+                 patch("gitbench.harness.capabilities.resolve_capabilities", return_value=caps), \
+                 patch("gitbench.cli.get_model_client", return_value=MockModelClient()):
                 result = runner.invoke(
                     cli,
                     ["run", "--benchmark", "commit_messages", "--model", "gpt-4o-mini#xhigh"],
                 )
-            assert result.exit_code == 1
-            assert "does not support" in result.output.lower()
+            # Undocumented levels now warn but pass validation (OpenRouter may map them)
+            assert result.exit_code == 0
+
+    @pytest.mark.parametrize("level", ["none", "minimal", "low", "medium"])
+    def test_deepseek_v4_undocumented_efforts_pass_validation(self, runner, level):
+        """Undocumented DeepSeek V4 efforts now pass static validation."""
+        caps = {
+            "reasoning_models": {"deepseek/deepseek-v4-flash"},
+            "effort_matrix": {"deepseek-v4-flash": ["high", "xhigh"]},
+            "fetched_at": "2026-01-01T00:00:00Z",
+        }
+
+        with runner.isolated_filesystem():
+            with open("gitbench.json", "w") as f:
+                json.dump(
+                    {"models": {"test": {"models": ["mock"], "provider": "openai"}}},
+                    f,
+                )
+
+            from unittest.mock import patch
+
+            with patch("gitbench.cli.check_git_availability", return_value=True), \
+                 patch(
+                     "gitbench.harness.capabilities.resolve_capabilities",
+                     return_value=caps,
+                 ), \
+                 patch("gitbench.cli.get_model_client", return_value=MockModelClient()):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "commit_messages",
+                        "--model",
+                        f"deepseek/deepseek-v4-flash:{level}",
+                    ],
+                )
+
+        # Undocumented levels now pass validation (warning logged, not error)
+        assert result.exit_code == 0
 
     def test_run_with_invalid_level_name_fails_gate(self, runner):
         """Invalid level name (not in VALID_REASONING_LEVELS) fails gate."""
@@ -2971,8 +3603,8 @@ class TestValidationGate:
             assert result.exit_code == 1
             assert "invalid reasoning level" in result.output.lower()
 
-    def test_run_all_models_with_invalid_model_fails_gate(self, runner):
-        """--all-models with invalid config aborts before benchmark execution."""
+    def test_run_all_models_undocumented_level_passes(self, runner):
+        """--all-models with undocumented levels now passes (warning logged)."""
         caps = {
             "reasoning_models": {"openai/gpt-4o-mini"},
             "effort_matrix": {
@@ -2995,13 +3627,13 @@ class TestValidationGate:
 
             from unittest.mock import patch
             with patch("gitbench.cli.check_git_availability", return_value=True), \
-                 patch("gitbench.harness.capabilities.resolve_capabilities", return_value=caps):
+                 patch("gitbench.harness.capabilities.resolve_capabilities", return_value=caps), \
+                 patch("gitbench.cli.get_model_client", return_value=MockModelClient()):
                 result = runner.invoke(
                     cli,
                     ["run", "--benchmark", "commit_messages", "--all-models"],
                 )
-            assert result.exit_code == 1
-            assert "does not support" in result.output.lower() or "xhigh" in result.output.lower()
+            assert result.exit_code == 0
 
     def test_ollama_model_effort_warns_but_passes(self, runner):
         """Ollama models with effort suffix warn but pass validation."""

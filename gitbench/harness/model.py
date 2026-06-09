@@ -43,6 +43,99 @@ class ModelResponseError(RuntimeError):
     """Raised when a provider response cannot be parsed as model text."""
 
 
+class ReasoningDisableError(RuntimeError):
+    """Raised when a ``none`` response cannot prove reasoning was disabled."""
+
+    def __init__(
+        self,
+        model: str,
+        reason: str,
+        *,
+        reasoning_tokens: Any = None,
+        reasoning_content: Any = None,
+    ) -> None:
+        self.model = model
+        self.reason = reason
+        self.reasoning_tokens = reasoning_tokens
+        self.reasoning_content = reasoning_content
+        super().__init__(
+            f"Model '{model}' violated the reasoning_level=none invariant: {reason}"
+        )
+
+
+def _apply_reasoning_request(
+    kwargs: dict[str, Any],
+    *,
+    reasoning_level: str | None,
+    base_url: str | None,
+) -> dict[str, Any]:
+    """Return request kwargs with provider-specific reasoning controls."""
+    request_kwargs = dict(kwargs)
+    if not reasoning_level:
+        return request_kwargs
+
+    if not _is_openrouter_base_url(base_url):
+        request_kwargs["reasoning_effort"] = reasoning_level
+        return request_kwargs
+
+    extra_body = request_kwargs.get("extra_body")
+    if extra_body is None:
+        extra_body = {}
+    elif not isinstance(extra_body, dict):
+        raise TypeError(
+            "extra_body must be a dict when OpenRouter reasoning is used"
+        )
+    else:
+        extra_body = dict(extra_body)
+
+    if reasoning_level == "none":
+        extra_body["reasoning"] = {"enabled": False}
+    else:
+        extra_body["reasoning"] = {"effort": reasoning_level}
+    request_kwargs["extra_body"] = extra_body
+    return request_kwargs
+
+
+def _has_reasoning_content(value: Any) -> bool:
+    """Return whether a normalized reasoning field contains content."""
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    return bool(value)
+
+
+def _validate_reasoning_disabled(
+    *,
+    model: str,
+    usage: dict[str, Any] | None,
+    reasoning_content: Any,
+) -> None:
+    """Require explicit zero reasoning telemetry and no reasoning content."""
+    if usage is None or usage.get("reasoning_tokens") is None:
+        raise ReasoningDisableError(
+            model,
+            "provider response did not report reasoning token usage, so reasoning "
+            "disablement could not be verified",
+        )
+
+    reasoning_tokens = usage["reasoning_tokens"]
+    if reasoning_tokens != 0:
+        raise ReasoningDisableError(
+            model,
+            f"provider reported {reasoning_tokens} reasoning token(s)",
+            reasoning_tokens=reasoning_tokens,
+        )
+
+    if _has_reasoning_content(reasoning_content):
+        raise ReasoningDisableError(
+            model,
+            "provider returned non-empty reasoning content",
+            reasoning_tokens=reasoning_tokens,
+            reasoning_content=reasoning_content,
+        )
+
+
 def _format_provider_error(error_obj: Any) -> str:
     """Extract a useful message from provider-specific error payloads."""
     if isinstance(error_obj, dict):
@@ -173,21 +266,11 @@ class OpenAIAdapter(ModelInterface):
         model_messages = [msg.to_dict() for msg in messages]
         last_error: Exception | None = None
 
-        if self.reasoning_level:
-            if _is_openrouter_base_url(self._base_url):
-                extra_body = kwargs.get("extra_body")
-                if extra_body is None:
-                    extra_body = {}
-                elif not isinstance(extra_body, dict):
-                    raise TypeError(
-                        "extra_body must be a dict when OpenRouter reasoning is used"
-                    )
-                else:
-                    extra_body = dict(extra_body)
-                extra_body["reasoning"] = {"effort": self.reasoning_level}
-                kwargs["extra_body"] = extra_body
-            else:
-                kwargs["reasoning_effort"] = self.reasoning_level
+        kwargs = _apply_reasoning_request(
+            kwargs,
+            reasoning_level=self.reasoning_level,
+            base_url=self._base_url,
+        )
 
         # Extract structured-output contract from kwargs
         structured_output_contract = kwargs.pop("structured_output_contract", None)
@@ -262,6 +345,7 @@ class OpenAIAdapter(ModelInterface):
                             "role": "assistant",
                             "content": text,
                         }
+                        reasoning_content = None
                         choices = getattr(response, "choices", None)
                         if choices and len(choices) > 0:
                             message = getattr(choices[0], "message", None)
@@ -270,12 +354,21 @@ class OpenAIAdapter(ModelInterface):
                                     message, "reasoning_content", None
                                 ) or getattr(
                                     message, "reasoning", None
+                                ) or getattr(
+                                    message, "reasoning_details", None
                                 )
                                 if reasoning_content is not None:
                                     assistant_entry["reasoning_content"] = (
                                         reasoning_content
                                     )
                         transcript.append(assistant_entry)
+
+                        if self.reasoning_level == "none":
+                            _validate_reasoning_disabled(
+                                model=self._full_model,
+                                usage=usage,
+                                reasoning_content=reasoning_content,
+                            )
 
                         result.append({
                             "text": text,

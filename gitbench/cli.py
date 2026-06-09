@@ -8,10 +8,14 @@ import os
 import shutil
 import subprocess
 import sys
-from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
+import time
+import urllib.request
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import click
 from rich.console import Console
@@ -20,6 +24,7 @@ from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedCo
 from gitbench.benchmarks import Benchmark
 from gitbench.config import find_profile_for_model, load_config, load_project_env, resolve_profile
 from gitbench.export import FORMAT_REGISTRY, get_available_formats
+from gitbench.harness.capabilities import validate_models, load_effort_matrix, save_effort_mapping
 from gitbench.harness.capacity import (
     CapacityInfo,
     RequestBudgetCoordinator,
@@ -28,8 +33,13 @@ from gitbench.harness.capacity import (
     global_request_limit,
     resolve_group_limits,
 )
-from gitbench.harness.model import MockModelClient, OllamaAdapter, OpenAIAdapter, parse_model_name
-from gitbench.harness.capabilities import validate_models
+from gitbench.harness.model import (
+    MockModelClient,
+    OllamaAdapter,
+    OpenAIAdapter,
+    ReasoningDisableError,
+    parse_model_name,
+)
 from gitbench.harness.reasoning import parse_model_reasoning
 from gitbench.harness.runner import BenchmarkRunner, RunProgress
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
@@ -57,6 +67,39 @@ DEFAULT_LOG_DIR = "gitbench-logs"
 DEFAULT_RETRY_COUNT = 3
 DEFAULT_DOCTOR_TIMEOUT = 120
 DEFAULT_BAILOUT_FAILURES = 3
+REASONING_PREFLIGHT_MAX_TOKENS = 16
+REASONING_PREFLIGHT_PROMPT = (
+    "Reply with exactly OK. Do not explain your answer."
+)
+
+
+@dataclass(frozen=True)
+class ReasoningPreflightTarget:
+    """One unique OpenRouter target that must prove reasoning is disabled."""
+
+    profile_name: str
+    model: str
+    base_model: str
+    provider: str
+    base_url: str
+    api_key: str | None
+    timeout: int | None
+    retry_count: int
+    extra_body: dict[str, Any] | None
+
+
+@dataclass(frozen=True)
+class EffortPreflightTarget:
+    """One unique model+effort pair to validate via Responses API."""
+
+    profile_name: str
+    model: str
+    base_model: str
+    requested_effort: str
+    provider: str
+    base_url: str
+    api_key: str | None
+    timeout: int | None
 
 
 def _progress_model_names(models: list[str]) -> list[str]:
@@ -145,6 +188,467 @@ def _resolved_provider_name(profile_conf: dict) -> str:
     if base_url and ("localhost" in base_url or "127.0.0.1" in base_url):
         return "ollama"
     return "openai"
+
+
+def _effective_provider_name(
+    profile_conf: dict,
+    *,
+    base_url: str | None,
+    provider_override: str | None,
+) -> str:
+    """Return the provider used after applying CLI overrides."""
+    if provider_override:
+        return provider_override
+    provider = profile_conf.get("provider")
+    if provider:
+        return str(provider)
+    if base_url and ("localhost" in base_url or "127.0.0.1" in base_url):
+        return "ollama"
+    return "openai"
+
+
+def _profile_model_generate_kwargs(profile_conf: dict) -> dict[str, Any]:
+    """Return request kwargs configured for every call in a profile."""
+    extra_body = profile_conf.get("extra_body")
+    if extra_body is None:
+        return {}
+    if not isinstance(extra_body, dict):
+        raise click.ClickException("Profile field 'extra_body' must be a JSON object.")
+    return {"extra_body": extra_body}
+
+
+def _discover_reasoning_preflight_targets(
+    runs: list[tuple[str, dict, list[str]]],
+    *,
+    base_url_override: str | None,
+    provider_override: str | None,
+    timeout_override: int | None,
+    retry_count_override: int | None,
+) -> list[ReasoningPreflightTarget]:
+    """Deduplicate statically valid OpenRouter ``none`` targets."""
+    targets: list[ReasoningPreflightTarget] = []
+    seen: set[tuple[str, str, str, str]] = set()
+
+    for profile_name, profile_conf, models in runs:
+        effective_base_url = base_url_override or profile_conf.get("base_url")
+        if not effective_base_url or "openrouter.ai" not in effective_base_url.lower():
+            continue
+        effective_provider = _effective_provider_name(
+            profile_conf,
+            base_url=effective_base_url,
+            provider_override=provider_override,
+        )
+        request_kwargs = _profile_model_generate_kwargs(profile_conf)
+        extra_body = request_kwargs.get("extra_body")
+        routing_identity = json.dumps(
+            extra_body or {},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+
+        for full_model in models:
+            if full_model == "mock" or full_model.startswith(("mock#", "mock:")):
+                continue
+            base_model, reasoning_level = parse_model_reasoning(full_model)
+            if reasoning_level != "none":
+                continue
+
+            identity = (
+                effective_provider.lower(),
+                str(effective_base_url).rstrip("/").lower(),
+                base_model,
+                routing_identity,
+            )
+            if identity in seen:
+                continue
+            seen.add(identity)
+            targets.append(
+                ReasoningPreflightTarget(
+                    profile_name=profile_name,
+                    model=full_model,
+                    base_model=base_model,
+                    provider=effective_provider,
+                    base_url=str(effective_base_url),
+                    api_key=profile_conf.get("api_key"),
+                    timeout=_effective_timeout(profile_conf, timeout_override),
+                    retry_count=_effective_retry_count(
+                        profile_conf,
+                        retry_count_override,
+                    ),
+                    extra_body=extra_body,
+                )
+            )
+
+    return targets
+
+
+def _run_reasoning_preflights(
+    targets: list[ReasoningPreflightTarget],
+) -> None:
+    """Run one bounded canary for every unique OpenRouter ``none`` target."""
+    failures: list[str] = []
+
+    for target in targets:
+        logger.info(
+            "Preflighting reasoning disablement for %s via %s",
+            target.model,
+            target.base_url,
+        )
+        model_client = get_model_client(
+            target.model,
+            timeout=target.timeout,
+            retry_count=target.retry_count,
+            base_url=target.base_url,
+            api_key=target.api_key,
+            provider=target.provider,
+        )
+        generate_kwargs: dict[str, Any] = {
+            "max_tokens": REASONING_PREFLIGHT_MAX_TOKENS,
+        }
+        if target.extra_body is not None:
+            generate_kwargs["extra_body"] = target.extra_body
+
+        try:
+            model_client.generate(
+                [ModelMessage(role="user", content=REASONING_PREFLIGHT_PROMPT)],
+                **generate_kwargs,
+            )
+        except ReasoningDisableError as exc:
+            failures.append(
+                f"'{target.model}': {exc.reason}"
+            )
+        except Exception as exc:
+            failures.append(
+                f"'{target.model}': {type(exc).__name__}: {exc}"
+            )
+
+    if failures:
+        raise click.ClickException(
+            "Reasoning preflight failed for "
+            f"{len(failures)} model(s) that did not disable reasoning:\n\n  "
+            + "\n  ".join(failures)
+            + "\n\nBenchmark fixtures were not started."
+        )
+
+
+EFFORT_PREFLIGHT_PROMPTS = [
+    # Counting / character reasoning
+    (
+        "Count the number of 'r' letters in the word 'strawberry'. "
+        "Think step by step, then answer with just the number."
+    ),
+    # Arithmetic
+    (
+        "A car wash takes 12 minutes per car. How many cars can be washed "
+        "in 2 hours? Think step by step, then answer with just the number."
+    ),
+    # Common sense / trade-off reasoning
+    (
+        "The car wash is only 100m away from my house. Should I walk "
+        "or drive? Think step by step, then answer with just 'walk' "
+        "or 'drive'."
+    ),
+]
+EFFORT_PREFLIGHT_DELAY_S = 1.0  # pause between preflight calls to avoid rate limits
+
+
+def _responses_url(base_url: str) -> str:
+    """Normalize a base URL so it points at the Responses API."""
+    normalized = base_url.rstrip("/")
+    # OpenRouter's chat completions URL typically ends with /v1
+    if normalized.endswith("/v1"):
+        return normalized + "/responses"
+    return normalized + "/responses"
+
+
+def _discover_effort_preflight_targets(
+    runs: list[tuple[str, dict, list[str]]],
+    *,
+    base_url_override: str | None,
+    provider_override: str | None,
+    timeout_override: int | None,
+) -> list[EffortPreflightTarget]:
+    """Collect unique OpenRouter model+effort pairs (except bare models with no suffix).
+
+    Skips pairs already verified in the effort matrix cache.
+    """
+    matrix = load_effort_matrix()
+    targets: list[EffortPreflightTarget] = []
+    seen: set[tuple[str, str, str]] = set()
+    skipped: int = 0
+
+    for profile_name, profile_conf, models in runs:
+        effective_base_url = base_url_override or profile_conf.get("base_url")
+        if not effective_base_url or "openrouter.ai" not in effective_base_url.lower():
+            continue
+        effective_provider = _effective_provider_name(
+            profile_conf,
+            base_url=effective_base_url,
+            provider_override=provider_override,
+        )
+        for full_model in models:
+            if full_model == "mock" or full_model.startswith(("mock#", "mock:")):
+                continue
+            base_model, effort = parse_model_reasoning(full_model)
+            if effort is None:
+                continue
+
+            normalized = base_model.split("/", 1)[1] if "/" in base_model else base_model
+
+            # Skip already-verified combos
+            if normalized in matrix and effort in matrix[normalized]:
+                skipped += 1
+                continue
+
+            identity = (
+                effective_provider.lower(),
+                str(effective_base_url).rstrip("/").lower(),
+                base_model,
+                effort,
+            )
+            if identity in seen:
+                continue
+            seen.add(identity)
+            targets.append(
+                EffortPreflightTarget(
+                    profile_name=profile_name,
+                    model=full_model,
+                    base_model=base_model,
+                    requested_effort=effort,
+                    provider=effective_provider,
+                    base_url=str(effective_base_url),
+                    api_key=profile_conf.get("api_key"),
+                    timeout=_effective_timeout(profile_conf, timeout_override),
+                )
+            )
+
+    if skipped:
+        logger.info(
+            "Skipped %d already-verified effort mapping(s); %d to preflight",
+            skipped,
+            len(targets),
+        )
+
+    return targets
+
+
+def _call_responses_api(
+    base_url: str,
+    model: str,
+    effort: str,
+    prompt: str,
+    api_key: str | None,
+    timeout: int,
+) -> dict | None:
+    """Make a single Responses API call and return the parsed body."""
+    url = _responses_url(base_url)
+    payload = json.dumps({
+        "model": model,
+        "input": prompt,
+        "reasoning": {"effort": effort},
+    })
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    request = urllib.request.Request(
+        url, data=payload.encode("utf-8"), headers=headers, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return None
+
+
+def _check_reasoning_evidence(body: dict) -> tuple[bool, int, bool]:
+    """Return (has_evidence, reasoning_tokens, has_reasoning_output)."""
+    output = body.get("output") or []
+    usage = body.get("usage") or {}
+    output_details = usage.get("output_tokens_details") or {}
+    reasoning_tokens = output_details.get("reasoning_tokens") or 0
+    has_reasoning_output = any(
+        item.get("type") == "reasoning" for item in output
+    )
+    has_evidence = (
+        isinstance(reasoning_tokens, (int, float)) and reasoning_tokens > 0
+    ) or has_reasoning_output
+    return has_evidence, reasoning_tokens, has_reasoning_output
+
+
+def _run_effort_preflights(
+    targets: list[EffortPreflightTarget],
+) -> None:
+    """Query the Responses API to discover effective effort for each target.
+
+    Verifies actual reasoning occurred by checking for reasoning output
+    items and reasoning token counts.  Runs every target before reporting
+    failures so the matrix cache is populated for passing models.
+    """
+    failures: list[str] = []
+    # Load matrix to check whether model supports reasoning at OTHER levels
+    matrix = load_effort_matrix()
+    first = True
+
+    logger.info(
+        "Effort preflight: verifying %d model-effort pair(s)", len(targets)
+    )
+    for t in targets:
+        logger.debug("  -> %s (effort=%s)", t.model, t.requested_effort)
+
+    for target in targets:
+        if not first:
+            time.sleep(EFFORT_PREFLIGHT_DELAY_S)
+        first = False
+
+        click.echo(
+            f"  Effort preflight: {target.model} (requested {target.requested_effort})…",
+            err=True,
+            nl=False,
+        )
+
+        effective_effort = None
+        has_evidence = False
+        reasoning_tokens = 0
+        has_reasoning_output = False
+
+        for prompt_index, prompt in enumerate(EFFORT_PREFLIGHT_PROMPTS):
+            body = _call_responses_api(
+                base_url=target.base_url,
+                model=target.base_model,
+                effort=target.requested_effort,
+                prompt=prompt,
+                api_key=target.api_key,
+                timeout=target.timeout or 30,
+            )
+            if body is None:
+                continue
+            if body.get("error"):
+                continue
+
+            effective_effort = (body.get("reasoning") or {}).get("effort")
+            has_evidence, reasoning_tokens, has_reasoning_output = _check_reasoning_evidence(body)
+
+            if target.requested_effort == "none" or has_evidence:
+                break  # got what we need
+
+            # Not reasoning yet — pause before next retry
+            if prompt_index < len(EFFORT_PREFLIGHT_PROMPTS) - 1:
+                time.sleep(0.5)
+
+        if body is None or body.get("error"):
+            api_msg = "API error"
+            if body and body.get("error"):
+                api_err = body["error"]
+                api_msg = f"API error: {api_err.get('message', str(api_err)) if isinstance(api_err, dict) else str(api_err)}"
+            click.echo(f" {api_msg}", err=True)
+            continue
+
+        if effective_effort is None:
+            click.echo(" no reasoning.effort in response", err=True)
+            continue
+
+        if target.requested_effort != "none" and not has_evidence:
+            normalized = (
+                target.base_model.split("/", 1)[1]
+                if "/" in target.base_model
+                else target.base_model
+            )
+            model_supports_reasoning = bool(matrix.get(normalized))
+
+            # Log the raw response details for diagnosis
+            output = body.get("output") or []
+            logger.warning(
+                "Effort preflight for '%s' (effort=%s): no reasoning evidence. "
+                "effective_effort=%s reasoning_tokens=%s has_reasoning_output=%s "
+                "output_types=%s",
+                target.model,
+                target.requested_effort,
+                effective_effort,
+                reasoning_tokens,
+                has_reasoning_output,
+                [item.get("type") for item in output],
+            )
+
+            if model_supports_reasoning:
+                click.echo(
+                    f" effort '{target.requested_effort}' not honored",
+                    err=True,
+                )
+                failures.append(
+                    f"'{target.model}': requested effort "
+                    f"'{target.requested_effort}' produced no reasoning, "
+                    f"but lower effort levels are supported. "
+                    f"This model may not support high effort levels."
+                )
+            else:
+                click.echo(" model does not support reasoning", err=True)
+                failures.append(
+                    f"'{target.model}': requested effort "
+                    f"'{target.requested_effort}' but the model produced "
+                    f"no reasoning output or tokens."
+                )
+            continue
+
+        if effective_effort is None:
+            click.echo(" no reasoning.effort in response", err=True)
+            logger.warning(
+                "Effort preflight for '%s' (requested effort=%s): "
+                "Responses API did not return reasoning.effort",
+                target.model,
+                target.requested_effort,
+            )
+            continue
+
+        if effective_effort != target.requested_effort:
+            click.echo(
+                f" mapped to {effective_effort}",
+                err=True,
+            )
+            logger.warning(
+                "Effort mismatch for '%s': requested '%s' but provider "
+                "used '%s'. OpenRouter mapped the requested effort to the "
+                "nearest supported level.",
+                target.model,
+                target.requested_effort,
+                effective_effort,
+            )
+        else:
+            reasoning_note = ""
+            if target.requested_effort == "none" and has_evidence:
+                reasoning_note = " but reasoning was produced"
+            elif target.requested_effort != "none" and has_evidence:
+                if prompt_index > 0:
+                    reasoning_note = f" (verified, prompt {prompt_index + 1})"
+                else:
+                    reasoning_note = " (verified)"
+            click.echo(f" confirmed ({effective_effort}){reasoning_note}", err=True)
+            logger.info(
+                "Effort preflight for '%s': requested '%s', effective '%s'",
+                target.model,
+                target.requested_effort,
+                effective_effort,
+            )
+
+        # Persist the verified mapping
+        normalized = (
+            target.base_model.split("/", 1)[1]
+            if "/" in target.base_model
+            else target.base_model
+        )
+        save_effort_mapping(
+            model_id=normalized,
+            requested=target.requested_effort,
+            effective=effective_effort,
+        )
+
+    if failures:
+        raise click.ClickException(
+            "Effort preflight failed for "
+            f"{len(failures)} model(s):\n\n  "
+            + "\n  ".join(failures)
+            + "\n\nRemove these models or adjust their effort levels."
+        )
 
 
 def _doctor_progress_label(profile_conf: dict, model: str) -> str:
@@ -638,7 +1142,11 @@ def _doctor_one_file(
             api_key=profile_conf.get("api_key"),
             provider=profile_conf.get("provider"),
         )
-        runner = BenchmarkRunner(_benchmark_registry, model_client)
+        runner = BenchmarkRunner(
+            _benchmark_registry,
+            model_client,
+            model_generate_kwargs=_profile_model_generate_kwargs(profile_conf),
+        )
         result = runner.run_benchmark(
             target.benchmark,
             selected_fixture_ids=list(target.fixture_ids),
@@ -1162,6 +1670,13 @@ def run(
         )
         sys.exit(1)
 
+    preflight_targets = _discover_reasoning_preflight_targets(
+        runs,
+        base_url_override=base_url,
+        provider_override=provider,
+        timeout_override=timeout,
+        retry_count_override=retry_count,
+    )
     capacity_by_target: dict[tuple[int, int], CapacityInfo] = {}
     for run_index, (_profile_name, profile_conf, models_list) in enumerate(runs):
         for model_index, model_name in enumerate(models_list):
@@ -1197,6 +1712,21 @@ def run(
         raise click.ClickException(
             f"Unknown benchmark: {unknown_benchmarks[0]}. Available: {available}"
         )
+
+    _run_reasoning_preflights(preflight_targets)
+
+    effort_targets = _discover_effort_preflight_targets(
+        runs,
+        base_url_override=base_url,
+        provider_override=provider,
+        timeout_override=timeout,
+    )
+    if effort_targets:
+        logger.info(
+            "Preflighting effort compatibility for %d model-effort pair(s)",
+            len(effort_targets),
+        )
+        _run_effort_preflights(effort_targets)
 
     # Collect all run envelopes for combined aggregation when running "both"
     all_mode_envelopes: list[dict] = []
@@ -1304,6 +1834,9 @@ def run(
                             request_budget=request_budget,
                             capacity_key=capacity_info.capacity_key,
                             output_mode=output_mode,
+                            model_generate_kwargs=_profile_model_generate_kwargs(
+                                profile_conf
+                            ),
                         )
                         future = executor.submit(
                             runner.run_all,
@@ -1340,7 +1873,13 @@ def run(
                             run_index = future_to_run_index.pop(future)
                             capacity_info = capacity_by_target[(run_index, 0)]
                             active_group_counts[capacity_info.capacity_key] -= 1
-                            ordered_results[run_index] = future.result()
+                            try:
+                                ordered_results[run_index] = future.result()
+                            except ReasoningDisableError:
+                                pending_run_indices.clear()
+                                for pending_future in future_to_run_index:
+                                    pending_future.cancel()
+                                raise
 
                 for run_index, model_result in enumerate(ordered_results):
                     if model_result is None:
@@ -1411,6 +1950,9 @@ def run(
                                     request_budget=request_budget,
                                     capacity_key=capacity_info.capacity_key,
                                     output_mode=output_mode,
+                                    model_generate_kwargs=_profile_model_generate_kwargs(
+                                        profile_conf
+                                    ),
                                 )
                                 future = executor.submit(
                                     runner.run_all,
@@ -1448,7 +1990,13 @@ def run(
                                     index = future_to_index.pop(future)
                                     capacity_info = capacity_by_target[(run_index, index)]
                                     active_group_counts[capacity_info.capacity_key] -= 1
-                                    ordered_results[index] = future.result()
+                                    try:
+                                        ordered_results[index] = future.result()
+                                    except ReasoningDisableError:
+                                        pending_indices.clear()
+                                        for pending_future in future_to_index:
+                                            pending_future.cancel()
+                                        raise
 
                         for model_result in ordered_results:
                             if model_result is not None:
@@ -1471,6 +2019,9 @@ def run(
                                 request_budget=request_budget,
                                 capacity_key=capacity_info.capacity_key,
                                 output_mode=output_mode,
+                                model_generate_kwargs=_profile_model_generate_kwargs(
+                                    profile_conf
+                                ),
                             )
                             model_result = runner.run_all(
                                 benchmarks_to_run,
@@ -1626,6 +2177,15 @@ def run(
                 if stdout_json_enabled:
                     click.echo(output_json)
 
+        except ReasoningDisableError as e:
+            if progress_display is not None:
+                progress_display.close()
+            logger.exception(
+                "Fatal reasoning-disable violation in %s mode",
+                output_mode,
+            )
+            click.echo(f"Fatal reasoning-disable violation: {e}", err=True)
+            sys.exit(1)
         except Exception as e:
             if progress_display is not None:
                 progress_display.close()

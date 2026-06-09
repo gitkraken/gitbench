@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   buildGroupedMetricRows,
+  buildTokenUsageRows,
   getGroupedMetricSortValue,
   pairModelVariants,
   passRateMetric,
@@ -145,4 +146,161 @@ test("pairModelVariants groups concrete storage keys by canonical effort", () =>
       },
     ]
   );
+});
+
+function tokenChartData(tokenSummaries) {
+  const levels = ["low", "medium", "high"];
+  const models = levels.map((level) => ({
+    name: `openai/gpt-test:${level}`,
+    provider: "openai",
+    baseModel: "gpt-test",
+    reasoningLevel: level,
+    output_mode: "text",
+  }));
+  return {
+    models,
+    benchmarks: [],
+    model_summaries: Object.fromEntries(
+      models.map((model) => [model.name, summary(1)]),
+    ),
+    model_runtimes: {},
+    model_token_summaries: Object.fromEntries(
+      levels.map((level, index) => [
+        `openai/gpt-test:${level}`,
+        tokenSummaries[index],
+      ]),
+    ),
+    matrix: {},
+    fixtures: {},
+    fixture_index: {},
+    runs_meta: [],
+    base_model_groups: [],
+  };
+}
+
+test("token rows use one representative effort instead of summing efforts", () => {
+  const data = tokenChartData([
+    {
+      input_tokens: 40,
+      output_tokens: 60,
+      reasoning_tokens: 10,
+      total_tokens: 100,
+    },
+    {
+      input_tokens: 80,
+      output_tokens: 120,
+      reasoning_tokens: 20,
+      total_tokens: 200,
+    },
+    {
+      input_tokens: 120,
+      output_tokens: 180,
+      reasoning_tokens: 30,
+      total_tokens: 300,
+    },
+  ]);
+
+  const [row] = buildTokenUsageRows(
+    data,
+    ["openai/gpt-test"],
+    "text",
+  );
+
+  assert.equal(row.textRepresentativeValue, 200);
+  assert.equal(row.textInputTokens, 80);
+  assert.equal(row.textVisibleOutputTokens, 100);
+  assert.equal(row.textReasoningTokens, 20);
+  assert.equal(
+    row.textInputTokens +
+      row.textVisibleOutputTokens +
+      row.textReasoningTokens,
+    200,
+  );
+});
+
+test("token rows preserve no-reasoning, zero, and inconsistent counts", () => {
+  const noReasoning = buildTokenUsageRows(
+    tokenChartData([
+      {
+        input_tokens: 40,
+        output_tokens: 60,
+        reasoning_tokens: null,
+        total_tokens: 100,
+      },
+      {
+        input_tokens: 80,
+        output_tokens: 120,
+        reasoning_tokens: null,
+        total_tokens: 200,
+      },
+      {
+        input_tokens: 120,
+        output_tokens: 180,
+        reasoning_tokens: null,
+        total_tokens: 300,
+      },
+    ]),
+    ["openai/gpt-test"],
+    "text",
+  )[0];
+  assert.equal(noReasoning.textVisibleOutputTokens, 120);
+  assert.equal(noReasoning.textReasoningTokens, 0);
+  assert.equal(noReasoning.textHasReasoningData, false);
+  assert.equal(noReasoning.hasReasoningData, false);
+
+  const zeroReasoning = buildTokenUsageRows(
+    tokenChartData([
+      {
+        input_tokens: 40,
+        output_tokens: 60,
+        reasoning_tokens: 0,
+        total_tokens: 100,
+      },
+      {
+        input_tokens: 80,
+        output_tokens: 120,
+        reasoning_tokens: 0,
+        total_tokens: 200,
+      },
+      {
+        input_tokens: 120,
+        output_tokens: 180,
+        reasoning_tokens: 0,
+        total_tokens: 300,
+      },
+    ]),
+    ["openai/gpt-test"],
+    "text",
+  )[0];
+  assert.equal(zeroReasoning.textVisibleOutputTokens, 120);
+  assert.equal(zeroReasoning.textReasoningTokens, 0);
+  assert.equal(zeroReasoning.textHasReasoningData, true);
+  assert.equal(zeroReasoning.hasReasoningData, true);
+
+  const inconsistent = buildTokenUsageRows(
+    tokenChartData([
+      {
+        input_tokens: 40,
+        output_tokens: 60,
+        reasoning_tokens: 10,
+        total_tokens: 100,
+      },
+      {
+        input_tokens: 80,
+        output_tokens: 100,
+        reasoning_tokens: 120,
+        total_tokens: 180,
+      },
+      {
+        input_tokens: 120,
+        output_tokens: 180,
+        reasoning_tokens: 30,
+        total_tokens: 300,
+      },
+    ]),
+    ["openai/gpt-test"],
+    "text",
+  )[0];
+  assert.equal(inconsistent.textVisibleOutputTokens, 0);
+  assert.equal(inconsistent.textReasoningTokens, 120);
 });

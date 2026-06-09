@@ -72,7 +72,7 @@ export interface ModelTokenSummary {
   input_tokens: number;
   output_tokens: number;
   total_tokens: number;
-  reasoning_tokens: number;
+  reasoning_tokens: number | null;
 }
 
 export interface FixtureInfo {

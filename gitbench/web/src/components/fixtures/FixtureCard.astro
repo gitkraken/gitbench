@@ -1,5 +1,9 @@
 ---
 import { Check, X } from "lucide-react";
+import {
+  REASONING_WITHIN_OUTPUT_LABEL,
+  TOTAL_OUTPUT_LABEL,
+} from "@/lib/token-usage";
 
 interface Props {
   fixtureId: string;
@@ -97,7 +101,7 @@ const reasoningTokenLabel =
               {outputTokenLabel}
             </div>
             <div class="mt-1 font-mono text-[0.58rem] uppercase tracking-normal text-(--color-text-dim)">
-              Output
+              {hasReasoningData ? TOTAL_OUTPUT_LABEL : "Output"}
             </div>
           </div>
           {
@@ -107,7 +111,7 @@ const reasoningTokenLabel =
                   {reasoningTokenLabel}
                 </div>
                 <div class="mt-1 font-mono text-[0.58rem] uppercase tracking-normal text-(--color-text-dim) opacity-60">
-                  Reason
+                  {REASONING_WITHIN_OUTPUT_LABEL}
                 </div>
               </div>
             )

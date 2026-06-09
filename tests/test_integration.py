@@ -5,8 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from gitbench.benchmarks import Benchmark
 from gitbench.benchmarks.commit_messages import CommitMessagesBenchmark
 from gitbench.cli import discover_benchmarks
@@ -67,7 +65,18 @@ class TestJSONOutputContract:
     def _run_benchmark_cli(self) -> str:
         """Run the benchmark CLI and return stdout."""
         result = subprocess.run(
-            [sys.executable, "-m", "gitbench.cli", "run", "--benchmark", "commit_messages", "--model", "mock"],
+            [
+                sys.executable,
+                "-m",
+                "gitbench.cli",
+                "run",
+                "--benchmark",
+                "commit_messages",
+                "--model",
+                "mock",
+                "--output-mode",
+                "text",
+            ],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,
@@ -174,7 +183,18 @@ class TestMockModelClient:
     def test_mock_model_used_by_default(self):
         """Verify mock model is used when --model mock is specified."""
         result = subprocess.run(
-            [sys.executable, "-m", "gitbench.cli", "run", "--benchmark", "commit_messages", "--model", "mock"],
+            [
+                sys.executable,
+                "-m",
+                "gitbench.cli",
+                "run",
+                "--benchmark",
+                "commit_messages",
+                "--model",
+                "mock",
+                "--output-mode",
+                "text",
+            ],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,
@@ -184,7 +204,18 @@ class TestMockModelClient:
     def _run_json_benchmark(self) -> dict:
         """Run the benchmark CLI and parse the JSON result."""
         result = subprocess.run(
-            [sys.executable, "-m", "gitbench.cli", "run", "--benchmark", "commit_messages", "--model", "mock"],
+            [
+                sys.executable,
+                "-m",
+                "gitbench.cli",
+                "run",
+                "--benchmark",
+                "commit_messages",
+                "--model",
+                "mock",
+                "--output-mode",
+                "text",
+            ],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,
@@ -315,7 +346,19 @@ class TestVerboseOutput:
     def test_verbose_flag_produces_per_fixture_output(self):
         """Verify --verbose flag produces per-fixture output on stderr."""
         result = subprocess.run(
-            [sys.executable, "-m", "gitbench.cli", "run", "--benchmark", "commit_messages", "--model", "mock", "--verbose"],
+            [
+                sys.executable,
+                "-m",
+                "gitbench.cli",
+                "run",
+                "--benchmark",
+                "commit_messages",
+                "--model",
+                "mock",
+                "--output-mode",
+                "text",
+                "--verbose",
+            ],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,
@@ -331,7 +374,18 @@ class TestEndToEndPipeline:
     def test_full_pipeline_produces_valid_results(self):
         """Verify the full pipeline from fixtures to scoring produces valid results."""
         result = subprocess.run(
-            [sys.executable, "-m", "gitbench.cli", "run", "--benchmark", "commit_messages", "--model", "mock"],
+            [
+                sys.executable,
+                "-m",
+                "gitbench.cli",
+                "run",
+                "--benchmark",
+                "commit_messages",
+                "--model",
+                "mock",
+                "--output-mode",
+                "text",
+            ],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,
@@ -357,7 +411,18 @@ class TestEndToEndPipeline:
     def test_cli_exits_zero_on_success(self):
         """Verify the CLI exits with code 0 on successful completion."""
         result = subprocess.run(
-            [sys.executable, "-m", "gitbench.cli", "run", "--benchmark", "commit_messages", "--model", "mock"],
+            [
+                sys.executable,
+                "-m",
+                "gitbench.cli",
+                "run",
+                "--benchmark",
+                "commit_messages",
+                "--model",
+                "mock",
+                "--output-mode",
+                "text",
+            ],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,

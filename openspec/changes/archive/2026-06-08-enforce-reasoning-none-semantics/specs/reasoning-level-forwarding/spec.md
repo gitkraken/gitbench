@@ -1,8 +1,4 @@
-## Purpose
-
-Reasoning level forwarding defines how model adapters translate GitBench reasoning effort into provider-specific request parameters or intentionally ignore unsupported effort values.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: OpenAIAdapter forwards reasoning level as reasoning_effort
 When an `OpenAIAdapter` was constructed with a reasoning level, calls to `generate()` SHALL forward it using the transport-appropriate request shape. For the first-party OpenAI API, the adapter SHALL forward the value as `reasoning_effort`. For OpenRouter-compatible base URLs, non-`none` levels SHALL be forwarded as `reasoning.effort`, while `none` SHALL be forwarded as an explicit disabled reasoning configuration.
@@ -55,25 +51,3 @@ Every response produced by a model configured with reasoning level `none` SHALL 
 #### Scenario: Runtime violation aborts target
 - **WHEN** a benchmark fixture response violates the `none` invariant after preflight succeeded
 - **THEN** GitBench SHALL stop scheduling work for the target, cancel pending work best-effort, omit the violating response from normal scores, and exit the run non-zero
-
-### Requirement: OllamaAdapter ignores reasoning level
-When an `OllamaAdapter` was constructed with a reasoning level, calls to `generate()` SHALL log a debug message and NOT include the level in the request.
-
-#### Scenario: Ollama call with reasoning level from model name
-- **WHEN** `OllamaAdapter(model="llama3.1#medium")` calls `generate()`
-- **THEN** a debug-level log message SHALL be emitted and the request body SHALL NOT include reasoning parameters
-
-#### Scenario: Ollama call without reasoning level
-- **WHEN** `OllamaAdapter(model="llama3.1")` calls `generate()`
-- **THEN** no debug message about reasoning SHALL be logged and the request SHALL proceed normally
-
-### Requirement: MockModelClient ignores reasoning level
-The `MockModelClient` SHALL silently accept and ignore the `#level` or `:level` suffix in model names.
-
-#### Scenario: Mock with reasoning level
-- **WHEN** `MockModelClient()` or `get_model_client("mock#high")` is used
-- **THEN** mock behavior SHALL be unchanged and `call_count` SHALL increment normally
-
-#### Scenario: Mock with max effort
-- **WHEN** `get_model_client("mock:max")` is used
-- **THEN** mock behavior SHALL be unchanged and `call_count` SHALL increment normally
