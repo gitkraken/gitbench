@@ -28,16 +28,6 @@
         "high": "high",
         "xhigh": "xhigh"
       }
-    },
-    "lfm-2-24b-a2b": {
-      "mappings": {
-        "none": "none"
-      }
-    },
-    "granite-4.1-8b": {
-      "mappings": {
-        "none": "none"
-      }
     }
   }
 }

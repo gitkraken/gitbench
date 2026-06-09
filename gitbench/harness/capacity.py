@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import fnmatch
 import threading
+import time
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from typing import Any, Iterable, Iterator
@@ -156,6 +157,95 @@ def resolve_group_limits(infos: Iterable[CapacityInfo]) -> dict[str, int | None]
     return group_limits
 
 
+def _non_negative_int(value: Any) -> int | None:
+    """Parse a non-negative integer, returning None on failure."""
+    if value is None:
+        return None
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    if parsed < 0:
+        return None
+    return parsed
+
+
+def resolve_group_intervals(
+    config: dict[str, Any],
+    infos: Iterable[CapacityInfo],
+) -> dict[str, float]:
+    """Resolve minimum inter-request intervals (seconds) per capacity key.
+
+    Per-group ``min_request_interval_ms`` from explicit concurrency groups
+    take precedence over the global ``concurrency.min_request_interval_ms``
+    default.  Keys not covered by any configured interval receive no entry.
+    """
+    global_ms = _non_negative_int(
+        (config.get("concurrency") or {}).get("min_request_interval_ms")
+    )
+    global_s = (global_ms / 1000.0) if global_ms else 0.0
+
+    # Collect per-key overrides from explicit concurrency groups
+    per_key_s: dict[str, float] = {}
+    for group in (config.get("concurrency") or {}).get("groups") or []:
+        if not isinstance(group, dict):
+            continue
+        key = group.get("key")
+        if not key:
+            continue
+        interval_ms = _non_negative_int(group.get("min_request_interval_ms"))
+        if interval_ms is not None:
+            per_key_s[key] = interval_ms / 1000.0
+
+    result: dict[str, float] = {}
+    for info in infos:
+        if info.capacity_key in per_key_s:
+            result[info.capacity_key] = per_key_s[info.capacity_key]
+        elif global_s > 0:
+            result[info.capacity_key] = global_s
+
+    return result
+
+
+class RateLimitedBoundedSemaphore:
+    """A ``BoundedSemaphore`` wrapper that enforces a minimum interval
+    between successive releases and acquires.
+
+    When ``min_interval_s`` is greater than zero, each ``acquire()``
+    sleeps if called sooner than the configured interval after the
+    previous ``release()``.
+    """
+
+    def __init__(self, value: int = 1, min_interval_s: float = 0.0) -> None:
+        self._semaphore = threading.BoundedSemaphore(value)
+        self._min_interval = min_interval_s
+        self._last_release: float = 0.0
+        self._lock = threading.Lock()
+
+    def acquire(self) -> bool:
+        """Acquire the semaphore, waiting for the interval if needed."""
+        self._semaphore.acquire()
+        if self._min_interval > 0:
+            with self._lock:
+                elapsed = time.monotonic() - self._last_release
+                if elapsed < self._min_interval:
+                    time.sleep(self._min_interval - elapsed)
+        return True
+
+    def release(self) -> None:
+        """Release the semaphore, recording the release time."""
+        with self._lock:
+            self._last_release = time.monotonic()
+        self._semaphore.release()
+
+    def __enter__(self) -> "RateLimitedBoundedSemaphore":
+        self.acquire()
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self.release()
+
+
 class RequestBudgetCoordinator:
     """Coordinates global and per-capacity-group request semaphores."""
 
@@ -164,21 +254,24 @@ class RequestBudgetCoordinator:
         *,
         global_limit: int | None = None,
         group_limits: dict[str, int | None] | None = None,
+        group_intervals: dict[str, float] | None = None,
     ) -> None:
         self.global_limit = global_limit
         self.group_limits = dict(group_limits or {})
+        self.group_intervals = dict(group_intervals or {})
         self._global = threading.BoundedSemaphore(global_limit) if global_limit else None
-        self._groups: dict[str, threading.BoundedSemaphore] = {}
+        self._groups: dict[str, RateLimitedBoundedSemaphore] = {}
         self._lock = threading.Lock()
 
-    def _group_semaphore(self, capacity_key: str) -> threading.BoundedSemaphore | None:
+    def _group_semaphore(self, capacity_key: str) -> RateLimitedBoundedSemaphore | None:
         limit = self.group_limits.get(capacity_key)
         if not limit:
             return None
         with self._lock:
             semaphore = self._groups.get(capacity_key)
             if semaphore is None:
-                semaphore = threading.BoundedSemaphore(limit)
+                interval = self.group_intervals.get(capacity_key, 0.0)
+                semaphore = RateLimitedBoundedSemaphore(limit, min_interval_s=interval)
                 self._groups[capacity_key] = semaphore
             return semaphore
 
@@ -196,6 +289,7 @@ class RequestBudgetCoordinator:
 def describe_request_budgets(
     global_limit: int | None,
     group_limits: dict[str, int | None],
+    group_intervals: dict[str, float] | None = None,
 ) -> str:
     """Format budget settings for run-start logging."""
     global_label = str(global_limit) if global_limit else "unlimited"
@@ -203,6 +297,20 @@ def describe_request_budgets(
         key: value for key, value in sorted(group_limits.items()) if value is not None
     }
     if not limited_groups:
-        return f"Request budgets: global={global_label}; groups=unlimited"
-    groups_label = ", ".join(f"{key}={value}" for key, value in limited_groups.items())
-    return f"Request budgets: global={global_label}; groups={groups_label}"
+        base = f"Request budgets: global={global_label}; groups=unlimited"
+    else:
+        groups_label = ", ".join(
+            f"{key}={value}" for key, value in limited_groups.items()
+        )
+        base = f"Request budgets: global={global_label}; groups={groups_label}"
+
+    if group_intervals:
+        interval_parts = sorted(group_intervals.items())
+        if interval_parts:
+            intervals_label = ", ".join(
+                f"{key}={int(value * 1000)}ms"
+                for key, value in interval_parts
+            )
+            base += f"; intervals={intervals_label}"
+
+    return base

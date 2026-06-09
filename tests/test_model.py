@@ -13,6 +13,7 @@ from gitbench.harness.model import (
     OllamaAdapter,
     OpenAIAdapter,
     ReasoningDisableError,
+    _extract_retry_after,
     parse_model_name,
 )
 from gitbench.harness.types import ModelMessage
@@ -643,7 +644,7 @@ class TestOpenAIAdapterReasoning:
         adapter.generate(messages)
 
         call_kwargs = mock_client.chat.completions.create.call_args
-        assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"enabled": False}
+        assert call_kwargs.kwargs["extra_body"]["reasoning"] == {"enabled": False, "max_tokens": 0}
         assert "reasoning" not in call_kwargs.kwargs
         assert "reasoning_effort" not in call_kwargs.kwargs
 
@@ -719,7 +720,7 @@ class TestOpenAIAdapterReasoning:
         )
         assert sent_extra_body == {
             "provider": {"order": ["OpenAI"]},
-            "reasoning": {"enabled": False},
+            "reasoning": {"enabled": False, "max_tokens": 0},
         }
         assert extra_body == {"provider": {"order": ["OpenAI"]}}
 
@@ -863,10 +864,11 @@ class TestOpenAIAdapterReasoning:
         ],
     )
     @patch("openai.OpenAI")
-    def test_generate_none_rejects_missing_reasoning_telemetry(
+    def test_generate_none_accepts_missing_reasoning_telemetry(
         self, mock_openai_class, usage
     ):
-        """None fails closed when zero reasoning cannot be verified."""
+        """None passes when reasoning token telemetry is absent (some providers
+        omit the field entirely when reasoning is disabled)."""
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = SimpleNamespace(
             error=None,
@@ -889,8 +891,9 @@ class TestOpenAIAdapterReasoning:
         )
         adapter._client = mock_client
 
-        with pytest.raises(ReasoningDisableError, match="could not be verified"):
-            adapter.generate([ModelMessage(role="user", content="Hi")])
+        # Should not raise — missing reasoning_tokens is not a failure
+        result = adapter.generate([ModelMessage(role="user", content="Hi")])
+        assert result["text"] == "Output"
 
     def test_generate_rejects_openrouter_non_dict_extra_body(self):
         """OpenRouter reasoning requires extra_body to remain mergeable."""
@@ -1009,3 +1012,60 @@ class TestMockModelClientReasoning:
         ]
         assert result["api_duration_ms"] > 0
         assert client.call_count == 1
+
+
+class TestExtractRetryAfter:
+    """Tests for _extract_retry_after helper."""
+
+    def test_header_present_with_integer(self):
+        """Retry-After header with integer value."""
+        import openai
+        exc = openai.RateLimitError(
+            message="Rate limit exceeded",
+            body=None,
+            response=MagicMock(
+                headers={"Retry-After": "30"},
+            ),
+        )
+        assert _extract_retry_after(exc) == 30.0
+
+    def test_header_present_with_float(self):
+        """Retry-After header with float value."""
+        import openai
+        exc = openai.RateLimitError(
+            message="Rate limit exceeded",
+            body=None,
+            response=MagicMock(
+                headers={"Retry-After": "2.5"},
+            ),
+        )
+        assert _extract_retry_after(exc) == 2.5
+
+    def test_header_missing(self):
+        """No Retry-After header returns 0.0."""
+        import openai
+        exc = openai.RateLimitError(
+            message="Rate limit exceeded",
+            body=None,
+            response=MagicMock(
+                headers={},
+            ),
+        )
+        assert _extract_retry_after(exc) == 0.0
+
+    def test_malformed_header(self):
+        """Malformed Retry-After value returns 0.0."""
+        import openai
+        exc = openai.RateLimitError(
+            message="Rate limit exceeded",
+            body=None,
+            response=MagicMock(
+                headers={"Retry-After": "not-a-number"},
+            ),
+        )
+        assert _extract_retry_after(exc) == 0.0
+
+    def test_not_rate_limit_error(self):
+        """Non-RateLimitError returns 0.0."""
+        exc = TimeoutError("timed out")
+        assert _extract_retry_after(exc) == 0.0

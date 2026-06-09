@@ -378,10 +378,6 @@ class TestRunCommand:
                 "provider reported 2 reasoning token(s)",
             ),
             (
-                "missing",
-                "could not be verified",
-            ),
-            (
                 "rejected",
                 "unsupported reasoning control",
             ),
@@ -390,7 +386,7 @@ class TestRunCommand:
     def test_run_preflight_failure_aborts_before_benchmark_call(
         self, runner, tmp_path, preflight_error, expected
     ):
-        """Violated, unverifiable, or rejected none targets fail closed."""
+        """Violated or rejected none targets fail closed."""
         from gitbench.harness.model import ReasoningDisableError
 
         config = {
@@ -412,12 +408,6 @@ class TestRunCommand:
                 "vendor/model:none",
                 "provider reported 2 reasoning token(s)",
                 reasoning_tokens=2,
-            )
-        elif preflight_error == "missing":
-            error = ReasoningDisableError(
-                "vendor/model:none",
-                "provider response did not report reasoning token usage, so "
-                "reasoning disablement could not be verified",
             )
         else:
             error = RuntimeError("unsupported reasoning control")

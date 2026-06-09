@@ -31,6 +31,7 @@ from gitbench.harness.capacity import (
     derive_capacity_info,
     describe_request_budgets,
     global_request_limit,
+    resolve_group_intervals,
     resolve_group_limits,
 )
 from gitbench.harness.model import (
@@ -1683,6 +1684,7 @@ def run(
             info = derive_capacity_info(config, profile_conf, model_name)
             capacity_by_target[(run_index, model_index)] = info
     group_limits = resolve_group_limits(capacity_by_target.values())
+    group_intervals = resolve_group_intervals(config, capacity_by_target.values())
 
     request_budget = RequestBudgetCoordinator(
         global_limit=global_request_limit(
@@ -1690,9 +1692,14 @@ def run(
             fallback=max(1, model_workers * fixture_workers),
         ),
         group_limits=group_limits,
+        group_intervals=group_intervals,
     )
     logger.info(
-        describe_request_budgets(request_budget.global_limit, request_budget.group_limits)
+        describe_request_budgets(
+            request_budget.global_limit,
+            request_budget.group_limits,
+            request_budget.group_intervals,
+        )
     )
 
     # Discover benchmarks once

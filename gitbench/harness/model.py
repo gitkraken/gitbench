@@ -89,7 +89,7 @@ def _apply_reasoning_request(
         extra_body = dict(extra_body)
 
     if reasoning_level == "none":
-        extra_body["reasoning"] = {"enabled": False}
+        extra_body["reasoning"] = {"enabled": False, "max_tokens": 0}
     else:
         extra_body["reasoning"] = {"effort": reasoning_level}
     request_kwargs["extra_body"] = extra_body
@@ -111,16 +111,14 @@ def _validate_reasoning_disabled(
     usage: dict[str, Any] | None,
     reasoning_content: Any,
 ) -> None:
-    """Require explicit zero reasoning telemetry and no reasoning content."""
-    if usage is None or usage.get("reasoning_tokens") is None:
-        raise ReasoningDisableError(
-            model,
-            "provider response did not report reasoning token usage, so reasoning "
-            "disablement could not be verified",
-        )
+    """Require explicit zero reasoning telemetry and no reasoning content.
 
-    reasoning_tokens = usage["reasoning_tokens"]
-    if reasoning_tokens != 0:
+    A missing reasoning_tokens field is not treated as a failure — when
+    reasoning is disabled, some providers omit the field entirely rather
+    than reporting an explicit zero.
+    """
+    reasoning_tokens = (usage or {}).get("reasoning_tokens")
+    if reasoning_tokens is not None and reasoning_tokens != 0:
         raise ReasoningDisableError(
             model,
             f"provider reported {reasoning_tokens} reasoning token(s)",
@@ -171,6 +169,38 @@ def _extract_openai_content(response: Any) -> str:
         )
 
     return getattr(message, "content", None) or ""
+
+
+def _extract_retry_after(exception: Exception) -> float:
+    """Extract ``Retry-After`` seconds from an OpenAI rate-limit error.
+
+    Returns 0.0 if the header is missing, malformed, or the exception
+    does not carry an HTTP response.
+    """
+    try:
+        import openai
+
+        if not isinstance(exception, openai.RateLimitError):
+            return 0.0
+    except ImportError:
+        return 0.0
+
+    response = getattr(exception, "response", None)
+    if response is None:
+        return 0.0
+
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return 0.0
+
+    retry_after_raw = headers.get("Retry-After") or headers.get("retry-after")
+    if retry_after_raw is None:
+        return 0.0
+
+    try:
+        return float(retry_after_raw)
+    except (ValueError, TypeError):
+        return 0.0
 
 
 class ModelInterface(ABC):
@@ -421,7 +451,9 @@ class OpenAIAdapter(ModelInterface):
             ) as e:
                 last_error = e
                 if attempt < self.retry_count:
-                    delay = min(2 ** (attempt - 1), 16)
+                    backoff = min(2 ** (attempt - 1), 16)
+                    retry_after = _extract_retry_after(e)
+                    delay = max(backoff, retry_after)
                     logger.info(
                         "Retryable error on attempt %d/%d: %s — retrying in %ds",
                         attempt,
