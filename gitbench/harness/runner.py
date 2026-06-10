@@ -74,22 +74,33 @@ class BenchmarkRunner:
             from gitbench.config import JUDGE_REQUIRED_BENCHMARKS, resolve_profile
 
             judge_profile = resolve_profile(judge_config["_config"], judge_config["profile"])
-            judge_model_client = self._create_judge_model_client(judge_profile)
-            self._judge_client = JudgeClient(judge_model_client)
+            judge_model_clients = self._create_judge_model_client(judge_profile)
+            self._judge_client = JudgeClient(judge_model_clients)
             self._judge_benchmarks = JUDGE_REQUIRED_BENCHMARKS
 
     def _create_judge_model_client(self, profile: dict):
-        """Create a model client for the judge from a resolved profile."""
+        """Create model clients for every model in the judge profile.
+
+        Each client is configured with ``retry_count=5`` for robust
+        judge retries. The JudgeClient will try them in order.
+        """
         from gitbench.cli import get_model_client
 
         models = profile.get("models", [])
-        model = models[0] if models else ""
-        return get_model_client(
-            model,
-            base_url=profile.get("base_url"),
-            api_key=profile.get("api_key"),
-            provider=profile.get("provider"),
-        )
+        if not models:
+            raise ValueError("Judge profile has no models configured")
+
+        clients = []
+        for model in models:
+            client = get_model_client(
+                model,
+                retry_count=5,
+                base_url=profile.get("base_url"),
+                api_key=profile.get("api_key"),
+                provider=profile.get("provider"),
+            )
+            clients.append(client)
+        return clients
 
     def run_benchmark(
         self,
@@ -345,7 +356,7 @@ class BenchmarkRunner:
                 score._output_mode = output_mode
                 return fixture.id, score
 
-            score = benchmark.score(fixture, model_output, repo_path=repo_path, diff=diff)
+            score = benchmark.score(fixture, model_output, repo_path=repo_path, diff=diff, prompt=fixture.prompt)
             score.reasoning_level = getattr(
                 self._model_client, "reasoning_level", None
             )

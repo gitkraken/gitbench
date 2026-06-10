@@ -534,6 +534,7 @@ class TestScorerJudgeIntegration:
         mock_judge_client.evaluate_commit_message.assert_called_once_with(
             "diff --git a/file.txt b/file.txt",
             "fix: correct spelling error",
+            prompt="Generate commit message",
         )
 
     def test_scorer_falls_back_when_no_diff(

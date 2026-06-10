@@ -246,7 +246,7 @@
     "openrouter-llms-as-judges": {
       "model": [
         "ibm-granite/granite-4.1-8b",
-        "inclusionai/ling-2.6-flash",
+        "google/gemma-4-26b-a4b-it",
         "openai/gpt-oss-120b:xhigh"
       ],
       "base_url": "https://openrouter.ai/api/v1",

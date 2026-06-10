@@ -24,7 +24,7 @@ class RebaseBenchmark(Benchmark):
     name = "rebase"
     description = "Resolve a rebase conflict"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a resolved file against the expected value.
 
         Args:

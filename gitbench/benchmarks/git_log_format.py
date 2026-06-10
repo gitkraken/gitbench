@@ -24,7 +24,7 @@ class GitLogFormatBenchmark(Benchmark):
     name = "git_log_format"
     description = "Query and interpret git log output with various formatting options"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a git log answer against the expected value.
 
         Args:

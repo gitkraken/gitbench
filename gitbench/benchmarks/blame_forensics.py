@@ -25,7 +25,7 @@ class BlameForensicsBenchmark(Benchmark):
     name = "blame_forensics"
     description = "Identify bug-introducing commits using git blame analysis"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a blame forensics answer against the expected value.
 
         Args:

@@ -24,7 +24,7 @@ class BranchCleanupBenchmark(Benchmark):
     name = "branch_cleanup"
     description = "Identify branches to delete (fully merged into main)"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a branch cleanup answer against the expected value.
 
         Args:

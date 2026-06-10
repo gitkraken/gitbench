@@ -29,7 +29,7 @@ class CommitSquashBenchmark(Benchmark):
     name = "commit_squash"
     description = "Identify commits to squash into a cleaner history"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score the model's identified commits to squash against the expected value.
 
         Args:

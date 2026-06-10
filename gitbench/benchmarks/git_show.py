@@ -25,7 +25,7 @@ class GitShowBenchmark(Benchmark):
     name = "git_show"
     description = "Inspect commit details, diffs, tags, and file state using git show"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a git show answer against the expected value.
 
         Args:

@@ -26,7 +26,7 @@ class GitGrepBenchmark(Benchmark):
     name = "git_grep"
     description = "Search repository content using git grep"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a git grep answer against the expected value.
 
         Args:

@@ -24,7 +24,7 @@ class CherryPickBenchmark(Benchmark):
     name = "cherry_pick"
     description = "Resolve a cherry-pick conflict"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a resolved file against the expected value.
 
         Args:

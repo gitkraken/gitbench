@@ -508,7 +508,7 @@ class TestJudgeEndToEnd:
 
         mock_model = MagicMock()
         mock_model.generate.return_value = {"text": "0.9", "content": "0.9"}
-        judge_client = JudgeClient(mock_model)
+        judge_client = JudgeClient([mock_model])
 
         scorer = Scorer(judge_client=judge_client)
         fixture = Fixture(
@@ -539,11 +539,8 @@ class TestJudgeEndToEnd:
         from gitbench.harness.types import Fixture
 
         mock_model = MagicMock()
-        mock_model.generate.side_effect = [
-            RuntimeError("Connection refused"),
-            RuntimeError("Connection refused"),
-        ]
-        judge_client = JudgeClient(mock_model)
+        mock_model.generate.side_effect = RuntimeError("Connection refused")
+        judge_client = JudgeClient([mock_model])
 
         scorer = Scorer(judge_client=judge_client)
         fixture = Fixture(

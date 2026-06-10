@@ -27,7 +27,7 @@ class StashRecoveryBenchmark(Benchmark):
     name = "stash_recovery"
     description = "Recover stashed changes using git stash list"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score the model's recovery answer against the expected value.
 
         Args:

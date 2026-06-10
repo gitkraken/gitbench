@@ -56,7 +56,7 @@ class WorktreeUsageBenchmark(Benchmark):
         logger.debug(f"Set up fixture {fixture.id} at {repo_path}")
         return executor, repo_path
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score the fixture by executing model output then checking state.
 
         Args:

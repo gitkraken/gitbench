@@ -26,7 +26,7 @@ class TagManagementBenchmark(Benchmark):
     name = "tag_management"
     description = "Manage git tags for release versioning"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score the fixture by executing model output then checking state.
 
         Args:

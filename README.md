@@ -194,8 +194,8 @@ in `gitbench.json`. These should be cheap, fast models:
 ```
 
 - `profile` (required): Name of a model profile to use as the judge model group.
-  The first model in the profile is used for all judge calls. The judge
-  automatically applies to all judge-required benchmarks (`commit_messages`).
+  **Every model in the profile is called** and their scores are averaged.
+  The judge automatically applies to all judge-required benchmarks (`commit_messages`).
 
 **CLI usage**:
 
@@ -215,12 +215,14 @@ gitbench run --benchmark commit_messages --model mock
 
 **How it works**:
 
-1. The judge model receives the git diff and the model's generated commit message.
-2. It returns a score between 0.0 and 1.0 rating the message quality.
-3. This score replaces the `SequenceMatcher` similarity score.
-4. On runtime failure (after one retry), the system falls back to `SequenceMatcher`
+1. Every model in the judge profile receives the git diff and the model's generated commit message.
+2. Each returns a score between 0.0 and 1.0 rating message quality.
+3. The **average** of all successful scores replaces the `SequenceMatcher` similarity score.
+4. Each model adapter retries up to 5 times with `Retry-After` backoff on rate limits.
+5. Failed models are excluded from the average.
+6. If all models fail, the system falls back to `SequenceMatcher`
    and marks the result with a "judge_failed" error.
-5. Running `commit_messages` without a `judge` section exits with an error
+7. Running `commit_messages` without a `judge` section exits with an error
    (except with `--model mock` for testing).
 
 **Judge prompt criteria**:

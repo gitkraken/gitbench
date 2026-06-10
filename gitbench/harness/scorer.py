@@ -601,7 +601,7 @@ class Scorer:
         self._json_semantic_equal_scorer = JsonSemanticEqualScorer()
         self._judge_client = judge_client
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a model output against the expected value.
 
         Args:
@@ -624,7 +624,7 @@ class Scorer:
                 if self._judge_client is not None and diff is not None:
                     try:
                         similarity = self._judge_client.evaluate_commit_message(
-                            diff, model_output
+                            diff, model_output, prompt=prompt or fixture.prompt
                         )
                         passed = similarity >= threshold
                         return Score(

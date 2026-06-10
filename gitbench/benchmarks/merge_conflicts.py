@@ -24,7 +24,7 @@ class MergeConflictsBenchmark(Benchmark):
     name = "merge_conflicts"
     description = "Resolve a merge conflict"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         """Score a resolved file against the expected value.
 
         Args:
