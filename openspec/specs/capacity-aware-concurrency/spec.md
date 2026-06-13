@@ -1,9 +1,7 @@
 ## Purpose
 
 Capacity-aware concurrency prevents GitBench runs from exceeding upstream model request limits by coordinating global and per-capacity-group request budgets while preserving deterministic output.
-
 ## Requirements
-
 ### Requirement: Model API calls are gated by request budgets
 GitBench SHALL gate each real model API call through a global request budget and a capacity-group request budget before invoking `ModelInterface.generate()`.
 
@@ -50,7 +48,7 @@ For OpenRouter profiles, GitBench SHALL infer capacity groups from the configure
 - **THEN** GitBench uses `openrouter:<base-model-id>` as the inferred capacity group
 
 ### Requirement: Explicit concurrency groups override inference
-GitBench SHALL allow config-defined concurrency groups to override inferred capacity groups. Override matching SHALL apply to the base model ID after effort stripping.
+GitBench SHALL allow config-defined concurrency groups to override inferred capacity groups. Override matching SHALL apply to the base model ID after effort stripping. Groups MAY also specify a minimum inter-request interval.
 
 #### Scenario: Explicit group collapses matching models
 - **WHEN** config defines a group with key `openrouter:anthropic/claude` matching `anthropic/claude-*`
@@ -59,6 +57,14 @@ GitBench SHALL allow config-defined concurrency groups to override inferred capa
 #### Scenario: Explicit group limit is used
 - **WHEN** a matched explicit group has `max_concurrent_requests` set to 1
 - **THEN** GitBench uses 1 as the request budget for that capacity group
+
+#### Scenario: Explicit group interval overrides global default
+- **WHEN** a matched explicit group has `min_request_interval_ms` set to 2000
+- **THEN** GitBench enforces a 2000ms minimum interval between requests in that capacity group, regardless of the global `concurrency.min_request_interval_ms` setting
+
+#### Scenario: Explicit group without interval uses global default
+- **WHEN** a matched explicit group does not specify `min_request_interval_ms` but the global `concurrency.min_request_interval_ms` is 500
+- **THEN** GitBench enforces a 500ms minimum interval for that capacity group
 
 #### Scenario: Explicit groups do not match effort suffixes
 - **WHEN** config defines a group matching `anthropic/claude-opus-*`
@@ -74,3 +80,4 @@ GitBench SHALL preserve existing output structure and deterministic ordering eve
 #### Scenario: Fixture output order follows fixture order
 - **WHEN** fixtures complete in a different order than they were loaded
 - **THEN** each benchmark result lists scores in fixture order
+
