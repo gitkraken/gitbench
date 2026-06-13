@@ -4,21 +4,21 @@
 TBD - created by archiving change add-llm-judge. Update Purpose after archive.
 ## Requirements
 ### Requirement: Judge configuration in gitbench.json
-The system SHALL require a top-level `judge` section in `gitbench.json` for benchmarks that use LLM judge scoring (currently `commit_messages`). Running a judge-required benchmark without judge configuration SHALL exit with an error.
+The system SHALL require a top-level `judge` section in `gitbench.json` for benchmarks whose fixtures declare `scoring.type: llm_judge`. Running a judge-required benchmark without judge configuration SHALL exit with an error (unless all models are mock).
 
 The `judge` section MUST have:
-- `profile`: Name of a model profile defined in `models` to use as the judge model group. The first model in the profile is used for all judge calls.
+- `profile`: Name of a model profile defined in `models` to use as the judge model group. Every model in the profile is called for ensemble averaging.
 
 #### Scenario: Judge section present
 - **WHEN** `gitbench.json` contains `"judge": {"profile": "openrouter-llms-as-judges"}`
-- **THEN** the system SHALL use the judge for all judge-required benchmarks
+- **THEN** the system SHALL use the judge for all benchmarks containing `llm_judge` fixtures
 
 #### Scenario: Judge section absent for judge-required benchmark
-- **WHEN** `gitbench.json` has no `judge` key and a judge-required benchmark (e.g. `commit_messages`) is run
+- **WHEN** `gitbench.json` has no `judge` key and a benchmark with `llm_judge` fixtures (e.g. `commit_messages`) is run
 - **THEN** the system SHALL exit with an error indicating that a judge profile is required
 
 #### Scenario: Judge section absent for non-judge benchmark
-- **WHEN** `gitbench.json` has no `judge` key and a benchmark that does not require a judge is run (e.g. `git_bisect`)
+- **WHEN** `gitbench.json` has no `judge` key and a benchmark that has no `llm_judge` fixtures is run (e.g. `git_bisect`)
 - **THEN** the system SHALL run normally without a judge
 
 #### Scenario: Judge profile not found
@@ -52,25 +52,37 @@ The system SHALL provide a `JudgeClient` class that wraps multiple model clients
 - **WHEN** the judge model returns a response that cannot be parsed as a number
 - **THEN** `evaluate_commit_message` SHALL raise a `ValueError`
 
-### Requirement: Scorer integrates judge for similarity-type benchmarks
-The `Scorer` class SHALL accept an optional `JudgeClient` and use it for benchmarks configured to use judge scoring.
+### Requirement: Judge gating is declared per fixture
+The system SHALL invoke the LLM judge if and only if a fixture declares `scoring.type: llm_judge`. No benchmark-level allowlist or diff-presence heuristic SHALL participate in judge routing.
 
-For judge-enabled benchmarks with `scoring.type: similarity`:
-- The scorer SHALL call `JudgeClient.evaluate_commit_message()` instead of `difflib.SequenceMatcher`
-- The returned score SHALL be used as the `similarity` field on `Score`
-- The `passed` field SHALL be computed as `similarity >= threshold` (unchanged behavior)
+The `Scorer` class SHALL accept an optional `JudgeClient` and dispatch to it for `llm_judge` fixtures.
 
-#### Scenario: Judge scoring a commit_messages fixture
-- **WHEN** scoring a `commit_messages` fixture with a judge configured and the judge returns 0.85
-- **THEN** the resulting `Score.similarity` SHALL be 0.85 and `Score.passed` SHALL be `True` if the fixture threshold is ≤ 0.85
+#### Scenario: llm_judge fixture routed to judge
+- **WHEN** a fixture with `scoring.type: llm_judge` is scored and a judge is configured
+- **THEN** the score comes from `JudgeClient` ensemble averaging, with `passed = similarity >= threshold`
 
-#### Scenario: No judge configured for similarity-type benchmark
-- **WHEN** scoring a judge-required fixture without a judge configured
-- **THEN** this scenario is prevented by the CLI validation — the run exits before scoring begins
+#### Scenario: similarity fixture never routed to judge
+- **WHEN** a fixture with `scoring.type: similarity` is scored, even with a judge configured and a diff available
+- **THEN** the score comes from SequenceMatcher only
 
-#### Scenario: Non-similarity scoring type with judge
-- **WHEN** scoring a fixture with `scoring.type` other than `similarity` (e.g., `exact_match`)
-- **THEN** the scorer SHALL use the existing scoring logic regardless of judge configuration
+#### Scenario: llm_judge without judge client
+- **WHEN** a fixture with `scoring.type: llm_judge` is scored and no judge client is configured
+- **THEN** the result is a failed score with an error indicating a judge is required (normally prevented by CLI preflight)
+
+### Requirement: Judge-required benchmarks are discovered from fixtures
+The system SHALL determine which benchmarks require a judge by scanning their fixtures for `scoring.type: llm_judge`, replacing the hardcoded `JUDGE_REQUIRED_BENCHMARKS` constant.
+
+#### Scenario: Preflight error without judge profile
+- **WHEN** a requested benchmark contains llm_judge fixtures, no `judge` section exists in `gitbench.json`, and models are not all mock
+- **THEN** the CLI exits with the existing "requires an LLM judge" error before any fixtures run
+
+#### Scenario: Mock-models exemption preserved
+- **WHEN** all requested models are mock variants
+- **THEN** llm_judge benchmarks run without a judge profile, as today
+
+#### Scenario: No stale allowlist
+- **WHEN** a new benchmark's fixtures declare `scoring.type: llm_judge`
+- **THEN** preflight validation and judge wiring apply to it without any code or config change
 
 ### Requirement: Judge failure handling
 The system SHALL call **every** model in the judge profile and average their scores.
@@ -81,6 +93,7 @@ Each model adapter is configured with 5 retries:
 - Failed models are excluded from the average; only successful scores count
 - If all models in the profile fail, the system SHALL fall back to ``SequenceMatcher``
 - The resulting ``Score`` SHALL have a non-null ``error`` field containing "judge_failed"
+- This fallback behavior lives in the `llm_judge` scoring branch, not the `similarity` branch.
 
 #### Scenario: Judge averages multiple model scores
 - **WHEN** the judge profile has 3 models returning 0.8, 0.6, and 0.7
@@ -91,23 +104,20 @@ Each model adapter is configured with 5 retries:
 - **THEN** the judge SHALL return 0.6 (average of the two successful scores)
 
 #### Scenario: All judge models fail
-- **WHEN** every model in the judge profile exhausts its retries
-- **THEN** the system SHALL fall back to ``SequenceMatcher`` scoring
-- **THEN** the ``Score.error`` field SHALL contain "judge_failed"
+- **WHEN** every model in the judge profile exhausts its retries while scoring an llm_judge fixture
+- **THEN** the score falls back to SequenceMatcher against `fixture.expected` and `Score.error` contains "judge_failed"
+
+#### Scenario: Partial judge failure
+- **WHEN** one judge model fails and others return scores
+- **THEN** the average of successful scores is used and no error is set
 
 ### Requirement: Runner wires judge into benchmark execution
-The `BenchmarkRunner` SHALL create a `JudgeClient` at initialization when a judge is configured and pass it to the `Scorer`.
-
-The runner SHALL:
-- Load the judge profile from config and instantiate the model client
-- Create a `Scorer` with the `JudgeClient`
-- Pass the judge-enabled scorer to benchmarks during fixture execution
+The `BenchmarkRunner` SHALL construct a single judge-aware `Scorer` when a judge is configured and use it for all benchmarks; scoring-type dispatch alone decides whether the judge is called.
 
 #### Scenario: Runner with judge configuration
-- **WHEN** the runner is initialized with a config containing a valid `judge` section with benchmarks including `commit_messages`
-- **THEN** the runner SHALL create a `JudgeClient` from the specified profile and pass it to the `Scorer`
+- **WHEN** the runner is initialized with a valid `judge` section
+- **THEN** one `Scorer` carrying the `JudgeClient` is used for every benchmark, with no per-benchmark scorer substitution
 
 #### Scenario: Runner without judge configuration
-- **WHEN** the runner is initialized without a `judge` section in config
-- **THEN** the runner SHALL create a `Scorer` without a `JudgeClient`
-
+- **WHEN** the runner is initialized without a `judge` section
+- **THEN** the `Scorer` has no judge client, and only llm_judge fixtures would error (prevented by preflight)
