@@ -13,7 +13,7 @@ prompt: Generate a concise commit message (max 50 characters) describing the cha
   in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').
 expected: Update app.py with new content
 scoring:
-  type: similarity
+  type: llm_judge
   threshold: 0.5
 purpose: Tests ability to generate a commit message for a single-file content modification.
   Evaluates describing incremental changes.

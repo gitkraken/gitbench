@@ -57,8 +57,9 @@ class BenchmarkRunner:
             model_client: The model adapter to call for generation.
             output_mode: ``text``, ``json_schema``, or ``both`` (default).
             judge_config: Optional judge config dict with a ``profile`` key.
-                When provided, a JudgeClient is created and wired into
-                the Scorer for all judge-required benchmarks.
+                When provided, a JudgeClient is created and a single
+                judge-aware Scorer is used for all benchmarks;
+                scoring-type dispatch alone decides whether the judge is called.
         """
         self._registry = registry
         self._model_client = model_client
@@ -68,15 +69,17 @@ class BenchmarkRunner:
         self._model_generate_kwargs = dict(model_generate_kwargs or {})
         self._judge_config = judge_config
         self._judge_client: JudgeClient | None = None
-        self._judge_benchmarks: set[str] = set()
 
         if judge_config is not None:
-            from gitbench.config import JUDGE_REQUIRED_BENCHMARKS, resolve_profile
+            from gitbench.config import resolve_profile
 
             judge_profile = resolve_profile(judge_config["_config"], judge_config["profile"])
             judge_model_clients = self._create_judge_model_client(judge_profile)
             self._judge_client = JudgeClient(judge_model_clients)
-            self._judge_benchmarks = JUDGE_REQUIRED_BENCHMARKS
+
+        # Construct one judge-aware Scorer when a judge is configured;
+        # scoring-type dispatch alone decides whether the judge is called.
+        self._scorer = Scorer(judge_client=self._judge_client)
 
     def _create_judge_model_client(self, profile: dict):
         """Create model clients for every model in the judge profile.
@@ -135,10 +138,6 @@ class BenchmarkRunner:
 
         benchmark_class = self._registry[benchmark_name]
         benchmark = benchmark_class()
-
-        # Inject judge client if this benchmark is judge-enabled
-        if self._judge_client is not None and benchmark_name in self._judge_benchmarks:
-            benchmark._scorer = Scorer(judge_client=self._judge_client)
 
         model_name = progress_model_name or benchmark_name
 
@@ -356,7 +355,7 @@ class BenchmarkRunner:
                 score._output_mode = output_mode
                 return fixture.id, score
 
-            score = benchmark.score(fixture, model_output, repo_path=repo_path, diff=diff, prompt=fixture.prompt)
+            score = self._scorer.score(fixture, model_output, repo_path=repo_path, diff=diff, prompt=fixture.prompt)
             score.reasoning_level = getattr(
                 self._model_client, "reasoning_level", None
             )

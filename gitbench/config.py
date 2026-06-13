@@ -13,9 +13,41 @@ logger = logging.getLogger(__name__)
 CONFIG_FILENAMES = ["gitbench.json", ".gitbench.json"]
 USER_CONFIG = Path.home() / ".gitbench.json"
 
-# Benchmarks that require an LLM judge for semantic scoring.
-# Running these without a judge section in config will error.
-JUDGE_REQUIRED_BENCHMARKS: set[str] = {"commit_messages"}
+def discover_judge_benchmarks(benchmarks: list[str]) -> set[str]:
+    """Discover which requested benchmarks require an LLM judge.
+
+    Loads each benchmark's fixtures and returns the set of benchmark
+    names that contain at least one fixture with ``scoring.type: llm_judge``.
+
+    Args:
+        benchmarks: List of benchmark names to check.
+
+    Returns:
+        Set of benchmark names that require a judge.
+    """
+    from pathlib import Path
+
+    import gitbench
+    from gitbench.harness.loader import FixtureLoader
+
+    fixtures_root = Path(gitbench.__file__).parent.parent / "fixtures"
+    loader = FixtureLoader()
+    judge_benchmarks: set[str] = set()
+
+    for name in benchmarks:
+        bench_dir = fixtures_root / name
+        if not bench_dir.is_dir():
+            continue
+        try:
+            fixtures = loader.load_dir(str(bench_dir))
+        except Exception:
+            continue
+        for fixture in fixtures:
+            if fixture.scoring.get("type") == "llm_judge":
+                judge_benchmarks.add(name)
+                break
+
+    return judge_benchmarks
 
 
 def load_project_env(config_path: Path | None = None) -> bool:

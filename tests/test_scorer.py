@@ -619,25 +619,37 @@ class TestScorerJudgeIntegration:
         return mock
 
     @pytest.fixture
-    def similarity_fixture(self):
-        """Create a similarity-type fixture."""
+    def llm_judge_fixture(self):
+        """Create an llm_judge-type fixture."""
         return Fixture(
             id="judge_001",
             description="Judge-enabled fixture",
             setup=["git init"],
             prompt="Generate commit message",
             expected="fix: correct spelling error in file.txt",
+            scoring={"type": "llm_judge", "threshold": 0.7},
+        )
+
+    @pytest.fixture
+    def similarity_fixture(self):
+        """Create a similarity-type fixture."""
+        return Fixture(
+            id="sim_001",
+            description="Similarity fixture",
+            setup=["git init"],
+            prompt="Generate commit message",
+            expected="fix: correct spelling error in file.txt",
             scoring={"type": "similarity", "threshold": 0.7},
         )
 
-    def test_scorer_uses_judge_when_diff_provided(
-        self, mock_judge_client, similarity_fixture
+    def test_llm_judge_type_routes_to_judge(
+        self, mock_judge_client, llm_judge_fixture
     ):
-        """Scorer uses judge when judge_client and diff are provided."""
+        """llm_judge type routes to judge when judge client is configured."""
         scorer = Scorer(judge_client=mock_judge_client)
 
         result = scorer.score(
-            similarity_fixture,
+            llm_judge_fixture,
             "fix: correct spelling error",
             diff="diff --git a/file.txt b/file.txt",
         )
@@ -650,47 +662,50 @@ class TestScorerJudgeIntegration:
             prompt="Generate commit message",
         )
 
-    def test_scorer_falls_back_when_no_diff(
-        self, mock_judge_client, similarity_fixture
+    def test_llm_judge_passes_empty_diff(
+        self, mock_judge_client, llm_judge_fixture
     ):
-        """Scorer uses SequenceMatcher when judge_client exists but no diff."""
+        """llm_judge passes empty string when diff is None."""
         scorer = Scorer(judge_client=mock_judge_client)
 
         result = scorer.score(
-            similarity_fixture,
-            similarity_fixture.expected,
+            llm_judge_fixture,
+            llm_judge_fixture.expected,
         )
 
-        # No diff, so should use SequenceMatcher (exact match = 1.0)
         assert result.passed is True
-        assert result.similarity == 1.0
-        mock_judge_client.evaluate_commit_message.assert_not_called()
+        assert result.similarity == 0.85
+        mock_judge_client.evaluate_commit_message.assert_called_once_with(
+            "",
+            llm_judge_fixture.expected,
+            prompt="Generate commit message",
+        )
 
-    def test_scorer_falls_back_when_no_judge(self, similarity_fixture):
-        """Scorer uses SequenceMatcher when no judge_client configured."""
+    def test_llm_judge_without_client_errors(self, llm_judge_fixture):
+        """llm_judge without judge client returns a scoring error."""
         scorer = Scorer()
 
         result = scorer.score(
-            similarity_fixture,
-            similarity_fixture.expected,
+            llm_judge_fixture,
+            llm_judge_fixture.expected,
             diff="diff content",
         )
 
-        # No judge, so should use SequenceMatcher (exact match = 1.0)
-        assert result.passed is True
-        assert result.similarity == 1.0
+        assert result.passed is False
+        assert result.similarity == 0.0
+        assert "llm_judge requires a judge client" in result.error
 
-    def test_scorer_falls_back_on_judge_error(
-        self, mock_judge_client, similarity_fixture
+    def test_llm_judge_falls_back_on_error(
+        self, mock_judge_client, llm_judge_fixture
     ):
-        """Scorer falls back to SequenceMatcher and sets error on judge failure."""
+        """llm_judge falls back to SequenceMatcher and sets error on judge failure."""
         mock_judge_client.evaluate_commit_message.side_effect = ValueError(
             "Judge call failed after retry: connection error"
         )
         scorer = Scorer(judge_client=mock_judge_client)
 
         result = scorer.score(
-            similarity_fixture,
+            llm_judge_fixture,
             "fix: correct spelling error",
             diff="diff content",
         )
@@ -700,21 +715,35 @@ class TestScorerJudgeIntegration:
         # Should have fallen back to SequenceMatcher
         assert 0.0 <= result.similarity <= 1.0
 
-    def test_scorer_ignores_judge_for_non_similarity_type(
-        self, mock_judge_client
+    def test_similarity_never_calls_judge(
+        self, mock_judge_client, similarity_fixture
     ):
-        """Scorer does not use judge for non-similarity scoring types."""
-        fixture = Fixture(
-            id="exact_001",
-            description="Exact match fixture",
-            setup=[],
-            prompt="Give answer",
-            expected="hello",
-            scoring={"type": "exact_match"},
-        )
+        """similarity type never calls the judge even when one is configured."""
         scorer = Scorer(judge_client=mock_judge_client)
 
-        result = scorer.score(fixture, "hello", diff="some diff")
+        result = scorer.score(
+            similarity_fixture,
+            similarity_fixture.expected,
+            diff="diff content",
+        )
 
+        # Pure SequenceMatcher — exact match = 1.0
         assert result.passed is True
+        assert result.similarity == 1.0
+        mock_judge_client.evaluate_commit_message.assert_not_called()
+
+    def test_similarity_ignores_judge_with_diff(
+        self, mock_judge_client, similarity_fixture
+    ):
+        """similarity type uses SequenceMatcher even with diff and judge."""
+        scorer = Scorer(judge_client=mock_judge_client)
+
+        result = scorer.score(
+            similarity_fixture,
+            "fix: correct spelling error",
+            diff="diff --git a/file.txt b/file.txt",
+        )
+
+        # SequenceMatcher, not judge
+        assert 0.0 <= result.similarity <= 1.0
         mock_judge_client.evaluate_commit_message.assert_not_called()

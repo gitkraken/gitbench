@@ -17,7 +17,7 @@ prompt: Generate a concise commit message (max 50 characters) describing the cha
   in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Refactor').
 expected: Refactor helpers into core module
 scoring:
-  type: similarity
+  type: llm_judge
   threshold: 0.5
 purpose: Tests ability to generate a commit message for a multi-file refactor. Evaluates
   describing structural reorganization across modules.

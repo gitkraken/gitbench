@@ -1797,16 +1797,14 @@ def run(
 
     # Validate that judge-required benchmarks have a judge configured.
     # Skip the requirement when all models are mock (testing mode).
-    from gitbench.config import JUDGE_REQUIRED_BENCHMARKS
+    from gitbench.config import discover_judge_benchmarks
 
     all_models_mock = all(
         m == "mock" or m.startswith(("mock#", "mock:"))
         for _, _, models in runs
         for m in models
     )
-    judge_required_requested = [
-        b for b in benchmarks_to_run if b in JUDGE_REQUIRED_BENCHMARKS
-    ]
+    judge_required_requested = discover_judge_benchmarks(benchmarks_to_run)
     if judge_required_requested and resolved_judge_config is None and not all_models_mock:
         raise click.ClickException(
             f"Benchmark(s) {', '.join(judge_required_requested)} require an LLM judge. "

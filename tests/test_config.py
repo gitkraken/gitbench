@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from gitbench.config import (
+    discover_judge_benchmarks,
     find_config,
     find_profile_for_model,
     load_config,
@@ -468,3 +469,36 @@ class TestMultipleModels:
         with patch.dict(os.environ, {"OPENROUTER_KEY": "sk-test"}):
             result = find_profile_for_model(config, "deepseek/deepseek-v4-flash")
             assert result["models"] == ["openai/gpt-oss-20b", "deepseek/deepseek-v4-flash"]
+
+
+class TestDiscoverJudgeBenchmarks:
+    """Tests for discover_judge_benchmarks function."""
+
+    def test_detects_benchmark_with_llm_judge_fixtures(self):
+        """Benchmark with llm_judge fixtures is detected."""
+        result = discover_judge_benchmarks(["commit_messages"])
+        assert "commit_messages" in result
+
+    def test_does_not_detect_benchmark_without_llm_judge(self):
+        """Benchmark without llm_judge fixtures is not detected."""
+        result = discover_judge_benchmarks(["cherry_pick"])
+        assert "cherry_pick" not in result
+
+    def test_unknown_benchmark_not_included(self):
+        """Unknown/nonexistent benchmark is not included in results."""
+        result = discover_judge_benchmarks(["nonexistent_benchmark"])
+        assert "nonexistent_benchmark" not in result
+
+    def test_mixed_benchmarks_correctly_filtered(self):
+        """Only benchmarks with llm_judge fixtures are returned from a mixed list."""
+        result = discover_judge_benchmarks([
+            "commit_messages",
+            "cherry_pick",
+            "nonexistent_benchmark",
+        ])
+        assert result == {"commit_messages"}
+
+    def test_empty_list_returns_empty_set(self):
+        """Empty benchmark list returns empty set."""
+        result = discover_judge_benchmarks([])
+        assert result == set()

@@ -497,6 +497,65 @@ class TestJudgeEndToEnd:
         assert data["benchmark"] == "commit_messages"
         assert data["total"] > 0
 
+    def test_judge_scorer_integration_json_schema_mode(self):
+        """End-to-end: judge scoring via CLI with mock models in json_schema mode."""
+        import json
+        import sys
+        from pathlib import Path
+
+        with open(Path(__file__).parent / "gitbench_judge_test.json", "w") as f:
+            json.dump({
+                "models": {
+                    "test": {
+                        "models": ["mock"],
+                        "provider": "openai",
+                    },
+                    "judge-profile": {
+                        "models": ["mock"],
+                        "provider": "openai",
+                    },
+                },
+                "judge": {
+                    "profile": "judge-profile",
+                },
+            }, f)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "gitbench.cli",
+                "run",
+                "--benchmark",
+                "commit_messages",
+                "--model",
+                "mock",
+                "--output-mode",
+                "json_schema",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent.parent,
+            env={**__import__("os").environ, "GITBENCH_CONFIG": str(Path(__file__).parent / "gitbench_judge_test.json")},
+        )
+
+        # Clean up
+        (Path(__file__).parent / "gitbench_judge_test.json").unlink(missing_ok=True)
+
+        assert result.returncode == 0, f"CLI failed: {result.stderr}"
+
+        stdout = result.stdout
+        json_start = stdout.find("{")
+        assert json_start != -1, f"No JSON in output:\n{stdout}"
+        data = json.loads(stdout[json_start:])
+        assert data["benchmark"] == "commit_messages"
+        assert data["total"] > 0
+        # Scores should have similarity field, threshold pass/fail
+        for score in data.get("scores", []):
+            assert "similarity" in score
+            assert "passed" in score
+            assert isinstance(score["similarity"], (int, float))
+
     def test_judge_client_creates_valid_scores(self):
         """JudgeClient integration: scores from judge flow through to Score objects."""
         from unittest.mock import MagicMock
@@ -517,7 +576,7 @@ class TestJudgeEndToEnd:
             setup=["git init"],
             prompt="Generate commit message",
             expected="feat: add user authentication",
-            scoring={"type": "similarity", "threshold": 0.7},
+            scoring={"type": "llm_judge", "threshold": 0.7},
         )
 
         result = scorer.score(
@@ -549,7 +608,7 @@ class TestJudgeEndToEnd:
             setup=["git init"],
             prompt="Generate commit message",
             expected="feat: add user auth",
-            scoring={"type": "similarity", "threshold": 0.7},
+            scoring={"type": "llm_judge", "threshold": 0.7},
         )
 
         result = scorer.score(

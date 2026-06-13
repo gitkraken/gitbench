@@ -120,12 +120,21 @@ class TestBenchmarkContract:
 class TestCommitMessagesBenchmark:
     """Test the commit_messages benchmark implementation."""
 
+    @pytest.fixture
+    def mock_judge_client(self):
+        """Create a mock JudgeClient that returns high similarity."""
+        from unittest.mock import MagicMock
+        mock = MagicMock()
+        mock.evaluate_commit_message.return_value = 0.95
+        return mock
 
-    def test_score_method_works(self):
+    def test_score_method_works(self, mock_judge_client):
         """Test that the score method works correctly."""
+        from gitbench.harness.scorer import Scorer
         from gitbench.harness.types import Fixture, Score
 
         benchmark = CommitMessagesBenchmark()
+        benchmark._scorer = Scorer(judge_client=mock_judge_client)
         fixtures = benchmark.load_fixtures()
 
         # Score with an identical message should score high
@@ -138,9 +147,15 @@ class TestCommitMessagesBenchmark:
 
     def test_score_method_handles_different_output(self):
         """Test that the score method handles different outputs correctly."""
+        from unittest.mock import MagicMock
+        from gitbench.harness.scorer import Scorer
         from gitbench.harness.types import Fixture, Score
 
+        mock_judge = MagicMock()
+        mock_judge.evaluate_commit_message.return_value = 0.2
+
         benchmark = CommitMessagesBenchmark()
+        benchmark._scorer = Scorer(judge_client=mock_judge)
         fixtures = benchmark.load_fixtures()
 
         fixture = fixtures[0]

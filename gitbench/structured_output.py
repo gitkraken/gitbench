@@ -312,6 +312,7 @@ def _resolve_path(payload: dict[str, Any], path: str) -> Any:
 SCORING_TYPE_TEMPLATES: dict[str, tuple[callable, str, str]] = {
     # (template_fn, primary_path, canonicalize_strategy)
     "similarity": (commit_message_template, "commit", "string"),
+    "llm_judge": (commit_message_template, "commit", "string"),
     "exact_match": (command_template, "command", "string"),
     "numeric_exact": (numeric_template, "count", "numeric_string"),
     "commit_hash_by_subject": (hash_template, "hash", "string"),

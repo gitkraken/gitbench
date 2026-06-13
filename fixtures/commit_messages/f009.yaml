@@ -13,7 +13,7 @@ prompt: Generate a concise commit message (max 50 characters) describing the cha
   in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').
 expected: Fix add function to handle string inputs
 scoring:
-  type: similarity
+  type: llm_judge
   threshold: 0.5
 purpose: Tests ability to generate a commit message for a bug fix. Evaluates recognizing
   and describing fix semantics in a diff.

@@ -1,1 +1,0 @@
-{"models": {"test": {"models": ["mock"], "provider": "openai"}, "judge-profile": {"models": ["mock"], "provider": "openai"}}, "judge": {"profile": "judge-profile"}}
