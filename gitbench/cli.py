@@ -1,5 +1,6 @@
 """CLI for GitBench."""
 
+import copy
 import importlib
 import inspect
 import json
@@ -22,7 +23,14 @@ from rich.console import Console
 from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedColumn
 
 from gitbench.benchmarks import Benchmark
-from gitbench.config import find_profile_for_model, load_config, load_judge_config, load_project_env, resolve_profile
+from gitbench.config import (
+    find_profile_for_model,
+    load_config,
+    load_judge_config,
+    load_project_env,
+    load_result_safety_config,
+    resolve_profile,
+)
 from gitbench.export import FORMAT_REGISTRY, get_available_formats
 from gitbench.harness.capabilities import validate_models, load_effort_matrix, save_effort_mapping
 from gitbench.harness.capacity import (
@@ -62,6 +70,18 @@ from gitbench.result_doctoring import (
     mark_scores_retried,
     replace_scores_and_recompute,
     write_result_payload,
+)
+from gitbench.result_safety import (
+    ResultSafetyError,
+    ResultSafetyProcessor,
+    ResultSafetyReviewer,
+    SafetyValidationError,
+    find_timestamped_result_files as find_safety_result_files,
+    refresh_derived_safety_hashes,
+    sanitize_result_file,
+    stamp_artifact_safety,
+    validate_payload_safety,
+    write_new_run_backup,
 )
 from gitbench.ui.display import RichProgressDisplay
 from gitbench.version import BENCHMARK_SUITE_VERSION, RESULT_SCHEMA_VERSION
@@ -776,6 +796,56 @@ def get_model_client(
         return OpenAIAdapter(model=model, timeout=timeout, retry_count=retry_count, base_url=base_url, api_key=api_key, attempt_gate=attempt_gate)
 
 
+def _build_result_safety_processor(
+    config: dict[str, Any],
+    *,
+    required: bool = False,
+) -> ResultSafetyProcessor | None:
+    """Build the configured single-model result-safety processor."""
+    try:
+        safety_config = load_result_safety_config(config)
+    except SystemExit as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if safety_config is None:
+        if required:
+            raise click.ClickException(
+                "Result safety is not configured. Add "
+                "'result_safety.profile' to gitbench.json."
+            )
+        return None
+
+    profile_name = safety_config["profile"]
+    model_name = safety_config["model"]
+    profile = safety_config["resolved_profile"]
+    api_key_env = profile.get("_api_key_env")
+    if (
+        not model_name.startswith("mock")
+        and api_key_env
+        and not profile.get("api_key")
+    ):
+        raise click.ClickException(
+            f"Environment variable {api_key_env} is not set for result-safety "
+            f"profile '{profile_name}'."
+        )
+
+    model_client = get_model_client(
+        model_name,
+        timeout=_effective_timeout(profile, None),
+        retry_count=_effective_retry_count(profile, None),
+        base_url=profile.get("base_url"),
+        api_key=profile.get("api_key"),
+        provider=profile.get("provider"),
+    )
+    reviewer = ResultSafetyReviewer(
+        model_client,
+        profile_name=profile_name,
+        model_name=model_name,
+        generate_kwargs=_profile_model_generate_kwargs(profile),
+    )
+    return ResultSafetyProcessor(reviewer)
+
+
 def _get_git_sha() -> str | None:
     """Get the current git commit SHA, or None if unavailable."""
     try:
@@ -890,6 +960,52 @@ def write_jsonl(envelope: dict, jsonl_path: str) -> Path:
         f.write(json.dumps(envelope) + "\n")
 
     return file_path
+
+
+def _replace_envelope_results_in_place(
+    envelope: dict[str, Any],
+    sanitized: dict[str, Any],
+) -> None:
+    """Apply sanitized results while preserving shared combined-output references."""
+    current_results = envelope.get("results")
+    sanitized_results = sanitized.get("results")
+    if not isinstance(current_results, list) or not isinstance(sanitized_results, list):
+        raise ResultSafetyError("Sanitized run envelope is missing result lists.")
+    if len(current_results) != len(sanitized_results):
+        raise ResultSafetyError("Sanitized run envelope changed the result count.")
+
+    for current, replacement in zip(current_results, sanitized_results):
+        if not isinstance(current, dict) or not isinstance(replacement, dict):
+            raise ResultSafetyError("Sanitized benchmark results must be objects.")
+        current.clear()
+        current.update(replacement)
+
+    for key, value in sanitized.items():
+        if key != "results":
+            envelope[key] = value
+
+
+def _validate_report_safety_input(path: Path) -> None:
+    """Validate every artifact in a JSON or JSONL report input."""
+    try:
+        if path.suffix.lower() == ".jsonl":
+            for line_number, line in enumerate(
+                path.read_text().splitlines(),
+                start=1,
+            ):
+                if not line.strip():
+                    continue
+                payload = json.loads(line)
+                validate_payload_safety(
+                    payload,
+                    artifact_name=f"{path} line {line_number}",
+                )
+            return
+
+        payload = json.loads(path.read_text())
+        validate_payload_safety(payload, artifact_name=str(path))
+    except json.JSONDecodeError as exc:
+        raise SafetyValidationError(f"{path} contains invalid JSON.") from exc
 
 
 def write_text_file(path: str, content: str) -> Path:
@@ -1383,6 +1499,79 @@ def doctor(
     )
 
 
+@cli.command("safety-doctor")
+@click.argument(
+    "result_file",
+    required=False,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
+@click.option(
+    "--latest",
+    is_flag=True,
+    help="Review JSON files in timestamped directories beneath gitbench-results/.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Classify and report planned redactions without writing files or backups.",
+)
+def safety_doctor(
+    result_file: Path | None,
+    latest: bool,
+    dry_run: bool,
+) -> None:
+    """Review and sanitize historical result artifacts."""
+    if bool(result_file) == latest:
+        raise click.ClickException(
+            "Specify exactly one RESULT_FILE or --latest."
+        )
+
+    config = load_config()
+    processor = _build_result_safety_processor(config, required=True)
+    assert processor is not None
+
+    input_paths = find_safety_result_files() if latest else [result_file]
+    if not input_paths:
+        raise click.ClickException(
+            "No JSON result files found in timestamped gitbench-results/ directories."
+        )
+
+    total_reviewed = 0
+    total_redacted = 0
+    total_skipped = 0
+    click.echo(f"Inputs: {len(input_paths)}")
+
+    for input_path in input_paths:
+        assert input_path is not None
+        click.echo(f"Reviewing: {input_path}")
+        try:
+            result = sanitize_result_file(
+                input_path,
+                processor,
+                dry_run=dry_run,
+            )
+        except (OSError, ResultSafetyError) as exc:
+            raise click.ClickException(f"{input_path}: {exc}") from exc
+
+        total_reviewed += result.reviewed_scores
+        total_redacted += result.redacted_scores
+        total_skipped += result.skipped_scores
+        action = "Would redact" if dry_run else "Redacted"
+        click.echo(
+            f"  Reviewed scores: {result.reviewed_scores + result.skipped_scores}; "
+            f"{action.lower()}: {result.redacted_scores}; "
+            f"already current: {result.skipped_scores}"
+        )
+        if result.backup_path is not None:
+            click.echo(f"  Original backup: {result.backup_path}")
+
+    prefix = "Dry run complete" if dry_run else "Safety doctor complete"
+    click.echo(
+        f"{prefix}: reviewed {total_reviewed + total_skipped} score(s), "
+        f"redacted {total_redacted}, already current {total_skipped}."
+    )
+
+
 @cli.command()
 @click.option(
     "--all",
@@ -1602,6 +1791,7 @@ def run(
         sys.exit(1)
 
     config = load_config()
+    result_safety_processor = _build_result_safety_processor(config)
     resolved_json_output = resolve_run_output_path(
         config,
         json_output=json_output,
@@ -2189,6 +2379,29 @@ def run(
                 for r in model_result.get("results", []):
                     all_results.append(r)
 
+            if result_safety_processor is not None:
+                reviewed_outputs: list[
+                    tuple[dict[str, Any], dict[str, Any], int]
+                ] = []
+                for _profile_name, envelope in pending_outputs:
+                    reviewed = result_safety_processor.review_payload(envelope)
+                    reviewed_outputs.append(
+                        (envelope, reviewed.payload, reviewed.redacted_scores)
+                    )
+
+                # Required original backups complete before any normal writer runs.
+                for envelope, _sanitized, redacted_scores in reviewed_outputs:
+                    if redacted_scores:
+                        try:
+                            write_new_run_backup(copy.deepcopy(envelope))
+                        except OSError as exc:
+                            raise ResultSafetyError(
+                                f"Could not write required result-safety backup: {exc}"
+                            ) from exc
+
+                for envelope, sanitized, _redacted_scores in reviewed_outputs:
+                    _replace_envelope_results_in_place(envelope, sanitized)
+
             for _profile_name, envelope in pending_outputs:
                 if output_dir:
                     written = write_output_dir(envelope, output_dir)
@@ -2217,6 +2430,14 @@ def run(
                     "profiles": all_profile_results,
                 }
 
+            if result_safety_processor is not None:
+                if isinstance(combined, list):
+                    combined = {
+                        "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+                        "results": combined,
+                    }
+                combined = result_safety_processor.review_payload(combined).payload
+
             # ── Build run envelope (shared by exports + HTML) ──────────────────────────
             # Compute profile name before building envelope
             if len(runs) == 1:
@@ -2244,6 +2465,9 @@ def run(
                     results=[],
                     output_mode=output_mode,
                 )
+
+            if result_safety_processor is not None:
+                _envelope = result_safety_processor.review_payload(_envelope).payload
 
             # ── Export files ────────────────────────────────────────────────────────
 
@@ -2287,6 +2511,8 @@ def run(
                 progress_display.close()
             logger.exception("Benchmark failed in %s mode", output_mode)
             click.echo(f"Error in {output_mode} mode: {e}", err=True)
+            if isinstance(e, ResultSafetyError):
+                raise click.ClickException(str(e)) from e
             if len(modes_to_run) == 1:
                 sys.exit(1)
             # Continue to next mode when running both
@@ -2439,6 +2665,30 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
     results_dir = input_dir or "gitbench-results"
     web_dir = Path(__file__).parent / "web"
     json_output = output_path or str(web_dir / "public" / "results.json")
+    config = load_config()
+    try:
+        report_safety_config = load_result_safety_config(config)
+    except SystemExit as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if report_safety_config is not None:
+        if input_file:
+            safety_inputs = [Path(input_file)]
+        else:
+            root = Path(results_dir)
+            safety_inputs = sorted(root.glob("*.json")) if root.is_dir() else []
+            if root.is_dir():
+                for subdir in sorted(path for path in root.iterdir() if path.is_dir()):
+                    safety_inputs.extend(sorted(subdir.glob("*.json")))
+
+        try:
+            for safety_input in safety_inputs:
+                _validate_report_safety_input(safety_input)
+        except SafetyValidationError as exc:
+            raise click.ClickException(
+                f"{exc} Run 'gitbench safety-doctor {safety_input}' before "
+                "generating the report."
+            ) from exc
 
     runs: list[dict] = []
     aggregate_reports: list[dict] = []
@@ -2519,6 +2769,17 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
     if runs:
         data_sources.append(aggregate_runs(runs))
     data = merge_aggregate_reports(data_sources)
+    if report_safety_config is not None:
+        refresh_derived_safety_hashes(data)
+        stamp_artifact_safety(
+            data,
+            profile_name=report_safety_config["profile"],
+            model_name=report_safety_config["model"],
+        )
+        try:
+            validate_payload_safety(data, artifact_name="generated report data")
+        except SafetyValidationError as exc:
+            raise click.ClickException(str(exc)) from exc
     render_json(data, json_output)
     click.echo(f"JSON data written to: {json_output}", err=True)
     db_output = web_dir / "data" / "gitbench.db"

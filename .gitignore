@@ -35,3 +35,4 @@ gitbench-logs/
 .claude
 gitbench.egg-info/
 gitbench-results-dirty
+gitbench-results-nsfw/

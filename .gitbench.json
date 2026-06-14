@@ -251,7 +251,15 @@
       ],
       "base_url": "https://openrouter.ai/api/v1",
       "api_key_env": "OPENROUTER_API_KEY"
+    },
+    "openrouter-result-safety": {
+      "model": "openai/gpt-5.4-mini:none",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
     }
+  },
+  "result_safety": {
+    "profile": "openrouter-result-safety"
   },
   "judge": {
     "profile": "openrouter-llms-as-judges"

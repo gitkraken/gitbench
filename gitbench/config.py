@@ -198,6 +198,41 @@ def load_judge_config(config: dict[str, Any]) -> dict[str, Any] | None:
     return {"profile": profile_name}
 
 
+def load_result_safety_config(config: dict[str, Any]) -> dict[str, Any] | None:
+    """Resolve the optional single-model result-safety profile."""
+    if "result_safety" not in config:
+        return None
+
+    result_safety = config["result_safety"]
+    if not isinstance(result_safety, dict):
+        raise SystemExit("Result safety configuration must be an object.")
+
+    profile_name = result_safety.get("profile")
+    if not isinstance(profile_name, str) or not profile_name.strip():
+        raise SystemExit("Result safety requires a non-empty 'profile' value.")
+
+    try:
+        profile = resolve_profile(config, profile_name)
+    except SystemExit:
+        raise SystemExit(
+            f"Result safety profile '{profile_name}' not found in config. "
+            f"Available profiles: {list(config.get('models', {}).keys())}"
+        )
+
+    models = profile.get("models", [])
+    if len(models) != 1:
+        raise SystemExit(
+            f"Result safety profile '{profile_name}' requires exactly one model; "
+            f"found {len(models)}."
+        )
+
+    return {
+        "profile": profile_name,
+        "model": models[0],
+        "resolved_profile": profile,
+    }
+
+
 def find_profile_for_model(config: dict[str, Any], model: str) -> dict[str, Any]:
     """Find a profile that matches the given model name.
 

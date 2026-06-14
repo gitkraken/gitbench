@@ -2,6 +2,7 @@
 
 import csv
 import io
+import json
 from typing import Any
 
 
@@ -106,6 +107,11 @@ def export_artificialanalysis(envelope: dict) -> str:
     return output.getvalue()
 
 
+def export_json(envelope: dict) -> str:
+    """Return the complete run envelope as formatted JSON."""
+    return json.dumps(envelope, indent=2)
+
+
 def get_available_formats() -> list[str]:
     """Return a sorted list of available export format names."""
     return sorted(FORMAT_REGISTRY.keys())
@@ -127,5 +133,6 @@ def export_csv_stdlib(envelope: dict) -> str:
 
 FORMAT_REGISTRY: dict[str, Any] = {
     "csv": export_csv,
+    "json": export_json,
     "artificialanalysis": export_artificialanalysis,
 }

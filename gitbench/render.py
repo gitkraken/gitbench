@@ -403,6 +403,7 @@ def aggregate_runs(runs: list[dict]) -> dict[str, Any]:
                     "parsed_payload": score.get("parsed_payload"),
                     "raw_structured_output": score.get("raw_structured_output"),
                     "structured_error": score.get("structured_error"),
+                    "safety_review": score.get("safety_review"),
                 })
                 # Report runtime is successful API call latency, not fixture wall time.
                 if score.get("api_duration_ms") is not None:

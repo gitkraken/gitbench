@@ -88,6 +88,37 @@ List configured profiles:
 gitbench profiles
 ```
 
+### Result safety configuration
+
+Result safety is optional. To enable it, reference a model profile containing
+exactly one model:
+
+```json
+{
+  "models": {
+    "openrouter-result-safety": {
+      "model": "openai/gpt-5.4-mini:none",
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    }
+  },
+  "result_safety": {
+    "profile": "openrouter-result-safety"
+  }
+}
+```
+
+The selected provider receives stored model-generated fields and retained
+diagnostic strings, not explicit fixture prompts or expected answers. GitBench
+reviews each score before normal serialization, fails closed on reviewer or
+response errors, and writes only a fixed application-owned redaction marker to
+public artifacts. A configured profile with zero or multiple models is
+rejected.
+
+The repository config includes `openrouter-result-safety-example` as a
+single-model example but does not enable `result_safety`; select and verify the
+reviewer model before adding the section.
+
 ## Running Benchmarks
 
 ### Full CLI reference
@@ -124,7 +155,7 @@ Key options:
 | `--json-output` | Single JSON file for results (default: `gitbench-results/{timestamp}/results-v{version}.json`) |
 | `--output-dir`, `-d` | Write per-run auto-named JSON files to a directory |
 | `--jsonl`, `-j` | Append run results as a JSON line to a file (useful for accumulating runs) |
-| `--export`, `-e` | Export format(s): `csv`, `artificialanalysis` (repeatable) |
+| `--export`, `-e` | Export format(s): `csv`, `json`, `artificialanalysis` (repeatable) |
 | `--export-path` | Path for export file (auto-named from model + timestamp if omitted) |
 
 ### Examples
@@ -289,6 +320,36 @@ gitbench doctor --latest --timeout 180
 
 The `doctor` command identifies failures caused by known transient error patterns (HTTP 429, 500/502/503/504, timeouts, rate limits) and re-runs only those fixtures against the original models.
 
+## Result safety doctoring
+
+When `result_safety.profile` is configured, new runs are reviewed before JSON,
+JSONL, CSV, stdout, or aggregate output is written. Historical files can be
+reviewed separately:
+
+```bash
+# Classify one artifact without changing it
+gitbench safety-doctor results.json --dry-run
+
+# Sanitize one artifact
+gitbench safety-doctor results.json
+
+# Sweep JSON files in every timestamped directory under gitbench-results/
+gitbench safety-doctor --latest --dry-run
+gitbench safety-doctor --latest
+```
+
+Flagged generated content and non-empty retained `error` or
+`structured_error` diagnostics are replaced with
+`[Redacted - Reason: Inappropriate NSFW content]`; scoring, token, cost,
+timing, and benchmark summaries are preserved. Before an existing file
+with redactions is replaced atomically, its complete unsanitized original is
+written to the mirrored, collision-safe `gitbench-results-nsfw/` tree.
+
+`gitbench-results-nsfw/` is gitignored but is not encrypted. It can contain
+explicit content, so local access control, retention, and deletion are the
+operator's responsibility. Clean artifacts do not create backups. A failed
+classification or required backup leaves the source artifact unchanged.
+
 ## Report generation
 
 After running benchmarks, generate a static report site:
@@ -298,6 +359,11 @@ gitbench report
 ```
 
 This aggregates results from `gitbench-results/`, generates `web/public/results.json`, builds the Astro site to `web/dist/`, and starts a preview server.
+
+When result safety is configured, report generation validates every raw or
+aggregate input before writing report JSON or SQLite data. Missing, stale, or
+modified safety metadata is rejected with the artifact path and a direction to
+run `gitbench safety-doctor`. Report validation never calls the reviewer model.
 
 ```bash
 gitbench report --open       # build and open in browser
@@ -313,6 +379,7 @@ Results can be exported to structured formats for external analysis:
 | Format | Description |
 | ------ | ----------- |
 | `csv` | One row per fixture result (benchmark, fixture_id, model, passed, similarity, error, etc.) |
+| `json` | Complete formatted run envelope |
 | `artificialanalysis` | One row per benchmark (model, benchmark, score, total, passed) — compatible with artificialanalysis.com |
 
 ```bash
@@ -536,6 +603,7 @@ pytest tests/test_cli.py -v
 pytest tests/test_export.py -v
 pytest tests/test_parallel_fixtures.py -v
 pytest tests/test_result_doctoring.py -v
+pytest tests/test_result_safety.py tests/test_result_safety_cli.py -v
 ```
 
 ## Adding Fixtures and Benchmarks
@@ -575,11 +643,12 @@ scoring:
 ```
 gitbench/
 ├── __init__.py
-├── cli.py                  # Click-based CLI (run, list, doctor, profiles, report)
+├── cli.py                  # Click-based CLI (run, doctoring, profiles, report)
 ├── config.py               # Configuration loader (gitbench.json profiles)
 ├── export.py               # CSV and artificialanalysis format exporters
 ├── render.py               # Result aggregation and JSON generation for reports
 ├── result_doctoring.py     # Selective repair of transient failures
+├── result_safety.py        # Safety review, redaction, metadata, and backups
 ├── version.py              # Version constants (schema, suite, package)
 ├── harness/
 │   ├── benchmark.py       # Benchmark abstract base class
@@ -647,13 +716,15 @@ tests/
 ├── test_reasoning.py      # Reasoning level validation tests
 ├── test_render.py         # Render/aggregation tests
 ├── test_result_doctoring.py   # Doctor command tests
+├── test_result_safety.py      # Result-safety unit tests
+├── test_result_safety_cli.py  # Result-safety CLI and publication-gate tests
 ├── test_scorer.py         # Scoring logic tests
 └── test_types.py          # Data type tests
 ```
 
 ## Architecture
 
-- **CLI** (`gitbench/cli.py`): Click-based command group with `run`, `list`, `doctor`, `profiles`, and `report` commands.
+- **CLI** (`gitbench/cli.py`): Click-based command group with `run`, `list`, `doctor`, `safety-doctor`, `profiles`, and `report` commands.
 - **Configuration** (`gitbench/config.py`): Loads model profiles from `gitbench.json` and project `.env` files. Profiles define model lists, provider type, base URL, credential variable names via `api_key_env`, timeout, and retry settings.
 - **Benchmark ABC** (`gitbench/harness/benchmark.py`): Abstract base class enforcing `run_setup()`, `load_fixtures()`, and `score()` interface. Drop a new Python module in `benchmarks/` to add a new benchmark category — auto-discovered via `importlib`.
 - **Benchmark Runner** (`gitbench/harness/runner.py`): Orchestrates fixture execution against a model, supports concurrent fixtures, and reports progress via the `RunProgress` protocol.
@@ -665,4 +736,5 @@ tests/
 - **Progress display** (`gitbench/ui/display.py`): Rich-based live TUI with progress bars, model panels, throughput stats, cost estimation, and final summary tables.
 - **Export** (`gitbench/export.py`): Pluggable format registry. Ships with CSV (per-fixture) and artificialanalysis (per-benchmark) exporters.
 - **Result doctoring** (`gitbench/result_doctoring.py`): Identifies transient failures (rate limits, timeouts, server errors) and re-runs only affected fixtures against the original models.
+- **Result safety** (`gitbench/result_safety.py`): Reviews canonical generated-content bundles, applies deterministic redaction, records audit hashes, backs up affected originals, and validates publication inputs.
 - **Report rendering** (`gitbench/render.py`): Aggregates run envelopes from directories or JSONL files, resolves model metadata, and produces `results.json` for the Astro report site.

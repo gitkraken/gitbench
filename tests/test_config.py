@@ -12,6 +12,7 @@ from gitbench.config import (
     find_profile_for_model,
     load_config,
     load_project_env,
+    load_result_safety_config,
     resolve_profile,
 )
 
@@ -350,6 +351,50 @@ class TestFindProfileForModel:
         }
         result = find_profile_for_model(config, "llama3.1:8b")
         assert result["provider"] == "ollama"
+
+
+class TestLoadResultSafetyConfig:
+    def test_absent_configuration_is_disabled(self):
+        assert load_result_safety_config({"models": {}}) is None
+
+    def test_valid_single_model_profile_is_resolved(self):
+        config = {
+            "models": {
+                "safety": {
+                    "model": "openai/safety-model",
+                    "base_url": "https://openrouter.ai/api/v1",
+                }
+            },
+            "result_safety": {"profile": "safety"},
+        }
+
+        result = load_result_safety_config(config)
+
+        assert result is not None
+        assert result["profile"] == "safety"
+        assert result["model"] == "openai/safety-model"
+        assert result["resolved_profile"]["models"] == ["openai/safety-model"]
+
+    def test_missing_profile_name_is_rejected(self):
+        with pytest.raises(SystemExit, match="non-empty 'profile'"):
+            load_result_safety_config({"models": {}, "result_safety": {}})
+
+    def test_missing_referenced_profile_is_rejected(self):
+        config = {
+            "models": {"other": {"model": "model"}},
+            "result_safety": {"profile": "missing"},
+        }
+        with pytest.raises(SystemExit, match="Result safety profile 'missing' not found"):
+            load_result_safety_config(config)
+
+    @pytest.mark.parametrize("models, count", [([], 0), (["one", "two"], 2)])
+    def test_profile_requires_exactly_one_model(self, models, count):
+        config = {
+            "models": {"safety": {"models": models}},
+            "result_safety": {"profile": "safety"},
+        }
+        with pytest.raises(SystemExit, match=f"exactly one model; found {count}"):
+            load_result_safety_config(config)
 
 
 class TestMultipleModels:
