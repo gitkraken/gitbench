@@ -7,7 +7,7 @@ from pathlib import Path
 from gitbench.harness.loader import FixtureLoader
 from gitbench.harness.scorer import Scorer
 from gitbench.harness.types import Fixture, Score
-from gitbench.utils.git import GitExecutor
+from gitbench.utils.git import FixtureGenerationContext, GitExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -69,20 +69,32 @@ class Benchmark(ABC):
         """
         ...
 
-    def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
+    def setup_fixture(
+        self,
+        fixture: Fixture,
+        *,
+        fixture_generation_context: FixtureGenerationContext | None = None,
+    ) -> tuple[GitExecutor, str]:
         """Set up a git repository for a single fixture.
 
         The default creates a new :class:`GitExecutor` and runs
         ``fixture.setup`` commands inside a temp repo named
-        ``<self.name>_<fixture.id>``.
+        ``<self.name>_<fixture.id>``.  When ``fixture_generation_context``
+        is supplied, Git commands use deterministic author/committer
+        identities, timestamps, timezone, and locale so repeated setups
+        produce identical Git object identities.
 
         Args:
             fixture: The fixture to set up.
+            fixture_generation_context: Optional deterministic context for
+                reproducible fixture generation.
 
         Returns:
             A tuple of (GitExecutor, repo_path).
         """
-        executor = GitExecutor()
+        executor = GitExecutor(
+            fixture_generation_context=fixture_generation_context,
+        )
         repo_path = executor.setup_repo(
             f"{self.name}_{fixture.id}", fixture.setup
         )

@@ -97,6 +97,57 @@ export interface RunMeta {
   output_mode: string;
 }
 
+export interface CampaignSummary {
+  campaign_id: string;
+  created_at: string;
+  state: string;
+  publication_state: string;
+  legacy: boolean;
+  planned_trials: number;
+  completed_trials: number;
+  valid_attempts: number;
+  passing_attempts: number;
+  excluded_attempts: number;
+  mean_success_rate: number | null;
+  incomplete: boolean;
+  publishable: boolean;
+}
+
+export interface CampaignAwareGitBenchData extends GitBenchData {
+  campaign_id: string | null;
+  campaign_metadata: CampaignSummary | null;
+}
+
+export interface FixtureReliability {
+  fixture_id: string;
+  benchmark: string;
+  planned_trials: number;
+  completed_trials: number;
+  valid_attempts: number;
+  passing_attempts: number;
+  failing_attempts: number;
+  excluded_attempts: number;
+  mean_success_rate: number | null;
+  pass_any_at_n: Record<string, boolean>;
+  classification: "stable_pass" | "flaky" | "stable_fail" | "unknown";
+  incomplete: boolean;
+}
+
+export interface ModelCampaignSummary {
+  model: string;
+  output_mode: string;
+  planned_trials: number;
+  completed_trials: number;
+  valid_attempts: number;
+  passing_attempts: number;
+  excluded_attempts: number;
+  mean_success_rate: number | null;
+  stable_pass_count: number;
+  flaky_count: number;
+  stable_fail_count: number;
+  incomplete: boolean;
+}
+
 export interface GitBenchData {
   models: ModelInfo[];
   benchmarks: string[];

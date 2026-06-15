@@ -1,23 +1,71 @@
 """Git executor for sandboxed git command execution."""
 
 import logging
+import os
 import shutil
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True)
+class FixtureGenerationContext:
+    """Deterministic inputs used to make generated Git history reproducible.
+
+    The same context (version, seed, author/committer identity, timestamp,
+    timezone, and locale) must produce identical Git objects across campaign
+    trials.
+    """
+
+    version: str = ""
+    seed: int | None = None
+    author_name: str = "GitBench Fixture Author"
+    author_email: str = "fixture@gitbench.local"
+    committer_name: str = "GitBench Fixture Committer"
+    committer_email: str = "fixture@gitbench.local"
+    date: str = "2020-01-01T00:00:00+0000"
+    tz: str = "UTC"
+    locale: str = "C.UTF-8"
+
+    def git_env(self) -> dict[str, str]:
+        """Return a copy of the current process environment with stable Git inputs."""
+        env = os.environ.copy()
+        env.update(
+            {
+                "GIT_AUTHOR_NAME": self.author_name,
+                "GIT_AUTHOR_EMAIL": self.author_email,
+                "GIT_COMMITTER_NAME": self.committer_name,
+                "GIT_COMMITTER_EMAIL": self.committer_email,
+                "GIT_AUTHOR_DATE": self.date,
+                "GIT_COMMITTER_DATE": self.date,
+                "TZ": self.tz,
+                "LC_ALL": self.locale,
+                "LANG": self.locale,
+            }
+        )
+        return env
+
+
 class GitExecutor:
     """Executes git commands in an isolated temporary directory."""
 
-    def __init__(self, base_dir: str | None = None):
+    def __init__(
+        self,
+        base_dir: str | None = None,
+        fixture_generation_context: FixtureGenerationContext | None = None,
+    ):
         """Initialize the git executor.
 
         Args:
             base_dir: Optional base directory for temp repos.
                      Defaults to system temp directory.
+            fixture_generation_context: Optional deterministic context. When
+                provided, all git commands run with stable author/committer
+                identities, timestamps, timezone, and locale so repeated
+                fixture generation produces the same Git object identities.
 
         Raises:
             RuntimeError: If git is not available in PATH.
@@ -27,6 +75,12 @@ class GitExecutor:
         self._repo_path: str | None = None
         self._cleanup_targets: list[str] = []
         self._created_branches: list[str] = []
+        self._fixture_generation_context = fixture_generation_context
+        self._env = (
+            fixture_generation_context.git_env()
+            if fixture_generation_context
+            else os.environ.copy()
+        )
 
         # Verify git is available
         git_path = shutil.which("git")
@@ -100,6 +154,7 @@ class GitExecutor:
             cwd=self._repo_path,
             capture_output=True,
             text=True,
+            env=self._env,
         )
 
         if result.returncode != 0:
@@ -131,6 +186,7 @@ class GitExecutor:
             cwd=self._repo_path,
             capture_output=True,
             text=True,
+            env=self._env,
         )
 
         # git merge, rebase, and cherry-pick return 1 when there are conflicts (expected)

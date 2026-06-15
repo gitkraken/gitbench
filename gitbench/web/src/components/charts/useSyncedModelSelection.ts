@@ -29,7 +29,7 @@ function readStoredSelection(groups: ModelGroup[]): string[] | null {
     if (!Array.isArray(parsed)) return null;
     return sanitizeGroupSelection(
       parsed.filter((value): value is string => typeof value === "string"),
-      groups,
+      groups
     );
   } catch {
     return null;
@@ -42,7 +42,9 @@ function writeSelection(selection: string[]): void {
 
 export function useSyncedModelSelection(data: GitBenchData | null) {
   const [selectedGroups, setSelectedGroupsState] = useState<string[]>([]);
-  const [outputMode, setOutputModeState] = useState<OutputMode>(readStoredOutputMode());
+  const [outputMode, setOutputModeState] = useState<OutputMode>(
+    readStoredOutputMode()
+  );
   const selectedRef = useRef<string[]>([]);
   const outputModeRef = useRef<OutputMode>(outputMode);
   const groupsRef = useRef<ModelGroup[]>([]);
@@ -87,7 +89,7 @@ export function useSyncedModelSelection(data: GitBenchData | null) {
     setOutputModeState(mode);
     writeStoredOutputMode(mode);
     window.dispatchEvent(
-      new CustomEvent(OUTPUT_MODE_EVENT_NAME, { detail: mode }),
+      new CustomEvent(OUTPUT_MODE_EVENT_NAME, { detail: mode })
     );
   }, []);
 
@@ -98,7 +100,7 @@ export function useSyncedModelSelection(data: GitBenchData | null) {
 
       const next = sanitizeGroupSelection(
         detail.filter((value): value is string => typeof value === "string"),
-        groupsRef.current,
+        groupsRef.current
       );
 
       if (arraysEqual(selectedRef.current, next)) return;
@@ -132,6 +134,8 @@ export function useSyncedModelSelection(data: GitBenchData | null) {
     selectedModels,
     outputMode,
     setOutputMode,
-    availableOutputModes: data ? getAvailableOutputModes(data) : new Set<string>(),
+    availableOutputModes: data
+      ? getAvailableOutputModes(data)
+      : new Set<string>(),
   };
 }

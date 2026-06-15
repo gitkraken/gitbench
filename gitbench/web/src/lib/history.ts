@@ -16,6 +16,6 @@ export function modelsWithRepeatRuns(runs: RunMeta[]): Set<string> {
   return new Set(
     Object.entries(counts)
       .filter(([, count]) => count > 1)
-      .map(([model]) => model),
+      .map(([model]) => model)
   );
 }

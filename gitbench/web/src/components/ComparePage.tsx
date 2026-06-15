@@ -35,6 +35,11 @@ import {
   OutputModeLegend,
   tooltipStyle,
 } from "@/components/charts/grouped-chart-ui";
+import {
+  computeReliabilityDeltas,
+  reliabilityDeltaSummary,
+} from "@/lib/fixture-reliability";
+import { Badge } from "@/components/ui/badge";
 
 const COLORS = [
   "#B657FF",
@@ -129,6 +134,17 @@ export default function ComparePage() {
       })),
     [benchmarkChart.pairs]
   );
+  const reliabilityDeltas = useMemo(
+    () =>
+      data && selectedModels.length >= 2
+        ? computeReliabilityDeltas(data, selectedModels[0], selectedModels[1])
+        : [],
+    [data, selectedModels]
+  );
+  const reliabilitySummary = useMemo(
+    () => reliabilityDeltaSummary(reliabilityDeltas),
+    [reliabilityDeltas]
+  );
 
   if (!data) return <div>Loading...</div>;
 
@@ -153,6 +169,136 @@ export default function ComparePage() {
           }
         />
       </div>
+
+      <section className="mb-10">
+        <div className="section-label">
+          <span>Fixture Reliability Delta</span>
+        </div>
+        <div className="card p-5">
+          {selectedModels.length < 2 ? (
+            <p className="text-sm text-(--color-text-mid)">
+              Select at least two models to compare fixture reliability.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-4 gap-3 mb-5">
+                <div className="bg-pass-bg/30 rounded-md p-3 text-center">
+                  <div className="text-lg font-bold text-pass">
+                    {reliabilitySummary.aMore}
+                  </div>
+                  <div className="text-[0.6rem] font-mono text-pass opacity-70">
+                    More reliable
+                  </div>
+                  <div className="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                    {selectedModels[0]}
+                  </div>
+                </div>
+                <div className="bg-fail-bg/30 rounded-md p-3 text-center">
+                  <div className="text-lg font-bold text-fail">
+                    {reliabilitySummary.bMore}
+                  </div>
+                  <div className="text-[0.6rem] font-mono text-fail opacity-70">
+                    More reliable
+                  </div>
+                  <div className="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                    {selectedModels[1]}
+                  </div>
+                </div>
+                <div className="bg-(--color-card) rounded-md p-3 text-center">
+                  <div className="text-lg font-bold text-(--color-text-mid)">
+                    {reliabilitySummary.equal}
+                  </div>
+                  <div className="text-[0.6rem] font-mono text-(--color-text-dim)">
+                    Equal reliability
+                  </div>
+                </div>
+                <div className="bg-(--color-card) rounded-md p-3 text-center">
+                  <div className="text-lg font-bold text-(--color-text-dim)">
+                    {reliabilitySummary.unknown}
+                  </div>
+                  <div className="text-[0.6rem] font-mono text-(--color-text-dim)">
+                    Unknown
+                  </div>
+                </div>
+              </div>
+              {reliabilityDeltas.filter(
+                (d) =>
+                  d.classification !== "equal" && d.classification !== "unknown"
+              ).length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-mono text-[0.65rem]">
+                    <thead>
+                      <tr className="text-(--color-text-dim) border-b border-border">
+                        <th className="pb-1.5 pr-3 font-normal">Fixture</th>
+                        <th className="pb-1.5 pr-3 font-normal text-right">
+                          {selectedModels[0]}
+                        </th>
+                        <th className="pb-1.5 pr-3 font-normal text-right">
+                          {selectedModels[1]}
+                        </th>
+                        <th className="pb-1.5 font-normal text-right">Delta</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reliabilityDeltas
+                        .filter(
+                          (d) =>
+                            d.classification !== "equal" &&
+                            d.classification !== "unknown"
+                        )
+                        .slice(0, 20)
+                        .map((d) => (
+                          <tr
+                            key={`${d.benchmark}/${d.fixtureId}`}
+                            className="border-b border-(--color-border-dim)"
+                          >
+                            <td className="py-1.5 pr-3">
+                              <a
+                                href={`/fixtures/${d.benchmark}/${d.fixtureId}`}
+                                className="text-accent hover:underline"
+                              >
+                                {d.fixtureId}
+                              </a>
+                            </td>
+                            <td className="py-1.5 pr-3 text-right">
+                              {d.a?.ratio != null
+                                ? `${(d.a.ratio * 100).toFixed(0)}% (${
+                                    d.a.passCount
+                                  }/${d.a.validCount})`
+                                : "—"}
+                            </td>
+                            <td className="py-1.5 pr-3 text-right">
+                              {d.b?.ratio != null
+                                ? `${(d.b.ratio * 100).toFixed(0)}% (${
+                                    d.b.passCount
+                                  }/${d.b.validCount})`
+                                : "—"}
+                            </td>
+                            <td
+                              className={`py-1.5 text-right font-medium ${
+                                (d.delta ?? 0) > 0
+                                  ? "text-pass"
+                                  : (d.delta ?? 0) < 0
+                                  ? "text-fail"
+                                  : "text-(--color-text-dim)"
+                              }`}
+                            >
+                              {d.delta != null
+                                ? `${d.delta >= 0 ? "+" : ""}${(
+                                    d.delta * 100
+                                  ).toFixed(0)}%`
+                                : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
 
       <section className="mb-10">
         <div className="section-label">

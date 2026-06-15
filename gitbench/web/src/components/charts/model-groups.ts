@@ -329,7 +329,7 @@ export function tokenMetric(
   };
   const decomposition = decomposeOutputTokens(
     tokens.output_tokens,
-    tokens.reasoning_tokens,
+    tokens.reasoning_tokens
   );
   return {
     ...effort,
@@ -342,12 +342,12 @@ export function tokenMetric(
 }
 
 function closestRepresentativeEffort(
-  summary: GroupedMetricModeSummary,
+  summary: GroupedMetricModeSummary
 ): MetricEffort {
   return summary.efforts.reduce((closest, effort) => {
     const distance = Math.abs(effort.value - summary.representativeValue);
     const closestDistance = Math.abs(
-      closest.value - summary.representativeValue,
+      closest.value - summary.representativeValue
     );
     if (distance < closestDistance) return effort;
     if (distance === closestDistance && effort.value < closest.value) {
@@ -359,7 +359,7 @@ function closestRepresentativeEffort(
 
 function applyTokenSegments(
   row: GroupedMetricRow,
-  mode: ConcreteOutputMode,
+  mode: ConcreteOutputMode
 ): void {
   const summary = row.modes[mode];
   if (!summary) return;
@@ -399,14 +399,14 @@ function applyTokenSegments(
 export function buildTokenUsageRows(
   data: GitBenchData,
   selectedGroupIds: string[],
-  outputMode: OutputMode,
+  outputMode: OutputMode
 ): GroupedMetricRow[] {
   const rows = buildGroupedMetricRows(
     data,
     selectedGroupIds,
     tokenMetric,
     "median",
-    outputMode,
+    outputMode
   );
   for (const row of rows) {
     applyTokenSegments(row, "text");

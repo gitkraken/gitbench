@@ -868,3 +868,66 @@ class TestSqliteReportDb:
 
         assert "stale_marker" not in tables
         assert models == {"anthropic/claude"}
+
+
+
+class TestCampaignSQLiteSchema:
+    """Campaign-aware SQLite schema extensions."""
+
+    def test_campaign_tables_exist(self, tmp_path):
+        db_path = tmp_path / "gitbench.db"
+        write_sqlite_report_db({"models": [], "benchmarks": [], "runs_meta": []}, str(db_path))
+        with sqlite3.connect(str(db_path)) as conn:
+            tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+            names = {t[0] for t in tables}
+            assert "campaigns" in names
+            assert "trials" in names
+            assert "raw_attempts" in names
+            assert "fixture_aggregates" in names
+
+    def test_campaign_insertion(self, tmp_path):
+        db_path = tmp_path / "gitbench.db"
+        data = {
+            "models": [],
+            "benchmarks": ["commit_messages"],
+            "runs_meta": [],
+            "campaigns": [
+                {
+                    "campaign_id": "cmp-db",
+                    "created_at": "2026-06-01T00:00:00+00:00",
+                    "config_hash": "abc",
+                    "state": "complete",
+                    "planned_attempts": 2,
+                    "completed_attempts": 2,
+                    "valid_attempts": 2,
+                    "passing_attempts": 1,
+                    "excluded_attempts": 0,
+                    "publication_state": "draft",
+                    "legacy": False,
+                    "benchmark_ids": ["commit_messages"],
+                    "model_ids": ["m1"],
+                    "output_modes": ["text"],
+                    "planned_trial_count": 1,
+                    "trials": [
+                        {
+                            "trial_index": 1,
+                            "planned_attempts": 2,
+                            "completed_attempts": 2,
+                            "valid_attempts": 2,
+                            "passing_attempts": 1,
+                            "excluded_attempts": 0,
+                            "complete": True,
+                        }
+                    ],
+                    "raw_attempts": [],
+                    "fixture_aggregates": [],
+                    "model_summaries": [],
+                    "benchmark_summaries": [],
+                    "resource_summaries": [],
+                }
+            ],
+        }
+        write_sqlite_report_db(data, str(db_path))
+        with sqlite3.connect(str(db_path)) as conn:
+            row = conn.execute("SELECT campaign_id, state FROM campaigns").fetchone()
+            assert row == ("cmp-db", "complete")

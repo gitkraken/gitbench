@@ -20,16 +20,14 @@ function formatTokenCount(value: number): string {
 
 export function decomposeOutputTokens(
   outputTokens: TokenCount,
-  reasoningTokens: TokenCount,
+  reasoningTokens: TokenCount
 ): OutputTokenDecomposition {
   const totalOutput = normalizedTokenCount(outputTokens);
   const reasoning = normalizedTokenCount(reasoningTokens);
   return {
     totalOutputTokens: totalOutput,
     visibleOutputTokens:
-      totalOutput == null
-        ? null
-        : Math.max(totalOutput - (reasoning ?? 0), 0),
+      totalOutput == null ? null : Math.max(totalOutput - (reasoning ?? 0), 0),
     reasoningTokens: reasoning,
     hasReasoningData: reasoning != null,
   };
@@ -39,10 +37,12 @@ export function formatCompactTokenUsage(
   inputTokens: TokenCount,
   outputTokens: TokenCount,
   reasoningLevel: string | null | undefined,
-  reasoningTokens: TokenCount,
+  reasoningTokens: TokenCount
 ): string | null {
   if (inputTokens == null || outputTokens == null) return null;
-  const base = `${formatTokenCount(inputTokens)} in → ${formatTokenCount(outputTokens)} out`;
+  const base = `${formatTokenCount(inputTokens)} in → ${formatTokenCount(
+    outputTokens
+  )} out`;
   if (!reasoningLevel) return base;
   return reasoningTokens == null
     ? `${base} (reasoning unavailable)`
@@ -53,7 +53,7 @@ export function formatAggregateTokenUsage(
   inputTokens: TokenCount,
   outputTokens: TokenCount,
   reasoningLevel: string | null | undefined,
-  reasoningTokens: TokenCount,
+  reasoningTokens: TokenCount
 ): string | null {
   if (inputTokens == null || outputTokens == null) return null;
   const input = formatTokenCount(inputTokens);

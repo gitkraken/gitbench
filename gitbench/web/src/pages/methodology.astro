@@ -84,6 +84,120 @@ import Layout from "@/components/Layout.astro";
 
       <section>
         <h3 class="text-base font-bold text-(--color-text) mb-2">
+          Evaluation Campaigns
+        </h3>
+        <p>
+          GitBench runs repeated <em>evaluation campaigns</em>. A campaign
+          executes every selected model, reasoning effort, output mode, and
+          fixture for a configurable number of complete trial rounds. The
+          default is three trials; published evaluations may use more. Each
+          campaign has an unique ID, an immutable configuration hash, and records
+          every raw attempt so aggregates can be traced back to individual
+          evidence.
+        </p>
+        <p class="mt-2">
+          For each fixture we report the <strong>mean one-attempt success rate</strong>,
+          which is the proportion of valid attempts that passed. We also report
+          <code
+            class="font-mono text-[0.75rem] bg-(--color-surface) px-1 py-0.5 rounded"
+            >pass_any_at_n</code
+          >, the share of fixtures that passed at least once in the first
+          <em>n</em> comparable attempts. These are different numbers and are
+          labeled separately; mean success is not the probability of passing at
+          least once across trials.
+        </p>
+        <p class="mt-2">
+          A fixture is classified as
+          <strong>stable_pass</strong> when every valid attempt passes,
+          <strong>stable_fail</strong> when every valid attempt fails, and
+          <strong>flaky</strong> when it has both passing and failing valid
+          attempts. Classifications, numerators, and denominators are shown
+          throughout the report so you can see how much evidence supports each
+          aggregate.
+        </p>
+      </section>
+
+      <section>
+        <h3 class="text-base font-bold text-(--color-text) mb-2">
+          Deterministic Inputs, Non-Deterministic Models
+        </h3>
+        <p>
+          Fixture inputs are deterministic within a campaign: Git author,
+          committer, reflog timestamps, identities, locale, timezone, and other
+          relevant repository inputs are fixed, and every attempt records hashes
+          for the fixture input, rendered prompt, expected output, request
+          configuration, and scorer configuration. Identical campaign
+          configuration and seed therefore produce identical fixture state.
+        </p>
+        <p class="mt-2">
+          However, hosted model inference remains non-deterministic. Provider
+          routing, retry behavior, LLM-judge decisions, and the model's own
+          sampling can all vary between attempts. GitBench records available
+          provider-route metadata and retry history for each attempt, but it
+          does not claim that evaluations are fully reproducible. Treat
+          pass rates as estimates of one-attempt reliability, not as guaranteed
+          probabilities.
+        </p>
+      </section>
+
+      <section>
+        <h3 class="text-base font-bold text-(--color-text) mb-2">
+          Exclusions and Campaign Completeness
+        </h3>
+        <p>
+          Not every failed call counts as a model-quality failure. Structured-output
+          parse or schema-validation failures are valid quality failures because
+          the model returned an unusable answer. In contrast, transport failures,
+          exhausted provider retries, invalid fixture hashes, and unavailable
+          judge results are excluded from quality denominators and make the
+          campaign incomplete.
+        </p>
+        <p class="mt-2">
+          Campaign completeness therefore has three parts: target attempts must
+          finish with valid quality outcomes, judge scoring must not be
+          exhausted, and any configured safety review must reach an allowed
+          state. Incomplete campaigns are still inspectable, but they are not
+          included in default rankings.
+        </p>
+      </section>
+
+      <section>
+        <h3 class="text-base font-bold text-(--color-text) mb-2">
+          Judge Caching and Resource Normalization
+        </h3>
+        <p>
+          LLM-judge decisions are cached within a campaign by fixture input
+          hash, target output hash, and judge configuration hash. This prevents
+          duplicate judge calls and keeps judge variance separate from target
+          variance. Member-level judge scores and aggregation provenance are
+          retained for auditability.
+        </p>
+        <p class="mt-2">
+          Cost, token, and API-time metrics are reported at two scopes.
+          Ranking charts use the <strong>mean per complete trial</strong> so
+          campaigns with different trial counts remain comparable. The
+          <strong>total campaign</strong> cost, tokens, and API time are shown
+          as operational context. Wall-clock duration is tracked separately and
+          is not treated as additive API time.
+        </p>
+      </section>
+
+      <section>
+        <h3 class="text-base font-bold text-(--color-text) mb-2">
+          Legacy Campaigns
+        </h3>
+        <p>
+          Historical result artifacts created before evaluation campaigns are
+          imported as <strong>one-trial legacy campaigns</strong>. They are
+          marked legacy and do not have repeated-trial evidence. Stability
+          classifications, trial variability, and pass_any_at_n semantics should
+          not be inferred from them. New campaigns should be used when making
+          reliability comparisons.
+        </p>
+      </section>
+
+      <section>
+        <h3 class="text-base font-bold text-(--color-text) mb-2">
           Pass@k Metric
         </h3>
         <p>
@@ -99,11 +213,9 @@ import Layout from "@/components/Layout.astro";
           For single-run evaluations (the default), <code
             class="font-mono text-[0.75rem] bg-(--color-surface) px-1 py-0.5 rounded"
             >k = 1</code
-          >. When a model is run multiple times, <code
-            class="font-mono text-[0.75rem] bg-(--color-surface) px-1 py-0.5 rounded"
-            >k</code
-          > represents the number of runs, and pass@k is computed per benchmark or
-          across all benchmarks. Pass rates are shown as percentages on the Overview
+          >. For repeated campaigns, the headline metric is mean one-attempt
+          success: passing valid attempts divided by scheduled quality
+          attempts. Pass rates are shown as percentages on the Overview
           and model detail pages.
         </p>
       </section>
@@ -186,8 +298,14 @@ import Layout from "@/components/Layout.astro";
             speed, UX, multi-turn reasoning, or tool use.
           </li>
           <li>
-            Results <strong>vary by run</strong> — LLM outputs are non-deterministic.
-            Pass rates should be treated as estimates, not absolute scores.
+            Results <strong>vary by run</strong> — LLM outputs and provider routing
+            are non-deterministic. Pass rates should be treated as estimates of
+            one-attempt reliability, not absolute scores.
+          </li>
+          <li>
+            <strong>Fixture inputs are deterministic within a campaign</strong>,
+            but hosted model evaluation is not fully reproducible. Provider routing,
+            retries, and judge decisions can still vary.
           </li>
           <li>
             <strong>Similarity scoring is approximate</strong> — a correct answer

@@ -8,6 +8,7 @@ from gitbench.export import (
     FORMAT_REGISTRY,
     get_available_formats,
 )
+from gitbench.harness.campaign import AttemptStatus
 from gitbench.version import BENCHMARK_SUITE_VERSION
 
 
@@ -311,3 +312,150 @@ def test_artificialanalysis_reasoning_level():
     reader = csv.DictReader(io.StringIO(csv_str))
     rows = list(reader)
     assert rows[0]["reasoning_level"] == "medium"
+
+
+
+class TestCampaignReportExport:
+    """Export campaign reports in the new JSON schema."""
+
+    def test_export_campaign_report_structure(self):
+        from gitbench.harness.campaign import (
+            AttemptIdentity,
+            RawAttempt,
+            Trial,
+            make_campaign,
+        )
+        from gitbench.export import build_campaign_report
+
+        campaign = make_campaign(
+            campaign_id="cmp-export",
+            fixture_ids=["f1"],
+            model_ids=["m1"],
+            output_modes=["text"],
+            planned_trial_count=2,
+        )
+        campaign.trials = [
+            Trial(
+                trial_index=1,
+                planned_attempts=1,
+                attempt_identities=[
+                    AttemptIdentity(
+                        campaign_id=campaign.campaign_id,
+                        trial_index=1,
+                        model_id="m1",
+                        reasoning_effort="none",
+                        output_mode="text",
+                        fixture_id="f1",
+                    )
+                ],
+            ),
+            Trial(
+                trial_index=2,
+                planned_attempts=1,
+                attempt_identities=[
+                    AttemptIdentity(
+                        campaign_id=campaign.campaign_id,
+                        trial_index=2,
+                        model_id="m1",
+                        reasoning_effort="none",
+                        output_mode="text",
+                        fixture_id="f1",
+                    )
+                ],
+            ),
+        ]
+        campaign.raw_attempts = [
+            RawAttempt(
+                identity=campaign.trials[0].attempt_identities[0],
+                status=AttemptStatus.VALID_PASS,
+                passed=True,
+            ),
+            RawAttempt(
+                identity=campaign.trials[1].attempt_identities[0],
+                status=AttemptStatus.VALID_PASS,
+                passed=True,
+            ),
+        ]
+        report = build_campaign_report(campaign)
+        assert report.version == 2
+        assert report.schema_version == 2
+        assert report.campaign.state.value == "complete"
+        assert report.model_summaries
+        assert report.campaign.fixture_aggregates
+
+    def test_export_campaign_report_json(self):
+        import json
+        from gitbench.harness.campaign import (
+            AttemptIdentity,
+            RawAttempt,
+            Trial,
+            make_campaign,
+        )
+        from gitbench.export import export_campaign_report
+
+        campaign = make_campaign(
+            campaign_id="cmp-export-json",
+            fixture_ids=["f1"],
+            model_ids=["m1"],
+            output_modes=["text"],
+            planned_trial_count=1,
+        )
+        id1 = AttemptIdentity(
+            campaign_id=campaign.campaign_id,
+            trial_index=1,
+            model_id="m1",
+            reasoning_effort="none",
+            output_mode="text",
+            fixture_id="f1",
+        )
+        campaign.trials = [Trial(trial_index=1, planned_attempts=1, attempt_identities=[id1])]
+        campaign.raw_attempts = [
+            RawAttempt(identity=id1, status=AttemptStatus.VALID_PASS, passed=True),
+        ]
+        json_str = export_campaign_report(campaign)
+        data = json.loads(json_str)
+        assert data["version"] == 2
+        assert data["campaign"]["campaign_id"] == "cmp-export-json"
+
+
+def test_compatibility_report_from_legacy_envelope():
+    """A legacy artifact produces a campaign report marked legacy without stability."""
+    from gitbench.export import build_compatibility_report
+    from gitbench.harness.campaign import FixtureReliability
+
+    envelope = {
+        "version": 1,
+        "benchmark_suite_version": "0.3.0",
+        "timestamp": "2026-05-01T00:00:00+00:00",
+        "model": "mock",
+        "output_mode": "text",
+        "results": [
+            {
+                "benchmark": "commit_messages",
+                "total": 2,
+                "passed": 1,
+                "scores": [
+                    {
+                        "fixture_id": "commit_messages/f001",
+                        "passed": True,
+                        "similarity": 0.9,
+                        "model_output": "feat: add login",
+                    },
+                    {
+                        "fixture_id": "commit_messages/f002",
+                        "passed": False,
+                        "similarity": 0.3,
+                        "model_output": "bad message",
+                    },
+                ],
+            }
+        ],
+    }
+    report = build_compatibility_report(envelope)
+    assert report.campaign.legacy is True
+    assert report.campaign.config.planned_trial_count == 1
+    assert all(
+        agg.reliability_classification == FixtureReliability.UNKNOWN
+        for agg in report.campaign.fixture_aggregates
+    )
+    assert any(ms.model_id == "mock" for ms in report.model_summaries)

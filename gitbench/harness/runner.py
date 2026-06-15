@@ -285,6 +285,37 @@ class BenchmarkRunner:
 
     # ------------------------------------------------------------------
 
+    def _provider_route_metadata(self) -> dict[str, Any]:
+        """Return available provider-route metadata from the model client."""
+        client = self._model_client
+        metadata: dict[str, Any] = {
+            "model_id": getattr(client, "model", None),
+            "reasoning_level": getattr(client, "reasoning_level", None),
+            "adapter": type(client).__name__,
+        }
+        base_url = getattr(client, "base_url", None) or getattr(client, "_base_url", None)
+        if base_url:
+            metadata["base_url"] = base_url
+        return {k: v for k, v in metadata.items() if v is not None}
+
+    def _normalized_request_config(
+        self,
+        *,
+        output_mode: str,
+        structured_output_contract: Any | None,
+    ) -> dict[str, Any]:
+        """Return normalized request configuration for provenance."""
+        config: dict[str, Any] = {
+            "output_mode": output_mode,
+            "model_generate_kwargs": dict(self._model_generate_kwargs),
+        }
+        if structured_output_contract is not None:
+            config["structured_output"] = {
+                "benchmark": structured_output_contract.primary_path,
+                "canonicalize": structured_output_contract.canonicalize,
+            }
+        return config
+
     def _run_fixture(self, benchmark: Benchmark, fixture: Fixture) -> tuple[int, Score]:
         """Run a single fixture through the full lifecycle.
 
@@ -388,6 +419,13 @@ class BenchmarkRunner:
                 if usage.get("cost") is not None:
                     score.cost_usd = usage.get("cost")
 
+            # Record provider-route and normalized request provenance.
+            score.provider_route_metadata = self._provider_route_metadata()
+            score.request_config = self._normalized_request_config(
+                output_mode=output_mode,
+                structured_output_contract=structured_output_contract,
+            )
+
             # Attach structured-output fields
             score._output_mode = output_mode
             score._parsed_payload = parsed_payload
@@ -413,7 +451,9 @@ class BenchmarkRunner:
                 prompt=fixture.prompt,
                 expected=fixture.expected,
                 description=fixture.description,
+                operational_failure=True,
             )
+            score.provider_route_metadata = self._provider_route_metadata()
             if exc.telemetry is not None:
                 score.request_telemetry = exc.telemetry.to_dict()
             return fixture.id, score

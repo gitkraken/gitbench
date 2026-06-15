@@ -18,6 +18,8 @@ import {
   zeroAnchoredDomain,
 } from "@/components/charts/grouped-chart-ui";
 
+import { useCampaignId } from "@/lib/use-campaign";
+
 interface PassRateBarChartProps {
   benchmarkName?: string;
 }
@@ -26,6 +28,7 @@ export default function PassRateBarChart({
   benchmarkName,
 }: PassRateBarChartProps = {}) {
   const [data, setData] = useState<GitBenchData | null>(null);
+  const campaignId = useCampaignId();
   const {
     selectedGroups,
     setSelectedGroups,
@@ -36,7 +39,7 @@ export default function PassRateBarChart({
 
   useEffect(() => {
     loadPassRateChart(benchmarkName).then(setData);
-  }, [benchmarkName]);
+  }, [benchmarkName, campaignId]);
 
   const chartData = useMemo(() => {
     if (!data) return [];
@@ -127,6 +130,21 @@ export default function PassRateBarChart({
             >
               % of {fixtureCount} fixture{fixtureCount !== 1 ? "s" : ""} passed
             </div>
+            {data.campaign_metadata && (
+              <div
+                style={{
+                  color: "var(--text-dim)",
+                  fontSize: 10,
+                  lineHeight: 1.4,
+                  marginTop: 4,
+                }}
+              >
+                Campaign {data.campaign_metadata.campaign_id}:{" "}
+                {data.campaign_metadata.completed_trials}/
+                {data.campaign_metadata.planned_trials} trials. Repeated-trial
+                variability is shown in fixture detail.
+              </div>
+            )}
           </div>
         )}
       />

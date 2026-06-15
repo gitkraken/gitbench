@@ -1,5 +1,6 @@
 ---
 import Layout from "@/components/Layout.astro";
+import { CampaignStatusBanner } from "@/components/CampaignStatusBanner";
 import PassRateBarChart from "@/components/charts/PassRateBarChart";
 import CostValueChart from "@/components/charts/CostValueChart";
 import RuntimeBarChart from "@/components/charts/RuntimeBarChart";
@@ -10,6 +11,10 @@ import BenchmarkHeatmap from "@/components/charts/BenchmarkHeatmap";
 ---
 
 <Layout title="Overview">
+  <section class="mb-6">
+    <CampaignStatusBanner client:load />
+  </section>
+
   <section class="mb-8">
     <div class="card">
       <div class="section-label"><span>About</span></div>
@@ -26,7 +31,9 @@ import BenchmarkHeatmap from "@/components/charts/BenchmarkHeatmap";
         <p>
           204 fixtures. Each one asks a model to write a git command. The output
           gets fuzzy-matched against the correct answer. Every test runs in an
-          isolated repo. Deterministic. Reproducible. No luck, no vibes.
+          isolated repo. Fixture inputs are deterministic within a campaign,
+          but hosted model inference is not fully reproducible. No cherry-picked
+          examples.
         </p>
         <p>
           Picking an AI coding assistant? Fine-tuning your own model? Just

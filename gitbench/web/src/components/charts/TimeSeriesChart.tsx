@@ -27,8 +27,14 @@ const COLORS = [
 
 export default function TimeSeriesChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
-  const { selectedGroups, setSelectedGroups, selectedModels: syncedSelectedModels, outputMode, setOutputMode, availableOutputModes } =
-    useSyncedModelSelection(data);
+  const {
+    selectedGroups,
+    setSelectedGroups,
+    selectedModels: syncedSelectedModels,
+    outputMode,
+    setOutputMode,
+    availableOutputModes,
+  } = useSyncedModelSelection(data);
 
   useEffect(() => {
     loadData().then((d) => {
@@ -39,8 +45,8 @@ export default function TimeSeriesChart() {
   if (!data) return <div>Loading...</div>;
 
   const repeatModels = modelsWithRepeatRuns(data.runs_meta);
-  const selectedModels = syncedSelectedModels.filter(
-    (model) => repeatModels.has(model),
+  const selectedModels = syncedSelectedModels.filter((model) =>
+    repeatModels.has(model)
   );
 
   const runsByModel: Record<string, RunMeta[]> = {};
@@ -83,9 +89,7 @@ export default function TimeSeriesChart() {
         onOutputModeChange={setOutputMode}
         availableOutputModes={availableOutputModes}
       />
-      <div
-        className="card"
-      >
+      <div className="card">
         <ResponsiveContainer width="100%" height={300}>
           <LineChart
             data={chartData}

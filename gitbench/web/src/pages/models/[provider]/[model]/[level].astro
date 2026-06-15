@@ -1,4 +1,5 @@
 ---
+import { ModelReliabilitySummary } from "@/components/ModelReliabilitySummary";
 import Layout from "@/components/Layout.astro";
 import FixtureCard from "@/components/fixtures/FixtureCard.astro";
 import { loadDataSync } from "@/lib/data";
@@ -7,6 +8,10 @@ import {
   computeModeComparison,
   jsonSchemaModelName,
 } from "@/lib/model-comparison";
+import {
+  computeReliabilityDeltas,
+  reliabilityDeltaSummary,
+} from "@/lib/fixture-reliability";
 import { getReportStore } from "@/lib/node-sqlite-report-store";
 import type { GitBenchData, FixtureResult, BaseModelGroup } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +90,8 @@ if (!summary) {
 }
 
 const passRate = Math.round(summary.pass_at_k * 1000) / 10;
+const outputMode = modelName.endsWith("__json_schema") ? "json_schema" : "text";
+const outputModeLabel = outputMode === "text" ? "Text" : "JSON Schema";
 const encodedModelGroup = encodeURIComponent(`${provider}/${baseModel}`);
 const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
 
@@ -289,6 +296,20 @@ const aggregateTokenLabel = formatAggregateTokenUsage(
     </a>
   </div>
 
+  <!-- Reliability summary -->
+  <section class="mb-8">
+    <div class="section-label">
+      <span>Reliability by Benchmark ({outputModeLabel})</span>
+    </div>
+    <div class="card p-5">
+      <ModelReliabilitySummary
+        client:load
+        model={modelName}
+        outputMode={outputMode}
+      />
+    </div>
+  </section>
+
   <!-- Text vs JSON Schema Comparison -->
   {
     comparison && (
@@ -369,6 +390,80 @@ const aggregateTokenLabel = formatAggregateTokenUsage(
               </div>
             </div>
           </div>
+
+          {/* Reliability deltas */}
+          {comparison && data && jsonModelName && (
+            <>
+              <div class="text-xs font-mono text-(--color-text-dim) mt-5 mb-2">
+                Fixture Reliability Delta
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left font-mono text-[0.65rem]">
+                  <thead>
+                    <tr class="text-(--color-text-dim) border-b border-border">
+                      <th class="pb-1.5 pr-3 font-normal">Fixture</th>
+                      <th class="pb-1.5 pr-3 font-normal text-right">Text</th>
+                      <th class="pb-1.5 pr-3 font-normal text-right">JSON</th>
+                      <th class="pb-1.5 font-normal text-right">Delta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {
+                      (() => {
+                        const deltas = computeReliabilityDeltas(
+                          data,
+                          modelName,
+                          jsonModelName,
+                        );
+                        return deltas
+                          .filter(
+                            (d) =>
+                              d.classification !== "equal" &&
+                              d.classification !== "unknown",
+                          )
+                          .slice(0, 20)
+                          .map((d) => (
+                            <tr class="border-b border-(--color-border-dim)">
+                              <td class="py-1.5 pr-3">
+                                <a
+                                  href={`/fixtures/${d.benchmark}/${d.fixtureId}`}
+                                  class="text-accent hover:underline"
+                                >
+                                  {d.fixtureId}
+                                </a>
+                              </td>
+                              <td class="py-1.5 pr-3 text-right">
+                                {d.a?.ratio != null
+                                  ? `${(d.a.ratio * 100).toFixed(0)}% (${d.a.passCount}/${d.a.validCount})`
+                                  : "—"}
+                              </td>
+                              <td class="py-1.5 pr-3 text-right">
+                                {d.b?.ratio != null
+                                  ? `${(d.b.ratio * 100).toFixed(0)}% (${d.b.passCount}/${d.b.validCount})`
+                                  : "—"}
+                              </td>
+                              <td
+                                class={`py-1.5 text-right font-medium ${
+                                  (d.delta ?? 0) > 0
+                                    ? "text-pass"
+                                    : (d.delta ?? 0) < 0
+                                      ? "text-fail"
+                                      : "text-(--color-text-dim)"
+                                }`}
+                              >
+                                {d.delta != null
+                                  ? `${d.delta >= 0 ? "+" : ""}${(d.delta * 100).toFixed(0)}%`
+                                  : "—"}
+                              </td>
+                            </tr>
+                          ));
+                      })()
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           {/* Per-benchmark deltas */}
           {comparison.benchmarkDeltas.length > 0 && (

@@ -1,46 +1,10 @@
 ---
 import Layout from "@/components/Layout.astro";
 import TimeSeriesChart from "@/components/charts/TimeSeriesChart";
-import { loadDataSync } from "@/lib/data";
-import { hasRepeatModelRuns } from "@/lib/history";
-import { modelPath } from "@/lib/routes";
-import type { GitBenchData } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
-
-const data = loadDataSync();
-const showHistory = hasRepeatModelRuns(data.runs_meta);
-
-// Sort runs by timestamp descending
-const sortedRuns = [...data.runs_meta].sort((a, b) =>
-  b.timestamp.localeCompare(a.timestamp),
-);
-
-// Compute deltas from previous run of same model AND output_mode
-const runsWithDelta = sortedRuns.map((run, idx) => {
-  const prev = sortedRuns.slice(idx + 1).find(
-    (r) => r.model === run.model && r.output_mode === run.output_mode,
-  );
-  const modelKey = run.output_mode !== "text"
-    ? `${run.model}__${run.output_mode}`
-    : run.model;
-  const summary = data.model_summaries[modelKey];
-  const prevModelKey = prev && prev.output_mode !== "text"
-    ? `${prev.model}__${prev.output_mode}`
-    : prev?.model ?? "";
-  const prevSummary = prev ? data.model_summaries[prevModelKey] : null;
-  const delta =
-    prevSummary && summary
-      ? Math.round((summary.pass_at_k - prevSummary.pass_at_k) * 10000) / 100
-      : null;
-  const modelInfo = data.models.find((m) => m.name === modelKey);
-  const compareSelection = modelInfo
-    ? `${modelInfo.provider}/${modelInfo.baseModel}`
-    : modelKey;
-  return { ...run, delta, modelKey, compareSelection };
-});
+import { CampaignHistory } from "@/components/CampaignHistory";
 ---
 
-<Layout title="Run History">
+<Layout title="Campaign History">
   <section class="mb-10">
     <div class="section-label"><span>Pass Rate Over Time</span></div>
     <TimeSeriesChart client:load />
@@ -48,107 +12,12 @@ const runsWithDelta = sortedRuns.map((run, idx) => {
 
   <section>
     <div class="info-tip">
-      <div class="section-label"><span>Run Log ({sortedRuns.length})</span></div>
+      <div class="section-label"><span>Campaign Log</span></div>
       <p class="info-blurb">
-        Every benchmark evaluation on record. Green Δ means improved since
-        last run. Red Δ means regressed.
+        One primary row per evaluation campaign. Δ is shown only when the
+        previous campaign has the same configuration hash.
       </p>
     </div>
-    <div class="card overflow-x-auto p-5">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Model</th>
-            <th>Mode</th>
-            <th>Profile</th>
-            <th>Reasoning</th>
-            <th>Pass</th>
-            <th>Suite</th>
-            <th>Δ prev</th>
-            <th>Git SHA</th>
-            <th>Compare</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            runsWithDelta.map((run) => {
-              const ts = run.timestamp
-                ? new Date(run.timestamp).toLocaleString()
-                : "—";
-              const sha = run.git_sha ? run.git_sha.slice(0, 8) : "—";
-              const rl = run.reasoning_level || "—";
-              const mode = run.output_mode || "text";
-              const summary = data.model_summaries[run.modelKey];
-              const passRate = summary
-                ? Math.round(summary.pass_at_k * 1000) / 10
-                : 0;
-              const hasDelta = run.delta !== null;
-              const deltaCls = hasDelta
-                ? run.delta! > 0
-                  ? "var(--color-pass)"
-                  : run.delta! < 0
-                    ? "var(--color-fail)"
-                    : "var(--color-text-dim)"
-                : "";
-              return (
-                <tr>
-                  <td class="font-mono text-xs text-(--color-text-dim)">
-                    {ts}
-                  </td>
-                  <td>
-                    <a
-                      href={modelPath(run.model)}
-                      class="text-(--color-text-mid) no-underline font-mono text-xs"
-                    >
-                      {run.model}
-                    </a>
-                  </td>
-                  <td class="font-mono text-[0.68rem] text-(--color-text-dim)">
-                    {mode === "text" ? "Text" : "JSON"}
-                  </td>
-                  <td class="font-mono text-[0.68rem] text-(--color-text-dim)">
-                    {run.profile || "—"}
-                  </td>
-                  <td class="font-mono text-[0.68rem] text-(--color-text-dim)">
-                    {rl}
-                  </td>
-                  <td>
-                    <Badge
-                      variant="outline"
-                      class="font-mono text-[0.65rem] border-pass-border text-pass bg-pass-bg"
-                    >
-                      {passRate}%
-                    </Badge>
-                  </td>
-                  <td class="font-mono text-[0.65rem] text-(--color-text-dim) opacity-60">
-                    {run.benchmark_suite_version || "—"}
-                  </td>
-                  <td
-                    class="font-mono text-[0.7rem]"
-                    style={`color: ${deltaCls};`}
-                  >
-                    {hasDelta
-                      ? (run.delta! >= 0 ? "+" : "") + run.delta + "%"
-                      : "—"}
-                  </td>
-                  <td class="font-mono text-[0.65rem] text-accent opacity-50">
-                    {sha}
-                  </td>
-                  <td>
-                    <a
-                      href={`/compare?with=${encodeURIComponent(run.compareSelection)}`}
-                      class="font-mono text-[0.6rem] text-accent no-underline"
-                    >
-                      Compare
-                    </a>
-                  </td>
-                </tr>
-              );
-            })
-          }
-        </tbody>
-      </table>
-    </div>
+    <CampaignHistory client:load />
   </section>
 </Layout>

@@ -79,6 +79,10 @@ class RichProgressDisplay:
         *,
         verbose: bool = False,
         refresh_interval: float = 1.0,
+        campaign_id: str | None = None,
+        trials: int | None = None,
+        planned_attempts: int | None = None,
+        publication_state: str | None = None,
     ) -> None:
         """Initialise the display.
 
@@ -89,10 +93,22 @@ class RichProgressDisplay:
                 log file on close.
             refresh_interval: Seconds between heartbeat repaints while the
                 live display is active.
+            campaign_id: Optional campaign identifier for repeated
+                evaluation campaigns.
+            trials: Number of planned trial rounds when running a campaign.
+            planned_attempts: Total planned attempts across all trials.
+            publication_state: Campaign publication state label.
         """
         self._models = models
         self._benchmarks = benchmarks
         self._verbose = verbose
+        self._campaign_id = campaign_id
+        self._trials = trials
+        self._planned_attempts = planned_attempts
+        self._publication_state = publication_state
+        self._completed_attempts = 0
+        self._failed_attempts = 0
+        self._reused_attempts = 0
         self._lock = Lock()
         self._started_at = monotonic()
         self._refresh_interval = refresh_interval
@@ -227,6 +243,24 @@ class RichProgressDisplay:
             row = self._rows[model]
             if row["status"] in {"pending", "queued", "running", "error"}:
                 row["status"] = "done"
+            self._refresh()
+
+    def campaign_attempt_completed(self, count: int = 1) -> None:
+        """Increment the number of completed campaign attempts."""
+        with self._lock:
+            self._completed_attempts += count
+            self._refresh()
+
+    def campaign_attempt_failed(self, count: int = 1) -> None:
+        """Increment the number of failed campaign attempts."""
+        with self._lock:
+            self._failed_attempts += count
+            self._refresh()
+
+    def campaign_attempt_reused(self, count: int = 1) -> None:
+        """Increment the number of reused campaign attempts."""
+        with self._lock:
+            self._reused_attempts += count
             self._refresh()
 
     def close(self) -> None:
@@ -488,6 +522,17 @@ class RichProgressDisplay:
             f"[bold]{label}[/] · {len(self._models)} model(s) · "
             f"{len(self._benchmarks)} benchmarks · elapsed {elapsed}"
         )
+        if self._campaign_id:
+            campaign_info = f"Campaign: {self._campaign_id}"
+            if self._trials is not None:
+                campaign_info += f" · {self._trials} trial(s)"
+            if self._planned_attempts is not None:
+                campaign_info += f" · {self._completed_attempts}/{self._planned_attempts} attempts"
+            if self._failed_attempts:
+                campaign_info += f" · {self._failed_attempts} failed"
+            if self._publication_state:
+                campaign_info += f" · {self._publication_state}"
+            text += f"\n[cyan]{campaign_info}[/]"
         return Panel(text, style="bold blue")
 
     # -- model panels ---------------------------------------------------------

@@ -3,6 +3,7 @@ import Layout from "@/components/Layout.astro";
 import PromptBlock from "@/components/fixtures/PromptBlock.astro";
 import ExpectedBlock from "@/components/fixtures/ExpectedBlock.astro";
 import ModelOutputCard from "@/components/fixtures/ModelOutputCard.astro";
+import { FixtureCampaignDetail } from "@/components/FixtureCampaignDetail";
 import { loadDataSync } from "@/lib/data";
 import type { GitBenchData } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -156,6 +157,19 @@ modelOutputs.sort((a, b) => b.similarity - a.similarity);
 
   <PromptBlock text={fi.prompt} />
   <ExpectedBlock text={fi.expected} />
+
+  <section class="mt-8">
+    <div class="section-label">
+      <span>Campaign Evidence</span>
+    </div>
+    <div class="card p-5">
+      <FixtureCampaignDetail
+        client:load
+        benchmark={benchmark}
+        fixture={fixtureId}
+      />
+    </div>
+  </section>
 
   <section class="mt-8">
     <div class="section-label">

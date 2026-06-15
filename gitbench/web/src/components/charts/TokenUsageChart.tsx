@@ -23,8 +23,11 @@ function formatTokens(value: number): string {
   return formatCompactDecimal(value, 2);
 }
 
+import { useCampaignId } from "@/lib/use-campaign";
+
 export default function TokenUsageChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
+  const campaignId = useCampaignId();
   const {
     selectedGroups,
     setSelectedGroups,
@@ -35,15 +38,13 @@ export default function TokenUsageChart() {
 
   useEffect(() => {
     loadTokenChart().then(setData);
-  }, []);
+  }, [campaignId]);
 
   const chartData = useMemo(() => {
     if (!data) return [];
-    return buildTokenUsageRows(
-      data,
-      selectedGroups,
-      outputMode
-    ).sort((a, b) => a.sortValue - b.sortValue);
+    return buildTokenUsageRows(data, selectedGroups, outputMode).sort(
+      (a, b) => a.sortValue - b.sortValue
+    );
   }, [data, selectedGroups, outputMode]);
 
   const yDomain = useMemo(
@@ -108,7 +109,13 @@ export default function TokenUsageChart() {
                     {effort.inputTokens || effort.outputTokens
                       ? ` (in ${formatTokens(
                           effort.inputTokens ?? 0
-                        )} / out ${formatTokens(effort.outputTokens ?? 0)}${effort.reasoningTokens != null ? ` (${formatTokens(effort.reasoningTokens)} reasoning within output)` : ""})`
+                        )} / out ${formatTokens(effort.outputTokens ?? 0)}${
+                          effort.reasoningTokens != null
+                            ? ` (${formatTokens(
+                                effort.reasoningTokens
+                              )} reasoning within output)`
+                            : ""
+                        })`
                       : ""}
                   </span>
                 )}
@@ -126,8 +133,8 @@ export default function TokenUsageChart() {
                   lineHeight: 1.4,
                 }}
               >
-                Input + visible output + reasoning = total tokens. Fewer is
-                more efficient.
+                Input + visible output + reasoning = total tokens. Fewer is more
+                efficient.
               </div>
             </div>
           )}

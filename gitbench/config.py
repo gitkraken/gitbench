@@ -101,6 +101,23 @@ def load_config(config_path: Path | None = None) -> dict[str, Any]:
         raise SystemExit(f"Error loading config: {e}")
 
 
+def load_campaign_defaults(config: dict[str, Any]) -> dict[str, Any]:
+    """Return campaign defaults from config, if present.
+
+    Reads a top-level ``campaign`` object and supports ``default_trials`` and
+    ``require_campaign_id`` keys.  Unknown keys are ignored.
+    """
+    campaign_config = config.get("campaign")
+    if not isinstance(campaign_config, dict):
+        return {}
+    defaults: dict[str, Any] = {}
+    if "default_trials" in campaign_config:
+        defaults["default_trials"] = int(campaign_config["default_trials"])
+    if "require_campaign_id" in campaign_config:
+        defaults["require_campaign_id"] = bool(campaign_config["require_campaign_id"])
+    return defaults
+
+
 def resolve_profile(config: dict[str, Any], profile_name: str) -> dict[str, Any]:
     """Resolve a named profile to its configuration values.
 

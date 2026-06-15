@@ -98,6 +98,11 @@ class Score:
     description: str | None = None
     duration_ms: float | None = None
     request_telemetry: dict | None = None
+    operational_failure: bool = False
+    unscored: bool = False
+    provider_route_metadata: dict | None = None
+    request_config: dict | None = None
+    judge_evidence: dict | None = None
     # Structured-output fields (attached at runtime, not in default serialization)
     _output_mode: str | None = field(default=None, repr=False)
     _parsed_payload: dict | None = field(default=None, repr=False)
@@ -114,6 +119,7 @@ class Score:
             "purpose", "difficulty", "tags",
             "prompt", "expected", "description",
             "duration_ms", "request_telemetry",
+            "provider_route_metadata", "request_config", "judge_evidence",
         )
         for field_name in none_fields:
             if result.get(field_name) is None:
@@ -131,6 +137,11 @@ class Score:
             result["raw_structured_output"] = self._raw_structured_output
         if self._structured_error is not None:
             result["structured_error"] = self._structured_error
+        # Operational failure and unscored flags are only interesting when true.
+        if not self.operational_failure:
+            result.pop("operational_failure", None)
+        if not self.unscored:
+            result.pop("unscored", None)
         return result
 
     @classmethod
@@ -138,6 +149,9 @@ class Score:
         """Create from dictionary."""
         kwargs = dict(data)
         kwargs.setdefault("duration_ms", None)
+        kwargs.setdefault("operational_failure", False)
+        kwargs.setdefault("unscored", False)
+        kwargs.setdefault("judge_evidence", None)
         # Extract structured-output fields if present in serialized form
         output_mode = kwargs.pop("output_mode", None)
         parsed_payload = kwargs.pop("parsed_payload", None)

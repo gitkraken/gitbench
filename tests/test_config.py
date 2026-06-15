@@ -547,3 +547,26 @@ class TestDiscoverJudgeBenchmarks:
         """Empty benchmark list returns empty set."""
         result = discover_judge_benchmarks([])
         assert result == set()
+
+
+class TestCampaignDefaults:
+    """Tests for campaign configuration defaults."""
+
+    def test_load_campaign_defaults_empty(self):
+        from gitbench.config import load_campaign_defaults
+
+        assert load_campaign_defaults({}) == {}
+        assert load_campaign_defaults({"models": {}}) == {}
+
+    def test_load_campaign_defaults_values(self):
+        from gitbench.config import load_campaign_defaults
+
+        config = {
+            "campaign": {
+                "default_trials": 5,
+                "require_campaign_id": True,
+            }
+        }
+        defaults = load_campaign_defaults(config)
+        assert defaults["default_trials"] == 5
+        assert defaults["require_campaign_id"] is True

@@ -672,42 +672,35 @@ class Scorer:
                         tags=fixture.tags or None,
                     )
 
-                try:
-                    similarity = self._judge_client.evaluate_commit_message(
-                        diff or "", model_output, prompt=prompt or fixture.prompt
-                    )
-                    passed = similarity >= threshold
+                evidence = self._judge_client.evaluate_commit_message_evidence(
+                    diff or "", model_output, prompt=prompt or fixture.prompt
+                )
+                if evidence.final_score is None:
                     return Score(
                         fixture_id=fixture.id,
-                        passed=passed,
-                        similarity=round(similarity, 4),
+                        passed=False,
+                        similarity=0.0,
                         model_output=model_output,
-                        error=None,
+                        error=f"judge_exhausted: {evidence.error}",
                         purpose=fixture.purpose or None,
                         difficulty=fixture.difficulty or None,
                         tags=fixture.tags or None,
+                        judge_evidence=evidence.to_dict(),
+                        unscored=True,
                     )
-                except ValueError as e:
-                    logger.warning(
-                        "Judge failed for fixture %s, falling back to "
-                        "SequenceMatcher: %s",
-                        fixture.id,
-                        e,
-                    )
-                    similarity = difflib.SequenceMatcher(
-                        None, model_output, fixture.expected
-                    ).ratio()
-                    passed = similarity >= threshold
-                    return Score(
-                        fixture_id=fixture.id,
-                        passed=passed,
-                        similarity=round(similarity, 4),
-                        model_output=model_output,
-                        error=f"judge_failed: {e}",
-                        purpose=fixture.purpose or None,
-                        difficulty=fixture.difficulty or None,
-                        tags=fixture.tags or None,
-                    )
+                similarity = evidence.final_score
+                passed = similarity >= threshold
+                return Score(
+                    fixture_id=fixture.id,
+                    passed=passed,
+                    similarity=round(similarity, 4),
+                    model_output=model_output,
+                    error=None,
+                    purpose=fixture.purpose or None,
+                    difficulty=fixture.difficulty or None,
+                    tags=fixture.tags or None,
+                    judge_evidence=evidence.to_dict(),
+                )
 
             elif scoring_type == "exact_match":
                 compared_output = model_output

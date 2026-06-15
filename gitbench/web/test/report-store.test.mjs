@@ -9,8 +9,13 @@ import { NodeSqliteReportStore } from "../src/lib/node-sqlite-report-store.ts";
 import { computeModeComparison } from "../src/lib/model-comparison.ts";
 import { deriveModelGroups } from "../src/components/charts/model-groups.ts";
 import modelResultsHandler from "../api/models/[...model]/results.ts";
+import fixtureAttemptsHandler from "../api/fixtures/[benchmark]/[fixture]/attempts.ts";
+import campaignsHandler from "../api/campaigns/index.ts";
+
+import { clearReportStoreCache } from "../src/lib/node-sqlite-report-store.ts";
 
 function callHandler(handler, query) {
+  clearReportStoreCache();
   const res = {
     statusCode: null,
     headers: {},
@@ -38,13 +43,22 @@ function withStore(fn, { seedFn = seedWithBothModes } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), "gitbench-store-"));
   const dbPath = path.join(dir, "gitbench.db");
   const db = new DatabaseSync(dbPath);
+  const previousDbEnv = process.env.GITBENCH_REPORT_DB;
   try {
     db.exec(readFileSync(path.resolve("data/schema.sql"), "utf8"));
     seedFn(db);
+    process.env.GITBENCH_REPORT_DB = dbPath;
+    clearReportStoreCache();
     fn(new NodeSqliteReportStore(db));
   } finally {
     db.close();
     rmSync(dir, { recursive: true, force: true });
+    if (previousDbEnv === undefined) {
+      delete process.env.GITBENCH_REPORT_DB;
+    } else {
+      process.env.GITBENCH_REPORT_DB = previousDbEnv;
+    }
+    clearReportStoreCache();
   }
 }
 
@@ -484,3 +498,179 @@ test("output-mode selection: text-only models do not have json_schema entries", 
     );
   }, { seedFn: seedTextOnly });
 });
+
+
+function seedCampaign(db) {
+  db.exec(`
+    INSERT INTO models (name, provider, base_model, reasoning_level, output_mode)
+    VALUES ('openai/gpt-test:high', 'openai', 'gpt-test', 'high', 'text');
+    INSERT INTO benchmarks (name) VALUES ('commit_messages');
+    INSERT INTO fixtures (
+      benchmark_name, fixture_id, prompt, expected, description, setup_json,
+      purpose, difficulty
+    )
+    VALUES (
+      'commit_messages', 'commit_messages/f001', 'Generate commit message',
+      'feat: add login', 'description', '[]', 'purpose', 'easy'
+    );
+    INSERT INTO campaigns (
+      campaign_id, created_at, config_hash, state, planned_attempts,
+      completed_attempts, valid_attempts, passing_attempts, excluded_attempts,
+      publication_state, legacy, benchmark_ids_json, model_ids_json,
+      output_modes_json, planned_trial_count
+    )
+    VALUES (
+      'cmp-test', '2026-06-01T00:00:00Z', 'abc', 'complete', 2, 2, 2, 1, 0,
+      'published', 0, '["commit_messages"]', '["openai/gpt-test:high"]',
+      '["text"]', 1
+    );
+    INSERT INTO trials (
+      campaign_id, trial_index, planned_attempts, completed_attempts,
+      valid_attempts, passing_attempts, excluded_attempts, complete
+    )
+    VALUES ('cmp-test', 1, 2, 2, 2, 1, 0, 1);
+    INSERT INTO raw_attempts (
+      campaign_id, trial_index, model_name, reasoning_level, output_mode,
+      benchmark_name, fixture_id, status, passed, similarity, error,
+      input_tokens, output_tokens, total_tokens, cost_usd, api_duration_ms,
+      model_output, safety_state
+    )
+    VALUES (
+      'cmp-test', 1, 'openai/gpt-test:high', 'high', 'text',
+      'commit_messages', 'commit_messages/f001', 'valid_pass', 1, 0.95, NULL,
+      10, 5, 15, 0.01, 100.0, 'secret output', 'reviewed'
+    );
+    INSERT INTO raw_attempts (
+      campaign_id, trial_index, model_name, reasoning_level, output_mode,
+      benchmark_name, fixture_id, status, passed, similarity, error,
+      input_tokens, output_tokens, total_tokens, cost_usd, api_duration_ms
+    )
+    VALUES (
+      'cmp-test', 1, 'openai/gpt-test:high', 'high', 'text',
+      'commit_messages', 'commit_messages/f001', 'valid_fail', 0, 0.3, 'bad',
+      10, 5, 15, 0.01, 100.0
+    );
+    INSERT INTO fixture_aggregates (
+      campaign_id, benchmark_name, fixture_id, planned_trials,
+      completed_trials, valid_attempts, passing_attempts, failing_attempts,
+      excluded_attempts, mean_success_rate, pass_any_at_n_json,
+      reliability_classification, incomplete
+    )
+    VALUES (
+      'cmp-test', 'commit_messages', 'commit_messages/f001', 1, 1, 2, 1, 1, 0,
+      0.5, '{"1": true}', 'flaky', 0
+    );
+    INSERT INTO campaign_benchmark_summaries (
+      campaign_id, benchmark_name, planned_trials, completed_trials,
+      valid_attempts, passing_attempts, excluded_attempts, mean_success_rate,
+      pass_any_at_n_json, incomplete, resource_summary_json
+    )
+    VALUES (
+      'cmp-test', 'commit_messages', 1, 1, 2, 1, 0, 0.5, '{"1": true}', 0, NULL
+    );
+    INSERT INTO resource_summaries (
+      id, campaign_id, scope, total_cost_usd, total_input_tokens,
+      total_output_tokens, total_tokens, partial_pricing
+    ) VALUES (1, 'cmp-test', 'campaign', 0.02, 20, 10, 30, 0);
+    INSERT INTO publication_states (
+      campaign_id, reviewed_count, sanitized_count, blocked_count, pending_count
+    ) VALUES ('cmp-test', 1, 0, 0, 0);
+  `);
+}
+
+test("campaign store: getCampaign returns a single campaign", () => {
+  withStore((store) => {
+    const campaign = store.getCampaign("cmp-test");
+    assert.ok(campaign);
+    assert.equal(campaign.campaign_id, "cmp-test");
+    assert.equal(campaign.incomplete, false);
+    assert.equal(campaign.publishable, true);
+  }, { seedFn: seedCampaign });
+});
+
+test("campaign store: publication gating allows published campaigns", () => {
+  withStore((store) => {
+    assert.equal(store.isCampaignPublicationAllowed("cmp-test"), true);
+  }, { seedFn: seedCampaign });
+});
+
+test("campaign store: raw attempts omit output by default", () => {
+  withStore((store) => {
+    const attempts = store.getRawAttempts("cmp-test");
+    assert.equal(attempts.length, 2);
+    assert.equal(attempts[0].model_output, undefined);
+    assert.equal(attempts[0].safety_state, "reviewed");
+  }, { seedFn: seedCampaign });
+});
+
+test("campaign store: raw attempts include output when requested", () => {
+  withStore((store) => {
+    const attempts = store.getRawAttempts("cmp-test", { includeOutput: true });
+    assert.equal(attempts[0].model_output, "secret output");
+  }, { seedFn: seedCampaign });
+});
+
+test("campaign store: raw attempt lookup by identity", () => {
+  withStore((store) => {
+    const attempt = store.getRawAttemptByIdentity("cmp-test", {
+      trial_index: 1,
+      model_name: "openai/gpt-test:high",
+      output_mode: "text",
+      fixture_id: "commit_messages/f001",
+    });
+    assert.ok(attempt);
+    assert.equal(attempt.status, "valid_pass");
+  }, { seedFn: seedCampaign });
+});
+
+test("campaign store: raw attempt lookup returns null for missing identity", () => {
+  withStore((store) => {
+    const attempt = store.getRawAttemptByIdentity("cmp-test", {
+      trial_index: 99,
+      model_name: "openai/gpt-test:high",
+      output_mode: "text",
+      fixture_id: "commit_messages/f001",
+    });
+    assert.equal(attempt, null);
+  }, { seedFn: seedCampaign });
+});
+
+test("fixture attempts endpoint returns campaign-aware groups and raw attempts", () => {
+  withStore(() => {
+    const response = callHandler(fixtureAttemptsHandler, {
+      benchmark: "commit_messages",
+      fixture: "commit_messages/f001",
+      campaign: "cmp-test",
+    });
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.campaign_id, "cmp-test");
+    assert.ok(Array.isArray(response.body.groups));
+    assert.ok(Array.isArray(response.body.attempts));
+    assert.equal(response.body.attempts.length, 2);
+  }, { seedFn: seedCampaign });
+});
+
+test("campaigns endpoint lists campaigns with config hash and status", () => {
+  withStore(() => {
+    const response = callHandler(campaignsHandler, {});
+    assert.equal(response.statusCode, 200);
+    assert.ok(Array.isArray(response.body.campaigns));
+    const campaign = response.body.campaigns.find((c) => c.campaign_id === "cmp-test");
+    assert.ok(campaign);
+    assert.equal(campaign.config_hash, "abc");
+    assert.equal(campaign.incomplete, false);
+  }, { seedFn: seedCampaign });
+});
+
+test("model results endpoint resolves campaign and returns metadata", () => {
+  withStore(() => {
+    const response = callHandler(modelResultsHandler, {
+      model: ["openai", "gpt-test:high"],
+      campaign: "cmp-test",
+    });
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.campaign_id, "cmp-test");
+    assert.ok(response.body.campaign_metadata);
+  }, { seedFn: seedCampaign });
+});
+

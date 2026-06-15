@@ -4,7 +4,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from gitbench.harness.judge import JUDGE_COMMIT_MESSAGE_PROMPT, JudgeClient
+from gitbench.harness.judge import (
+    JUDGE_COMMIT_MESSAGE_PROMPT,
+    JudgeCache,
+    JudgeClient,
+    compute_judge_config_hash,
+)
 from gitbench.harness.model import DEFAULT_MODEL_TIMEOUT
 from gitbench.harness.types import ModelMessage
 
@@ -313,3 +318,107 @@ class TestJudgeTimeoutIntegration:
                 mock_get_client.assert_called_once()
                 call_kwargs = mock_get_client.call_args
                 assert call_kwargs.kwargs["timeout"] == DEFAULT_MODEL_TIMEOUT
+
+
+class TestJudgeCache:
+    """Campaign-scoped judge caching."""
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a single mock model client."""
+        return MagicMock()
+
+    def test_cache_stores_and_returns_score(self, mock_client):
+        """A cached score is returned without calling the judge model."""
+        cache = JudgeCache()
+        client = JudgeClient([mock_client], cache=cache)
+        mock_client.generate.return_value = {"text": "0.85"}
+
+        score = client.evaluate_commit_message(
+            "diff", "message", cache_key=("fixture-hash", "output-hash")
+        )
+        assert score == 0.85
+        assert mock_client.generate.call_count == 1
+
+        cached = client.evaluate_commit_message(
+            "diff", "message", cache_key=("fixture-hash", "output-hash")
+        )
+        assert cached == 0.85
+        assert mock_client.generate.call_count == 1
+
+    def test_cache_key_includes_all_three_hashes(self, mock_client):
+        """Changing any component of the cache key misses the cache."""
+        cache = JudgeCache()
+        client = JudgeClient([mock_client], cache=cache)
+        mock_client.generate.return_value = {"text": "0.90"}
+
+        client.evaluate_commit_message(
+            "diff", "message", cache_key=("fixture-a", "output-a")
+        )
+
+        # Different fixture input hash.
+        mock_client.generate.return_value = {"text": "0.80"}
+        score = client.evaluate_commit_message(
+            "diff", "message", cache_key=("fixture-b", "output-a")
+        )
+        assert score == 0.80
+        assert mock_client.generate.call_count == 2
+
+    def test_cache_disabled_without_cache_key(self, mock_client):
+        """When no cache key is supplied, every call invokes the judge."""
+        cache = JudgeCache()
+        client = JudgeClient([mock_client], cache=cache)
+        mock_client.generate.return_value = {"text": "0.75"}
+
+        client.evaluate_commit_message("diff", "message")
+        client.evaluate_commit_message("diff", "message")
+        assert mock_client.generate.call_count == 2
+
+    def test_compute_judge_config_hash_is_stable(self):
+        """Equivalent judge client configurations produce the same hash."""
+        from gitbench.harness.model import MockModelClient
+
+        clients_a = [MockModelClient(model="mock-judge-1")]
+        clients_b = [MockModelClient(model="mock-judge-1")]
+        assert compute_judge_config_hash(clients_a) == compute_judge_config_hash(clients_b)
+
+    def test_compute_judge_config_hash_detects_model_change(self):
+        """A different judge model produces a different config hash."""
+        from gitbench.harness.model import MockModelClient
+
+        clients_a = [MockModelClient(model="mock-judge-1")]
+        clients_b = [MockModelClient(model="mock-judge-2")]
+        assert compute_judge_config_hash(clients_a) != compute_judge_config_hash(clients_b)
+
+
+class TestJudgeEvidence:
+    """Member-level judge evidence is returned for auditability."""
+
+    @pytest.fixture
+    def mock_client(self):
+        """Create a single mock model client."""
+        return MagicMock()
+
+    def test_evidence_includes_member_results(self, mock_client):
+        """Successful evaluations return per-member scores."""
+        mock_client.generate.return_value = {"text": "0.92"}
+        mock_client.model = "judge-model"
+        client = JudgeClient([mock_client])
+
+        evidence = client.evaluate_commit_message_evidence("diff", "message")
+        assert evidence.final_score == 0.92
+        assert len(evidence.members) == 1
+        assert evidence.members[0].model_id == "judge-model"
+        assert evidence.members[0].score == 0.92
+        assert evidence.judge_config_hash is not None
+
+    def test_evidence_records_failure_state(self, mock_client):
+        """All-judge failures are captured without raising."""
+        mock_client.generate.side_effect = ValueError("API error")
+        client = JudgeClient([mock_client])
+
+        evidence = client.evaluate_commit_message_evidence("diff", "message")
+        assert evidence.final_score is None
+        assert evidence.exhausted is True
+        assert evidence.error is not None
+        assert evidence.members[0].error is not None

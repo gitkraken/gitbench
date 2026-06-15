@@ -614,8 +614,14 @@ class TestScorerJudgeIntegration:
     def mock_judge_client(self):
         """Create a mock JudgeClient."""
         from unittest.mock import MagicMock
+        from gitbench.harness.campaign import JudgeEvidence
+
         mock = MagicMock()
         mock.evaluate_commit_message.return_value = 0.85
+        mock.evaluate_commit_message_evidence.return_value = JudgeEvidence(
+            final_score=0.85,
+            members=[],
+        )
         return mock
 
     @pytest.fixture
@@ -656,7 +662,7 @@ class TestScorerJudgeIntegration:
 
         assert result.passed is True
         assert result.similarity == 0.85
-        mock_judge_client.evaluate_commit_message.assert_called_once_with(
+        mock_judge_client.evaluate_commit_message_evidence.assert_called_once_with(
             "diff --git a/file.txt b/file.txt",
             "fix: correct spelling error",
             prompt="Generate commit message",
@@ -675,7 +681,7 @@ class TestScorerJudgeIntegration:
 
         assert result.passed is True
         assert result.similarity == 0.85
-        mock_judge_client.evaluate_commit_message.assert_called_once_with(
+        mock_judge_client.evaluate_commit_message_evidence.assert_called_once_with(
             "",
             llm_judge_fixture.expected,
             prompt="Generate commit message",
@@ -695,12 +701,17 @@ class TestScorerJudgeIntegration:
         assert result.similarity == 0.0
         assert "llm_judge requires a judge client" in result.error
 
-    def test_llm_judge_falls_back_on_error(
+    def test_llm_judge_exhausted_marks_unscored(
         self, mock_judge_client, llm_judge_fixture
     ):
-        """llm_judge falls back to SequenceMatcher and sets error on judge failure."""
-        mock_judge_client.evaluate_commit_message.side_effect = ValueError(
-            "Judge call failed after retry: connection error"
+        """Exhausted judge failures mark the attempt unscored; no heuristic fallback."""
+        from gitbench.harness.campaign import JudgeEvidence
+
+        mock_judge_client.evaluate_commit_message_evidence.return_value = JudgeEvidence(
+            final_score=None,
+            members=[],
+            error="All 1 judge model(s) failed.",
+            exhausted=True,
         )
         scorer = Scorer(judge_client=mock_judge_client)
 
@@ -710,10 +721,12 @@ class TestScorerJudgeIntegration:
             diff="diff content",
         )
 
-        assert result.error is not None
-        assert "judge_failed" in result.error
-        # Should have fallen back to SequenceMatcher
-        assert 0.0 <= result.similarity <= 1.0
+        assert result.passed is False
+        assert result.similarity == 0.0
+        assert result.unscored is True
+        assert "judge_exhausted" in result.error
+        # No SequenceMatcher fallback should occur: exact match would be high.
+        assert result.similarity == 0.0
 
     def test_similarity_never_calls_judge(
         self, mock_judge_client, similarity_fixture

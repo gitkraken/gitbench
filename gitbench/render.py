@@ -884,6 +884,313 @@ def _insert_report_data(conn: sqlite3.Connection, data: dict[str, Any]) -> None:
             ],
         )
 
+    _insert_campaign_data(conn, data)
+
+
+def _insert_campaign_data(
+    conn: sqlite3.Connection, data: dict[str, Any]
+) -> None:
+    """Insert campaign-aware report data when present in the aggregate.
+
+    The legacy single-result schema does not include ``campaigns``, so this
+    function is a no-op for historical artifacts.
+    """
+    campaigns = data.get("campaigns", [])
+    if not campaigns:
+        return
+
+    for campaign in campaigns:
+        _insert_single_campaign(conn, campaign)
+
+
+def _insert_single_campaign(
+    conn: sqlite3.Connection, campaign: dict[str, Any]
+) -> None:
+    """Insert one campaign and all of its derived rows."""
+    campaign_id = campaign.get("campaign_id", "")
+    conn.execute(
+        """
+        INSERT INTO campaigns (
+          campaign_id, created_at, config_hash, state,
+          planned_attempts, completed_attempts, valid_attempts,
+          passing_attempts, excluded_attempts, publication_state,
+          legacy, benchmark_ids_json, model_ids_json, output_modes_json,
+          planned_trial_count
+        )
+        VALUES (
+          :campaign_id, :created_at, :config_hash, :state,
+          :planned_attempts, :completed_attempts, :valid_attempts,
+          :passing_attempts, :excluded_attempts, :publication_state,
+          :legacy, :benchmark_ids_json, :model_ids_json, :output_modes_json,
+          :planned_trial_count
+        )
+        """,
+        {
+            "campaign_id": campaign_id,
+            "created_at": campaign.get("created_at", ""),
+            "config_hash": campaign.get("config_hash", ""),
+            "state": campaign.get("state", "incomplete"),
+            "planned_attempts": campaign.get("planned_attempts", 0),
+            "completed_attempts": campaign.get("completed_attempts", 0),
+            "valid_attempts": campaign.get("valid_attempts", 0),
+            "passing_attempts": campaign.get("passing_attempts", 0),
+            "excluded_attempts": campaign.get("excluded_attempts", 0),
+            "publication_state": campaign.get("publication_state", "draft"),
+            "legacy": 1 if campaign.get("legacy") else 0,
+            "benchmark_ids_json": _json_dumps(campaign.get("benchmark_ids", [])),
+            "model_ids_json": _json_dumps(campaign.get("model_ids", [])),
+            "output_modes_json": _json_dumps(campaign.get("output_modes", [])),
+            "planned_trial_count": campaign.get("planned_trial_count", 1),
+        },
+    )
+
+    for trial in campaign.get("trials", []):
+        conn.execute(
+            """
+            INSERT INTO trials (
+              campaign_id, trial_index, planned_attempts,
+              completed_attempts, valid_attempts, passing_attempts,
+              excluded_attempts, complete
+            )
+            VALUES (
+              :campaign_id, :trial_index, :planned_attempts,
+              :completed_attempts, :valid_attempts, :passing_attempts,
+              :excluded_attempts, :complete
+            )
+            """,
+            {
+                "campaign_id": campaign_id,
+                "trial_index": trial.get("trial_index", 0),
+                "planned_attempts": trial.get("planned_attempts", 0),
+                "completed_attempts": trial.get("completed_attempts", 0),
+                "valid_attempts": trial.get("valid_attempts", 0),
+                "passing_attempts": trial.get("passing_attempts", 0),
+                "excluded_attempts": trial.get("excluded_attempts", 0),
+                "complete": 1 if trial.get("complete") else 0,
+            },
+        )
+
+    for attempt in campaign.get("raw_attempts", []):
+        identity = attempt.get("identity", {})
+        fixture_id = identity.get("fixture_id", "")
+        benchmark_name = fixture_id.split("/")[0] if "/" in fixture_id else ""
+        conn.execute(
+            """
+            INSERT INTO raw_attempts (
+              campaign_id, trial_index, model_name, reasoning_level,
+              output_mode, benchmark_name, fixture_id, status, passed,
+              similarity, error, model_output, input_tokens, output_tokens,
+              total_tokens, reasoning_tokens, cost_usd, api_duration_ms,
+              request_telemetry_json, provider_route_metadata_json,
+              judge_evidence_json, safety_state, safety_cost_usd,
+              provenance_json
+            )
+            VALUES (
+              :campaign_id, :trial_index, :model_name, :reasoning_level,
+              :output_mode, :benchmark_name, :fixture_id, :status, :passed,
+              :similarity, :error, :model_output, :input_tokens, :output_tokens,
+              :total_tokens, :reasoning_tokens, :cost_usd, :api_duration_ms,
+              :request_telemetry_json, :provider_route_metadata_json,
+              :judge_evidence_json, :safety_state, :safety_cost_usd,
+              :provenance_json
+            )
+            """,
+            {
+                "campaign_id": campaign_id,
+                "trial_index": identity.get("trial_index", 0),
+                "model_name": identity.get("model_id", ""),
+                "reasoning_level": identity.get("reasoning_effort"),
+                "output_mode": identity.get("output_mode", "text"),
+                "benchmark_name": benchmark_name,
+                "fixture_id": fixture_id,
+                "status": attempt.get("status", "pending"),
+                "passed": 1 if attempt.get("passed") else 0,
+                "similarity": attempt.get("similarity"),
+                "error": attempt.get("error"),
+                "model_output": attempt.get("model_output", ""),
+                "input_tokens": attempt.get("input_tokens"),
+                "output_tokens": attempt.get("output_tokens"),
+                "total_tokens": attempt.get("total_tokens"),
+                "reasoning_tokens": attempt.get("reasoning_tokens"),
+                "cost_usd": attempt.get("cost_usd"),
+                "api_duration_ms": attempt.get("api_duration_ms"),
+                "request_telemetry_json": _json_dumps(
+                    attempt.get("request_telemetry")
+                ),
+                "provider_route_metadata_json": _json_dumps(
+                    attempt.get("provider_route_metadata")
+                ),
+                "judge_evidence_json": _json_dumps(attempt.get("judge_evidence")),
+                "safety_state": attempt.get("safety_state"),
+                "safety_cost_usd": attempt.get("safety_cost_usd"),
+                "provenance_json": _json_dumps(attempt.get("provenance")),
+            },
+        )
+
+    for aggregate in campaign.get("fixture_aggregates", []):
+        fixture_id = aggregate.get("fixture_id", "")
+        benchmark_name = fixture_id.split("/")[0] if "/" in fixture_id else ""
+        conn.execute(
+            """
+            INSERT INTO fixture_aggregates (
+              campaign_id, benchmark_name, fixture_id, planned_trials,
+              completed_trials, valid_attempts, passing_attempts,
+              failing_attempts, excluded_attempts, mean_success_rate,
+              pass_any_at_n_json, reliability_classification, incomplete
+            )
+            VALUES (
+              :campaign_id, :benchmark_name, :fixture_id, :planned_trials,
+              :completed_trials, :valid_attempts, :passing_attempts,
+              :failing_attempts, :excluded_attempts, :mean_success_rate,
+              :pass_any_at_n_json, :reliability_classification, :incomplete
+            )
+            """,
+            {
+                "campaign_id": campaign_id,
+                "benchmark_name": aggregate.get("benchmark") or benchmark_name,
+                "fixture_id": fixture_id,
+                "planned_trials": aggregate.get("planned_trials", 0),
+                "completed_trials": aggregate.get("completed_trials", 0),
+                "valid_attempts": aggregate.get("valid_attempts", 0),
+                "passing_attempts": aggregate.get("passing_attempts", 0),
+                "failing_attempts": aggregate.get("failing_attempts", 0),
+                "excluded_attempts": aggregate.get("excluded_attempts", 0),
+                "mean_success_rate": aggregate.get("mean_success_rate"),
+                "pass_any_at_n_json": _json_dumps(aggregate.get("pass_any_at_n", {})),
+                "reliability_classification": aggregate.get(
+                    "reliability_classification"
+                ),
+                "incomplete": 1 if aggregate.get("incomplete") else 0,
+            },
+        )
+
+    for summary in campaign.get("model_summaries", []):
+        conn.execute(
+            """
+            INSERT INTO campaign_model_summaries (
+              campaign_id, model_name, reasoning_level, planned_trials,
+              completed_trials, valid_attempts, passing_attempts,
+              excluded_attempts, mean_success_rate, pass_any_at_n_json,
+              incomplete, resource_summary_json
+            )
+            VALUES (
+              :campaign_id, :model_name, :reasoning_level, :planned_trials,
+              :completed_trials, :valid_attempts, :passing_attempts,
+              :excluded_attempts, :mean_success_rate, :pass_any_at_n_json,
+              :incomplete, :resource_summary_json
+            )
+            """,
+            {
+                "campaign_id": campaign_id,
+                "model_name": summary.get("model_id", ""),
+                "reasoning_level": summary.get("reasoning_effort"),
+                "planned_trials": summary.get("planned_trials", 0),
+                "completed_trials": summary.get("completed_trials", 0),
+                "valid_attempts": summary.get("valid_attempts", 0),
+                "passing_attempts": summary.get("passing_attempts", 0),
+                "excluded_attempts": summary.get("excluded_attempts", 0),
+                "mean_success_rate": summary.get("mean_success_rate"),
+                "pass_any_at_n_json": _json_dumps(summary.get("pass_any_at_n", {})),
+                "incomplete": 1 if summary.get("incomplete") else 0,
+                "resource_summary_json": _json_dumps(
+                    summary.get("resource_summary")
+                ),
+            },
+        )
+
+    for summary in campaign.get("benchmark_summaries", []):
+        conn.execute(
+            """
+            INSERT INTO campaign_benchmark_summaries (
+              campaign_id, benchmark_name, planned_trials,
+              completed_trials, valid_attempts, passing_attempts,
+              excluded_attempts, mean_success_rate, pass_any_at_n_json,
+              incomplete, resource_summary_json
+            )
+            VALUES (
+              :campaign_id, :benchmark_name, :planned_trials,
+              :completed_trials, :valid_attempts, :passing_attempts,
+              :excluded_attempts, :mean_success_rate, :pass_any_at_n_json,
+              :incomplete, :resource_summary_json
+            )
+            """,
+            {
+                "campaign_id": campaign_id,
+                "benchmark_name": summary.get("benchmark", ""),
+                "planned_trials": summary.get("planned_trials", 0),
+                "completed_trials": summary.get("completed_trials", 0),
+                "valid_attempts": summary.get("valid_attempts", 0),
+                "passing_attempts": summary.get("passing_attempts", 0),
+                "excluded_attempts": summary.get("excluded_attempts", 0),
+                "mean_success_rate": summary.get("mean_success_rate"),
+                "pass_any_at_n_json": _json_dumps(summary.get("pass_any_at_n", {})),
+                "incomplete": 1 if summary.get("incomplete") else 0,
+                "resource_summary_json": _json_dumps(
+                    summary.get("resource_summary")
+                ),
+            },
+        )
+
+    for idx, summary in enumerate(campaign.get("resource_summaries", [])):
+        conn.execute(
+            """
+            INSERT INTO resource_summaries (
+              id, campaign_id, scope, total_cost_usd, total_input_tokens,
+              total_output_tokens, total_tokens, total_reasoning_tokens,
+              total_api_duration_ms, total_wall_duration_ms,
+              mean_cost_per_complete_trial_usd, mean_tokens_per_complete_trial,
+              mean_api_duration_per_complete_trial_ms, partial_pricing
+            )
+            VALUES (
+              :id, :campaign_id, :scope, :total_cost_usd, :total_input_tokens,
+              :total_output_tokens, :total_tokens, :total_reasoning_tokens,
+              :total_api_duration_ms, :total_wall_duration_ms,
+              :mean_cost_per_complete_trial_usd, :mean_tokens_per_complete_trial,
+              :mean_api_duration_per_complete_trial_ms, :partial_pricing
+            )
+            """,
+            {
+                "id": idx + 1,
+                "campaign_id": campaign_id,
+                "scope": summary.get("scope", "campaign"),
+                "total_cost_usd": summary.get("total_cost_usd"),
+                "total_input_tokens": summary.get("total_input_tokens"),
+                "total_output_tokens": summary.get("total_output_tokens"),
+                "total_tokens": summary.get("total_tokens"),
+                "total_reasoning_tokens": summary.get("total_reasoning_tokens"),
+                "total_api_duration_ms": summary.get("total_api_duration_ms"),
+                "total_wall_duration_ms": summary.get("total_wall_duration_ms"),
+                "mean_cost_per_complete_trial_usd": summary.get(
+                    "mean_cost_per_complete_trial_usd"
+                ),
+                "mean_tokens_per_complete_trial": summary.get(
+                    "mean_tokens_per_complete_trial"
+                ),
+                "mean_api_duration_per_complete_trial_ms": summary.get(
+                    "mean_api_duration_per_complete_trial_ms"
+                ),
+                "partial_pricing": 1 if summary.get("partial_pricing") else 0,
+            },
+        )
+
+    safety_summary = campaign.get("safety_summary", {})
+    conn.execute(
+        """
+        INSERT INTO publication_states (
+          campaign_id, reviewed_count, sanitized_count,
+          blocked_count, pending_count
+        )
+        VALUES (:campaign_id, :reviewed_count, :sanitized_count, :blocked_count, :pending_count)
+        """,
+        {
+            "campaign_id": campaign_id,
+            "reviewed_count": safety_summary.get("reviewed", 0),
+            "sanitized_count": safety_summary.get("sanitized", 0),
+            "blocked_count": safety_summary.get("blocked", 0),
+            "pending_count": safety_summary.get("pending", 0),
+        },
+    )
+
 
 def _supplement_fixture_index_from_yaml(fixture_index: dict[str, dict]) -> None:
     """Fill in missing fixture metadata by loading YAML fixture files.

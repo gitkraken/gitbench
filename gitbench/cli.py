@@ -25,6 +25,7 @@ from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedCo
 from gitbench.benchmarks import Benchmark
 from gitbench.config import (
     find_profile_for_model,
+    load_campaign_defaults,
     load_config,
     load_judge_config,
     load_project_env,
@@ -84,7 +85,11 @@ from gitbench.result_safety import (
     write_new_run_backup,
 )
 from gitbench.ui.display import RichProgressDisplay
-from gitbench.version import BENCHMARK_SUITE_VERSION, RESULT_SCHEMA_VERSION
+from gitbench.harness.campaign import CampaignState
+from gitbench.harness.scheduler import build_schedule
+from gitbench.harness.campaign_orchestrator import plan_campaign, write_campaign_manifest
+from gitbench.harness.benchmark import Benchmark
+from gitbench.version import BENCHMARK_SUITE_VERSION, RESULT_SCHEMA_VERSION, CAMPAIGN_SCHEMA_VERSION
 
 DEFAULT_JSON_OUTPUT_PATH = "gitbench-results/{timestamp}/results-v{version}.json"
 DEFAULT_LOG_DIR = "gitbench-logs"
@@ -1146,6 +1151,102 @@ def _validate_run_credentials(runs: list[tuple[str, dict, list[str]]]) -> None:
             )
 
 
+def _display_campaign_plan(
+    campaign_id: str,
+    trials: int,
+    benchmarks_to_run: list[str],
+    runs: list[tuple[str, dict, list[str]]],
+    modes_to_run: list[str],
+    resolved_judge_config: dict[str, Any] | None,
+) -> None:
+    """Print a campaign scope preview and persist or resume a planned manifest."""
+    import random
+
+    global _benchmark_registry
+    if not _benchmark_registry:
+        _benchmark_registry = discover_benchmarks()
+
+    fixture_ids: list[str] = []
+    benchmark_instances: list[tuple[str, Benchmark]] = []
+    for benchmark_name in benchmarks_to_run:
+        benchmark_class = _benchmark_registry.get(benchmark_name)
+        if benchmark_class is None:
+            continue
+        benchmark = benchmark_class()
+        benchmark_instances.append((benchmark_name, benchmark))
+        for fixture in benchmark.load_fixtures():
+            fixture_ids.append(fixture.id)
+
+    models: list[tuple[str, str, dict[str, Any]]] = []
+    for profile_name, profile_conf, models_list in runs:
+        for full_model in models_list:
+            from gitbench.harness.reasoning import parse_model_reasoning
+            base_model, effort = parse_model_reasoning(full_model)
+            models.append((full_model, effort or "none", profile_conf))
+
+    output_modes = list(modes_to_run)
+    planned_attempts = trials * len(fixture_ids) * len(models) * len(output_modes)
+    judge_estimate = planned_attempts if resolved_judge_config is not None else 0
+    # Safety review, when configured, is evaluated once per retained raw attempt.
+    safety_estimate = planned_attempts if resolved_judge_config is not None else 0
+
+    click.echo("\n── Campaign plan ──", err=True)
+    click.echo(f"  Campaign ID: {campaign_id}", err=True)
+    click.echo(f"  Trials: {trials}", err=True)
+    click.echo(f"  Benchmarks: {len(benchmarks_to_run)}", err=True)
+    click.echo(f"  Models: {len(models)}", err=True)
+    click.echo(f"  Output modes: {', '.join(output_modes)}", err=True)
+    click.echo(f"  Fixtures: {len(fixture_ids)}", err=True)
+    click.echo(f"  Planned target attempts: {planned_attempts}", err=True)
+    if judge_estimate:
+        click.echo(f"  Estimated judge calls: {judge_estimate}", err=True)
+    if safety_estimate:
+        click.echo(f"  Estimated safety-review calls: {safety_estimate}", err=True)
+
+    # Load any existing campaign manifest to show resume state.
+    from gitbench.harness.campaign_store import CampaignStore, build_resume_plan
+    store = CampaignStore(campaign_id)
+    existing = store.load_manifest()
+    if existing is not None:
+        needed = build_resume_plan(existing, store)
+        reused = planned_attempts - len(needed)
+        completed = existing.completed_attempts
+        valid = existing.valid_attempts
+        failures = completed - valid
+        click.echo(f"  Existing valid attempts: {reused}", err=True)
+        click.echo(f"  Remaining attempts: {len(needed)}", err=True)
+        click.echo(f"  Completed attempts: {completed}", err=True)
+        click.echo(f"  Valid attempts: {valid}", err=True)
+        if failures:
+            click.echo(f"  Failed/invalid attempts: {failures}", err=True)
+        click.echo(f"  Campaign state: {existing.state.value}", err=True)
+        click.echo(
+            f"  Publication state: {existing.publication_state.value}",
+            err=True,
+        )
+        if existing.legacy:
+            click.echo("  Legacy campaign: true", err=True)
+    else:
+        # Persist a planned manifest with fixture hashes.  Use a deterministic
+        # seed when the user did not supply one so resume can reconstruct order.
+        scheduler_seed = random.randrange(0, 2**32)
+        try:
+            campaign = plan_campaign(
+                campaign_id=campaign_id,
+                benchmarks=benchmark_instances,
+                models=models,
+                output_modes=output_modes,
+                planned_trial_count=trials,
+                scheduler_seed=scheduler_seed,
+                judge_config=resolved_judge_config,
+                fixture_generation_version=BENCHMARK_SUITE_VERSION,
+            )
+            manifest_path = write_campaign_manifest(campaign)
+            click.echo(f"  Manifest: {manifest_path}", err=True)
+        except Exception as exc:
+            logger.warning("Could not persist campaign manifest: %s", exc)
+
+
 def _validate_doctor_targets(config: dict, plan) -> dict[tuple[str, str], dict]:
     """Validate and cache config profiles for every doctor target.
 
@@ -1732,6 +1833,18 @@ def safety_doctor(
         "(e.g. 'openrouter-llms-as-judges')."
     ),
 )
+@click.option(
+    "--campaign-id",
+    default=None,
+    help="Unique campaign identifier for repeated evaluation campaigns.",
+)
+@click.option(
+    "--trials",
+    default=None,
+    type=click.IntRange(1),
+    show_default=True,
+    help="Number of complete trial rounds for each model/output-mode/fixture combination. Defaults to config campaign.default_trials or 3.",
+)
 def run(
     run_all: bool,
     all_benchmarks_flag: bool,
@@ -1756,6 +1869,8 @@ def run(
     output_mode: str,
     judge: bool,
     judge_profile: str | None,
+    campaign_id: str | None,
+    trials: int | None,
 ):
     """Run one or all benchmarks against the specified model."""
     run_log_path = configure_run_logging()
@@ -1791,6 +1906,15 @@ def run(
         sys.exit(1)
 
     config = load_config()
+
+    # Resolve campaign defaults from configuration.
+    campaign_defaults = load_campaign_defaults(config)
+    resolved_trials = trials if trials is not None else campaign_defaults.get("default_trials", 3)
+    if campaign_defaults.get("require_campaign_id") and campaign_id is None:
+        raise click.ClickException(
+            "Configuration requires --campaign-id for every run."
+        )
+
     result_safety_processor = _build_result_safety_processor(config)
     resolved_json_output = resolve_run_output_path(
         config,
@@ -2005,8 +2129,29 @@ def run(
             '  "judge": {"profile": "my-judge-models"}'
         )
 
+    if campaign_id:
+        _display_campaign_plan(
+            campaign_id=campaign_id,
+            trials=resolved_trials,
+            benchmarks_to_run=benchmarks_to_run,
+            runs=runs,
+            modes_to_run=modes_to_run,
+            resolved_judge_config=resolved_judge_config,
+        )
+
     # Collect all run envelopes for combined aggregation when running "both"
     all_mode_envelopes: list[dict] = []
+
+    # Pre-compute fixture count for campaign-aware progress displays.
+    fixture_ids: list[str] = []
+    if campaign_id:
+        for benchmark_name in benchmarks_to_run:
+            benchmark_class = _benchmark_registry.get(benchmark_name)
+            if benchmark_class is None:
+                continue
+            benchmark = benchmark_class()
+            for fixture in benchmark.load_fixtures():
+                fixture_ids.append(fixture.id)
 
     for output_mode in modes_to_run:
         if len(modes_to_run) > 1:
@@ -2019,10 +2164,26 @@ def run(
             pending_outputs: list[tuple[str, dict]] = []
             progress_model_names_by_run = _progress_model_names_for_runs(runs)
             all_models_flat = [name for names in progress_model_names_by_run for name in names]
+            progress_kwargs: dict[str, Any] = {"verbose": verbose}
+            if campaign_id:
+                # Compute campaign scope for the live display.
+                total_fixtures = len(fixture_ids)
+                total_models = sum(len(r[2]) for r in runs)
+                mode_planned_attempts = (
+                    resolved_trials * total_fixtures * total_models
+                )
+                progress_kwargs.update(
+                    {
+                        "campaign_id": campaign_id,
+                        "trials": resolved_trials,
+                        "planned_attempts": mode_planned_attempts,
+                        "publication_state": "draft",
+                    }
+                )
             progress_display = RichProgressDisplay(
                 all_models_flat,
                 benchmarks_to_run,
-                verbose=verbose,
+                **progress_kwargs,
             )
 
             def finish_model_result(model_result: dict) -> None:
@@ -2528,6 +2689,23 @@ def run(
             for envelope in all_mode_envelopes:
                 written = write_output_dir(envelope, str(Path(resolved_json_output).parent))
                 click.echo(f"  Saved: {written}", err=True)
+
+    # Integrate campaign publication with result-safety review when configured.
+    if campaign_id and result_safety_processor is not None:
+        from gitbench.harness.campaign_store import (
+            CampaignStore,
+            review_campaign_safety,
+        )
+
+        store = CampaignStore(campaign_id)
+        campaign = store.load_manifest()
+        if campaign is not None:
+            review_campaign_safety(campaign, result_safety_processor, store)
+            click.echo(
+                f"\nSafety review completed for campaign {campaign_id}: "
+                f"{campaign.safety_summary}",
+                err=True,
+            )
 
 
 @cli.command("list")

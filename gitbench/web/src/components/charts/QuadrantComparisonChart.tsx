@@ -308,8 +308,11 @@ function PointShape({ cx, cy, payload, onFocusPair, onBlurPair }: any) {
   );
 }
 
+import { useCampaignId } from "@/lib/use-campaign";
+
 export default function QuadrantComparisonChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
+  const campaignId = useCampaignId();
   const [xMetricKey, setXMetricKey] = useState<MetricKey>("cost");
   const [yMetricKey, setYMetricKey] = useState<MetricKey>("passRate");
   const [focusedPairId, setFocusedPairId] = useState<string | null>(null);
@@ -323,7 +326,7 @@ export default function QuadrantComparisonChart() {
 
   useEffect(() => {
     loadQuadrantChart().then(setData);
-  }, []);
+  }, [campaignId]);
 
   const xMetric = metricByKey[xMetricKey];
   const yMetric = metricByKey[yMetricKey];

@@ -23,8 +23,11 @@ function formatCost(value: number): string {
   return `$${formatCompactDecimal(value, 2)}`;
 }
 
+import { useCampaignId } from "@/lib/use-campaign";
+
 export default function CostValueChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
+  const campaignId = useCampaignId();
   const {
     selectedGroups,
     setSelectedGroups,
@@ -35,7 +38,7 @@ export default function CostValueChart() {
 
   useEffect(() => {
     loadCostChart().then(setData);
-  }, []);
+  }, [campaignId]);
 
   const chartData = useMemo(() => {
     if (!data) return [];

@@ -21,8 +21,7 @@ const STORAGE_KEY = "gitbench-model-selection";
 const EVENT_NAME = "model-selection-changed";
 
 function getPassColor(passRate: number): string {
-  if (passRate >= 0.8)
-    return "text-pass bg-pass-bg border-pass-border";
+  if (passRate >= 0.8) return "text-pass bg-pass-bg border-pass-border";
   if (passRate >= 0.5)
     return "text-(--color-warn) bg-warn-bg border-(--color-warn-border)";
   return "text-fail bg-fail-bg border-(--color-fail-border)";
@@ -37,7 +36,7 @@ function readStoredSelection(groups: ModelGroup[]): string[] | null {
     if (!Array.isArray(parsed)) return null;
     return sanitizeGroupSelection(
       parsed.filter((value): value is string => typeof value === "string"),
-      groups,
+      groups
     );
   } catch {
     return null;
@@ -81,7 +80,7 @@ export default function ModelSelector({
         ? sanitizeGroupSelection(initialSelected, groups)
         : readStoredSelection(groups);
       setSelected(
-        next && next.length > 0 ? next : groups.map((group) => group.id),
+        next && next.length > 0 ? next : groups.map((group) => group.id)
       );
       return;
     }
@@ -96,7 +95,7 @@ export default function ModelSelector({
         ? sanitizeGroupSelection(initialSelected, groups)
         : readStoredSelection(groups);
       setSelected(
-        next && next.length > 0 ? next : groups.map((group) => group.id),
+        next && next.length > 0 ? next : groups.map((group) => group.id)
       );
     });
   }, [providedData, initialSelected, isControlled]);
@@ -188,7 +187,7 @@ export default function ModelSelector({
           <span className="ml-2 inline-flex shrink-0 items-center gap-1.5">
             <Badge
               className={`rounded-full border px-1.5 py-px font-mono text-[0.6rem] ${getPassColor(
-                range.colorValue,
+                range.colorValue
               )}`}
             >
               {range.label}

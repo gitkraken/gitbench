@@ -32,8 +32,11 @@ function formatAxis(seconds: number): string {
   return `${formatCompactDecimal(seconds, 2)}s`;
 }
 
+import { useCampaignId } from "@/lib/use-campaign";
+
 export default function RuntimeBarChart() {
   const [data, setData] = useState<GitBenchData | null>(null);
+  const campaignId = useCampaignId();
   const {
     selectedGroups,
     setSelectedGroups,
@@ -44,7 +47,7 @@ export default function RuntimeBarChart() {
 
   useEffect(() => {
     loadRuntimeChart().then(setData);
-  }, []);
+  }, [campaignId]);
 
   const chartData = useMemo(() => {
     if (!data) return [];

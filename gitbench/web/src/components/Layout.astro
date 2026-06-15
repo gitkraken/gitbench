@@ -1,6 +1,7 @@
 ---
 import "@/styles/global.css";
 import Sidebar from "@/components/Sidebar.astro";
+import { CampaignSelector } from "@/components/CampaignSelector";
 
 interface Props {
   title: string;
@@ -30,6 +31,7 @@ const generated = new Date().toISOString().split("T")[0];
     <div class="app-main">
       <header class="page-header">
         <h1>{title}</h1>
+        <CampaignSelector client:load />
       </header>
       <main class="page-content">
         <slot />

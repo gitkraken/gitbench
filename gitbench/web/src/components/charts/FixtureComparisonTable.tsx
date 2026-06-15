@@ -28,7 +28,7 @@ interface FixtureComparisonTableProps {
 const LEVEL_ORDER = ["none", "low", "medium", "high", "xhigh", "max"];
 
 function sortByReasoningLevel(
-  efforts: { reasoningLevel: string | null }[],
+  efforts: { reasoningLevel: string | null }[]
 ): typeof efforts {
   return [...efforts].sort((a, b) => {
     const ai = LEVEL_ORDER.indexOf(a.reasoningLevel ?? "none");
@@ -42,17 +42,22 @@ export default function FixtureComparisonTable({
 }: FixtureComparisonTableProps) {
   const [data, setData] = useState<GitBenchData | null>(null);
   const [benchmarkData, setBenchmarkData] = useState<BenchmarkDetail | null>(
-    null,
+    null
   );
-  const { selectedGroups, setSelectedGroups, outputMode, setOutputMode, availableOutputModes } =
-    useSyncedModelSelection(data);
+  const {
+    selectedGroups,
+    setSelectedGroups,
+    outputMode,
+    setOutputMode,
+    availableOutputModes,
+  } = useSyncedModelSelection(data);
 
   useEffect(() => {
     Promise.all([loadData(), loadBenchmark(benchName)]).then(
       ([summary, benchmark]) => {
         setData(summary);
         setBenchmarkData(benchmark);
-      },
+      }
     );
   }, [benchName]);
 
@@ -60,7 +65,7 @@ export default function FixtureComparisonTable({
   const allEfforts = useMemo((): EffortColumn[] => {
     if (!data) return [];
     const groups = deriveModelGroups(data).filter((g) =>
-      selectedGroups.includes(g.id),
+      selectedGroups.includes(g.id)
     );
     const result: EffortColumn[] = [];
     for (const group of groups) {

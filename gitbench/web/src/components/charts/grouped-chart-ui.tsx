@@ -273,8 +273,7 @@ export function VerticalGroupedMetricChart({
   const seriesCount = visibleModes.length;
   const hasTokenSegments = rows.some(
     (row) =>
-      row.textInputTokens !== undefined ||
-      row.jsonInputTokens !== undefined
+      row.textInputTokens !== undefined || row.jsonInputTokens !== undefined
   );
 
   return (
@@ -378,29 +377,31 @@ export function VerticalGroupedMetricChart({
                   if (modeHasReasoningData) {
                     bars.push(
                       <Bar
-                      key={`${mode}-reason`}
-                      dataKey={reasonKey}
-                      name={`${outputModeLabel(mode)} Reasoning within output`}
-                      stackId={stackId}
-                      barSize={verticalChartBarSize(rows.length, 1)}
-                      isAnimationActive={false}
-                    >
-                      {rows.map((entry) => (
-                        <Cell
-                          key={`${entry.id}-${mode}-reason`}
-                          fill={getProviderColor(entry.provider)}
-                          fillOpacity={0.28}
-                          stroke={getProviderColor(entry.provider)}
-                          strokeWidth={0.5}
-                        />
-                      ))}
-                      <ErrorBar
-                        dataKey={whiskerKey}
-                        width={9}
-                        stroke="rgba(229,232,238,0.76)"
-                        strokeWidth={1.7}
+                        key={`${mode}-reason`}
+                        dataKey={reasonKey}
+                        name={`${outputModeLabel(
+                          mode
+                        )} Reasoning within output`}
+                        stackId={stackId}
+                        barSize={verticalChartBarSize(rows.length, 1)}
                         isAnimationActive={false}
-                      />
+                      >
+                        {rows.map((entry) => (
+                          <Cell
+                            key={`${entry.id}-${mode}-reason`}
+                            fill={getProviderColor(entry.provider)}
+                            fillOpacity={0.28}
+                            stroke={getProviderColor(entry.provider)}
+                            strokeWidth={0.5}
+                          />
+                        ))}
+                        <ErrorBar
+                          dataKey={whiskerKey}
+                          width={9}
+                          stroke="rgba(229,232,238,0.76)"
+                          strokeWidth={1.7}
+                          isAnimationActive={false}
+                        />
                       </Bar>
                     );
                   }
@@ -418,10 +419,7 @@ export function VerticalGroupedMetricChart({
                       key={mode}
                       dataKey={dataKey}
                       name={outputModeLabel(mode)}
-                      barSize={verticalChartBarSize(
-                        rows.length,
-                        seriesCount
-                      )}
+                      barSize={verticalChartBarSize(rows.length, seriesCount)}
                       cursor="pointer"
                       isAnimationActive={false}
                       onClick={(entry: any) => {

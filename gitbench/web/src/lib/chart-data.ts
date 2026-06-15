@@ -25,7 +25,7 @@ function emptyData(summary: GitBenchData): GitBenchData {
 
 function matrixForBenchmark(
   matrix: GitBenchData["matrix"],
-  benchmark: string,
+  benchmark: string
 ): GitBenchData["matrix"] {
   const result: GitBenchData["matrix"] = {};
   for (const [model, byBenchmark] of Object.entries(matrix)) {
@@ -36,7 +36,7 @@ function matrixForBenchmark(
 }
 
 function minimalModelSummaries(
-  summary: GitBenchData,
+  summary: GitBenchData
 ): GitBenchData["model_summaries"] {
   return Object.fromEntries(
     Object.entries(summary.model_summaries).map(([model, modelSummary]) => [
@@ -45,7 +45,7 @@ function minimalModelSummaries(
         pass_at_k: modelSummary.pass_at_k,
         total_cost_usd: modelSummary.total_cost_usd,
       },
-    ]),
+    ])
   ) as GitBenchData["model_summaries"];
 }
 
@@ -57,14 +57,14 @@ function compactHeatmapMatrix(summary: GitBenchData) {
         const cell = summary.matrix[model.name]?.[benchmark];
         return cell ? [cell.pass_at_k, cell.passed, cell.total] : null;
       }),
-    ]),
+    ])
   );
 }
 
 export function chartData(
   chart: ChartKey,
   summary: GitBenchData,
-  benchmark?: string,
+  benchmark?: string
 ) {
   const data = emptyData(summary);
 

@@ -38,7 +38,7 @@ export interface ModeComparison {
 export function computeModeComparison(
   store: ReportStore,
   textModelName: string,
-  jsonModelName: string,
+  jsonModelName: string
 ): ModeComparison | null {
   const textResults = store.getModelResults(textModelName);
   const jsonResults = store.getModelResults(jsonModelName);
@@ -143,7 +143,7 @@ export function jsonSchemaModelName(textModelName: string): string {
  */
 export function hasBothModes(
   data: GitBenchData,
-  textModelName: string,
+  textModelName: string
 ): boolean {
   const jsonName = jsonSchemaModelName(textModelName);
   return (

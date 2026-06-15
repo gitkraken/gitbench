@@ -5,6 +5,13 @@ import io
 import json
 from typing import Any
 
+from gitbench.harness.aggregation import (
+    compute_benchmark_aggregates,
+    compute_model_aggregates,
+    refresh_campaign_aggregates,
+)
+from gitbench.harness.campaign import Campaign, CampaignReport
+
 
 def export_csv(envelope: dict) -> str:
     """Return a CSV string with one row per fixture result.
@@ -127,6 +134,70 @@ def _truncate(s: str, max_len: int) -> str:
 def export_csv_stdlib(envelope: dict) -> str:
     """Alias for export_csv — kept for backward compatibility."""
     return export_csv(envelope)
+
+
+def build_campaign_report(campaign: Campaign) -> CampaignReport:
+    """Build a versioned campaign report from a campaign and its raw attempts.
+
+    Recomputes all aggregates from immutable raw attempts and packages
+    campaign metadata, trial summaries, fixture aggregates, model/benchmark
+    summaries, resource summaries, and judge evidence into the new schema.
+    """
+    from datetime import datetime, timezone
+
+    refresh_campaign_aggregates(campaign)
+    model_summaries = compute_model_aggregates(campaign, campaign.fixture_aggregates)
+    benchmark_summaries = compute_benchmark_aggregates(
+        campaign, campaign.fixture_aggregates
+    )
+    judge_evidence = [
+        attempt.judge_evidence
+        for attempt in campaign.raw_attempts
+        if attempt.judge_evidence is not None
+    ]
+    resource_summaries = []
+    if campaign.resource_summary is not None:
+        resource_summaries.append(campaign.resource_summary)
+    for summary in model_summaries:
+        if summary.resource_summary is not None:
+            resource_summaries.append(summary.resource_summary)
+    for summary in benchmark_summaries:
+        if summary.resource_summary is not None:
+            resource_summaries.append(summary.resource_summary)
+
+    return CampaignReport(
+        version=2,
+        schema_version=2,
+        generated_at=datetime.now(timezone.utc).isoformat(),
+        campaign=campaign,
+        model_summaries=model_summaries,
+        benchmark_summaries=benchmark_summaries,
+        resource_summaries=resource_summaries,
+        judge_evidence=judge_evidence,
+    )
+
+
+def export_campaign_report(campaign: Campaign) -> str:
+    """Return a campaign report as formatted JSON in the new schema."""
+    report = build_campaign_report(campaign)
+    return json.dumps(report.to_dict(), indent=2)
+
+
+def build_compatibility_report(legacy_envelope: dict[str, Any]) -> CampaignReport:
+    """Generate a campaign-aware compatibility report from a historical artifact.
+
+    Imports the legacy envelope as a one-trial legacy campaign and builds the
+    new schema report.  Legacy campaigns do not infer stability metrics.
+    """
+    from gitbench.harness.import_legacy import import_legacy_campaign
+
+    campaign = import_legacy_campaign(legacy_envelope)
+    return build_campaign_report(campaign)
+
+
+def export_compatibility_report(legacy_envelope: dict[str, Any]) -> str:
+    """Return a compatibility report as formatted JSON in the new schema."""
+    return json.dumps(build_compatibility_report(legacy_envelope).to_dict(), indent=2)
 
 
 # ── Format Registry ──────────────────────────────────────────────────────────

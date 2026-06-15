@@ -6,22 +6,34 @@ import ModelOutputControls from "@/components/charts/ModelOutputControls";
 import { Badge } from "@/components/ui/badge";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 
+function classifyReliability(passAtK: number): {
+  label: string;
+  title: string;
+} {
+  if (passAtK >= 1) return { label: "stable pass", title: "Stable pass" };
+  if (passAtK <= 0) return { label: "stable fail", title: "Stable fail" };
+  return { label: "flaky", title: "Flaky" };
+}
+
 function heatBg(ratio: number): string {
   if (ratio >= 0.9) return "rgba(16,185,129,0.28)";
   if (ratio >= 0.8) return "rgba(16,185,129,0.18)";
-  if (ratio >= 0.7) return "rgba(245,158,11,0.18)";
-  if (ratio >= 0.5) return "rgba(245,158,11,0.12)";
+  if (ratio >= 0.5) return "rgba(245,158,11,0.18)";
+  if (ratio > 0) return "rgba(245,158,11,0.12)";
   return "rgba(244,63,94,0.15)";
 }
 
 function heatColor(ratio: number): string {
   if (ratio >= 0.8) return "var(--color-pass)";
-  if (ratio >= 0.5) return "var(--color-warn)";
+  if (ratio > 0) return "var(--color-warn)";
   return "var(--color-fail)";
 }
 
+import { useCampaignId } from "@/lib/use-campaign";
+
 export default function BenchmarkHeatmap() {
   const [data, setData] = useState<HeatmapChartData | null>(null);
+  const campaignId = useCampaignId();
   const selectionData = useMemo<GitBenchData | null>(() => {
     if (!data) return null;
     return {
@@ -37,14 +49,20 @@ export default function BenchmarkHeatmap() {
       base_model_groups: data.base_model_groups,
     };
   }, [data]);
-  const { selectedGroups, setSelectedGroups, selectedModels, outputMode, setOutputMode, availableOutputModes } =
-    useSyncedModelSelection(selectionData);
+  const {
+    selectedGroups,
+    setSelectedGroups,
+    selectedModels,
+    outputMode,
+    setOutputMode,
+    availableOutputModes,
+  } = useSyncedModelSelection(selectionData);
 
   useEffect(() => {
     loadHeatmapChart().then((d) => {
       setData(d);
     });
-  }, []);
+  }, [campaignId]);
 
   if (!data || !selectionData) return <div>Loading...</div>;
 
@@ -99,16 +117,12 @@ export default function BenchmarkHeatmap() {
                   }
                   const [passAtK, passed, total] = cell;
                   const pct = Math.round(passAtK * 1000) / 10;
-                  const descriptor =
-                    passAtK >= 0.8
-                      ? "Strong"
-                      : passAtK >= 0.5
-                        ? "Moderate"
-                        : "Weak";
+                  const { label, title: reliabilityTitle } =
+                    classifyReliability(passAtK);
                   return (
                     <td
                       key={m}
-                      title={`${m} on ${bench}: ${pct}% (${passed}/${total} passed) — ${descriptor}`}
+                      title={`${m} on ${bench}: ${passed}/${total} (${pct}%) — ${reliabilityTitle}`}
                     >
                       <a href={`/benchmarks/${bench}`} className="no-underline">
                         <Badge
@@ -120,10 +134,10 @@ export default function BenchmarkHeatmap() {
                             borderColor: `${heatColor(passAtK)}33`,
                           }}
                         >
-                          {pct}%
+                          {passed}/{total}
                         </Badge>
                         <span className="font-mono text-[0.65rem] text-(--color-text-dim) ml-1">
-                          {passed}/{total}
+                          {label}
                         </span>
                       </a>
                     </td>

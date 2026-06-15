@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from gitbench.utils.git import GitExecutor
+from gitbench.utils.git import FixtureGenerationContext, GitExecutor
 
 
 class TestGitExecutor:
@@ -339,3 +339,85 @@ class TestGitExecutor:
         assert executor._is_branch_creation("git checkout main") == (False, None)
         assert executor._is_branch_creation("git merge feature") == (False, None)
         assert executor._is_branch_creation("echo 'hello'") == (False, None)
+
+
+class TestGitExecutorDeterminism:
+    """Tests for deterministic fixture repository generation."""
+
+    def _commands(self) -> list[str]:
+        return [
+            "git init",
+            "git config user.email 'test@example.com'",
+            "git config user.name 'Test User'",
+            "echo 'Initial content' > file.txt",
+            "git add file.txt",
+            "git commit -m 'Initial commit'",
+            "echo 'Second version' > file.txt",
+            "git add file.txt",
+            "git commit -m 'Second commit'",
+            "git reset --soft HEAD~1",
+        ]
+
+    def _head_commit(self, repo_path: str) -> str:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+
+    def _reflog(self, repo_path: str) -> str:
+        result = subprocess.run(
+            ["git", "reflog", "show", "--no-abbrev"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout
+
+    def test_deterministic_context_produces_identical_commits(self, tmp_path):
+        """Two setups with the same deterministic context must yield the same HEAD hash."""
+        context = FixtureGenerationContext(version="0.3.0", seed=42)
+        first = GitExecutor(base_dir=str(tmp_path), fixture_generation_context=context)
+        second = GitExecutor(base_dir=str(tmp_path), fixture_generation_context=context)
+
+        first_path = first.setup_repo("det_repo", self._commands())
+        second_path = second.setup_repo("det_repo", self._commands())
+
+        assert self._head_commit(first_path) == self._head_commit(second_path)
+        assert self._reflog(first_path) == self._reflog(second_path)
+
+        first.cleanup()
+        second.cleanup()
+
+    def test_deterministic_context_sets_author_committer_dates(self, tmp_path):
+        """The deterministic context forces fixed author/committer timestamps."""
+        from datetime import datetime
+
+        context = FixtureGenerationContext(version="0.3.0", seed=42)
+        executor = GitExecutor(base_dir=str(tmp_path), fixture_generation_context=context)
+
+        repo_path = executor.setup_repo("dates_repo", self._commands())
+        result = subprocess.run(
+            ["git", "log", "-1", "--format=%aI|%cI|%an|%cn"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        author_date, committer_date, author_name, committer_name = result.stdout.strip().split("|")
+        assert datetime.fromisoformat(author_date) == datetime.fromisoformat(context.date)
+        assert datetime.fromisoformat(committer_date) == datetime.fromisoformat(context.date)
+        assert author_name == context.author_name
+        assert committer_name == context.committer_name
+        executor.cleanup()
+
+    def test_default_context_allows_normal_environment(self, tmp_path):
+        """Without a deterministic context, the executor uses the inherited environment."""
+        executor = GitExecutor(base_dir=str(tmp_path))
+        repo_path = executor.setup_repo("default_repo", self._commands())
+        assert Path(repo_path).exists()
+        executor.cleanup()

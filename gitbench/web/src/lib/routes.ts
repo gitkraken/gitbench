@@ -42,7 +42,9 @@ export function modelPath(modelName: string): string {
 }
 
 export function modelGroupPath(provider: string, baseModel: string): string {
-  return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(baseModel)}/`;
+  return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(
+    baseModel
+  )}/`;
 }
 
 export function modelLevelPath(
@@ -50,5 +52,7 @@ export function modelLevelPath(
   baseModel: string,
   level: string
 ): string {
-  return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(baseModel)}/${encodeRouteSegment(level)}/`;
+  return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(
+    baseModel
+  )}/${encodeRouteSegment(level)}/`;
 }

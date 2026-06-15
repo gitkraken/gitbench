@@ -164,6 +164,33 @@ class TestScore:
         assert reconstructed.passed == original.passed
         assert reconstructed.similarity == original.similarity
 
+    def test_operational_failure_roundtrip(self):
+        """Operational failure flag survives serialization."""
+        original = Score(
+            fixture_id="f1",
+            passed=False,
+            similarity=0.0,
+            model_output="",
+            error="timeout",
+            operational_failure=True,
+        )
+        data = original.to_dict()
+        assert data["operational_failure"] is True
+        reconstructed = Score.from_dict(data)
+        assert reconstructed.operational_failure is True
+
+    def test_operational_failure_false_is_omitted(self):
+        """Non-operational failures keep the serialized shape compact."""
+        score = Score(
+            fixture_id="f1",
+            passed=False,
+            similarity=0.0,
+            model_output="bad",
+            error="schema failure",
+        )
+        data = score.to_dict()
+        assert "operational_failure" not in data
+
 
 class TestBenchmarkResult:
     """Tests for BenchmarkResult dataclass."""
