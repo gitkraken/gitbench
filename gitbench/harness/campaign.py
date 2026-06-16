@@ -240,7 +240,7 @@ class AttemptIdentity:
     """Exact identity key for a single raw attempt.
 
     Uniqueness: (campaign_id, trial_index, model_id, reasoning_effort,
-    output_mode, fixture_id).
+    output_mode, benchmark, fixture_id).
     """
 
     campaign_id: str
@@ -249,6 +249,7 @@ class AttemptIdentity:
     reasoning_effort: str
     output_mode: str
     fixture_id: str
+    benchmark: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return _encode(asdict(self))
@@ -422,6 +423,9 @@ class FixtureAggregate:
 
     fixture_id: str
     benchmark: str | None = None
+    model_id: str | None = None
+    reasoning_effort: str | None = None
+    output_mode: str | None = None
     planned_trials: int = 0
     completed_trials: int = 0
     valid_attempts: int = 0
@@ -451,6 +455,20 @@ class FixtureAggregate:
         return _dataclass_from_dict(cls, data)
 
 
+def _identity_benchmark(identity: AttemptIdentity) -> str:
+    """Return the benchmark for an identity, falling back to qualified IDs."""
+    if identity.benchmark:
+        return identity.benchmark
+    if "/" in identity.fixture_id:
+        return identity.fixture_id.split("/", 1)[0]
+    return ""
+
+
+def _identity_fixture_key(identity: AttemptIdentity) -> tuple[str, str]:
+    """Return the benchmark/fixture pair for exact aggregate grouping."""
+    return (_identity_benchmark(identity), identity.fixture_id)
+
+
 def compute_fixture_aggregates(campaign: Campaign) -> list[FixtureAggregate]:
     """Compute fixture-level reliability aggregates from raw attempts.
 
@@ -459,16 +477,56 @@ def compute_fixture_aggregates(campaign: Campaign) -> list[FixtureAggregate]:
     classifications.  Only valid quality attempts contribute to the
     success-rate denominator.
     """
-    # Index attempts by fixture and trial.
-    attempts_by_fixture: dict[str, list[RawAttempt]] = {}
+    # Index attempts by exact comparison dimensions.
+    attempts_by_fixture: dict[
+        tuple[str, str, str, str, str], list[RawAttempt]
+    ] = {}
     for attempt in campaign.raw_attempts:
-        attempts_by_fixture.setdefault(attempt.identity.fixture_id, []).append(
-            attempt
+        key = (
+            _identity_benchmark(attempt.identity),
+            attempt.identity.fixture_id,
+            attempt.identity.model_id,
+            attempt.identity.reasoning_effort,
+            attempt.identity.output_mode,
         )
+        attempts_by_fixture.setdefault(key, []).append(attempt)
+
+    planned_keys: set[tuple[str, str, str, str, str]] = set()
+    for trial in campaign.trials:
+        for identity in trial.attempt_identities:
+            planned_keys.add(
+                (
+                    _identity_benchmark(identity),
+                    identity.fixture_id,
+                    identity.model_id,
+                    identity.reasoning_effort,
+                    identity.output_mode,
+                )
+            )
+    if not planned_keys:
+        if campaign.raw_attempts:
+            planned_keys.update(attempts_by_fixture.keys())
+        else:
+            for benchmark_id in campaign.config.benchmark_ids or [""]:
+                for fixture_id in campaign.config.fixture_ids:
+                    for model_id in campaign.config.model_ids:
+                        for reasoning_effort in campaign.config.reasoning_efforts or ["none"]:
+                            for output_mode in campaign.config.output_modes:
+                                planned_keys.add(
+                                    (
+                                        benchmark_id,
+                                        fixture_id,
+                                        model_id,
+                                        reasoning_effort,
+                                        output_mode,
+                                    )
+                                )
 
     aggregates: list[FixtureAggregate] = []
-    for fixture_id in campaign.config.fixture_ids:
-        attempts = attempts_by_fixture.get(fixture_id, [])
+    for benchmark, fixture_id, model_id, reasoning_effort, output_mode in sorted(planned_keys):
+        attempts = attempts_by_fixture.get(
+            (benchmark, fixture_id, model_id, reasoning_effort, output_mode), []
+        )
         valid_attempts = [a for a in attempts if a.status.is_quality_outcome()]
         passing = [a for a in valid_attempts if a.passed]
         failing = [a for a in valid_attempts if not a.passed]
@@ -514,7 +572,10 @@ def compute_fixture_aggregates(campaign: Campaign) -> list[FixtureAggregate]:
         aggregates.append(
             FixtureAggregate(
                 fixture_id=fixture_id,
-                benchmark=campaign.config.benchmark_ids[0] if campaign.config.benchmark_ids else None,
+                benchmark=benchmark or None,
+                model_id=model_id or None,
+                reasoning_effort=reasoning_effort or None,
+                output_mode=output_mode or None,
                 planned_trials=campaign.config.planned_trial_count,
                 completed_trials=completed_trials,
                 valid_attempts=valid_count,
@@ -558,6 +619,7 @@ class ModelCampaignSummary:
 
     model_id: str
     reasoning_effort: str | None = None
+    output_mode: str | None = None
     planned_trials: int = 0
     completed_trials: int = 0
     valid_attempts: int = 0
@@ -635,11 +697,14 @@ class CampaignConfig:
     scorer_config: dict[str, Any] | None = None
     judge_config: dict[str, Any] | None = None
     request_config: dict[str, Any] | None = None
+    request_config_hash: str | None = None
+    scorer_config_hash: str | None = None
     expected_fixture_hashes: dict[str, FixtureExpectedHashes] = field(
         default_factory=dict
     )
     fixture_generation_version: str = ""
     result_schema_version: int = 1
+    scheduler_version: str = "campaign-scheduler-v1"
     scheduler_seed: int | None = None
     safety_review_config: dict[str, Any] | None = None
     campaign_schema_version: str = CAMPAIGN_SCHEMA_VERSION
@@ -726,6 +791,10 @@ class Campaign:
             return AttemptStatus.HASH_MISMATCH
 
         expected = cfg.expected_fixture_hashes.get(attempt.identity.fixture_id)
+        if expected is None and attempt.identity.benchmark:
+            expected = cfg.expected_fixture_hashes.get(
+                f"{attempt.identity.benchmark}/{attempt.identity.fixture_id}"
+            )
         if expected is None:
             return AttemptStatus.HASH_MISMATCH
 
@@ -804,6 +873,9 @@ def make_campaign(
     scorer_config: dict[str, Any] | None = None,
     judge_config: dict[str, Any] | None = None,
     request_config: dict[str, Any] | None = None,
+    request_config_hash: str | None = None,
+    scorer_config_hash: str | None = None,
+    scheduler_version: str = "campaign-scheduler-v1",
     safety_review_config: dict[str, Any] | None = None,
 ) -> Campaign:
     """Create a new campaign with a consistent manifest hash and timestamps."""
@@ -823,6 +895,9 @@ def make_campaign(
         scorer_config=scorer_config,
         judge_config=judge_config,
         request_config=request_config,
+        request_config_hash=request_config_hash,
+        scorer_config_hash=scorer_config_hash,
+        scheduler_version=scheduler_version,
         safety_review_config=safety_review_config,
     )
     return Campaign(

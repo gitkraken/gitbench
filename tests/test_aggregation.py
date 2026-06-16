@@ -25,6 +25,9 @@ def _attempt(
     trial_index: int,
     model_id: str = "m1",
     *,
+    reasoning_effort: str = "none",
+    output_mode: str = "text",
+    benchmark: str = "",
     passed: bool = False,
     status: AttemptStatus | None = None,
     cost_usd: float | None = None,
@@ -38,9 +41,10 @@ def _attempt(
             campaign_id=campaign.campaign_id,
             trial_index=trial_index,
             model_id=model_id,
-            reasoning_effort="none",
-            output_mode="text",
+            reasoning_effort=reasoning_effort,
+            output_mode=output_mode,
             fixture_id=fixture_id,
+            benchmark=benchmark,
         ),
         status=status,
         passed=passed,
@@ -137,6 +141,64 @@ class TestModelAggregation:
         assert by_model["m1"].mean_success_rate == 0.5
         assert by_model["m1"].resource_summary.total_cost_usd == 0.2
         assert by_model["m2"].mean_success_rate == 1.0
+
+    def test_same_model_effort_and_mode_dimensions_stay_separate(self):
+        campaign = make_campaign(
+            campaign_id="cmp-dims",
+            benchmark_ids=["reflog"],
+            fixture_ids=["reflog/f1"],
+            model_ids=["m1"],
+            reasoning_efforts=["low", "high"],
+            output_modes=["text", "json_schema"],
+            planned_trial_count=1,
+        )
+        campaign.raw_attempts = [
+            _attempt(
+                campaign,
+                "f1",
+                1,
+                "m1",
+                reasoning_effort="low",
+                output_mode="text",
+                benchmark="reflog",
+                passed=True,
+            ),
+            _attempt(
+                campaign,
+                "f1",
+                1,
+                "m1",
+                reasoning_effort="high",
+                output_mode="text",
+                benchmark="reflog",
+                passed=False,
+            ),
+            _attempt(
+                campaign,
+                "f1",
+                1,
+                "m1",
+                reasoning_effort="low",
+                output_mode="json_schema",
+                benchmark="reflog",
+                passed=False,
+            ),
+        ]
+
+        fixture_summaries = {
+            (s.reasoning_effort, s.output_mode): s
+            for s in refresh_campaign_aggregates(campaign).fixture_aggregates
+        }
+        model_summaries = {
+            (s.reasoning_effort, s.output_mode): s
+            for s in compute_model_aggregates(campaign)
+        }
+
+        assert fixture_summaries[("low", "text")].mean_success_rate == 1.0
+        assert fixture_summaries[("high", "text")].mean_success_rate == 0.0
+        assert fixture_summaries[("low", "json_schema")].mean_success_rate == 0.0
+        assert model_summaries[("low", "text")].mean_success_rate == 1.0
+        assert model_summaries[("high", "text")].mean_success_rate == 0.0
 
 
 class TestBenchmarkAggregation:

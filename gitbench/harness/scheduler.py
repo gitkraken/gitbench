@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 
 from gitbench.harness.campaign import AttemptIdentity
 
+SCHEDULER_VERSION = "campaign-scheduler-v1"
+
 
 @dataclass
 class CampaignSchedule:
@@ -51,6 +53,7 @@ def build_schedule(
     planned_trial_count: int = 3,
     *,
     seed: int | None = None,
+    fixture_specs: list[tuple[str, str]] | None = None,
 ) -> CampaignSchedule:
     """Build a deterministic campaign schedule.
 
@@ -62,13 +65,18 @@ def build_schedule(
         planned_trial_count: Number of complete trial rounds (default 3).
         seed: Optional random seed for reproducible ordering.  When omitted,
             a seed is chosen deterministically from the campaign inputs.
+        fixture_specs: Optional ordered list of ``(benchmark, fixture_id)``
+            tuples.  When supplied, benchmark becomes part of every exact
+            attempt identity while ``fixture_id`` remains the fixture-local ID.
 
     Returns:
         A :class:`CampaignSchedule` with balanced trial ordering.
     """
     if planned_trial_count < 1:
         raise ValueError("planned_trial_count must be at least 1")
-    if not fixture_ids:
+    if fixture_specs is None:
+        fixture_specs = [("", fixture_id) for fixture_id in fixture_ids]
+    if not fixture_specs:
         raise ValueError("fixture_ids must not be empty")
     if not models:
         raise ValueError("models must not be empty")
@@ -78,7 +86,7 @@ def build_schedule(
     if seed is None:
         # Deterministic seed derived from campaign inputs so the same
         # configuration always produces the same schedule.
-        seed = _derive_seed(campaign_id, fixture_ids, models, output_modes)
+        seed = _derive_seed(campaign_id, fixture_specs, models, output_modes)
 
     rng = random.Random(seed)
     schedule = CampaignSchedule(
@@ -99,7 +107,7 @@ def build_schedule(
     # This balances model and output-mode ordering across rounds.
     model_offset = rng.randrange(len(models)) if len(models) > 1 else 0
     output_mode_offset = rng.randrange(len(output_modes)) if len(output_modes) > 1 else 0
-    fixture_offset = rng.randrange(len(fixture_ids)) if len(fixture_ids) > 1 else 0
+    fixture_offset = rng.randrange(len(fixture_specs)) if len(fixture_specs) > 1 else 0
 
     for trial_index in range(1, planned_trial_count + 1):
         trial_rng = random.Random(seed + trial_index)
@@ -110,12 +118,12 @@ def build_schedule(
         rotated_output_modes = _rotate(
             output_modes, output_mode_offset * (trial_index - 1)
         )
-        rotated_fixtures = _rotate(fixture_ids, fixture_offset * (trial_index - 1))
+        rotated_fixtures = _rotate(fixture_specs, fixture_offset * (trial_index - 1))
 
         # Within the round, shuffle the combined order using a trial-specific
         # seed so the exact sequence is reproducible but not purely round-robin.
         identities: list[AttemptIdentity] = []
-        for fixture_index, fixture_id in enumerate(rotated_fixtures):
+        for fixture_index, (benchmark, fixture_id) in enumerate(rotated_fixtures):
             for model_index, (model_id, reasoning_effort) in enumerate(
                 rotated_models
             ):
@@ -129,6 +137,7 @@ def build_schedule(
                         reasoning_effort=reasoning_effort,
                         output_mode=output_mode,
                         fixture_id=fixture_id,
+                        benchmark=benchmark,
                     )
                     identities.append(identity)
 
@@ -143,7 +152,7 @@ def build_schedule(
 
 def _derive_seed(
     campaign_id: str,
-    fixture_ids: list[str],
+    fixture_specs: list[tuple[str, str]],
     models: list[tuple[str, str]],
     output_modes: list[str],
 ) -> int:
@@ -153,7 +162,7 @@ def _derive_seed(
     canonical = "|".join(
         [
             campaign_id,
-            ",".join(fixture_ids),
+            ",".join(f"{benchmark}/{fixture_id}" for benchmark, fixture_id in fixture_specs),
             ",".join(f"{m}:{e}" for m, e in models),
             ",".join(output_modes),
         ]

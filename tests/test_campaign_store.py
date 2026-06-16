@@ -1,5 +1,7 @@
 """Tests for campaign result store persistence."""
 
+import json
+
 from gitbench.harness.campaign import (
     AttemptIdentity,
     AttemptStatus,
@@ -97,6 +99,70 @@ class TestCampaignStore:
         loaded = store.load_all_attempts()
         assert len(loaded) == 2
 
+    def test_same_fixture_id_across_benchmarks_has_distinct_envelopes(self, tmp_path):
+        store = CampaignStore("cmp-store-1", base_dir=str(tmp_path))
+        first = RawAttempt(
+            identity=AttemptIdentity(
+                campaign_id="cmp-store-1",
+                trial_index=1,
+                model_id="m1",
+                reasoning_effort="low",
+                output_mode="text",
+                benchmark="bench-a",
+                fixture_id="f1",
+            ),
+            status=AttemptStatus.VALID_PASS,
+            passed=True,
+        )
+        second = RawAttempt(
+            identity=AttemptIdentity(
+                campaign_id="cmp-store-1",
+                trial_index=1,
+                model_id="m1",
+                reasoning_effort="low",
+                output_mode="text",
+                benchmark="bench-b",
+                fixture_id="f1",
+            ),
+            status=AttemptStatus.VALID_FAIL,
+            passed=False,
+        )
+
+        first_path = store.write_attempt(first)
+        second_path = store.write_attempt(second)
+
+        assert first_path != second_path
+        assert store.load_attempt(first.identity).passed is True
+        assert store.load_attempt(second.identity).passed is False
+        assert len(store.load_all_attempts()) == 2
+
+    def test_legacy_envelope_path_loads_when_identity_matches(self, tmp_path):
+        store = CampaignStore("cmp-store-1", base_dir=str(tmp_path))
+        attempt = RawAttempt(
+            identity=AttemptIdentity(
+                campaign_id="cmp-store-1",
+                trial_index=1,
+                model_id="m1",
+                reasoning_effort="low",
+                output_mode="text",
+                benchmark="bench-a",
+                fixture_id="f1",
+            ),
+            status=AttemptStatus.VALID_PASS,
+            passed=True,
+        )
+        store.ensure_dirs()
+        legacy_path = store._legacy_envelope_path(attempt.identity)
+        legacy_path.write_text(json.dumps(attempt.to_dict()))
+
+        assert store.attempt_exists(attempt.identity)
+        assert store.load_attempt(attempt.identity).identity == attempt.identity
+
+        new_path = store.write_attempt(attempt)
+        assert new_path.exists()
+        assert not legacy_path.exists()
+        assert len(store.load_all_attempts()) == 1
+
 
 class TestUpdateCampaignCounts:
     """Tests for atomic campaign count updates."""
@@ -192,6 +258,48 @@ class TestUpdateCampaignCounts:
         assert campaign.completed_attempts == 1
         assert campaign.valid_attempts == 0
         assert campaign.excluded_attempts == 1
+
+    def test_counts_match_exact_benchmark_dimension(self):
+        campaign = make_campaign(
+            campaign_id="cmp-counts-benchmarks",
+            benchmark_ids=["bench-a", "bench-b"],
+            fixture_ids=["bench-a/f1", "bench-b/f1"],
+            model_ids=["m1"],
+            output_modes=["text"],
+            planned_trial_count=1,
+        )
+        planned = AttemptIdentity(
+            campaign_id=campaign.campaign_id,
+            trial_index=1,
+            model_id="m1",
+            reasoning_effort="low",
+            output_mode="text",
+            benchmark="bench-a",
+            fixture_id="f1",
+        )
+        stray = AttemptIdentity(
+            campaign_id=campaign.campaign_id,
+            trial_index=1,
+            model_id="m1",
+            reasoning_effort="low",
+            output_mode="text",
+            benchmark="bench-b",
+            fixture_id="f1",
+        )
+        campaign.trials = [
+            Trial(trial_index=1, planned_attempts=1, attempt_identities=[planned]),
+        ]
+        campaign.raw_attempts = [
+            RawAttempt(identity=planned, status=AttemptStatus.VALID_PASS, passed=True),
+            RawAttempt(identity=stray, status=AttemptStatus.VALID_FAIL, passed=False),
+        ]
+
+        update_campaign_counts(campaign)
+
+        assert campaign.completed_attempts == 1
+        assert campaign.valid_attempts == 1
+        assert campaign.passing_attempts == 1
+        assert campaign.trials[0].completed_attempts == 1
 
 
 class TestBuildResumePlan:

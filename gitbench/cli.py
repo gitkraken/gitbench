@@ -88,6 +88,7 @@ from gitbench.ui.display import RichProgressDisplay
 from gitbench.harness.campaign import CampaignState
 from gitbench.harness.scheduler import build_schedule
 from gitbench.harness.campaign_orchestrator import plan_campaign, write_campaign_manifest
+from gitbench.harness.campaign_executor import execute_campaign
 from gitbench.harness.benchmark import Benchmark
 from gitbench.version import BENCHMARK_SUITE_VERSION, RESULT_SCHEMA_VERSION, CAMPAIGN_SCHEMA_VERSION
 
@@ -2139,6 +2140,140 @@ def run(
             resolved_judge_config=resolved_judge_config,
         )
 
+        from gitbench.export import export_campaign_report
+        from gitbench.harness.campaign_store import (
+            CampaignStore,
+            validate_resume_compatibility,
+        )
+
+        store = CampaignStore(campaign_id)
+        campaign = store.load_manifest()
+        if campaign is None:
+            raise click.ClickException(
+                f"Campaign manifest was not created for {campaign_id}."
+            )
+
+        model_profile_by_id: dict[str, tuple[int, int, str, dict[str, Any]]] = {}
+        model_ids: list[str] = []
+        reasoning_efforts: list[str] = []
+        for run_index, (profile_name, profile_conf, models_list) in enumerate(runs):
+            for model_index, full_model in enumerate(models_list):
+                base_model, effort = parse_model_reasoning(full_model)
+                model_ids.append(full_model)
+                reasoning_efforts.append(effort or "none")
+                model_profile_by_id.setdefault(
+                    full_model,
+                    (run_index, model_index, profile_name, profile_conf),
+                )
+
+        qualified_fixture_ids: list[str] = []
+        for benchmark_name in benchmarks_to_run:
+            benchmark_class = _benchmark_registry.get(benchmark_name)
+            if benchmark_class is None:
+                continue
+            for fixture in benchmark_class().load_fixtures():
+                qualified_fixture_ids.append(f"{benchmark_name}/{fixture.id}")
+
+        try:
+            validate_resume_compatibility(
+                campaign,
+                benchmark_ids=benchmarks_to_run,
+                fixture_ids=qualified_fixture_ids,
+                model_ids=sorted(set(model_ids)),
+                reasoning_efforts=sorted(set(reasoning_efforts)),
+                output_modes=modes_to_run,
+                planned_trial_count=resolved_trials,
+                fixture_generation_version=BENCHMARK_SUITE_VERSION,
+            )
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+
+        progress_display = RichProgressDisplay(
+            _progress_model_names(model_ids),
+            benchmarks_to_run,
+            verbose=verbose,
+            campaign_id=campaign_id,
+            trials=resolved_trials,
+            planned_attempts=campaign.planned_attempts,
+            publication_state=campaign.publication_state.value,
+        )
+
+        runner_cache: dict[tuple[str, str], BenchmarkRunner] = {}
+
+        def runner_for_identity(identity):
+            try:
+                run_index, model_index, _profile_name, profile_conf = model_profile_by_id[
+                    identity.model_id
+                ]
+            except KeyError as exc:
+                raise click.ClickException(
+                    f"Campaign identity references unknown model: {identity.model_id}"
+                ) from exc
+
+            cache_key = (identity.model_id, identity.output_mode)
+            if cache_key in runner_cache:
+                return runner_cache[cache_key]
+
+            p_base_url = base_url or profile_conf.get("base_url")
+            p_api_key = profile_conf.get("api_key")
+            p_provider = provider or profile_conf.get("provider")
+            p_timeout = _effective_timeout(profile_conf, timeout)
+            p_retry_count = _effective_retry_count(profile_conf, retry_count)
+            capacity_info = capacity_by_target[(run_index, model_index)]
+            model_client = get_model_client(
+                identity.model_id,
+                timeout=p_timeout,
+                retry_count=p_retry_count,
+                base_url=p_base_url,
+                api_key=p_api_key,
+                provider=p_provider,
+                attempt_gate=RequestAttemptGate(
+                    request_budget,
+                    capacity_info.capacity_key,
+                ),
+            )
+            runner = BenchmarkRunner(
+                _benchmark_registry,
+                model_client,
+                request_budget=request_budget,
+                capacity_key=capacity_info.capacity_key,
+                output_mode=identity.output_mode,
+                model_generate_kwargs=_profile_model_generate_kwargs(profile_conf),
+                judge_config=resolved_judge_config,
+                model_timeout=p_timeout,
+                attempt_gate=RequestAttemptGate(
+                    request_budget,
+                    capacity_info.capacity_key,
+                ),
+            )
+            runner_cache[cache_key] = runner
+            return runner
+
+        try:
+            campaign = execute_campaign(
+                campaign,
+                store,
+                runner_for_identity,
+                progress=progress_display,
+            )
+        finally:
+            progress_display.close()
+
+        report_path = store.campaign_dir / "campaign-report.json"
+        report_path.write_text(export_campaign_report(campaign))
+        click.echo(f"\nCampaign report written to: {report_path}", err=True)
+
+        if result_safety_processor is not None:
+            from gitbench.harness.campaign_store import review_campaign_safety
+
+            review_campaign_safety(campaign, result_safety_processor, store)
+            click.echo(
+                f"Safety review completed for campaign {campaign_id}: "
+                f"{campaign.safety_summary}",
+                err=True,
+            )
+        return
+
     # Collect all run envelopes for combined aggregation when running "both"
     all_mode_envelopes: list[dict] = []
 
@@ -2831,6 +2966,7 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
     from gitbench.render import (
         aggregate_runs,
         load_aggregate_report,
+        load_campaign_reports_from_dir,
         load_runs_from_combined,
         load_runs_from_dir,
         load_runs_from_jsonl,
@@ -2858,6 +2994,11 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
             if root.is_dir():
                 for subdir in sorted(path for path in root.iterdir() if path.is_dir()):
                     safety_inputs.extend(sorted(subdir.glob("*.json")))
+            safety_inputs = [
+                path
+                for path in safety_inputs
+                if path.name not in {"campaign.json", "campaign-report.json"}
+            ]
 
         try:
             for safety_input in safety_inputs:
@@ -2870,11 +3011,15 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
 
     runs: list[dict] = []
     aggregate_reports: list[dict] = []
+    campaign_reports: list[dict] = []
 
     # 1. Try combined or raw run JSON from every timestamped subdirectory.
     #    Generated aggregate report JSON is ignored by load_runs_from_combined().
     combined_runs_loaded = False
     if not input_file:
+        campaign_reports = load_campaign_reports_from_dir(results_dir)
+        for _campaign_report in campaign_reports:
+            click.echo("Loaded campaign artifact data", err=True)
         try:
             dir_path = Path(results_dir)
             if dir_path.is_dir():
@@ -2917,7 +3062,7 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
         except FileNotFoundError as e:
             raise click.ClickException(str(e))
 
-    if not runs and not aggregate_reports:
+    if not runs and not aggregate_reports and not campaign_reports:
         raise click.ClickException(
             "No valid run data found. Run 'gitbench run -a' first or provide --input-dir/--input."
         )
@@ -2939,11 +3084,13 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
 
     click.echo(
         f"Aggregating {len(runs)} unique run(s)"
-        f" and {len(aggregate_reports)} aggregate report file(s)...",
+        f", {len(aggregate_reports)} aggregate report file(s),"
+        f" and {len(campaign_reports)} campaign report source(s)...",
         err=True,
     )
 
     data_sources = aggregate_reports.copy()
+    data_sources.extend(campaign_reports)
     if runs:
         data_sources.append(aggregate_runs(runs))
     data = merge_aggregate_reports(data_sources)

@@ -156,6 +156,41 @@ class TestJudgeCacheReuse:
         )
         assert mock_client.generate.call_count == 1
 
+    def test_scorer_context_uses_judge_cache(self):
+        fixture = Fixture(
+            id="judge_001",
+            description="Judge-enabled fixture",
+            setup=["git init"],
+            prompt="Generate commit message",
+            expected="fix: correct spelling error in file.txt",
+            scoring={"type": "llm_judge", "threshold": 0.7},
+        )
+        mock_client = MagicMock()
+        mock_client.generate.return_value = {"text": "0.9"}
+        mock_client.model = "judge-model"
+        scorer = Scorer(judge_client=JudgeClient([mock_client], cache=JudgeCache()))
+        context = {
+            "fixture_input_hash": "input-a",
+            "target_output_hash": "output-a",
+        }
+
+        first = scorer.score(
+            fixture,
+            "fix: correct spelling error",
+            diff="diff",
+            campaign_scoring_context=context,
+        )
+        second = scorer.score(
+            fixture,
+            "fix: correct spelling error",
+            diff="diff",
+            campaign_scoring_context=context,
+        )
+
+        assert first.similarity == 0.9
+        assert second.similarity == 0.9
+        assert mock_client.generate.call_count == 1
+
 
 class TestJudgeConfigChanges:
     """Changing the judge configuration invalidates cached decisions."""
@@ -180,9 +215,9 @@ class TestJudgeConfigChanges:
 
 
 class TestJudgeExhaustion:
-    """Exhausted judge failures mark attempts unscored."""
+    """Exhausted judge failures mark campaign attempts unscored."""
 
-    def test_scorer_marks_unscored_without_fallback(self):
+    def test_campaign_scorer_marks_unscored_without_fallback(self):
         fixture = Fixture(
             id="judge_001",
             description="Judge-enabled fixture",
@@ -200,7 +235,15 @@ class TestJudgeExhaustion:
         )
         scorer = Scorer(judge_client=mock_judge)
 
-        result = scorer.score(fixture, "fix: correct spelling error", diff="diff")
+        result = scorer.score(
+            fixture,
+            "fix: correct spelling error",
+            diff="diff",
+            campaign_scoring_context={
+                "fixture_input_hash": "input-a",
+                "target_output_hash": "output-a",
+            },
+        )
         assert result.unscored is True
         assert "judge_exhausted" in result.error
         assert result.similarity == 0.0

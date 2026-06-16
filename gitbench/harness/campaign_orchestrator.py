@@ -14,10 +14,13 @@ from gitbench.harness.campaign import (
     Campaign,
     CampaignState,
     FixtureExpectedHashes,
+    Trial,
     compute_fixture_expected_hashes,
+    hash_request_config,
+    hash_scorer_config,
     make_campaign,
 )
-from gitbench.harness.scheduler import CampaignSchedule, build_schedule
+from gitbench.harness.scheduler import CampaignSchedule, SCHEDULER_VERSION, build_schedule
 from gitbench.harness.types import Fixture
 from gitbench.utils.git import FixtureGenerationContext
 
@@ -56,6 +59,7 @@ def plan_campaign(
         to its config.
     """
     fixture_ids: list[str] = []
+    fixture_specs: list[tuple[str, str]] = []
     benchmark_ids: list[str] = []
     expected_hashes: dict[str, FixtureExpectedHashes] = {}
 
@@ -69,20 +73,24 @@ def plan_campaign(
         benchmark_ids.append(benchmark_name)
         fixtures = benchmark.load_fixtures()
         for fixture in fixtures:
-            fixture_ids.append(fixture.id)
+            qualified_fixture_id = f"{benchmark_name}/{fixture.id}"
+            fixture_ids.append(qualified_fixture_id)
+            fixture_specs.append((benchmark_name, fixture.id))
             executor, repo_path = benchmark.setup_fixture(
                 fixture, fixture_generation_context=context
             )
             try:
                 diff = benchmark.get_diff(repo_path)
                 rendered_prompt = benchmark.format_prompt(fixture, diff)
-                expected_hashes[fixture.id] = compute_fixture_expected_hashes(
+                hashes = compute_fixture_expected_hashes(
                     fixture,
                     context,
                     rendered_prompt=rendered_prompt,
                     request_config=request_config,
                     scorer_config=scorer_config,
                 )
+                expected_hashes[qualified_fixture_id] = hashes
+                expected_hashes.setdefault(fixture.id, hashes)
             finally:
                 executor.cleanup()
 
@@ -99,9 +107,12 @@ def plan_campaign(
         planned_trial_count=planned_trial_count,
         scheduler_seed=scheduler_seed,
         fixture_generation_version=fixture_generation_version,
+        scheduler_version=SCHEDULER_VERSION,
         scorer_config=scorer_config,
         judge_config=judge_config,
         request_config=request_config,
+        request_config_hash=hash_request_config(request_config),
+        scorer_config_hash=hash_scorer_config(scorer_config),
         safety_review_config=safety_review_config,
     )
     campaign.config.expected_fixture_hashes = expected_hashes
@@ -111,12 +122,22 @@ def plan_campaign(
     # Attach a schedule for consumers that need the exact planned order.
     campaign._schedule = build_schedule(
         campaign_id=campaign_id,
-        fixture_ids=fixture_ids,
+        fixture_ids=[fixture_id for _benchmark, fixture_id in fixture_specs],
         models=[(m[0], m[1]) for m in models],
         output_modes=output_modes,
         planned_trial_count=planned_trial_count,
         seed=scheduler_seed,
+        fixture_specs=fixture_specs,
     )
+    campaign.trials = [
+        Trial(
+            trial_index=trial_index,
+            planned_attempts=len(identities),
+            attempt_identities=identities,
+        )
+        for trial_index, identities in campaign._schedule.trial_identities.items()
+    ]
+    campaign.planned_attempts = campaign._schedule.planned_attempts
     return campaign
 
 
@@ -133,11 +154,9 @@ def write_campaign_manifest(
     Returns:
         Path to the written manifest file.
     """
-    import json
-
     results_dir = Path(results_dir)
-    campaign_dir = results_dir / campaign.campaign_id
-    campaign_dir.mkdir(parents=True, exist_ok=True)
-    manifest_path = campaign_dir / "campaign.json"
-    manifest_path.write_text(json.dumps(campaign.to_manifest_dict(), indent=2))
-    return manifest_path
+    from gitbench.harness.campaign_store import CampaignStore
+
+    return CampaignStore(campaign.campaign_id, base_dir=results_dir).save_manifest(
+        campaign
+    )

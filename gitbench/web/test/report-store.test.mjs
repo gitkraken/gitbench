@@ -522,13 +522,18 @@ function seedCampaign(db) {
     VALUES (
       'cmp-test', '2026-06-01T00:00:00Z', 'abc', 'complete', 2, 2, 2, 1, 0,
       'published', 0, '["commit_messages"]', '["openai/gpt-test:high"]',
-      '["text"]', 1
+      '["text"]', 2
     );
     INSERT INTO trials (
       campaign_id, trial_index, planned_attempts, completed_attempts,
       valid_attempts, passing_attempts, excluded_attempts, complete
     )
-    VALUES ('cmp-test', 1, 2, 2, 2, 1, 0, 1);
+    VALUES ('cmp-test', 1, 1, 1, 1, 1, 0, 1);
+    INSERT INTO trials (
+      campaign_id, trial_index, planned_attempts, completed_attempts,
+      valid_attempts, passing_attempts, excluded_attempts, complete
+    )
+    VALUES ('cmp-test', 2, 1, 1, 1, 0, 0, 1);
     INSERT INTO raw_attempts (
       campaign_id, trial_index, model_name, reasoning_level, output_mode,
       benchmark_name, fixture_id, status, passed, similarity, error,
@@ -546,7 +551,7 @@ function seedCampaign(db) {
       input_tokens, output_tokens, total_tokens, cost_usd, api_duration_ms
     )
     VALUES (
-      'cmp-test', 1, 'openai/gpt-test:high', 'high', 'text',
+      'cmp-test', 2, 'openai/gpt-test:high', 'high', 'text',
       'commit_messages', 'commit_messages/f001', 'valid_fail', 0, 0.3, 'bad',
       10, 5, 15, 0.01, 100.0
     );
@@ -557,7 +562,7 @@ function seedCampaign(db) {
       reliability_classification, incomplete
     )
     VALUES (
-      'cmp-test', 'commit_messages', 'commit_messages/f001', 1, 1, 2, 1, 1, 0,
+      'cmp-test', 'commit_messages', 'commit_messages/f001', 2, 2, 2, 1, 1, 0,
       0.5, '{"1": true}', 'flaky', 0
     );
     INSERT INTO campaign_benchmark_summaries (
@@ -566,7 +571,7 @@ function seedCampaign(db) {
       pass_any_at_n_json, incomplete, resource_summary_json
     )
     VALUES (
-      'cmp-test', 'commit_messages', 1, 1, 2, 1, 0, 0.5, '{"1": true}', 0, NULL
+      'cmp-test', 'commit_messages', 2, 2, 2, 1, 0, 0.5, '{"1": true}', 0, NULL
     );
     INSERT INTO resource_summaries (
       id, campaign_id, scope, total_cost_usd, total_input_tokens,
@@ -673,4 +678,3 @@ test("model results endpoint resolves campaign and returns metadata", () => {
     assert.ok(response.body.campaign_metadata);
   }, { seedFn: seedCampaign });
 });
-

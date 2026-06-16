@@ -119,6 +119,7 @@ class TestFixtureCampaignE2E:
                             model == "model-b"
                             and output_mode == "text"
                             and fixture == "commit_messages/f2"
+                            and trial_index == 1
                         )
                         # Structured output only for json_schema mode.
                         structured = {"commit": "fix"} if output_mode == "json_schema" else None
@@ -179,7 +180,13 @@ class TestFixtureCampaignE2E:
 
         # Verify a flaky fixture aggregate exists for the mixed-result case.
         flaky = next(
-            (fa for fa in campaign.fixture_aggregates if fa.fixture_id == "commit_messages/f2"),
+            (
+                fa
+                for fa in campaign.fixture_aggregates
+                if fa.fixture_id == "commit_messages/f2"
+                and fa.model_id == "model-b"
+                and fa.output_mode == "text"
+            ),
             None,
         )
         assert flaky is not None

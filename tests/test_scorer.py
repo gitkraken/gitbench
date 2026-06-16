@@ -701,10 +701,10 @@ class TestScorerJudgeIntegration:
         assert result.similarity == 0.0
         assert "llm_judge requires a judge client" in result.error
 
-    def test_llm_judge_exhausted_marks_unscored(
+    def test_llm_judge_exhausted_falls_back_for_legacy_scoring(
         self, mock_judge_client, llm_judge_fixture
     ):
-        """Exhausted judge failures mark the attempt unscored; no heuristic fallback."""
+        """Exhausted judge failures fall back outside campaign scoring."""
         from gitbench.harness.campaign import JudgeEvidence
 
         mock_judge_client.evaluate_commit_message_evidence.return_value = JudgeEvidence(
@@ -721,12 +721,39 @@ class TestScorerJudgeIntegration:
             diff="diff content",
         )
 
+        assert result.passed is True
+        assert result.unscored is False
+        assert "judge_failed" in result.error
+        assert result.similarity > 0.0
+
+    def test_llm_judge_exhausted_marks_campaign_attempt_unscored(
+        self, mock_judge_client, llm_judge_fixture
+    ):
+        """Campaign scoring preserves judge exhaustion as unscored."""
+        from gitbench.harness.campaign import JudgeEvidence
+
+        mock_judge_client.evaluate_commit_message_evidence.return_value = JudgeEvidence(
+            final_score=None,
+            members=[],
+            error="All 1 judge model(s) failed.",
+            exhausted=True,
+        )
+        scorer = Scorer(judge_client=mock_judge_client)
+
+        result = scorer.score(
+            llm_judge_fixture,
+            "fix: correct spelling error",
+            diff="diff content",
+            campaign_scoring_context={
+                "fixture_input_hash": "input-a",
+                "target_output_hash": "output-a",
+            },
+        )
+
         assert result.passed is False
         assert result.similarity == 0.0
         assert result.unscored is True
         assert "judge_exhausted" in result.error
-        # No SequenceMatcher fallback should occur: exact match would be high.
-        assert result.similarity == 0.0
 
     def test_similarity_never_calls_judge(
         self, mock_judge_client, similarity_fixture

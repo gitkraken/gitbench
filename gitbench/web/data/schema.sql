@@ -224,6 +224,9 @@ CREATE TABLE fixture_aggregates (
   campaign_id TEXT NOT NULL REFERENCES campaigns(campaign_id) ON DELETE CASCADE,
   benchmark_name TEXT NOT NULL,
   fixture_id TEXT NOT NULL,
+  model_name TEXT NOT NULL DEFAULT '',
+  reasoning_level TEXT NOT NULL DEFAULT '',
+  output_mode TEXT NOT NULL DEFAULT 'text',
   planned_trials INTEGER NOT NULL,
   completed_trials INTEGER NOT NULL,
   valid_attempts INTEGER NOT NULL,
@@ -234,14 +237,17 @@ CREATE TABLE fixture_aggregates (
   pass_any_at_n_json TEXT NOT NULL,
   reliability_classification TEXT,
   incomplete INTEGER NOT NULL,
-  PRIMARY KEY (campaign_id, benchmark_name, fixture_id),
+  PRIMARY KEY (
+    campaign_id, benchmark_name, fixture_id, model_name, reasoning_level, output_mode
+  ),
   FOREIGN KEY (benchmark_name, fixture_id) REFERENCES fixtures(benchmark_name, fixture_id) ON DELETE CASCADE
 );
 
 CREATE TABLE campaign_model_summaries (
   campaign_id TEXT NOT NULL REFERENCES campaigns(campaign_id) ON DELETE CASCADE,
   model_name TEXT NOT NULL,
-  reasoning_level TEXT,
+  reasoning_level TEXT NOT NULL DEFAULT '',
+  output_mode TEXT NOT NULL DEFAULT 'text',
   planned_trials INTEGER NOT NULL,
   completed_trials INTEGER NOT NULL,
   valid_attempts INTEGER NOT NULL,
@@ -251,7 +257,7 @@ CREATE TABLE campaign_model_summaries (
   pass_any_at_n_json TEXT NOT NULL,
   incomplete INTEGER NOT NULL,
   resource_summary_json TEXT,
-  PRIMARY KEY (campaign_id, model_name)
+  PRIMARY KEY (campaign_id, model_name, reasoning_level, output_mode)
 );
 
 CREATE TABLE campaign_benchmark_summaries (
@@ -299,7 +305,15 @@ CREATE INDEX idx_campaigns_state_legacy
 CREATE INDEX idx_trials_campaign
   ON trials(campaign_id, trial_index);
 CREATE INDEX idx_raw_attempts_campaign_identity
-  ON raw_attempts(campaign_id, trial_index, model_name, output_mode, fixture_id);
+  ON raw_attempts(
+    campaign_id, trial_index, model_name, reasoning_level,
+    output_mode, benchmark_name, fixture_id
+  );
+CREATE UNIQUE INDEX idx_raw_attempts_campaign_identity_unique
+  ON raw_attempts(
+    campaign_id, trial_index, model_name, COALESCE(reasoning_level, ''),
+    output_mode, benchmark_name, fixture_id
+  );
 CREATE INDEX idx_raw_attempts_status
   ON raw_attempts(status);
 CREATE INDEX idx_fixture_aggregates_campaign

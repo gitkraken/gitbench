@@ -21,7 +21,92 @@ from gitbench.harness.campaign import (
     CampaignState,
     PublicationState,
     RawAttempt,
+    hash_request_config,
+    hash_scorer_config,
 )
+from gitbench.harness.scheduler import SCHEDULER_VERSION
+
+
+def _identity_key(identity: AttemptIdentity) -> tuple[str, int, str, str, str, str, str]:
+    """Return the exact key used for campaign attempt identity comparisons."""
+    return (
+        identity.campaign_id,
+        identity.trial_index,
+        identity.model_id,
+        identity.reasoning_effort,
+        identity.output_mode,
+        identity.benchmark,
+        identity.fixture_id,
+    )
+
+
+def validate_resume_compatibility(
+    campaign: Campaign,
+    *,
+    benchmark_ids: list[str] | None = None,
+    fixture_ids: list[str] | None = None,
+    model_ids: list[str] | None = None,
+    reasoning_efforts: list[str] | None = None,
+    output_modes: list[str] | None = None,
+    planned_trial_count: int | None = None,
+    request_config: dict[str, Any] | None = None,
+    scorer_config: dict[str, Any] | None = None,
+    fixture_generation_version: str | None = None,
+    scheduler_seed: int | None = None,
+    scheduler_version: str | None = None,
+) -> None:
+    """Reject resume when requested immutable inputs differ from the manifest."""
+    cfg = campaign.config
+    checks: list[tuple[str, Any, Any]] = []
+    if benchmark_ids is not None:
+        checks.append(("benchmark_ids", sorted(benchmark_ids), sorted(cfg.benchmark_ids)))
+    if fixture_ids is not None:
+        checks.append(("fixture_ids", sorted(fixture_ids), sorted(cfg.fixture_ids)))
+    if model_ids is not None:
+        checks.append(("model_ids", sorted(model_ids), sorted(cfg.model_ids)))
+    if reasoning_efforts is not None:
+        checks.append(
+            ("reasoning_efforts", sorted(reasoning_efforts), sorted(cfg.reasoning_efforts))
+        )
+    if output_modes is not None:
+        checks.append(("output_modes", list(output_modes), list(cfg.output_modes)))
+    if planned_trial_count is not None:
+        checks.append(("planned_trial_count", planned_trial_count, cfg.planned_trial_count))
+    if fixture_generation_version is not None:
+        checks.append(
+            (
+                "fixture_generation_version",
+                fixture_generation_version,
+                cfg.fixture_generation_version,
+            )
+        )
+    if scheduler_seed is not None:
+        checks.append(("scheduler_seed", scheduler_seed, cfg.scheduler_seed))
+    if scheduler_version is not None:
+        checks.append(("scheduler_version", scheduler_version, cfg.scheduler_version))
+    if request_config is not None:
+        checks.append(
+            (
+                "request_config_hash",
+                hash_request_config(request_config),
+                cfg.request_config_hash,
+            )
+        )
+    if scorer_config is not None:
+        checks.append(
+            (
+                "scorer_config_hash",
+                hash_scorer_config(scorer_config),
+                cfg.scorer_config_hash,
+            )
+        )
+
+    for field, requested, persisted in checks:
+        if requested != persisted:
+            raise ValueError(
+                f"Campaign resume incompatible for {field}: "
+                f"requested {requested!r}, persisted {persisted!r}"
+            )
 
 
 def build_resume_plan(campaign: Campaign, store: CampaignStore) -> list[AttemptIdentity]:
@@ -39,6 +124,13 @@ def build_resume_plan(campaign: Campaign, store: CampaignStore) -> list[AttemptI
     Returns:
         List of attempt identities still needed to complete the campaign.
     """
+    if campaign.config.scheduler_version != SCHEDULER_VERSION:
+        raise ValueError(
+            "Campaign resume incompatible for scheduler_version: "
+            f"persisted {campaign.config.scheduler_version!r}, "
+            f"supported {SCHEDULER_VERSION!r}"
+        )
+
     schedule = getattr(campaign, "_schedule", None)
     if schedule is None:
         schedule_identities = [
@@ -49,30 +141,13 @@ def build_resume_plan(campaign: Campaign, store: CampaignStore) -> list[AttemptI
     else:
         schedule_identities = list(schedule.identities)
 
-    existing: set[tuple[str, int, str, str, str, str]] = set()
+    existing: set[tuple[str, int, str, str, str, str, str]] = set()
     for attempt in store.load_all_attempts():
-        identity = attempt.identity
-        existing.add(
-            (
-                identity.campaign_id,
-                identity.trial_index,
-                identity.model_id,
-                identity.reasoning_effort,
-                identity.output_mode,
-                identity.fixture_id,
-            )
-        )
+        existing.add(_identity_key(attempt.identity))
 
     missing: list[AttemptIdentity] = []
     for identity in schedule_identities:
-        key = (
-            identity.campaign_id,
-            identity.trial_index,
-            identity.model_id,
-            identity.reasoning_effort,
-            identity.output_mode,
-            identity.fixture_id,
-        )
+        key = _identity_key(identity)
         if key not in existing:
             missing.append(identity)
             continue
@@ -127,6 +202,20 @@ class CampaignStore:
 
     def _envelope_path(self, identity: AttemptIdentity) -> Path:
         """Return the envelope path for an attempt identity."""
+        benchmark = identity.benchmark.replace("/", "_").replace(":", "-")
+        benchmark_segment = f"{benchmark}_" if benchmark else ""
+        filename = (
+            f"trial-{identity.trial_index:04d}_"
+            f"{identity.model_id.replace('/', '_').replace(':', '-')}_"
+            f"{identity.reasoning_effort}_"
+            f"{identity.output_mode}_"
+            f"{benchmark_segment}"
+            f"{identity.fixture_id.replace('/', '_')}.json"
+        )
+        return self.envelopes_dir / filename
+
+    def _legacy_envelope_path(self, identity: AttemptIdentity) -> Path:
+        """Return the pre-benchmark-dimension envelope path for compatibility."""
         filename = (
             f"trial-{identity.trial_index:04d}_"
             f"{identity.model_id.replace('/', '_').replace(':', '-')}_"
@@ -138,7 +227,13 @@ class CampaignStore:
 
     def attempt_exists(self, identity: AttemptIdentity) -> bool:
         """Return True when an envelope exists for the identity."""
-        return self._envelope_path(identity).exists()
+        if self._envelope_path(identity).exists():
+            return True
+        try:
+            self.load_attempt(identity)
+            return True
+        except FileNotFoundError:
+            return False
 
     def write_attempt(self, attempt: RawAttempt) -> Path:
         """Atomically write a raw-attempt envelope and return its path."""
@@ -152,6 +247,18 @@ class CampaignStore:
             with os.fdopen(tmp_fd, "w") as f:
                 json.dump(attempt.to_dict(), f, indent=2)
             os.replace(tmp_path, path)
+            legacy_path = self._legacy_envelope_path(attempt.identity)
+            if legacy_path != path and legacy_path.exists():
+                try:
+                    legacy_attempt = RawAttempt.from_dict(
+                        json.loads(legacy_path.read_text())
+                    )
+                except Exception:
+                    legacy_attempt = None
+                if legacy_attempt is not None and _identity_key(
+                    legacy_attempt.identity
+                ) == _identity_key(attempt.identity):
+                    legacy_path.unlink()
         except Exception:
             Path(tmp_path).unlink(missing_ok=True)
             raise
@@ -183,8 +290,17 @@ class CampaignStore:
     def load_attempt(self, identity: AttemptIdentity) -> RawAttempt:
         """Load a raw-attempt envelope by identity."""
         path = self._envelope_path(identity)
-        data = json.loads(path.read_text())
-        return RawAttempt.from_dict(data)
+        if path.exists():
+            data = json.loads(path.read_text())
+            return RawAttempt.from_dict(data)
+
+        legacy_path = self._legacy_envelope_path(identity)
+        if legacy_path.exists():
+            attempt = RawAttempt.from_dict(json.loads(legacy_path.read_text()))
+            if _identity_key(attempt.identity) == _identity_key(identity):
+                return attempt
+
+        raise FileNotFoundError(path)
 
     def list_attempt_envelopes(self) -> list[Path]:
         """Return all attempt envelope paths."""
@@ -194,13 +310,16 @@ class CampaignStore:
 
     def load_all_attempts(self) -> list[RawAttempt]:
         """Load every attempt envelope in this campaign."""
-        attempts: list[RawAttempt] = []
+        attempts_by_identity: dict[
+            tuple[str, int, str, str, str, str, str], RawAttempt
+        ] = {}
         for path in self.list_attempt_envelopes():
             try:
-                attempts.append(RawAttempt.from_dict(json.loads(path.read_text())))
+                attempt = RawAttempt.from_dict(json.loads(path.read_text()))
+                attempts_by_identity[_identity_key(attempt.identity)] = attempt
             except Exception:
                 continue
-        return attempts
+        return list(attempts_by_identity.values())
 
 
 def review_campaign_safety(
@@ -321,7 +440,7 @@ def update_campaign_counts(campaign: Campaign) -> None:
     excluded = 0
     for trial in campaign.trials:
         trial_identities = set(
-            (a.model_id, a.reasoning_effort, a.output_mode, a.fixture_id)
+            (a.model_id, a.reasoning_effort, a.output_mode, a.benchmark, a.fixture_id)
             for a in trial.attempt_identities
         )
         trial_attempts = attempts_by_trial.get(trial.trial_index, [])
@@ -331,6 +450,7 @@ def update_campaign_counts(campaign: Campaign) -> None:
                 attempt.identity.model_id,
                 attempt.identity.reasoning_effort,
                 attempt.identity.output_mode,
+                attempt.identity.benchmark,
                 attempt.identity.fixture_id,
             )
             if key in trial_identities:

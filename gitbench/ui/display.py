@@ -109,6 +109,12 @@ class RichProgressDisplay:
         self._completed_attempts = 0
         self._failed_attempts = 0
         self._reused_attempts = 0
+        self._new_attempts = 0
+        self._quality_failed_attempts = 0
+        self._infrastructure_failed_attempts = 0
+        self._invalid_attempts = 0
+        self._unscored_attempts = 0
+        self._safety_blocked_attempts = 0
         self._lock = Lock()
         self._started_at = monotonic()
         self._refresh_interval = refresh_interval
@@ -249,18 +255,46 @@ class RichProgressDisplay:
         """Increment the number of completed campaign attempts."""
         with self._lock:
             self._completed_attempts += count
+            self._new_attempts += count
             self._refresh()
 
     def campaign_attempt_failed(self, count: int = 1) -> None:
         """Increment the number of failed campaign attempts."""
         with self._lock:
             self._failed_attempts += count
+            self._completed_attempts += count
+            self._new_attempts += count
             self._refresh()
 
     def campaign_attempt_reused(self, count: int = 1) -> None:
         """Increment the number of reused campaign attempts."""
         with self._lock:
             self._reused_attempts += count
+            self._refresh()
+
+    def campaign_attempt_recorded(
+        self,
+        status: str,
+        *,
+        safety_state: str | None = None,
+        count: int = 1,
+    ) -> None:
+        """Record a completed campaign attempt with status-specific counters."""
+        with self._lock:
+            self._completed_attempts += count
+            self._new_attempts += count
+            if status == "valid_fail":
+                self._quality_failed_attempts += count
+            elif status == "infrastructure_failure":
+                self._infrastructure_failed_attempts += count
+            elif status in {"invalid_input", "hash_mismatch"}:
+                self._invalid_attempts += count
+            elif status == "unscored":
+                self._unscored_attempts += count
+            elif status == "safety_blocked" or safety_state == "blocked":
+                self._safety_blocked_attempts += count
+            if status != "valid_pass":
+                self._failed_attempts += count
             self._refresh()
 
     def close(self) -> None:
@@ -527,9 +561,31 @@ class RichProgressDisplay:
             if self._trials is not None:
                 campaign_info += f" · {self._trials} trial(s)"
             if self._planned_attempts is not None:
-                campaign_info += f" · {self._completed_attempts}/{self._planned_attempts} attempts"
-            if self._failed_attempts:
-                campaign_info += f" · {self._failed_attempts} failed"
+                remaining = max(
+                    0,
+                    self._planned_attempts
+                    - self._reused_attempts
+                    - self._completed_attempts,
+                )
+                campaign_info += (
+                    f" · planned {self._planned_attempts}"
+                    f" · reused {self._reused_attempts}"
+                    f" · new {self._new_attempts}"
+                    f" · remaining {remaining}"
+                )
+            failure_parts = []
+            if self._quality_failed_attempts:
+                failure_parts.append(f"quality failed {self._quality_failed_attempts}")
+            if self._infrastructure_failed_attempts:
+                failure_parts.append(f"infra failed {self._infrastructure_failed_attempts}")
+            if self._invalid_attempts:
+                failure_parts.append(f"invalid {self._invalid_attempts}")
+            if self._unscored_attempts:
+                failure_parts.append(f"unscored {self._unscored_attempts}")
+            if self._safety_blocked_attempts:
+                failure_parts.append(f"safety blocked {self._safety_blocked_attempts}")
+            if failure_parts:
+                campaign_info += " · " + " · ".join(failure_parts)
             if self._publication_state:
                 campaign_info += f" · {self._publication_state}"
             text += f"\n[cyan]{campaign_info}[/]"

@@ -11,6 +11,8 @@ from gitbench.harness.judge import JudgeClient
 from gitbench.harness.model import DEFAULT_MODEL_TIMEOUT, ModelInterface, ReasoningDisableError, RetriesExhaustedError
 from gitbench.harness.scorer import Scorer
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
+from gitbench.harness.campaign import hash_text
+from gitbench.utils.git import FixtureGenerationContext
 from gitbench.structured_output import (
     canonicalize,
     contract_for_benchmark_fixture,
@@ -316,7 +318,42 @@ class BenchmarkRunner:
             }
         return config
 
-    def _run_fixture(self, benchmark: Benchmark, fixture: Fixture) -> tuple[int, Score]:
+    def run_fixture_identity(
+        self,
+        benchmark_name: str,
+        fixture_id: str,
+        *,
+        fixture_generation_context: FixtureGenerationContext | None = None,
+        campaign_scoring_context: dict | None = None,
+    ) -> Score:
+        """Run one exact benchmark fixture and return its score."""
+        if benchmark_name not in self._registry:
+            available = list(self._registry.keys())
+            raise ValueError(
+                f"Unknown benchmark: {benchmark_name}. Available: {available}"
+            )
+        benchmark = self._registry[benchmark_name]()
+        fixture_by_id = {fixture.id: fixture for fixture in benchmark.load_fixtures()}
+        if fixture_id not in fixture_by_id:
+            raise ValueError(
+                f"Unknown fixture id for benchmark {benchmark_name}: {fixture_id}"
+            )
+        _fixture_id, score = self._run_fixture(
+            benchmark,
+            fixture_by_id[fixture_id],
+            fixture_generation_context=fixture_generation_context,
+            campaign_scoring_context=campaign_scoring_context,
+        )
+        return score
+
+    def _run_fixture(
+        self,
+        benchmark: Benchmark,
+        fixture: Fixture,
+        *,
+        fixture_generation_context: FixtureGenerationContext | None = None,
+        campaign_scoring_context: dict | None = None,
+    ) -> tuple[int, Score]:
         """Run a single fixture through the full lifecycle.
 
         Returns ``(fixture.id, score)``. Runtime errors, including reasoning
@@ -330,7 +367,10 @@ class BenchmarkRunner:
         output_mode = self._output_mode
 
         try:
-            executor, repo_path = benchmark.setup_fixture(fixture)
+            executor, repo_path = benchmark.setup_fixture(
+                fixture,
+                fixture_generation_context=fixture_generation_context,
+            )
             diff = benchmark.get_diff(repo_path)
             prompt = benchmark.format_prompt(fixture, diff)
 
@@ -394,9 +434,28 @@ class BenchmarkRunner:
                 score._raw_structured_output = response.get("raw_structured_output")
                 score._structured_error = structured_error
                 score._output_mode = output_mode
+                score.provider_route_metadata = self._provider_route_metadata()
+                score.request_config = self._normalized_request_config(
+                    output_mode=output_mode,
+                    structured_output_contract=structured_output_contract,
+                )
                 return fixture.id, score
 
-            score = self._scorer.score(fixture, model_output, repo_path=repo_path, diff=diff, prompt=fixture.prompt)
+            effective_campaign_context = campaign_scoring_context
+            if effective_campaign_context is not None:
+                effective_campaign_context = dict(effective_campaign_context)
+                effective_campaign_context.setdefault(
+                    "target_output_hash", hash_text(model_output)
+                )
+
+            score = self._scorer.score(
+                fixture,
+                model_output,
+                repo_path=repo_path,
+                diff=diff,
+                prompt=fixture.prompt,
+                campaign_scoring_context=effective_campaign_context,
+            )
             score.reasoning_level = getattr(
                 self._model_client, "reasoning_level", None
             )

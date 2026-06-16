@@ -8,6 +8,7 @@ import pytest
 from gitbench.render import (
     REPORT_SCHEMA_PATH,
     aggregate_runs,
+    load_campaign_reports_from_dir,
     load_runs_from_combined,
     load_runs_from_dir,
     load_runs_from_jsonl,
@@ -931,3 +932,77 @@ class TestCampaignSQLiteSchema:
         with sqlite3.connect(str(db_path)) as conn:
             row = conn.execute("SELECT campaign_id, state FROM campaigns").fetchone()
             assert row == ("cmp-db", "complete")
+
+    def test_campaign_artifact_discovery_populates_json_and_sqlite(self, tmp_path):
+        from gitbench.harness.campaign import (
+            AttemptIdentity,
+            AttemptStatus,
+            RawAttempt,
+            Trial,
+            make_campaign,
+        )
+        from gitbench.harness.campaign_store import CampaignStore
+
+        identity = AttemptIdentity(
+            campaign_id="cmp-artifact",
+            trial_index=1,
+            model_id="mock",
+            reasoning_effort="none",
+            output_mode="text",
+            benchmark="commit_messages",
+            fixture_id="f001",
+        )
+        campaign = make_campaign(
+            campaign_id="cmp-artifact",
+            benchmark_ids=["commit_messages"],
+            fixture_ids=["commit_messages/f001"],
+            model_ids=["mock"],
+            reasoning_efforts=["none"],
+            output_modes=["text"],
+            planned_trial_count=1,
+        )
+        campaign.trials = [
+            Trial(trial_index=1, planned_attempts=1, attempt_identities=[identity])
+        ]
+        campaign.planned_attempts = 1
+
+        store = CampaignStore("cmp-artifact", base_dir=tmp_path)
+        store.save_manifest(campaign)
+        store.write_attempt(
+            RawAttempt(
+                identity=identity,
+                status=AttemptStatus.VALID_PASS,
+                passed=True,
+                similarity=1.0,
+                model_output="feat: add login",
+                safety_state="reviewed",
+            )
+        )
+
+        reports = load_campaign_reports_from_dir(str(tmp_path))
+        assert len(reports) == 1
+        data = reports[0]
+        assert data["campaigns"][0]["campaign_id"] == "cmp-artifact"
+        assert data["campaigns"][0]["raw_attempts"][0]["identity"]["benchmark"] == "commit_messages"
+
+        db_path = tmp_path / "gitbench.db"
+        write_sqlite_report_db(data, db_path)
+        with sqlite3.connect(db_path) as conn:
+            assert conn.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0] == 1
+            assert conn.execute("SELECT COUNT(*) FROM raw_attempts").fetchone()[0] == 1
+            row = conn.execute(
+                """
+                SELECT campaign_id, trial_index, model_name, reasoning_level,
+                       output_mode, benchmark_name, fixture_id
+                FROM raw_attempts
+                """
+            ).fetchone()
+        assert row == (
+            "cmp-artifact",
+            1,
+            "mock",
+            "none",
+            "text",
+            "commit_messages",
+            "f001",
+        )

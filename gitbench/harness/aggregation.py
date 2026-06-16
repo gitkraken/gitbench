@@ -22,6 +22,7 @@ from gitbench.harness.campaign import (
     ResourceSummary,
     Trial,
     compute_fixture_aggregates,
+    _identity_benchmark,
 )
 
 
@@ -32,14 +33,17 @@ def compute_trial_aggregates(campaign: Campaign) -> list[Trial]:
     outcomes are counted as excluded and prevent the trial from being
     considered complete.
     """
-    planned_by_trial: dict[int, set[tuple[str, str, str, str]]] = defaultdict(set)
+    planned_by_trial: dict[int, set[tuple[str, str, str, str, str]]] = defaultdict(set)
+    identities_by_trial: dict[int, list] = defaultdict(list)
     for trial in campaign.trials:
         for identity in trial.attempt_identities:
+            identities_by_trial[trial.trial_index].append(identity)
             planned_by_trial[trial.trial_index].add(
                 (
                     identity.model_id,
                     identity.reasoning_effort,
                     identity.output_mode,
+                    _identity_benchmark(identity),
                     identity.fixture_id,
                 )
             )
@@ -62,6 +66,7 @@ def compute_trial_aggregates(campaign: Campaign) -> list[Trial]:
                 a.identity.model_id,
                 a.identity.reasoning_effort,
                 a.identity.output_mode,
+                _identity_benchmark(a.identity),
                 a.identity.fixture_id,
             )
             in planned
@@ -77,6 +82,7 @@ def compute_trial_aggregates(campaign: Campaign) -> list[Trial]:
             passing_attempts=len(passing),
             excluded_attempts=excluded,
             complete=(len(completed) == len(planned) and excluded == 0),
+            attempt_identities=identities_by_trial.get(trial_index, []),
         )
         trials.append(trial)
 
@@ -174,38 +180,58 @@ def compute_model_aggregates(
     if fixture_aggregates is None:
         fixture_aggregates = compute_fixture_aggregates(campaign)
 
-    attempts_by_model: dict[str, list[Any]] = defaultdict(list)
+    attempts_by_model: dict[tuple[str, str, str], list[Any]] = defaultdict(list)
     for attempt in campaign.raw_attempts:
-        attempts_by_model[attempt.identity.model_id].append(attempt)
+        attempts_by_model[
+            (
+                attempt.identity.model_id,
+                attempt.identity.reasoning_effort,
+                attempt.identity.output_mode,
+            )
+        ].append(attempt)
 
     summaries: list[ModelCampaignSummary] = []
     for model_id in sorted(campaign.config.model_ids):
-        attempts = attempts_by_model.get(model_id, [])
-        valid = [a for a in attempts if a.status.is_quality_outcome()]
-        passing = [a for a in valid if a.passed]
-        excluded = [a for a in attempts if not a.status.is_quality_outcome()]
-
-        # Completed trials for this model: a trial counts when the model has
-        # at least one valid or excluded attempt recorded for it.
-        trial_indices = {a.identity.trial_index for a in attempts}
-        incomplete = (
-            len(trial_indices) < campaign.config.planned_trial_count
-            or bool(excluded)
+        model_keys = [key for key in attempts_by_model if key[0] == model_id]
+        reasoning_efforts = (
+            sorted(campaign.config.reasoning_efforts)
+            if campaign.config.reasoning_efforts
+            else sorted({key[1] for key in model_keys} or {"none"})
         )
-
-        summaries.append(
-            ModelCampaignSummary(
-                model_id=model_id,
-                planned_trials=campaign.config.planned_trial_count,
-                completed_trials=len(trial_indices),
-                valid_attempts=len(valid),
-                passing_attempts=len(passing),
-                excluded_attempts=len(excluded),
-                mean_success_rate=_mean_success_rate(valid),
-                resource_summary=_resource_summary_from_attempts(attempts),
-                incomplete=incomplete,
-            )
+        output_modes = (
+            sorted(campaign.config.output_modes)
+            if campaign.config.output_modes
+            else sorted({key[2] for key in model_keys} or {"text"})
         )
+        for reasoning_effort in reasoning_efforts:
+            for output_mode in output_modes:
+                attempts = attempts_by_model.get((model_id, reasoning_effort, output_mode), [])
+                valid = [a for a in attempts if a.status.is_quality_outcome()]
+                passing = [a for a in valid if a.passed]
+                excluded = [a for a in attempts if not a.status.is_quality_outcome()]
+
+                # Completed trials for this exact variant.
+                trial_indices = {a.identity.trial_index for a in attempts}
+                incomplete = (
+                    len(trial_indices) < campaign.config.planned_trial_count
+                    or bool(excluded)
+                )
+
+                summaries.append(
+                    ModelCampaignSummary(
+                        model_id=model_id,
+                        reasoning_effort=reasoning_effort or None,
+                        output_mode=output_mode,
+                        planned_trials=campaign.config.planned_trial_count,
+                        completed_trials=len(trial_indices),
+                        valid_attempts=len(valid),
+                        passing_attempts=len(passing),
+                        excluded_attempts=len(excluded),
+                        mean_success_rate=_mean_success_rate(valid),
+                        resource_summary=_resource_summary_from_attempts(attempts),
+                        incomplete=incomplete,
+                    )
+                )
 
     return summaries
 
@@ -227,7 +253,7 @@ def compute_benchmark_aggregates(
         attempts = [
             a
             for a in campaign.raw_attempts
-            if a.identity.fixture_id.startswith(f"{benchmark_id}/")
+            if _identity_benchmark(a.identity) == benchmark_id
         ]
         valid = [a for a in attempts if a.status.is_quality_outcome()]
         passing = [a for a in valid if a.passed]
@@ -236,8 +262,14 @@ def compute_benchmark_aggregates(
 
         # Completeness requires every planned trial to have all fixtures.
         fixture_count = len(
-            [f for f in campaign.config.fixture_ids if f.startswith(f"{benchmark_id}/")]
+            [
+                f
+                for f in campaign.config.fixture_ids
+                if f.startswith(f"{benchmark_id}/")
+            ]
         )
+        if fixture_count == 0:
+            fixture_count = len(campaign.config.fixture_ids)
         expected_attempts = (
             campaign.config.planned_trial_count
             * fixture_count

@@ -108,6 +108,7 @@ def _empty_report_data() -> dict[str, Any]:
         "fixture_index": {},
         "runs_meta": [],
         "base_model_groups": [],
+        "campaigns": [],
     }
 
 
@@ -181,7 +182,102 @@ def merge_aggregate_reports(reports: list[dict[str, Any]]) -> dict[str, Any]:
         groups.values(),
         key=lambda g: (g.get("provider", ""), g.get("baseModel", "")),
     )
+    campaigns_by_id: dict[str, dict] = {}
+    for report in reports:
+        for campaign in report.get("campaigns", []):
+            campaign_id = campaign.get("campaign_id")
+            if campaign_id:
+                campaigns_by_id[campaign_id] = campaign
+    merged["campaigns"] = sorted(
+        campaigns_by_id.values(),
+        key=lambda c: c.get("created_at", ""),
+    )
     return merged
+
+
+def load_campaign_reports_from_dir(directory: str) -> list[dict[str, Any]]:
+    """Load campaign artifacts from directories containing ``campaign.json``."""
+    from gitbench.export import build_campaign_report
+    from gitbench.harness.campaign_store import CampaignStore
+
+    root = Path(directory)
+    if not root.exists():
+        return []
+
+    reports: list[dict[str, Any]] = []
+    manifest_paths = sorted(root.glob("campaign.json"))
+    if root.is_dir():
+        manifest_paths.extend(sorted(root.glob("*/campaign.json")))
+
+    for manifest_path in manifest_paths:
+        campaign_id = manifest_path.parent.name
+        store = CampaignStore(campaign_id, base_dir=manifest_path.parent.parent)
+        campaign = store.load_manifest()
+        if campaign is None:
+            continue
+        campaign.raw_attempts = store.load_all_attempts()
+        report = build_campaign_report(campaign)
+        reports.append(campaign_report_to_aggregate_data(report.to_dict()))
+    return reports
+
+
+def campaign_report_to_aggregate_data(report: dict[str, Any]) -> dict[str, Any]:
+    """Convert a campaign report into aggregate report-data shape."""
+    data = _empty_report_data()
+    campaign = dict(report.get("campaign") or {})
+    config = campaign.get("config") or {}
+    campaign["benchmark_ids"] = config.get("benchmark_ids", [])
+    campaign["model_ids"] = config.get("model_ids", [])
+    campaign["output_modes"] = config.get("output_modes", [])
+    campaign["planned_trial_count"] = config.get("planned_trial_count", 1)
+    campaign["model_summaries"] = report.get("model_summaries", [])
+    campaign["benchmark_summaries"] = report.get("benchmark_summaries", [])
+    campaign["resource_summaries"] = report.get("resource_summaries", [])
+    data["campaigns"] = [campaign]
+    data["benchmarks"] = sorted(set(config.get("benchmark_ids", [])))
+
+    fixture_index: dict[str, dict] = {}
+    for attempt in campaign.get("raw_attempts", []):
+        identity = attempt.get("identity", {})
+        benchmark = identity.get("benchmark") or (
+            identity.get("fixture_id", "").split("/", 1)[0]
+            if "/" in identity.get("fixture_id", "")
+            else ""
+        )
+        fixture_id = identity.get("fixture_id", "")
+        if benchmark and fixture_id:
+            fixture_index[f"{benchmark}/{fixture_id}"] = {
+                "id": fixture_id,
+                "benchmark": benchmark,
+                "prompt": "",
+                "expected": "",
+                "description": "",
+                "setup": [],
+                "purpose": "",
+                "difficulty": "",
+                "tags": [],
+            }
+    for qualified_fixture in config.get("fixture_ids", []):
+        if "/" not in qualified_fixture:
+            continue
+        benchmark, fixture_id = qualified_fixture.split("/", 1)
+        fixture_index.setdefault(
+            f"{benchmark}/{fixture_id}",
+            {
+                "id": fixture_id,
+                "benchmark": benchmark,
+                "prompt": "",
+                "expected": "",
+                "description": "",
+                "setup": [],
+                "purpose": "",
+                "difficulty": "",
+                "tags": [],
+            },
+        )
+    _supplement_fixture_index_from_yaml(fixture_index)
+    data["fixture_index"] = fixture_index
+    return data
 
 
 def load_runs_from_combined(path: str) -> list[dict]:
@@ -973,7 +1069,9 @@ def _insert_single_campaign(
     for attempt in campaign.get("raw_attempts", []):
         identity = attempt.get("identity", {})
         fixture_id = identity.get("fixture_id", "")
-        benchmark_name = fixture_id.split("/")[0] if "/" in fixture_id else ""
+        benchmark_name = identity.get("benchmark") or (
+            fixture_id.split("/")[0] if "/" in fixture_id else ""
+        )
         conn.execute(
             """
             INSERT INTO raw_attempts (
@@ -1029,17 +1127,21 @@ def _insert_single_campaign(
 
     for aggregate in campaign.get("fixture_aggregates", []):
         fixture_id = aggregate.get("fixture_id", "")
-        benchmark_name = fixture_id.split("/")[0] if "/" in fixture_id else ""
+        benchmark_name = aggregate.get("benchmark") or (
+            fixture_id.split("/")[0] if "/" in fixture_id else ""
+        )
         conn.execute(
             """
             INSERT INTO fixture_aggregates (
-              campaign_id, benchmark_name, fixture_id, planned_trials,
+              campaign_id, benchmark_name, fixture_id, model_name,
+              reasoning_level, output_mode, planned_trials,
               completed_trials, valid_attempts, passing_attempts,
               failing_attempts, excluded_attempts, mean_success_rate,
               pass_any_at_n_json, reliability_classification, incomplete
             )
             VALUES (
-              :campaign_id, :benchmark_name, :fixture_id, :planned_trials,
+              :campaign_id, :benchmark_name, :fixture_id, :model_name,
+              :reasoning_level, :output_mode, :planned_trials,
               :completed_trials, :valid_attempts, :passing_attempts,
               :failing_attempts, :excluded_attempts, :mean_success_rate,
               :pass_any_at_n_json, :reliability_classification, :incomplete
@@ -1049,6 +1151,9 @@ def _insert_single_campaign(
                 "campaign_id": campaign_id,
                 "benchmark_name": aggregate.get("benchmark") or benchmark_name,
                 "fixture_id": fixture_id,
+                "model_name": aggregate.get("model_id") or "",
+                "reasoning_level": aggregate.get("reasoning_effort") or "",
+                "output_mode": aggregate.get("output_mode") or "text",
                 "planned_trials": aggregate.get("planned_trials", 0),
                 "completed_trials": aggregate.get("completed_trials", 0),
                 "valid_attempts": aggregate.get("valid_attempts", 0),
@@ -1068,13 +1173,13 @@ def _insert_single_campaign(
         conn.execute(
             """
             INSERT INTO campaign_model_summaries (
-              campaign_id, model_name, reasoning_level, planned_trials,
+              campaign_id, model_name, reasoning_level, output_mode, planned_trials,
               completed_trials, valid_attempts, passing_attempts,
               excluded_attempts, mean_success_rate, pass_any_at_n_json,
               incomplete, resource_summary_json
             )
             VALUES (
-              :campaign_id, :model_name, :reasoning_level, :planned_trials,
+              :campaign_id, :model_name, :reasoning_level, :output_mode, :planned_trials,
               :completed_trials, :valid_attempts, :passing_attempts,
               :excluded_attempts, :mean_success_rate, :pass_any_at_n_json,
               :incomplete, :resource_summary_json
@@ -1083,7 +1188,8 @@ def _insert_single_campaign(
             {
                 "campaign_id": campaign_id,
                 "model_name": summary.get("model_id", ""),
-                "reasoning_level": summary.get("reasoning_effort"),
+                "reasoning_level": summary.get("reasoning_effort") or "",
+                "output_mode": summary.get("output_mode") or "text",
                 "planned_trials": summary.get("planned_trials", 0),
                 "completed_trials": summary.get("completed_trials", 0),
                 "valid_attempts": summary.get("valid_attempts", 0),
@@ -1173,7 +1279,7 @@ def _insert_single_campaign(
             },
         )
 
-    safety_summary = campaign.get("safety_summary", {})
+    safety_summary = campaign.get("safety_summary") or {}
     conn.execute(
         """
         INSERT INTO publication_states (

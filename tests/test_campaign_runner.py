@@ -125,6 +125,7 @@ class TestInterruptedCampaign:
 
         # Reload and resume.
         campaign = store.load_manifest()
+        assert not hasattr(campaign, "_schedule")
         needed_after = build_resume_plan(campaign, store)
         assert len(needed_after) == total - len(first_batch)
         assert not any(i in needed_after for i in first_batch)

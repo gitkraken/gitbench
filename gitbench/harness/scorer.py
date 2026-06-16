@@ -623,7 +623,15 @@ class Scorer:
         self._json_semantic_equal_scorer = JsonSemanticEqualScorer()
         self._judge_client = judge_client
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
+    def score(
+        self,
+        fixture: Fixture,
+        model_output: str,
+        repo_path: str | None = None,
+        diff: str | None = None,
+        prompt: str | None = None,
+        campaign_scoring_context: dict[str, Any] | None = None,
+    ) -> Score:
         """Score a model output against the expected value.
 
         Args:
@@ -672,10 +680,45 @@ class Scorer:
                         tags=fixture.tags or None,
                     )
 
-                evidence = self._judge_client.evaluate_commit_message_evidence(
-                    diff or "", model_output, prompt=prompt or fixture.prompt
-                )
+                cache_key = None
+                if campaign_scoring_context is not None:
+                    fixture_input_hash = campaign_scoring_context.get(
+                        "fixture_input_hash"
+                    )
+                    target_output_hash = campaign_scoring_context.get(
+                        "target_output_hash"
+                    )
+                    if fixture_input_hash and target_output_hash:
+                        cache_key = (fixture_input_hash, target_output_hash)
+
+                if cache_key is None:
+                    evidence = self._judge_client.evaluate_commit_message_evidence(
+                        diff or "", model_output, prompt=prompt or fixture.prompt
+                    )
+                else:
+                    evidence = self._judge_client.evaluate_commit_message_evidence(
+                        diff or "",
+                        model_output,
+                        prompt=prompt or fixture.prompt,
+                        cache_key=cache_key,
+                    )
                 if evidence.final_score is None:
+                    if campaign_scoring_context is None:
+                        similarity = difflib.SequenceMatcher(
+                            None, model_output, fixture.expected
+                        ).ratio()
+                        passed = similarity >= threshold
+                        return Score(
+                            fixture_id=fixture.id,
+                            passed=passed,
+                            similarity=round(similarity, 4),
+                            model_output=model_output,
+                            error=f"judge_failed: {evidence.error}",
+                            purpose=fixture.purpose or None,
+                            difficulty=fixture.difficulty or None,
+                            tags=fixture.tags or None,
+                            judge_evidence=evidence.to_dict(),
+                        )
                     return Score(
                         fixture_id=fixture.id,
                         passed=False,

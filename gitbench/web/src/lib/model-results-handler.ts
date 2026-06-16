@@ -45,6 +45,7 @@ export function handleModelResults(req: any, res: any, model: string) {
     difficulty: queryString(req.query.difficulty),
     tag: queryString(req.query.tag),
     output_mode: outputMode,
+    campaign_id: campaign_id ?? undefined,
   });
   if (!result) {
     json(res, 404, { error: `Model not found: ${model}` });

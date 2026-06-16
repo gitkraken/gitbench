@@ -58,6 +58,7 @@ export interface ModelResultsFilters {
   difficulty?: string;
   tag?: string;
   output_mode?: string;
+  campaign_id?: string;
 }
 
 export interface BenchmarkDetail {
@@ -133,7 +134,9 @@ export interface ReportStore {
     identity: {
       trial_index: number;
       model_name: string;
+      reasoning_level?: string | null;
       output_mode: string;
+      benchmark_name?: string;
       fixture_id: string;
     },
     options?: { includeOutput?: boolean }

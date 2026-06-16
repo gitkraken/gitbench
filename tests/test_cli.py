@@ -2,6 +2,7 @@
 
 import json
 import logging
+import sqlite3
 import sys
 import threading
 import time
@@ -416,10 +417,12 @@ class TestRunCommand:
                      "gitbench.harness.capabilities.resolve_capabilities",
                      return_value=caps,
                  ), \
+                 patch("gitbench.config.discover_judge_benchmarks", return_value=[]), \
                  patch(
                      "gitbench.cli.get_model_client",
                      return_value=preflight_client,
                  ), \
+                 patch("gitbench.cli._run_effort_preflights"), \
                  patch(
                      "gitbench.harness.runner.BenchmarkRunner.run_all",
                      side_effect=fake_run_all,
@@ -572,6 +575,8 @@ class TestRunCommand:
                      "gitbench.harness.capabilities.resolve_capabilities",
                      return_value=caps,
                  ), \
+                 patch("gitbench.config.discover_judge_benchmarks", return_value=[]), \
+                 patch("gitbench.cli._run_effort_preflights"), \
                  patch("gitbench.cli.get_model_client", return_value=model_client), \
                  patch(
                      "gitbench.harness.runner.BenchmarkRunner.run_all",
@@ -664,6 +669,8 @@ class TestRunCommand:
                      "gitbench.harness.capabilities.resolve_capabilities",
                      return_value=caps,
                  ), \
+                 patch("gitbench.config.discover_judge_benchmarks", return_value=[]), \
+                 patch("gitbench.cli._run_effort_preflights"), \
                  patch("gitbench.cli._run_reasoning_preflights") as preflight, \
                  patch(
                      "gitbench.harness.runner.BenchmarkRunner.run_all",
@@ -758,6 +765,8 @@ class TestRunCommand:
                      "gitbench.harness.capabilities.resolve_capabilities",
                      return_value=caps,
                  ), \
+                 patch("gitbench.config.discover_judge_benchmarks", return_value=[]), \
+                 patch("gitbench.cli._run_effort_preflights"), \
                  patch("gitbench.cli._run_reasoning_preflights") as preflight, \
                  patch(
                      "gitbench.harness.runner.BenchmarkRunner.run_all",
@@ -1363,7 +1372,8 @@ class TestRunCommand:
         )
         output_path = tmp_path / "report-results.json"
 
-        with patch("gitbench.render.write_sqlite_report_db"):
+        with patch("gitbench.cli.load_config", return_value={}), \
+             patch("gitbench.render.write_sqlite_report_db"):
             result = runner.invoke(
                 cli,
                 [
@@ -1380,6 +1390,101 @@ class TestRunCommand:
         data = json.loads(output_path.read_text())
         assert data["model_summaries"]["openai/gpt-test:high"]["pass_at_k"] == 1.0
         assert data["model_summaries"]["openai/gpt-test:high__json_schema"]["pass_at_k"] == 0.0
+
+    def test_report_no_build_ingests_campaign_artifacts_into_json_and_sqlite(
+        self, runner, tmp_path
+    ):
+        """Report generation discovers campaign artifacts through the CLI path."""
+        from gitbench.harness.campaign import (
+            AttemptIdentity,
+            AttemptStatus,
+            RawAttempt,
+            Trial,
+            make_campaign,
+        )
+        from gitbench.harness.campaign_store import CampaignStore
+        from gitbench.render import write_sqlite_report_db as real_write_sqlite_report_db
+
+        results_root = tmp_path / "gitbench-results"
+        identity = AttemptIdentity(
+            campaign_id="cmp-cli-report",
+            trial_index=1,
+            model_id="mock",
+            reasoning_effort="none",
+            output_mode="text",
+            benchmark="commit_messages",
+            fixture_id="f001",
+        )
+        campaign = make_campaign(
+            campaign_id="cmp-cli-report",
+            benchmark_ids=["commit_messages"],
+            fixture_ids=["commit_messages/f001"],
+            model_ids=["mock"],
+            reasoning_efforts=["none"],
+            output_modes=["text"],
+            planned_trial_count=1,
+        )
+        campaign.trials = [
+            Trial(trial_index=1, planned_attempts=1, attempt_identities=[identity]),
+        ]
+        campaign.planned_attempts = 1
+
+        store = CampaignStore("cmp-cli-report", base_dir=results_root)
+        store.save_manifest(campaign)
+        store.write_attempt(
+            RawAttempt(
+                identity=identity,
+                status=AttemptStatus.VALID_PASS,
+                passed=True,
+                similarity=1.0,
+                model_output="feat: add login",
+                safety_state="reviewed",
+            )
+        )
+
+        output_path = tmp_path / "report-results.json"
+        db_path = tmp_path / "gitbench.db"
+
+        def write_temp_db(data, _db_output):
+            real_write_sqlite_report_db(data, db_path)
+
+        with patch("gitbench.cli.load_config", return_value={}), \
+             patch("gitbench.render.write_sqlite_report_db", side_effect=write_temp_db):
+            result = runner.invoke(
+                cli,
+                [
+                    "report",
+                    "--input-dir",
+                    str(results_root),
+                    "--output",
+                    str(output_path),
+                    "--no-build",
+                ],
+            )
+
+        assert result.exit_code == 0, result.output
+        data = json.loads(output_path.read_text())
+        assert data["campaigns"][0]["campaign_id"] == "cmp-cli-report"
+        assert data["campaigns"][0]["raw_attempts"][0]["identity"]["benchmark"] == "commit_messages"
+
+        with sqlite3.connect(db_path) as conn:
+            assert conn.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0] == 1
+            assert conn.execute("SELECT COUNT(*) FROM raw_attempts").fetchone()[0] == 1
+            row = conn.execute(
+                """
+                SELECT campaign_id, model_name, reasoning_level, output_mode,
+                       benchmark_name, fixture_id
+                FROM raw_attempts
+                """
+            ).fetchone()
+        assert row == (
+            "cmp-cli-report",
+            "mock",
+            "none",
+            "text",
+            "commit_messages",
+            "f001",
+        )
 
     def test_report_preserves_aggregate_report_artifacts_with_real_model_data(self, runner, tmp_path):
         """Already-aggregated report JSON remains usable as report input."""
@@ -1496,7 +1601,8 @@ class TestRunCommand:
         )
         output_path = tmp_path / "report-results.json"
 
-        with patch("gitbench.render.write_sqlite_report_db"):
+        with patch("gitbench.cli.load_config", return_value={}), \
+             patch("gitbench.render.write_sqlite_report_db"):
             result = runner.invoke(
                 cli,
                 [
@@ -2854,6 +2960,30 @@ class TestRichProgressDisplay:
         assert d._live.update.call_count >= 1
         d.close()
 
+    def test_campaign_header_shows_execution_failure_classes(self):
+        """Campaign header distinguishes reused, remaining, and failure classes."""
+        d = RichProgressDisplay(
+            ["mock"],
+            ["commit_messages"],
+            campaign_id="cmp-display",
+            trials=2,
+            planned_attempts=4,
+            publication_state="draft",
+        )
+        d.campaign_attempt_reused(1)
+        d.campaign_attempt_recorded("valid_pass")
+        d.campaign_attempt_recorded("valid_fail")
+        d.campaign_attempt_recorded("infrastructure_failure")
+
+        rendered = str(d._render_header().renderable)
+        assert "planned 4" in rendered
+        assert "reused 1" in rendered
+        assert "new 3" in rendered
+        assert "remaining 0" in rendered
+        assert "quality failed 1" in rendered
+        assert "infra failed 1" in rendered
+        assert "draft" in rendered
+
     def test_model_panel_colour_by_status(self):
         """Model panels are coloured by status."""
         from io import StringIO as SIO
@@ -3948,3 +4078,42 @@ class TestJudgeCliFlags:
                 )
             assert result.exit_code != 0
             assert "not found" in result.output.lower()
+
+    def test_campaign_run_executes_two_trials_and_writes_raw_attempts(
+        self, runner, tmp_path
+    ):
+        """Campaign runs execute every planned trial identity."""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with patch("gitbench.cli.check_git_availability", return_value=True):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "run",
+                        "--benchmark",
+                        "reflog",
+                        "--model",
+                        "mock",
+                        "--campaign-id",
+                        "cmp-cli-trials",
+                        "--trials",
+                        "2",
+                        "--output-mode",
+                        "text",
+                    ],
+                )
+
+            assert result.exit_code == 0, result.output
+
+            from gitbench.harness.campaign import CampaignState
+            from gitbench.harness.campaign_store import CampaignStore
+
+            store = CampaignStore("cmp-cli-trials")
+            campaign = store.load_manifest()
+            assert campaign is not None
+            assert campaign.state == CampaignState.COMPLETE
+            assert len(campaign.trials) == 2
+            assert [trial.planned_attempts for trial in campaign.trials] == [12, 12]
+            assert campaign.planned_attempts == 24
+            assert campaign.completed_attempts == 24
+            assert all(len(trial.attempt_identities) == 12 for trial in campaign.trials)
+            assert len(store.load_all_attempts()) == 24

@@ -186,8 +186,36 @@ export class NodeSqliteReportStore implements ReportStore {
   ): { model: string; results: Record<string, FixtureResult[]> } | null {
     // Find the actual model_name + output_mode for the given composite key
     const [modelName, outputMode] = this.resolveModelKey(model);
+    const requestedOutputMode = filters.output_mode ?? outputMode ?? "text";
+    if (filters.campaign_id) {
+      const campaignRows = this.db
+        .prepare(
+          `
+          SELECT ra.*, NULL AS duration_ms, NULL AS purpose, NULL AS difficulty,
+                 '[]' AS tags_json, NULL AS parsed_payload,
+                 NULL AS raw_structured_output, NULL AS structured_error
+          FROM raw_attempts ra
+          WHERE ra.campaign_id = ? AND ra.model_name = ?
+            AND ra.output_mode = ?
+            ${filters.benchmark ? "AND ra.benchmark_name = ?" : ""}
+          ORDER BY ra.benchmark_name, ra.fixture_id, ra.trial_index
+          `
+        )
+        .all(
+          ...[
+            filters.campaign_id,
+            model,
+            requestedOutputMode,
+            ...(filters.benchmark ? [filters.benchmark] : []),
+          ]
+        ) as Record<string, unknown>[];
+      if (campaignRows.length === 0) return null;
+      return {
+        model: modelModeKey(model, requestedOutputMode),
+        results: groupResultsByBenchmark(campaignRows, true),
+      };
+    }
     if (!modelName) return null;
-    const requestedOutputMode = filters.output_mode ?? outputMode;
     if (!this.modelExists(modelName, requestedOutputMode)) return null;
 
     const clauses = ["fr.model_name = ?", "fr.output_mode = ?"];
@@ -516,12 +544,36 @@ export class NodeSqliteReportStore implements ReportStore {
     identity: {
       trial_index: number;
       model_name: string;
+      reasoning_level?: string | null;
       output_mode: string;
+      benchmark_name?: string;
       fixture_id: string;
     },
     options: { includeOutput?: boolean } = {}
   ): RawAttempt | null {
     const includeOutput = options.includeOutput ?? false;
+    const clauses = [
+      "campaign_id = ?",
+      "trial_index = ?",
+      "model_name = ?",
+      "output_mode = ?",
+      "fixture_id = ?",
+    ];
+    const params: (string | number | null)[] = [
+      campaignId,
+      identity.trial_index,
+      identity.model_name,
+      identity.output_mode,
+      identity.fixture_id,
+    ];
+    if (identity.reasoning_level !== undefined) {
+      clauses.push("COALESCE(reasoning_level, '') = ?");
+      params.push(identity.reasoning_level ?? "");
+    }
+    if (identity.benchmark_name) {
+      clauses.push("benchmark_name = ?");
+      params.push(identity.benchmark_name);
+    }
     const row = this.db
       .prepare(
         `
@@ -531,17 +583,10 @@ export class NodeSqliteReportStore implements ReportStore {
                cost_usd, api_duration_ms, safety_state,
                ${includeOutput ? "model_output" : "NULL AS model_output"}
         FROM raw_attempts
-        WHERE campaign_id = ? AND trial_index = ? AND model_name = ?
-          AND output_mode = ? AND fixture_id = ?
+        WHERE ${clauses.join(" AND ")}
         `
       )
-      .get(
-        campaignId,
-        identity.trial_index,
-        identity.model_name,
-        identity.output_mode,
-        identity.fixture_id
-      ) as Record<string, unknown> | undefined;
+      .get(...params) as Record<string, unknown> | undefined;
     return row ? rawAttemptFromRow(row, includeOutput) : null;
   }
 
@@ -578,7 +623,7 @@ export class NodeSqliteReportStore implements ReportStore {
                  cost_usd, api_duration_ms, safety_state, NULL AS model_output
           FROM raw_attempts
           WHERE campaign_id = ? AND benchmark_name = ? AND fixture_id = ?
-          ORDER BY model_name, output_mode, trial_index
+          ORDER BY model_name, reasoning_level, output_mode, trial_index
           `
         )
         .all(campaignId, benchmark, fixtureId) as Record<string, unknown>[];
@@ -588,14 +633,16 @@ export class NodeSqliteReportStore implements ReportStore {
         string,
         {
           model_name: string;
+          reasoning_level: string | null;
           output_mode: string;
           attempts: RawAttempt[];
         }
       > = {};
       for (const attempt of attempts) {
-        const key = `${attempt.model_name}::${attempt.output_mode}`;
+        const key = `${attempt.model_name}::${attempt.reasoning_level ?? ""}::${attempt.output_mode}`;
         byModelMode[key] = byModelMode[key] ?? {
           model_name: attempt.model_name,
+          reasoning_level: attempt.reasoning_level,
           output_mode: attempt.output_mode,
           attempts: [],
         };
@@ -817,6 +864,10 @@ function rawAttemptFromRow(
   row: Record<string, unknown>,
   includeOutput: boolean
 ): RawAttempt {
+  const safetyState =
+    typeof row.safety_state === "string" ? row.safety_state : null;
+  const canExposeOutput =
+    safetyState === "reviewed" || safetyState === "published";
   return {
     trial_index: Number(row.trial_index),
     model_name: String(row.model_name),
@@ -837,9 +888,9 @@ function rawAttemptFromRow(
     reasoning_tokens: nullableNumber(row.reasoning_tokens),
     cost_usd: nullableNumber(row.cost_usd),
     api_duration_ms: nullableNumber(row.api_duration_ms),
-    model_output: includeOutput ? String(row.model_output ?? "") : undefined,
-    safety_state:
-      typeof row.safety_state === "string" ? row.safety_state : null,
+    model_output:
+      includeOutput && canExposeOutput ? String(row.model_output ?? "") : undefined,
+    safety_state: safetyState,
   };
 }
 
@@ -847,13 +898,18 @@ function fixtureResultFromRow(
   row: Record<string, unknown>,
   includeModelOutput: boolean
 ): FixtureResult {
+  const safetyState =
+    typeof row.safety_state === "string" ? row.safety_state : null;
+  const canExposeOutput =
+    safetyState === null || safetyState === "reviewed" || safetyState === "published";
   return {
     fixture_id: String(row.fixture_id),
     passed: Boolean(row.passed),
     similarity: Number(row.similarity),
     error:
       row.error === null || row.error === undefined ? null : String(row.error),
-    model_output: includeModelOutput ? String(row.model_output ?? "") : "",
+    model_output:
+      includeModelOutput && canExposeOutput ? String(row.model_output ?? "") : "",
     reasoning_level:
       row.reasoning_level === null || row.reasoning_level === undefined
         ? null
