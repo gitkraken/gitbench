@@ -132,7 +132,7 @@ The aggregated report JSON SHALL include `output_mode` for every model variant, 
 - **THEN** the aggregated JSON preserves both result variants without merging their fixture counts or pass rates
 
 ### Requirement: JSON export includes structured-output result metadata
-Fixture results in aggregated JSON SHALL include structured-output metadata when available, including raw structured output, parsed payload, and structured-output error details.
+Fixture results in aggregated JSON SHALL include structured-output metadata when available, including raw structured output, parsed payload, and structured-output error details. Parsed payloads SHALL be included only for structured responses that parsed as strict JSON and validated against the fixture contract. Invalid structured responses SHALL be represented through raw structured output and structured-output error fields rather than invalid or non-finite parsed payload values.
 
 #### Scenario: Valid structured result exported
 - **WHEN** a structured fixture result has a parsed payload
@@ -141,6 +141,25 @@ Fixture results in aggregated JSON SHALL include structured-output metadata when
 #### Scenario: Invalid structured result exported
 - **WHEN** a structured fixture result has a structured-output error
 - **THEN** the aggregated fixture result includes the structured-output error
+- **AND** the aggregated fixture result includes the raw structured output where available
+- **AND** the aggregated fixture result does not include the invalid response as `parsed_payload`
+
+#### Scenario: Invalid structured result keeps report JSON valid
+- **WHEN** a structured fixture result failed because the raw response was invalid JSON or failed schema validation
+- **THEN** the aggregated fixture result represents the raw model response as a string
+- **AND** `results.json` remains valid standard JSON
+
+### Requirement: JSON export emits strict standard JSON
+Generated report JSON artifacts SHALL be valid standard JSON that can be parsed by browser-compatible `JSON.parse` implementations. Report JSON serialization MUST NOT emit bare `NaN`, `Infinity`, or `-Infinity` constants.
+
+#### Scenario: Non-finite value cannot be serialized
+- **WHEN** report generation attempts to serialize aggregate data containing a non-finite numeric value
+- **THEN** report generation fails with a clear serialization error
+- **AND** the generated report JSON artifact does not contain bare non-finite JSON constants
+
+#### Scenario: Browser parser can read generated report
+- **WHEN** `render_json(data, "web/public/results.json")` completes successfully
+- **THEN** the written file can be parsed by a browser-compatible JSON parser
 
 ### Requirement: JSON export exposes output-mode-aware model grouping
 The aggregated JSON SHALL preserve provider/base-model/reasoning grouping while exposing output-mode variants for each effort that has text or JSON-schema results.
@@ -200,4 +219,3 @@ Every raw campaign attempt record or reference in JSON export SHALL include camp
 #### Scenario: Exact identity exported
 - **WHEN** a raw attempt is exported for a JSON-schema high-reasoning model run
 - **THEN** its exported identity SHALL include `campaign_id`, `trial_index`, `model_id`, `reasoning_effort`, `output_mode`, `benchmark`, and `fixture_id`
-

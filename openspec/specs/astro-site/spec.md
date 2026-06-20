@@ -79,7 +79,7 @@ All routes SHALL be defined as `.astro` files in `src/pages/`. Dynamic routes SH
 - **THEN** the Fixture Detail page (`fixtures/[fixture].astro`) is rendered with fixture data for `f001`
 
 ### Requirement: results.json served as static asset
-The aggregated benchmark data MAY be written to `ui/public/results.json` by the Python CLI as a compatibility artifact. The Astro site SHALL NOT embed the full report data in page HTML. React islands SHALL load query-specific report data through the report API client instead of fetching the full `/results.json` payload.
+The aggregated benchmark data MAY be written to `ui/public/results.json` by the Python CLI as a compatibility artifact. The Astro site SHALL NOT embed the full report data in page HTML. React islands SHALL load query-specific report data through the report API client instead of fetching the full `/results.json` payload. The overview page's first chart (PassRateBarChart) is an exception: it MAY receive chart-specific data via an `initialData` prop computed at build time from `getReportStore()`, bypassing the report API client for the default (no campaign) view. This exception is limited to the pass-rate chart on the overview page. All other charts and pages SHALL continue to load data through the report API client.
 
 #### Scenario: results.json is accessible when emitted
 - **WHEN** the built site is served and compatibility JSON was emitted during report generation
@@ -93,6 +93,18 @@ The aggregated benchmark data MAY be written to `ui/public/results.json` by the 
 - **WHEN** a hydrated React chart or interactive table loads in the browser
 - **THEN** it requests only the query-specific API payload needed for that view
 - **AND** it does not fetch `/results.json` as the canonical report data source
+
+#### Scenario: Overview pass-rate chart uses embedded data
+- **WHEN** the overview page loads with no `?campaign=` query parameter
+- **THEN** the PassRateBarChart renders immediately from embedded `initialData` without an API fetch
+
+#### Scenario: Other overview charts still fetch from API
+- **WHEN** the overview page loads
+- **THEN** all charts other than PassRateBarChart fetch their data from the report API client as before
+
+#### Scenario: Campaign override triggers API fetch
+- **WHEN** the overview page loads with a `?campaign=<id>` query parameter
+- **THEN** PassRateBarChart falls back to fetching from `/api/charts/pass-rate?campaign=<id>` to obtain campaign metadata
 
 ### Requirement: Build produces static dist/ directory
 Running `npm run build` in `gitbench/ui/` SHALL produce a static Astro site in `ui/dist/` with HTML, CSS, JS, and static assets. The Astro page output SHALL remain static, while API-backed report data SHALL be served by deployment-specific API functions during local development and hosted production.
@@ -208,4 +220,3 @@ The fixture detail page (`/fixtures/[benchmark]/[fixture]`) SHALL display token 
 #### Scenario: ModelOutputCard handles missing tokens
 - **WHEN** a model output has null token values
 - **THEN** no token badges are displayed (the card looks the same as before)
-

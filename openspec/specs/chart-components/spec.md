@@ -247,6 +247,25 @@ The `PassRateBarChart` React component SHALL render a Recharts vertical bar char
 - **WHEN** `PassRateBarChart` renders without a `benchmarkName` prop
 - **THEN** mode summaries use `model_summaries[model].pass_at_k` and the tooltip footnote reads "% of 204 fixtures passed"
 
+### Requirement: PassRateBarChart accepts optional initialData prop
+The `PassRateBarChart` React component SHALL accept an optional `initialData` prop of type `GitBenchData | undefined`. When `initialData` is provided and no campaign override is active (no `?campaign=` query parameter), the component SHALL use `initialData` as its initial data state and SHALL NOT fetch from `/api/charts/pass-rate`. When `initialData` is absent or a campaign override is active, the component SHALL fetch from the report API client as before.
+
+#### Scenario: Renders immediately from initialData
+- **WHEN** `PassRateBarChart` receives `initialData` with model summaries and no campaign is selected
+- **THEN** the chart renders from `initialData` on first hydration without showing "Loading..." and without making an API request
+
+#### Scenario: Falls back to API when initialData absent
+- **WHEN** `PassRateBarChart` receives no `initialData` prop
+- **THEN** the component shows "Loading..." and fetches from `/api/charts/pass-rate` as before
+
+#### Scenario: Falls back to API when campaign override active
+- **WHEN** `PassRateBarChart` receives `initialData` but the URL contains `?campaign=<id>`
+- **THEN** the component fetches from `/api/charts/pass-rate?campaign=<id>` to obtain campaign-specific data and metadata
+
+#### Scenario: Benchmark detail page still fetches
+- **WHEN** `PassRateBarChart` is rendered on a benchmark detail page with a `benchmarkName` prop and no `initialData`
+- **THEN** the component fetches from `/api/charts/pass-rate?benchmark=<name>` as before
+
 ### Requirement: RuntimeBarChart renders vertical range-whisker bar chart ranking models by speed
 The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = total API time in seconds). Each solid bar SHALL represent one selected provider/base-model group's median deduped effort API time from zero. A neutral range whisker SHALL visualize the range from the fastest effort API time to the slowest effort API time in that group. The median deduped effort API time SHALL be the representative value used for sorting and bar prominence. The Y-axis domain SHALL start at 0 and include the slowest displayed effort API time. Bars SHALL be color-coded by provider using the `getProviderColor()` palette. X-axis tick labels SHALL display the provider brand icon (via `ProviderIcon`) and the truncated base model name (max ~10 characters + ellipsis), rotated `-40` degrees. The component SHALL accept a `data` prop containing the full dataset and an optional selected group list for filtering. Chart height SHALL be fixed at 350 pixels. A provider legend SHALL be rendered below the chart card showing colored dots for each unique provider present. Model groups SHALL be sorted fastest-first by their median deduped effort API time.
 
@@ -400,4 +419,3 @@ Charts SHALL expose equivalent reliability meaning through labels, patterns, sym
 
 - **WHEN** the marker is focused using a keyboard
 - **THEN** its accessible name SHALL identify the fixture as flaky and state its pass ratio
-
