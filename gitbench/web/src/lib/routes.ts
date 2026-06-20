@@ -41,6 +41,28 @@ export function modelPath(modelName: string): string {
   return modelLevelPath(provider, baseModel, level);
 }
 
+export function modelResultAnchor(
+  modelName: string,
+  outputMode = "text"
+): string {
+  return `result-${modelSlug(modelName)}-${modelSlug(outputMode)}`;
+}
+
+export function fixturePath(
+  benchmark: string,
+  fixtureId: string,
+  result?: { modelName: string; outputMode?: string | null }
+): string {
+  const path = `/fixtures/${encodeRouteSegment(benchmark)}/${encodeRouteSegment(
+    fixtureId
+  )}`;
+  if (!result) return path;
+  return `${path}#${modelResultAnchor(
+    result.modelName,
+    result.outputMode || "text"
+  )}`;
+}
+
 export function modelGroupPath(provider: string, baseModel: string): string {
   return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(
     baseModel

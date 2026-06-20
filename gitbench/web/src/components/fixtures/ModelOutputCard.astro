@@ -1,7 +1,7 @@
 ---
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { modelPath } from "@/lib/routes";
+import { modelPath, modelResultAnchor } from "@/lib/routes";
 import { formatCompactTokenUsage } from "@/lib/token-usage";
 import { formatStructuredOutputFailure } from "@/lib/structured-output-display";
 import { Copy } from "lucide-react";
@@ -63,9 +63,10 @@ const tokenBadge = formatCompactTokenUsage(
   reasoningLevel,
   reasoningTokens,
 );
+const cardId = modelResultAnchor(modelName, outputMode);
 ---
 
-<div class="card p-5">
+<div id={cardId} class="card scroll-mt-6 p-5">
   <div class="flex justify-between items-start flex-wrap gap-3 mb-3">
     <div class="flex gap-2 items-center flex-wrap">
       <a

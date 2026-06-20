@@ -1,5 +1,6 @@
 ---
 import { Check, X } from "lucide-react";
+import { fixturePath } from "@/lib/routes";
 import {
   REASONING_WITHIN_OUTPUT_LABEL,
   TOTAL_OUTPUT_LABEL,
@@ -16,6 +17,8 @@ interface Props {
   outputTokens?: number | null;
   reasoningTokens?: number | null;
   reasoningLevel?: string | null;
+  modelName?: string | null;
+  outputMode?: string | null;
 }
 
 const {
@@ -29,6 +32,8 @@ const {
   outputTokens,
   reasoningTokens,
   reasoningLevel,
+  modelName,
+  outputMode,
 } = Astro.props;
 const passColor = passed
   ? "text-pass bg-pass-bg border-pass-border"
@@ -42,10 +47,15 @@ const outputTokenLabel =
   outputTokens != null ? outputTokens.toLocaleString() : "n/a";
 const reasoningTokenLabel =
   reasoningTokens != null ? reasoningTokens.toLocaleString() : "N/A";
+const href = fixturePath(
+  benchmark,
+  fixtureId,
+  modelName ? { modelName, outputMode } : undefined,
+);
 ---
 
 <a
-  href={`/fixtures/${encodeURIComponent(benchmark)}/${fixtureId}`}
+  href={href}
   class="no-underline card fixture-card flex min-h-[132px] flex-col justify-between p-4 cursor-pointer transition-colors hover:border-(--color-border-accent)"
   data-benchmark={benchmark}
   data-difficulty={difficulty}

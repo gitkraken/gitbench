@@ -797,6 +797,8 @@ const aggregateTokenLabel = primaryStats.aggregateTokenLabel;
                   outputTokens={fx.output_tokens}
                   reasoningTokens={fx.reasoning_tokens}
                   reasoningLevel={fx.reasoning_level}
+                  modelName={textModelName}
+                  outputMode="text"
                 />
               );
             })
@@ -821,6 +823,8 @@ const aggregateTokenLabel = primaryStats.aggregateTokenLabel;
                   outputTokens={fx.output_tokens}
                   reasoningTokens={fx.reasoning_tokens}
                   reasoningLevel={fx.reasoning_level}
+                  modelName={jsonModelName}
+                  outputMode="json_schema"
                 />
               );
             })
@@ -842,6 +846,8 @@ const aggregateTokenLabel = primaryStats.aggregateTokenLabel;
                   jsonSimilarity={bf.jsonResult?.similarity ?? null}
                   difficulty={fi?.difficulty || ""}
                   tags={fi?.tags || []}
+                  textModelName={textModelName}
+                  jsonModelName={jsonModelName}
                 />
               );
             })
