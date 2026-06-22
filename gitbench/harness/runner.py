@@ -470,14 +470,33 @@ class BenchmarkRunner:
                     "target_output_hash", hash_text(model_output)
                 )
 
-            score = self._scorer.score(
-                fixture,
-                model_output,
-                repo_path=repo_path,
-                diff=diff,
-                prompt=fixture.prompt,
-                campaign_scoring_context=effective_campaign_context,
-            )
+            scoring_type = fixture.scoring.get("type", "similarity")
+            if scoring_type == "llm_judge":
+                # llm_judge fixtures go through the judge-aware Scorer
+                # with the same arguments and failure behavior as before.
+                score = self._scorer.score(
+                    fixture,
+                    model_output,
+                    repo_path=repo_path,
+                    diff=diff,
+                    prompt=fixture.prompt,
+                    campaign_scoring_context=effective_campaign_context,
+                )
+            else:
+                # Non-judge fixtures are evaluated through the benchmark's
+                # own score() method so custom scorers and stateful command
+                # execution run before the result is recorded.
+                score = benchmark.score(
+                    fixture,
+                    model_output,
+                    repo_path=repo_path,
+                    diff=diff,
+                    prompt=fixture.prompt,
+                )
+                # Scoring-framework errors (unsupported type, configuration
+                # errors) are infrastructure failures, not quality failures.
+                if score.error and score.error.startswith("Scoring error:"):
+                    score.operational_failure = True
             score.reasoning_level = getattr(
                 self._model_client, "reasoning_level", None
             )
@@ -573,6 +592,7 @@ class BenchmarkRunner:
                 prompt=fixture.prompt,
                 expected=fixture.expected,
                 description=fixture.description,
+                operational_failure=True,
             )
             return fixture.id, score
         finally:
@@ -592,11 +612,17 @@ class BenchmarkRunner:
         model_name: str,
         benchmark_name: str,
     ) -> list[Score]:
-        """Run fixtures in parallel, preserving fixture order in the output."""
+        """Run fixtures in parallel, preserving fixture order in the output.
+
+        Each fixture receives a fresh benchmark instance so that mutable
+        state (e.g. ``worktree_usage._current_executor``) is not shared
+        across concurrently executing fixtures.
+        """
         ordered_scores: list[Score | None] = [None] * len(fixtures)
         executor = ThreadPoolExecutor(max_workers=workers)
         future_map: dict[Future, int] = {}
         next_index = 0
+        benchmark_class = self._registry[benchmark_name]
 
         def submit_next() -> bool:
             nonlocal next_index
@@ -605,7 +631,9 @@ class BenchmarkRunner:
             index = next_index
             next_index += 1
             future_map[
-                executor.submit(self._run_fixture, benchmark, fixtures[index])
+                executor.submit(
+                    self._run_fixture, benchmark_class(), fixtures[index]
+                )
             ] = index
             return True
 

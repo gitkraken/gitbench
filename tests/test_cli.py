@@ -3555,13 +3555,13 @@ class TestRunnerReasoningLevel:
         class FakeBench:
             def load_fixtures(self):
                 return []
-            def setup_fixture(self, fixture):
+            def setup_fixture(self, fixture, *, fixture_generation_context=None):
                 return None, None
             def get_diff(self, repo_path):
                 return ""
             def format_prompt(self, fixture, diff):
                 return ""
-            def score(self, fixture, output, repo_path=None):
+            def score(self, fixture, output, repo_path=None, diff=None, prompt=None):
                 from gitbench.harness.types import Score
                 return Score(fixture_id="f1", passed=True, similarity=1.0, model_output="test")
 
@@ -3585,13 +3585,13 @@ class TestRunnerReasoningLevel:
         class FakeBench:
             def load_fixtures(self):
                 return []
-            def setup_fixture(self, fixture):
+            def setup_fixture(self, fixture, *, fixture_generation_context=None):
                 return None, None
             def get_diff(self, repo_path):
                 return ""
             def format_prompt(self, fixture, diff):
                 return ""
-            def score(self, fixture, output, repo_path=None):
+            def score(self, fixture, output, repo_path=None, diff=None, prompt=None):
                 from gitbench.harness.types import Score
                 return Score(fixture_id="f1", passed=True, similarity=1.0, model_output="test")
 
@@ -3633,7 +3633,7 @@ class TestRunnerReasoningLevel:
                     )
                 ]
 
-            def setup_fixture(self, fixture):
+            def setup_fixture(self, fixture, *, fixture_generation_context=None):
                 return None, None
 
             def get_diff(self, repo_path):
@@ -3700,7 +3700,7 @@ class TestRunnerReasoningLevel:
                     for index in range(5)
                 ]
 
-            def setup_fixture(self, fixture):
+            def setup_fixture(self, fixture, *, fixture_generation_context=None):
                 return None, None
 
             def get_diff(self, repo_path):
@@ -3709,7 +3709,7 @@ class TestRunnerReasoningLevel:
             def format_prompt(self, fixture, diff):
                 return ""
 
-            def score(self, fixture, output, repo_path=None):
+            def score(self, fixture, output, repo_path=None, diff=None, prompt=None):
                 return Score(
                     fixture_id=fixture.id,
                     passed=True,
@@ -3747,7 +3747,7 @@ class TestRunnerSelectedFixtures:
                     Fixture("f003", "three", [], "p3", "ok", {}),
                 ]
 
-            def setup_fixture(self, fixture):
+            def setup_fixture(self, fixture, *, fixture_generation_context=None):
                 calls.append(("setup", fixture.id))
 
                 class Executor:
@@ -3764,7 +3764,7 @@ class TestRunnerSelectedFixtures:
                 calls.append(("prompt", fixture.id, diff))
                 return fixture.prompt
 
-            def score(self, fixture, output, repo_path=None):
+            def score(self, fixture, output, repo_path=None, diff=None, prompt=None):
                 calls.append(("score", fixture.id, output, repo_path))
                 return Score(
                     fixture_id=fixture.id,
@@ -3793,7 +3793,7 @@ class TestRunnerSelectedFixtures:
             def load_fixtures(self):
                 return [Fixture("f001", "one", [], "p1", "ok", {})]
 
-            def setup_fixture(self, fixture):
+            def setup_fixture(self, fixture, *, fixture_generation_context=None):
                 raise AssertionError("setup should not run")
 
         runner = BenchmarkRunner({"fake": FakeBench}, MockModelClient())

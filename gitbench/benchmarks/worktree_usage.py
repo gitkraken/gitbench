@@ -9,7 +9,7 @@ from gitbench.benchmarks import Benchmark
 from gitbench.harness.loader import FixtureLoader
 from gitbench.harness.scorer import Scorer
 from gitbench.harness.types import Fixture, Score
-from gitbench.utils.git import GitExecutor
+from gitbench.utils.git import FixtureGenerationContext, GitExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -30,18 +30,27 @@ class WorktreeUsageBenchmark(Benchmark):
         super().__init__(fixtures_root=fixtures_root)
         self._current_executor: GitExecutor | None = None
 
-    def setup_fixture(self, fixture: Fixture) -> tuple[GitExecutor, str]:
+    def setup_fixture(
+        self,
+        fixture: Fixture,
+        *,
+        fixture_generation_context: FixtureGenerationContext | None = None,
+    ) -> tuple[GitExecutor, str]:
         """Set up a git repository for a worktree usage scenario.
 
         Creates the repo and registers cleanup handlers.
 
         Args:
             fixture: The fixture containing setup commands.
+            fixture_generation_context: Optional deterministic context for
+                reproducible fixture generation.
 
         Returns:
             A tuple of (GitExecutor, repo_path).
         """
-        executor = GitExecutor()
+        executor = GitExecutor(
+            fixture_generation_context=fixture_generation_context,
+        )
         repo_path = executor.setup_repo(f"worktree_usage_{fixture.id}", fixture.setup)
 
         # Store executor reference so execute_model_output can use it for cleanup

@@ -67,13 +67,18 @@ class _FastBenchmark(Benchmark):
             for i in range(4)
         ]
 
-    def setup_fixture(self, fixture: Fixture):
+    def setup_fixture(
+        self,
+        fixture: Fixture,
+        *,
+        fixture_generation_context=None,
+    ):
         return _Cleanup(), "/tmp"
 
     def get_diff(self, repo_path: str) -> str:
         return "diff"
 
-    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None) -> Score:
+    def score(self, fixture: Fixture, model_output: str, repo_path: str | None = None, diff: str | None = None, prompt: str | None = None) -> Score:
         return Score(
             fixture_id=fixture.id,
             passed=True,
