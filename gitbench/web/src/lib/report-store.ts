@@ -72,7 +72,7 @@ export interface BenchmarkDetail {
     avg_similarity: number;
   }[];
   fixtures: Record<string, FixtureInfo>;
-  results: Record<string, FixtureResult[]>;
+  results: Record<string, Record<string, FixtureResult[]>>;
 }
 
 export interface FixtureDetail {

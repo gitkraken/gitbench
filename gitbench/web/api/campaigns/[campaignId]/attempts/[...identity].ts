@@ -55,10 +55,10 @@ export default function handler(req: any, res: any) {
   }
 
   if (!allowRawContent) {
-    (attempt as Record<string, unknown>).model_output = undefined;
-    (attempt as Record<string, unknown>).parsed_payload = undefined;
-    (attempt as Record<string, unknown>).raw_structured_output = undefined;
-    (attempt as Record<string, unknown>).structured_error = undefined;
+    delete attempt.model_output;
+    delete attempt.parsed_payload;
+    delete attempt.raw_structured_output;
+    delete attempt.structured_error;
   }
 
   json(res, 200, { campaign_id: campaignId, attempt });

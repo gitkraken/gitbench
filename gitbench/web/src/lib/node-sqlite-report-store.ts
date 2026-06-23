@@ -177,7 +177,20 @@ export class NodeSqliteReportStore implements ReportStore {
           ORDER BY name, output_mode
           `
       )
-      .all() as ModelInfo[];
+      .all()
+      .map((row) => {
+        const r = row as Record<string, unknown>;
+        return {
+          name: String(r.name),
+          provider: String(r.provider),
+          baseModel: String(r.baseModel),
+          reasoningLevel:
+            r.reasoningLevel === null || r.reasoningLevel === undefined
+              ? null
+              : String(r.reasoningLevel),
+          output_mode: String(r.output_mode),
+        };
+      });
   }
 
   getModelResults(
@@ -326,7 +339,19 @@ export class NodeSqliteReportStore implements ReportStore {
           ORDER BY benchmark_suite_version, timestamp
           `
       )
-      .all() as GitBenchData["runs_meta"];
+      .all()
+      .map((row) => {
+        const r = row as Record<string, unknown>;
+        return {
+          timestamp: String(r.timestamp),
+          model: String(r.model),
+          profile: String(r.profile),
+          git_sha: String(r.git_sha),
+          benchmark_suite_version: String(r.benchmark_suite_version),
+          reasoning_level: String(r.reasoning_level ?? ""),
+          output_mode: String(r.output_mode),
+        };
+      });
   }
 
   getCampaigns(filters: CampaignFilters = {}): CampaignListItem[] {
@@ -711,14 +736,15 @@ export class NodeSqliteReportStore implements ReportStore {
             ORDER BY COALESCE(level, ''), output_mode
             `
           )
-          .all(group.id) as (BaseModelGroup["levels"][number] & {
-          output_mode: string;
-        })[]
+          .all(group.id) as Record<string, unknown>[]
       ).map((level) => ({
-        level: level.level,
-        modelName: modelModeKey(level.modelName, level.output_mode),
-        pass_at_k: level.pass_at_k,
-        total_cost_usd: level.total_cost_usd,
+        level: level.level === null ? null : String(level.level),
+        modelName: modelModeKey(
+          String(level.modelName),
+          String(level.output_mode)
+        ),
+        pass_at_k: Number(level.pass_at_k),
+        total_cost_usd: nullableNumber(level.total_cost_usd),
       })),
     }));
   }
