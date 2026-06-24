@@ -12,15 +12,20 @@ import {
 import {
   GroupedMetricTooltipSections,
   VerticalGroupedMetricChart,
-  formatCompactDecimal,
   tooltipStyle,
   zeroAnchoredDomain,
 } from "@/components/charts/grouped-chart-ui";
 
-function formatCost(value: number): string {
-  if (value < 0.0001) return `$${value.toExponential(1)}`;
-  if (value < 0.01) return `$${formatCompactDecimal(value, 3)}`;
-  return `$${formatCompactDecimal(value, 2)}`;
+const costFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 4,
+});
+
+export function formatCost(value: number): string {
+  if (!Number.isFinite(value)) return "\u2014";
+  return costFormatter.format(value);
 }
 
 import { useCampaignId } from "@/lib/use-campaign";

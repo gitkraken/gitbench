@@ -8,7 +8,10 @@ import {
 } from "./report-api.ts";
 
 export function chartHandler(req: any, res: any, chart: ChartKey): void {
-  const unsupported = rejectUnsupportedQuery(req.query, new Set(["benchmark", "chart", "campaign"]));
+  const unsupported = rejectUnsupportedQuery(
+    req.query,
+    new Set(["benchmark", "chart", "campaign"])
+  );
   if (unsupported) {
     json(res, 400, { error: `Unsupported query parameter: ${unsupported}` });
     return;

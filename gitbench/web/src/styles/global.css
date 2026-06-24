@@ -89,6 +89,7 @@
   --font-mono: "Fira Code Medium", SFMono-Regular, Consolas, monospace;
   --sidebar-width: 220px;
   --sidebar-bg: rgba(28, 28, 28, 0.94);
+  --main-max-width: 1440px;
 }
 
 /* ── Reset ── */
@@ -159,6 +160,8 @@ body::before {
 .app-main {
   flex: 1;
   margin-left: var(--sidebar-width);
+  max-width: var(--main-max-width);
+  margin-right: auto;
   min-width: 0;
   min-height: 100vh;
   display: flex;

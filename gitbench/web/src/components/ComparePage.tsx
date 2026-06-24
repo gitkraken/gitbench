@@ -11,7 +11,9 @@ import {
 } from "recharts";
 import type { GitBenchData } from "@/lib/types";
 import { loadData } from "@/lib/load-data";
-import ModelSelector from "@/components/charts/ModelSelector";
+import ModelSelector, {
+  defaultSelectionForCompare,
+} from "@/components/charts/ModelSelector";
 import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import ScatterPlot from "@/components/charts/ScatterPlot";
 import {
@@ -91,9 +93,7 @@ export default function ComparePage() {
       setData(d);
       const params = new URLSearchParams(window.location.search);
       const withModel = params.get("with");
-      const initial = withModel
-        ? [withModel]
-        : d.models.slice(0, 3).map((m) => m.name);
+      const initial = withModel ? [withModel] : defaultSelectionForCompare(d);
       setSelectedGroups(sanitizeGroupSelection(initial, deriveModelGroups(d)));
     });
   }, []);

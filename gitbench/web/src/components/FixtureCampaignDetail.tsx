@@ -182,7 +182,9 @@ export function FixtureCampaignDetail({
   }
   if (error) {
     return (
-      <div className="text-sm text-red-500">Raw attempt evidence unavailable</div>
+      <div className="text-sm text-red-500">
+        Raw attempt evidence unavailable
+      </div>
     );
   }
   if (!data || data.groups.length === 0) {

@@ -10,6 +10,27 @@ import {
   type ModelGroup,
 } from "@/components/charts/model-groups";
 
+/**
+ * Returns the top two provider/base-model group IDs sorted by mean pass
+ * rate descending, skipping groups without a measurable pass rate.
+ * Used as the cold-load default for the Compare page.
+ */
+export function defaultSelectionForCompare(data: GitBenchData): string[] {
+  const groups = deriveModelGroups(data);
+  const ranked = groups
+    .map((group) => {
+      const passRates = group.efforts
+        .map((e) => e.passRate)
+        .filter((r): r is number => r != null);
+      if (passRates.length === 0) return null;
+      const mean = passRates.reduce((sum, r) => sum + r, 0) / passRates.length;
+      return { id: group.id, mean };
+    })
+    .filter((x): x is { id: string; mean: number } => x !== null)
+    .sort((a, b) => b.mean - a.mean);
+  return ranked.slice(0, 2).map((x) => x.id);
+}
+
 interface ModelSelectorProps {
   data?: GitBenchData;
   initialSelected?: string[];

@@ -428,7 +428,9 @@ export class NodeSqliteReportStore implements ReportStore {
     if (rows.length > 0) return rows.map((row) => String(row.benchmark_name));
 
     const campaignRow = this.getCampaignRow(campaignId);
-    return campaignRow ? parseJsonArray(campaignRow.benchmark_ids_json).sort() : [];
+    return campaignRow
+      ? parseJsonArray(campaignRow.benchmark_ids_json).sort()
+      : [];
   }
 
   private getCampaignModelSummaries(
@@ -535,7 +537,10 @@ export class NodeSqliteReportStore implements ReportStore {
 
     return Object.fromEntries(
       rows.map((row) => {
-        const key = modelModeKey(String(row.model_name), String(row.output_mode));
+        const key = modelModeKey(
+          String(row.model_name),
+          String(row.output_mode)
+        );
         const resource = parseJsonObject(row.resource_summary_json);
         const stats = fixtureStats.get(key) ?? rawFixtureStats.get(key);
         return [
@@ -768,7 +773,10 @@ export class NodeSqliteReportStore implements ReportStore {
           const total = Number(row.total ?? 0);
           const passed = Number(row.passed ?? 0);
           return {
-            model: modelModeKey(String(row.model_name), String(row.output_mode)),
+            model: modelModeKey(
+              String(row.model_name),
+              String(row.output_mode)
+            ),
             pass_at_k: total > 0 ? passed / total : 0,
             total,
             passed,
@@ -776,8 +784,7 @@ export class NodeSqliteReportStore implements ReportStore {
           };
         })
         .sort(
-          (a, b) =>
-            b.pass_at_k - a.pass_at_k || a.model.localeCompare(b.model)
+          (a, b) => b.pass_at_k - a.pass_at_k || a.model.localeCompare(b.model)
         );
     }
 
@@ -1189,7 +1196,9 @@ export class NodeSqliteReportStore implements ReportStore {
         }
       > = {};
       for (const attempt of attempts) {
-        const key = `${attempt.model_name}::${attempt.reasoning_level ?? ""}::${attempt.output_mode}`;
+        const key = `${attempt.model_name}::${attempt.reasoning_level ?? ""}::${
+          attempt.output_mode
+        }`;
         byModelMode[key] = byModelMode[key] ?? {
           model_name: attempt.model_name,
           reasoning_level: attempt.reasoning_level,
@@ -1499,7 +1508,9 @@ function rawAttemptFromRow(
     cost_usd: nullableNumber(row.cost_usd),
     api_duration_ms: nullableNumber(row.api_duration_ms),
     model_output:
-      includeOutput && canExposeOutput ? String(row.model_output ?? "") : undefined,
+      includeOutput && canExposeOutput
+        ? String(row.model_output ?? "")
+        : undefined,
     safety_state: safetyState,
   };
 }
@@ -1522,7 +1533,9 @@ function fixtureResultFromRow(
     error:
       row.error === null || row.error === undefined ? null : String(row.error),
     model_output:
-      includeModelOutput && canExposeOutput ? String(row.model_output ?? "") : "",
+      includeModelOutput && canExposeOutput
+        ? String(row.model_output ?? "")
+        : "",
     reasoning_level:
       row.reasoning_level === null || row.reasoning_level === undefined
         ? null

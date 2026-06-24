@@ -57,7 +57,7 @@ export function ModelReliabilitySummary({
 }: ModelReliabilitySummaryProps) {
   // Read initial output mode from localStorage, falling back to the prop
   const [activeOutputMode, setActiveOutputMode] = useState<string>(() =>
-    readInitialOutputMode(outputMode),
+    readInitialOutputMode(outputMode)
   );
 
   const [results, setResults] = useState<Record<

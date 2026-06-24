@@ -119,9 +119,7 @@ export function CampaignHistory() {
                   new Date(b.timestamp).getTime()
               )
               .map((run) => (
-                <tr
-                  key={`${run.timestamp}-${run.model}-${run.output_mode}`}
-                >
+                <tr key={`${run.timestamp}-${run.model}-${run.output_mode}`}>
                   <td className="font-mono text-xs text-(--color-text-mid)">
                     {run.model}
                   </td>

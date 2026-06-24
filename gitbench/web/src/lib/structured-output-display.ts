@@ -5,7 +5,7 @@ export interface StructuredOutputFailureDisplay {
 
 export function formatStructuredOutputFailure(
   structuredError: string | null | undefined,
-  rawStructuredOutput: string | null | undefined,
+  rawStructuredOutput: string | null | undefined
 ): StructuredOutputFailureDisplay | null {
   if (!structuredError || rawStructuredOutput == null) return null;
 
