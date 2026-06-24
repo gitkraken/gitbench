@@ -33,7 +33,7 @@ The report database SHALL include indexes for common report access patterns, inc
 - **THEN** indexes exist for model result, benchmark result, fixture detail, tag filter, run history, and model grouping queries
 
 ### Requirement: Vercel API routes expose query-shaped report data
-The web project SHALL expose Vercel API routes that return report data for summary, models, model results, benchmark details, fixture details, and history.
+The web project SHALL expose Vercel API routes that return report data for summary, models, model results, benchmark details, fixture details, chart data, campaign data, and raw campaign attempt inspection. Run history data SHALL be exposed through the summary response's `runs_meta` field instead of requiring a standalone history API function.
 
 #### Scenario: Summary endpoint returns compact data
 - **WHEN** a client requests the summary API endpoint
@@ -51,6 +51,66 @@ The web project SHALL expose Vercel API routes that return report data for summa
 #### Scenario: Fixture endpoint returns full outputs
 - **WHEN** a client requests the fixture detail API endpoint for a benchmark and fixture id
 - **THEN** the response includes fixture metadata, prompt, expected output, setup commands, and all model outputs for that fixture
+
+#### Scenario: Chart endpoints return chart-specific data
+- **WHEN** a client requests a supported chart API endpoint
+- **THEN** the response includes only the data needed to render that chart
+
+#### Scenario: History data is available from summary
+- **WHEN** a client needs run history data
+- **THEN** the client can read `runs_meta` from the summary API response
+
+### Requirement: Report API stays within Vercel function budget
+The web project SHALL expose the report API with no more than 11 Vercel serverless function route files under `gitbench/web/api`.
+
+#### Scenario: Consolidated API file count
+- **WHEN** the report API route files are enumerated under `gitbench/web/api`
+- **THEN** there are no more than 11 TypeScript API route files
+
+#### Scenario: Chart endpoints share one dynamic function
+- **WHEN** the chart API routes are enumerated
+- **THEN** the six chart names `cost`, `heatmap`, `pass-rate`, `quadrant`, `runtime`, and `tokens` are served by one dynamic chart function
+- **AND** there are not separate serverless function files for each chart name
+
+### Requirement: Dynamic chart API preserves chart behavior
+The chart API SHALL serve supported chart names through a single dynamic route while preserving the existing `/api/charts/{chart}` URL shape, supported query parameters, and compact response payloads.
+
+#### Scenario: Supported chart returns compact payload
+- **WHEN** a client requests `/api/charts/pass-rate`
+- **THEN** the response contains the same compact pass-rate chart data that the previous static pass-rate chart endpoint returned
+- **AND** the response does not include full model output text
+
+#### Scenario: Benchmark filter is preserved
+- **WHEN** a client requests `/api/charts/pass-rate?benchmark=blame_forensics`
+- **THEN** the response is scoped to the requested benchmark as before
+
+#### Scenario: Unsupported chart is rejected
+- **WHEN** a client requests `/api/charts/not-a-chart`
+- **THEN** the API returns a clear client error response
+- **AND** it does not execute a report query for an unknown chart type
+
+### Requirement: Model results are served by the catch-all route
+The model-results API SHALL use one catch-all route to serve model result requests, including two-segment provider/model URLs and model names containing encoded slashes or levels.
+
+#### Scenario: Two-segment model URL resolves
+- **WHEN** a client requests `/api/models/anthropic/claude-opus-4.7%3Ahigh/results`
+- **THEN** the catch-all model-results handler resolves the model name as `anthropic/claude-opus-4.7:high`
+- **AND** it returns the same response shape as the previous two-segment model-results route
+
+#### Scenario: Model result filters still work
+- **WHEN** a client requests model results with `benchmark`, `difficulty`, `tag`, `output_mode`, or `campaign` query parameters
+- **THEN** the catch-all model-results handler applies the same validation and filtering behavior as before
+
+### Requirement: Summary is the supported history source
+The summary API SHALL remain the supported source for run history data by returning `runs_meta`. The web UI SHALL NOT require a standalone `/api/history` serverless function to render history views.
+
+#### Scenario: Summary includes run history
+- **WHEN** a client requests `/api/summary`
+- **THEN** the response includes `runs_meta` with the run history needed by the history chart
+
+#### Scenario: History UI uses summary data
+- **WHEN** the History page renders the pass-rate-over-time chart
+- **THEN** it loads run history from summary data rather than a standalone history endpoint
 
 ### Requirement: API uses report-store abstraction
 API route handlers SHALL access report data through a report-store abstraction rather than embedding storage-specific database logic directly in UI components or route handlers.
@@ -238,4 +298,35 @@ Campaign API routes SHALL NOT return raw prompt, model output, structured raw ou
 - **WHEN** a public client requests raw content for an attempt whose safety state is pending
 - **THEN** the API SHALL omit raw content fields
 - **AND** it SHALL still expose non-sensitive status and denominator metadata
+
+### Requirement: Report APIs resolve latest evaluation by default
+
+Report APIs that serve campaign-sensitive summaries, charts, model results, benchmark details, fixture attempts, or comparison data SHALL resolve the default campaign through the report-store abstraction when no explicit campaign ID is supplied. The default SHALL prefer the latest complete, publishable, non-legacy campaign. If no campaign records exist, APIs SHALL fall back to aggregate report summary data where that endpoint has a legacy aggregate equivalent.
+
+#### Scenario: Chart endpoint defaults to latest campaign
+
+- **WHEN** a client requests a campaign-sensitive chart endpoint without a `campaign` query parameter
+- **THEN** the endpoint SHALL use the report store's default latest reportable campaign when one exists
+- **AND** the response SHALL include campaign metadata when the response shape supports it
+
+#### Scenario: Aggregate fallback when no campaigns exist
+
+- **WHEN** the report database has model and benchmark summary rows but no campaign rows
+- **THEN** compact report endpoints SHALL continue returning aggregate summary data
+- **AND** they SHALL NOT return an error solely because campaign rows are absent
+
+### Requirement: Explicit campaign lookup remains supported
+
+Report APIs SHALL continue accepting explicit campaign IDs for compatible internal links, History drilldowns, raw-attempt inspection, and debug query parameters. Unsupported or incompatible explicit campaign IDs SHALL be rejected or ignored according to the endpoint's existing validation behavior without creating a visible campaign selector requirement.
+
+#### Scenario: Compatible explicit campaign is honored
+
+- **WHEN** a request includes a compatible `campaign` query parameter
+- **THEN** the endpoint SHALL use that campaign for campaign-sensitive data
+
+#### Scenario: Incompatible explicit campaign is not silently compared
+
+- **WHEN** a request includes a campaign that is incompatible with the requested benchmark, model, or output mode
+- **THEN** the endpoint SHALL avoid returning misleading campaign-scoped aggregates
+- **AND** it SHALL preserve existing validation or null-fallback semantics
 

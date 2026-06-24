@@ -1,8 +1,5 @@
-# evaluation-campaign-reporting Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-repeated-evaluation-campaigns. Update Purpose after archive.
-## Requirements
 ### Requirement: Reports select a campaign globally
 
 The report application SHALL NOT provide a campaign selector shared across ordinary campaign-sensitive pages. Campaign-sensitive summaries, charts, tables, and links SHALL default to the latest reportable evaluation campaign when one exists, without requiring user selection. Explicit campaign IDs MAY still be honored through internal links, History drilldowns, raw-attempt inspection, or debug query parameters.
@@ -41,35 +38,6 @@ The report SHALL display campaign trial counts, completeness, publication state,
 - **THEN** the UI SHALL identify the incompatibility in History or comparison contexts
 - **AND** it SHALL not compute a default reliability delta
 
-### Requirement: Aggregate reliability is traceable to raw attempts
-
-Model, benchmark, and fixture summaries SHALL expose explicit pass counts and denominators and SHALL link to the raw attempts that produced the aggregate.
-
-#### Scenario: Inspect a flaky fixture
-
-- **WHEN** a fixture summary reports four passes in five attempts
-- **THEN** the user SHALL be able to expand or navigate to all five attempts
-- **AND** each attempt SHALL show its quality result, output mode, score, validation state, trial, resource usage, and available provenance
-
-### Requirement: Report rankings use complete balanced campaigns
-
-Default leaderboards and cross-model comparisons SHALL include only complete balanced campaign summaries.
-
-#### Scenario: Campaign is partially complete
-
-- **WHEN** one model has fewer valid scheduled attempts than another
-- **THEN** the incomplete model SHALL not appear in the default ranking
-- **AND** the user MAY explicitly reveal it with its missing counts visible
-
-### Requirement: UI reliability states are accessible
-
-Campaign and fixture reliability states SHALL be communicated with text or counts in addition to color and SHALL be operable with keyboard and assistive technologies.
-
-#### Scenario: Reliability heatmap is read without color
-
-- **WHEN** a user reads a heatmap cell with assistive technology
-- **THEN** the cell SHALL announce the model or fixture, passing attempts, total valid attempts, and reliability classification
-
 ### Requirement: History treats campaigns as the comparison unit
 
 History views SHALL show one primary node, point, or row per campaign when campaign records exist and SHALL provide trial-level detail without presenting trials as independent benchmark releases. Campaign terminology MAY be user-facing on History because it identifies the stored evaluation nodes being compared.
@@ -86,6 +54,8 @@ History views SHALL show one primary node, point, or row per campaign when campa
 - **THEN** History SHALL present them as the evaluation timeline
 - **AND** ordinary report pages SHALL continue to default to the latest reportable campaign
 
+## ADDED Requirements
+
 ### Requirement: Campaign terminology is constrained outside history
 
 Ordinary report pages SHALL prefer user-facing terms such as "evaluation run", "latest evaluation", "trial", or "raw attempt" instead of "campaign". The term "campaign" SHALL remain acceptable in History, Methodology sections that define the internal model, API/debug contexts, and raw evidence views where the exact stored identity matters.
@@ -99,4 +69,3 @@ Ordinary report pages SHALL prefer user-facing terms such as "evaluation run", "
 
 - **WHEN** a user opens raw attempt evidence for a specific campaign
 - **THEN** the UI MAY display the campaign ID because it is part of the evidence identity
-

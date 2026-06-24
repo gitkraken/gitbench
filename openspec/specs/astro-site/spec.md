@@ -14,7 +14,7 @@ The project SHALL include an Astro project at `gitbench/ui/` with `package.json`
 - **THEN** it includes `react()` in the integrations array
 
 ### Requirement: Static Layout component with sidebar
-The site SHALL have a `Layout.astro` component that wraps all pages with a header, a minimal `Sidebar.astro` component, a content area via `<slot />`, and a footer. The sidebar SHALL contain seven navigation links: Overview, Models, Benchmarks, Explore, Compare, History, Methodology.
+The site SHALL have a `Layout.astro` component that wraps all pages with a header, a minimal `Sidebar.astro` component, a content area via `<slot />`, and a footer. The sidebar SHALL contain seven navigation links: Overview, Models, Benchmarks, Explore, Compare, History, Methodology. The shared layout SHALL NOT render a campaign selector, campaign status control, or "No campaigns" text in ordinary page headers.
 
 At viewport widths greater than 960px, the sidebar SHALL render as a fixed 220px left sidebar with all icons and labels visible.
 
@@ -48,6 +48,11 @@ The "GitBench" title and "by GitKraken" subtitle text SHALL be visible at all vi
 - **WHEN** the viewport width is 600px or less but greater than 380px
 - **THEN** both "GitBench" and "by GitKraken" text are visible in the sidebar header
 
+#### Scenario: Header omits campaign controls
+- **WHEN** any ordinary report page renders
+- **THEN** the shared header SHALL NOT include `CampaignSelector`
+- **AND** it SHALL NOT display a campaign empty state
+
 ### Requirement: Design tokens in global CSS
 The site SHALL use CSS custom properties (design tokens) for colors, typography, spacing, and borders in `src/styles/global.css`. The theme SHALL be dark (matching the existing GitBench report aesthetic) with variables for background, surface, text, accent, pass/warn/fail colors.
 
@@ -79,7 +84,7 @@ All routes SHALL be defined as `.astro` files in `src/pages/`. Dynamic routes SH
 - **THEN** the Fixture Detail page (`fixtures/[fixture].astro`) is rendered with fixture data for `f001`
 
 ### Requirement: results.json served as static asset
-The aggregated benchmark data MAY be written to `ui/public/results.json` by the Python CLI as a compatibility artifact. The Astro site SHALL NOT embed the full report data in page HTML. React islands SHALL load query-specific report data through the report API client instead of fetching the full `/results.json` payload. The overview page's first chart (PassRateBarChart) is an exception: it MAY receive chart-specific data via an `initialData` prop computed at build time from `getReportStore()`, bypassing the report API client for the default (no campaign) view. This exception is limited to the pass-rate chart on the overview page. All other charts and pages SHALL continue to load data through the report API client.
+The aggregated benchmark data MAY be written to `ui/public/results.json` by the Python CLI as a compatibility artifact. The Astro site SHALL NOT embed the full report data in page HTML. React islands SHALL load query-specific report data through the report API client instead of fetching the full `/results.json` payload. The overview page's first chart (PassRateBarChart) MAY receive chart-specific data via an `initialData` prop computed at build time, but that payload SHALL use the same default latest-evaluation semantics as the corresponding chart API when campaign rows exist. If no campaign rows exist, the initial payload MAY use aggregate summary data as a compatibility fallback. This exception is limited to the pass-rate chart on the overview page. All other charts and pages SHALL continue to load data through the report API client.
 
 #### Scenario: results.json is accessible when emitted
 - **WHEN** the built site is served and compatibility JSON was emitted during report generation
@@ -94,9 +99,14 @@ The aggregated benchmark data MAY be written to `ui/public/results.json` by the 
 - **THEN** it requests only the query-specific API payload needed for that view
 - **AND** it does not fetch `/results.json` as the canonical report data source
 
-#### Scenario: Overview pass-rate chart uses embedded data
-- **WHEN** the overview page loads with no `?campaign=` query parameter
-- **THEN** the PassRateBarChart renders immediately from embedded `initialData` without an API fetch
+#### Scenario: Overview pass-rate chart uses default evaluation data
+- **WHEN** the overview page loads without a `campaign` query parameter and campaign rows exist
+- **THEN** the PassRateBarChart initial data SHALL represent the same default latest reportable campaign that `/api/charts/pass-rate` would return
+
+#### Scenario: Overview pass-rate chart falls back without campaigns
+- **WHEN** the overview page loads and no campaign rows exist
+- **THEN** the PassRateBarChart MAY render from aggregate summary initial data
+- **AND** the page SHALL NOT display "No campaigns"
 
 #### Scenario: Other overview charts still fetch from API
 - **WHEN** the overview page loads
@@ -104,7 +114,7 @@ The aggregated benchmark data MAY be written to `ui/public/results.json` by the 
 
 #### Scenario: Campaign override triggers API fetch
 - **WHEN** the overview page loads with a `?campaign=<id>` query parameter
-- **THEN** PassRateBarChart falls back to fetching from `/api/charts/pass-rate?campaign=<id>` to obtain campaign metadata
+- **THEN** PassRateBarChart falls back to fetching from `/api/charts/pass-rate?campaign=<id>` to obtain campaign-scoped data and metadata
 
 ### Requirement: Build produces static dist/ directory
 Running `npm run build` in `gitbench/ui/` SHALL produce a static Astro site in `ui/dist/` with HTML, CSS, JS, and static assets. The Astro page output SHALL remain static, while API-backed report data SHALL be served by deployment-specific API functions during local development and hosted production.

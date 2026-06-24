@@ -160,19 +160,35 @@ The Compare page (`compare.astro`) SHALL be a React island component that provid
 - **THEN** `gpt-4o#high` is pre-selected in the model picker
 
 ### Requirement: History page shows run history and time series
-The History page (`history.astro`) SHALL render a static run log table showing timestamp, model, pass rate, suite version, and delta from previous run. It SHALL include a React island time series chart showing pass rate over time per selected model. Expanding a run row SHALL show the specific fixtures that regressed or improved compared to the previous run of the same model.
+The History page (`history.astro`) SHALL render campaign records as the primary evaluation timeline when campaign data exists. Each campaign node or row SHALL show campaign identity, evaluation date, status, trial counts, mean success, valid attempts, and delta from the previous compatible campaign when available. The page MAY retain legacy run history and time-series behavior as a fallback for reports that contain only single-run aggregate data.
 
-#### Scenario: Run log table is rendered statically
-- **WHEN** navigating to `/history`
-- **THEN** a table displays all runs sorted by timestamp descending, without requiring JavaScript
+#### Scenario: Campaign timeline is rendered
+- **WHEN** navigating to `/history` with campaign records available
+- **THEN** the page displays campaign nodes or rows sorted by evaluation time
+- **AND** each row includes status, trial counts, mean success, valid attempts, and compatibility-aware delta where available
 
-#### Scenario: Time series chart shows pass rate over calendar time
-- **WHEN** the History page loads and React hydrates
-- **THEN** a line chart displays pass rate over time for each selected model
+#### Scenario: Time series chart uses campaign nodes
+- **WHEN** the History page loads and campaign records exist
+- **THEN** the time series chart SHALL use campaign-level points rather than independent trial rows
 
-#### Scenario: Expanding a run row shows fixture deltas
-- **WHEN** a user clicks to expand a run row
-- **THEN** the expanded area lists fixtures whose pass status or similarity changed significantly from the previous run
+#### Scenario: Legacy run history fallback
+- **WHEN** the report contains no campaign records but contains legacy run history
+- **THEN** the History page MAY display the legacy run log and run-level time series
+
+### Requirement: Ordinary report pages omit campaign controls
+
+Overview, Models, Benchmarks, Explore, Compare, Methodology, and Fixture pages SHALL NOT render a campaign selector or a "No campaigns" campaign empty state. These pages SHALL use the default latest evaluation data supplied by the report APIs or store helpers.
+
+#### Scenario: Overview has no campaign selector
+
+- **WHEN** a user opens the Overview page
+- **THEN** the page header SHALL NOT include a campaign selector
+- **AND** the page SHALL NOT show "No campaigns" when aggregate report data exists
+
+#### Scenario: Campaign-specific fixture evidence remains available
+
+- **WHEN** a user navigates to a fixture evidence view from History or a raw-attempt link
+- **THEN** campaign-specific raw attempt details MAY be shown for that evidence context
 
 ### Requirement: Models index page groups by provider and base model
 The Models index page (`/models`) SHALL render models grouped by provider, then by base model within each provider. Each provider section SHALL display the provider brand icon and provider name as a header. Within each provider section, base models SHALL be displayed as cards containing sub-cards for each reasoning level. Reasoning level sub-cards SHALL be sorted by reasoning effort order: default/none, low, medium, high, xhigh, max. Each level sub-card SHALL show: the level name, pass rate percentage (color-coded), and total cost in USD. Clicking a level sub-card SHALL navigate to `/models/<provider>/<base-model>/<level>/`.
