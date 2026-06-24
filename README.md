@@ -13,10 +13,17 @@ A benchmark suite for evaluating language models' Git competency. GitBench runs 
 pip install -e .
 ```
 
-Or with the included virtual environment:
+Or with a dedicated virtual environment:
 
 ```bash
+# Create the virtual environment
+python -m venv .venv
+
+# Activate it
 source .venv/bin/activate
+
+# Install the package in editable mode
+pip install -e .
 ```
 
 ## Quick Start
