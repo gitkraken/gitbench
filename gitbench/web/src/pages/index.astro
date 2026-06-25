@@ -7,6 +7,7 @@ import TokenUsageChart from "@/components/charts/TokenUsageChart";
 import QuadrantComparisonChart from "@/components/charts/QuadrantComparisonChart";
 import ModelSelector from "@/components/charts/ModelSelector";
 import BenchmarkHeatmap from "@/components/charts/BenchmarkHeatmap";
+import EmailCta from "@/components/EmailCta";
 import { getReportStore } from "@/lib/node-sqlite-report-store";
 import { chartData } from "@/lib/chart-data";
 
@@ -54,6 +55,10 @@ const passRateData = {
         </p>
       </div>
     </div>
+  </section>
+
+  <section class="mb-8">
+    <EmailCta client:load />
   </section>
 
   <section>
