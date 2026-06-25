@@ -32,9 +32,15 @@ for (const fid of fixtureKeys) {
     tagCounts[t] = (tagCounts[t] || 0) + 1;
   }
 }
+
+const benchmarkDescription = `${benchName} benchmark results across ${fixtureKeys.length} Git fixtures, with model pass rates, tags, and per-fixture comparisons.`;
 ---
 
-<Layout title={benchName}>
+<Layout
+  title={benchName}
+  description={benchmarkDescription}
+  image="/og/benchmark-detail.png"
+>
   <div class="card mb-8">
     <div class="font-mono text-[0.68rem] text-(--color-text-dim) mb-1">
       Benchmark

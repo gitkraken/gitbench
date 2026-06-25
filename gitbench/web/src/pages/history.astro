@@ -4,7 +4,11 @@ import TimeSeriesChart from "@/components/charts/TimeSeriesChart";
 import { CampaignHistory } from "@/components/CampaignHistory";
 ---
 
-<Layout title="History">
+<Layout
+  title="History"
+  description="Track GitBench evaluation runs over time, including pass-rate trends and campaign timeline changes."
+  image="/og/history.png"
+>
   <section class="mb-10">
     <div class="section-label"><span>Pass Rate Over Time</span></div>
     <TimeSeriesChart client:load />

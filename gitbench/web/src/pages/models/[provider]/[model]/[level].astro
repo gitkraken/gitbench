@@ -317,9 +317,21 @@ const hasReasoningTelemetry = primaryStats.hasReasoningTelemetry;
 const totalCost = primaryStats.totalCost;
 const hasCost = primaryStats.hasCost;
 const aggregateTokenLabel = primaryStats.aggregateTokenLabel;
+const levelLabel = level || "default";
+const outputEvidenceDescription = hasComparison
+  ? "text and JSON Schema output comparisons"
+  : `${outputModeLabel.toLowerCase()} output evidence`;
+const modelLevelDescription =
+  `${providerName} ${baseModel} ${levelLabel} GitBench results: ` +
+  `${passRate}% pass rate across ${summary.total_fixtures} fixtures, ` +
+  `with ${outputEvidenceDescription}.`;
 ---
 
-<Layout title={`${providerName} / ${baseModel} / ${level || "default"}`}>
+<Layout
+  title={`${providerName} / ${baseModel} / ${levelLabel}`}
+  description={modelLevelDescription}
+  image="/og/model-detail.png"
+>
   <!-- Header with provider icon -->
   <div class="flex items-center gap-3 mb-2">
     <ProviderIcon provider={provider} size={24} client:load />

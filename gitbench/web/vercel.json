@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/**/*.ts": {
-      "includeFiles": "data/gitbench.db"
+      "includeFiles": "{data/gitbench.db,src/lib/**/*.ts}"
     }
   },
   "rewrites": [

@@ -24,6 +24,15 @@ const { provider, baseModel, group, data } = Astro.props as {
 
 // Capitalize provider name for display
 const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+const variantCount = group.levels.length;
+const bestPassRate =
+  variantCount > 0
+    ? Math.round(Math.max(...group.levels.map((l) => l.pass_at_k)) * 1000) /
+      10
+    : 0;
+const modelDescription =
+  `${providerName} ${baseModel} GitBench results across ${variantCount} ` +
+  `reasoning and output variants. Best observed pass rate: ${bestPassRate}%.`;
 
 // Split levels into text and json_schema groups
 const textLevels = group.levels.filter((l) => {
@@ -46,7 +55,11 @@ function formatModelSummary(
 }
 ---
 
-<Layout title={`${providerName} / ${baseModel}`}>
+<Layout
+  title={`${providerName} / ${baseModel}`}
+  description={modelDescription}
+  image="/og/model-detail.png"
+>
   <div class="flex items-center gap-3 mb-6">
     <ProviderIcon provider={provider} size={28} client:load />
     <div>

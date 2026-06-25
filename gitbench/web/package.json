@@ -9,6 +9,7 @@
     "dev": "astro dev",
     "dev:api": "vercel dev",
     "build:db": "node scripts/build-db.mjs",
+    "build:og": "node scripts/build-og-images.mjs",
     "test:api": "node --experimental-strip-types --experimental-transform-types --test test/*.test.mjs",
     "build": "node scripts/build-db.mjs && astro build",
     "preview": "astro preview",

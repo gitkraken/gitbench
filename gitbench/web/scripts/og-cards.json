@@ -1,0 +1,112 @@
+[
+  {
+    "name": "overview",
+    "file": "overview.png",
+    "eyebrow": "GitBench",
+    "title": "AI model rankings for real Git tasks",
+    "subtitle": "Pass rates, costs, runtimes, and fixture-level evidence for coding models.",
+    "stat1": "204 fixtures",
+    "stat2": "17 benchmarks",
+    "stat3": "transparent scoring",
+    "panel": "Model pass rate"
+  },
+  {
+    "name": "models",
+    "file": "models.png",
+    "eyebrow": "GitBench Models",
+    "title": "Model results by provider",
+    "subtitle": "Compare base models, reasoning levels, and output modes across Git tasks.",
+    "stat1": "pass rate",
+    "stat2": "cost",
+    "stat3": "runtime",
+    "panel": "Provider leaderboard"
+  },
+  {
+    "name": "benchmarks",
+    "file": "benchmarks.png",
+    "eyebrow": "GitBench Benchmarks",
+    "title": "Git benchmark coverage",
+    "subtitle": "Browse task categories from commit messages to rebases, bisects, reflogs, and worktrees.",
+    "stat1": "17 benchmarks",
+    "stat2": "204 fixtures",
+    "stat3": "Git task domains",
+    "panel": "Benchmark matrix"
+  },
+  {
+    "name": "benchmark-detail",
+    "file": "benchmark-detail.png",
+    "eyebrow": "GitBench Benchmark",
+    "title": "Benchmark deep dive",
+    "subtitle": "Per-fixture pass rates, tags, and model leaderboards for each Git task category.",
+    "stat1": "fixture table",
+    "stat2": "model ranking",
+    "stat3": "tag filters",
+    "panel": "Pass rate by model"
+  },
+  {
+    "name": "compare",
+    "file": "compare.png",
+    "eyebrow": "GitBench Compare",
+    "title": "Head-to-head model comparison",
+    "subtitle": "Pick models and inspect which fixtures each one passes, misses, or disagrees on.",
+    "stat1": "2+ models",
+    "stat2": "fixture scatter",
+    "stat3": "disagreements",
+    "panel": "Comparison signal"
+  },
+  {
+    "name": "explore",
+    "file": "explore.png",
+    "eyebrow": "GitBench Explore",
+    "title": "Explore GitBench fixtures",
+    "subtitle": "Filter test cases by tag, difficulty, and benchmark, then inspect prompts and attempts.",
+    "stat1": "tags",
+    "stat2": "difficulty",
+    "stat3": "prompts",
+    "panel": "Fixture coverage"
+  },
+  {
+    "name": "history",
+    "file": "history.png",
+    "eyebrow": "GitBench History",
+    "title": "Evaluation history",
+    "subtitle": "Track repeated runs, campaign timelines, and pass-rate changes over time.",
+    "stat1": "runs",
+    "stat2": "deltas",
+    "stat3": "campaigns",
+    "panel": "Trend line"
+  },
+  {
+    "name": "methodology",
+    "file": "methodology.png",
+    "eyebrow": "GitBench Methodology",
+    "title": "Transparent scoring methodology",
+    "subtitle": "Deterministic Git fixtures, repeatable inputs, similarity scoring, and raw evidence.",
+    "stat1": "scoring",
+    "stat2": "reliability",
+    "stat3": "audit trail",
+    "panel": "Evidence pipeline"
+  },
+  {
+    "name": "model-detail",
+    "file": "model-detail.png",
+    "eyebrow": "GitBench Model",
+    "title": "Model performance deep dive",
+    "subtitle": "Inspect pass rate, output mode comparisons, tokens, cost, and fixture evidence.",
+    "stat1": "pass rate",
+    "stat2": "JSON schema",
+    "stat3": "tokens",
+    "panel": "Model profile"
+  },
+  {
+    "name": "fixture-detail",
+    "file": "fixture-detail.png",
+    "eyebrow": "GitBench Fixture",
+    "title": "Fixture-level evidence",
+    "subtitle": "See the prompt, expected answer, repository setup, and every model output.",
+    "stat1": "prompt",
+    "stat2": "expected",
+    "stat3": "model outputs",
+    "panel": "Attempt evidence"
+  }
+]

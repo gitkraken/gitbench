@@ -4,9 +4,40 @@ import Sidebar from "@/components/Sidebar.astro";
 
 interface Props {
   title: string;
+  description?: string;
+  canonicalPath?: string;
+  image?: string;
+  imageAlt?: string;
+  type?: "website" | "article";
 }
 
-const { title } = Astro.props;
+const SITE_NAME = "GitBench";
+const DEFAULT_DESCRIPTION =
+  "GitBench ranks AI models on deterministic Git tasks with transparent scoring, repeated evaluation runs, and fixture-level evidence.";
+const DEFAULT_IMAGE = "/og/overview.png";
+const DEFAULT_IMAGE_ALT = "GitBench model leaderboard and benchmark dashboard";
+
+const {
+  title,
+  description = DEFAULT_DESCRIPTION,
+  canonicalPath = Astro.url.pathname,
+  image = DEFAULT_IMAGE,
+  imageAlt = DEFAULT_IMAGE_ALT,
+  type = "website",
+} = Astro.props;
+
+const vercelUrl =
+  import.meta.env.VERCEL_PROJECT_PRODUCTION_URL || import.meta.env.VERCEL_URL;
+const siteFromEnv =
+  import.meta.env.PUBLIC_SITE_URL ||
+  (vercelUrl ? `https://${vercelUrl}` : undefined);
+const metadataBase = new URL(
+  siteFromEnv ?? Astro.site?.href ?? Astro.url.origin,
+);
+const pageTitle = title === SITE_NAME ? SITE_NAME : `${title} | ${SITE_NAME}`;
+const metaDescription = description.trim() || DEFAULT_DESCRIPTION;
+const canonicalUrl = new URL(canonicalPath, metadataBase).toString();
+const imageUrl = new URL(image, metadataBase).toString();
 const generated = new Date().toISOString().split("T")[0];
 ---
 
@@ -15,41 +46,67 @@ const generated = new Date().toISOString().split("T")[0];
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title></head
-  >: GitBench
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-</html>
-<body>
-  <div class="app-layout">
-    <Sidebar />
-    <div class="app-main">
-      <header class="page-header">
-        <h1>{title}</h1>
-      </header>
-      <main class="page-content">
-        <slot />
-      </main>
-      <footer class="app-footer">
-        <span>GitBench - Automated Git Task Benchmark</span>
-        <span>{generated}</span>
-      </footer>
+    <title>{pageTitle}</title>
+    <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta name="theme-color" content="#1f8fff" />
+
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:secure_url" content={imageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={imageAlt} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={metaDescription} />
+    <meta name="twitter:image" content={imageUrl} />
+    <meta name="twitter:image:alt" content={imageAlt} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <Sidebar />
+      <div class="app-main">
+        <header class="page-header">
+          <h1>{title}</h1>
+        </header>
+        <main class="page-content">
+          <slot />
+        </main>
+        <footer class="app-footer">
+          <span>GitBench - Automated Git Task Benchmark</span>
+          <span>{generated}</span>
+        </footer>
+      </div>
     </div>
-  </div>
-  <script>
-    document
-      .querySelectorAll(".sidebar-collapse-toggle, .menu-toggle")
-      .forEach(function (input) {
-        input.addEventListener("change", function () {
-          var checked = this.checked;
-          this.setAttribute("aria-expanded", String(checked));
-          var nav = this.parentElement.querySelector(".sidebar-nav");
-          if (nav) nav.setAttribute("aria-expanded", String(checked));
+    <script>
+      document
+        .querySelectorAll(".sidebar-collapse-toggle, .menu-toggle")
+        .forEach(function (input) {
+          input.addEventListener("change", function () {
+            var checked = this.checked;
+            this.setAttribute("aria-expanded", String(checked));
+            var nav = this.parentElement.querySelector(".sidebar-nav");
+            if (nav) nav.setAttribute("aria-expanded", String(checked));
+          });
         });
-      });
-  </script>
-</body>
+    </script>
+  </body>
+</html>

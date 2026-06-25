@@ -46,7 +46,11 @@ function modelModeKey(modelName: string, outputMode: string): string {
 }
 
 export class NodeSqliteReportStore implements ReportStore {
-  constructor(private readonly db: DatabaseSync) {}
+  private readonly db: DatabaseSync;
+
+  constructor(db: DatabaseSync) {
+    this.db = db;
+  }
 
   getSummary(options: ReportQueryOptions = {}): GitBenchData {
     if (options.campaign_id) {

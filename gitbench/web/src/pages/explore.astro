@@ -28,7 +28,11 @@ const maxCount = Math.max(...sortedTags.map((t) => t[1]));
 const allFixtures = Object.values(data.fixture_index);
 ---
 
-<Layout title="Explore">
+<Layout
+  title="Explore"
+  description="Filter GitBench fixtures by tag, difficulty, and benchmark, then inspect prompts, expected answers, and model attempts."
+  image="/og/explore.png"
+>
   <div class="info-tip">
     <div class="section-label"><span>About</span></div>
     <p class="info-blurb">

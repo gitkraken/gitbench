@@ -76,9 +76,18 @@ for (const m of data.models) {
 
 // Sort by similarity descending
 modelOutputs.sort((a, b) => b.similarity - a.similarity);
+const fixtureDescription =
+  fi.purpose ||
+  fi.description ||
+  `GitBench fixture ${fixtureId} from the ${fi.benchmark} benchmark.`;
+const fixtureMetaDescription = `${fixtureDescription} See the prompt, expected answer, setup commands, and model outputs for ${fi.benchmark}/${fixtureId}.`;
 ---
 
-<Layout title={`${fixtureId} — ${fi.benchmark}`}>
+<Layout
+  title={`${fixtureId} — ${fi.benchmark}`}
+  description={fixtureMetaDescription}
+  image="/og/fixture-detail.png"
+>
   <div class="mb-6">
     <a
       href={`/benchmarks/${fi.benchmark}`}

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitBench OpenGraph Card</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        margin: 0;
+        overflow: hidden;
+        background: #151515;
+        color: #f4f4f4;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      .card {
+        position: relative;
+        width: 1200px;
+        height: 630px;
+        padding: 68px 76px;
+        background:
+          linear-gradient(135deg, rgba(77, 163, 255, 0.18), transparent 42%),
+          radial-gradient(circle at 82% 18%, rgba(67, 209, 122, 0.2), transparent 30%),
+          #171717;
+      }
+
+      .frame {
+        position: absolute;
+        inset: 48px;
+        border: 1px solid #373737;
+        border-radius: 28px;
+        background: rgba(32, 32, 32, 0.86);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+      }
+
+      .content {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: 1fr 390px;
+        gap: 58px;
+        height: 100%;
+        align-items: center;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: #9dcfff;
+        font-size: 24px;
+        font-weight: 750;
+        letter-spacing: 0;
+        margin-bottom: 26px;
+      }
+
+      .mark {
+        position: relative;
+        width: 66px;
+        height: 18px;
+      }
+
+      .mark::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        background: #4da3ff;
+        box-shadow:
+          24px 0 0 #43d17a,
+          48px 0 0 #f5c14a;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 660px;
+        font-size: 78px;
+        line-height: 0.98;
+        letter-spacing: 0;
+        font-weight: 850;
+      }
+
+      .subtitle {
+        max-width: 700px;
+        margin: 28px 0 0;
+        color: #c9c9c9;
+        font-size: 30px;
+        line-height: 1.25;
+        font-weight: 520;
+      }
+
+      .stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 38px;
+      }
+
+      .stat {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid #424242;
+        background: #242424;
+        color: #e8e8e8;
+        font-size: 19px;
+        font-weight: 680;
+      }
+
+      .panel {
+        height: 390px;
+        padding: 30px;
+        border-radius: 22px;
+        border: 1px solid #3c3c3c;
+        background: #1b1b1b;
+      }
+
+      .panel-title {
+        color: #a7a7a7;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 28px;
+      }
+
+      .bars {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        height: 230px;
+        align-items: end;
+        border-bottom: 3px solid #4a4a4a;
+        padding: 0 12px;
+      }
+
+      .bar {
+        border-radius: 12px 12px 0 0;
+        min-height: 44px;
+      }
+
+      .bar:nth-child(1) {
+        height: 42%;
+        background: #ff6b6b;
+      }
+
+      .bar:nth-child(2) {
+        height: 58%;
+        background: #f5c14a;
+      }
+
+      .bar:nth-child(3) {
+        height: 76%;
+        background: #4da3ff;
+      }
+
+      .bar:nth-child(4) {
+        height: 92%;
+        background: #43d17a;
+      }
+
+      .axis {
+        display: flex;
+        justify-content: space-between;
+        color: #8f8f8f;
+        font-size: 16px;
+        font-weight: 700;
+        margin-top: 18px;
+        padding: 0 12px;
+      }
+
+      .brand {
+        position: absolute;
+        left: 76px;
+        bottom: 56px;
+        z-index: 3;
+        color: #8e8e8e;
+        font-size: 22px;
+        font-weight: 720;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" aria-label="GitBench OpenGraph card">
+      <div class="frame"></div>
+      <section class="content">
+        <div>
+          <div class="eyebrow">
+            <span class="mark" aria-hidden="true"></span>
+            <span data-field="eyebrow">GitBench</span>
+          </div>
+          <h1 data-field="title">AI model rankings for real Git tasks</h1>
+          <p class="subtitle" data-field="subtitle">
+            Pass rates, costs, runtimes, and fixture-level evidence for coding models.
+          </p>
+          <div class="stats">
+            <span class="stat" data-field="stat1">204 fixtures</span>
+            <span class="stat" data-field="stat2">17 benchmarks</span>
+            <span class="stat" data-field="stat3">transparent scoring</span>
+          </div>
+        </div>
+        <aside class="panel">
+          <div class="panel-title" data-field="panel">Model pass rate</div>
+          <div class="bars">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+          </div>
+          <div class="axis">
+            <span>fail</span>
+            <span>flaky</span>
+            <span>pass</span>
+          </div>
+        </aside>
+      </section>
+      <div class="brand">GitBench by GitKraken</div>
+    </main>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      for (const el of document.querySelectorAll("[data-field]")) {
+        const key = el.getAttribute("data-field");
+        const value = params.get(key);
+        if (value) el.textContent = value;
+      }
+    </script>
+  </body>
+</html>

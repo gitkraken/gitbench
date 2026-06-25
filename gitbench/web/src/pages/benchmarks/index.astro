@@ -6,7 +6,11 @@ import { Badge } from "@/components/ui/badge";
 const data = loadDataSync();
 ---
 
-<Layout title="Benchmarks">
+<Layout
+  title="Benchmarks"
+  description="Browse GitBench Git task categories and see where AI models perform best or fail across fixture suites."
+  image="/og/benchmarks.png"
+>
   <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
     {
       data.benchmarks.map((bench) => {
