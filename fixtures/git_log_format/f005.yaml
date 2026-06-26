@@ -18,7 +18,7 @@ expected: 'February commit
 
   March commit'
 scoring:
-  type: exact_match
+  type: unordered_line_set
 output_schema: commit_message_list
 purpose: Tests ability to list commits in a date range. Evaluates time-based filtering
   with git log.

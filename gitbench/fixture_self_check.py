@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import dataclass
 
 from gitbench.harness.types import Fixture
+from gitbench.scorer_capabilities import capabilities_for_scorer
 
 
 _HASH_RE = re.compile(r"\b[0-9a-fA-F]{7,40}\b")
@@ -19,21 +20,30 @@ class FixtureSelfCheckIssue:
     message: str
 
 
-def check_fixture(fixture: Fixture, repo_path: str | None = None) -> list[FixtureSelfCheckIssue]:
+def check_fixture(
+    fixture: Fixture,
+    repo_path: str | None = None,
+    benchmark_name: str | None = None,
+) -> list[FixtureSelfCheckIssue]:
     issues: list[FixtureSelfCheckIssue] = []
-    issues.extend(_check_hash_answer_shape(fixture))
-    issues.extend(_check_multiline_exact_order(fixture))
+    capabilities = capabilities_for_scorer(
+        fixture.scoring.get("type", "similarity"),
+        benchmark_name=benchmark_name,
+    )
+    issues.extend(_check_hash_answer_shape(fixture, capabilities.dynamic_expected))
+    issues.extend(_check_multiline_exact_order(fixture, capabilities.order_sensitive))
     if repo_path is not None:
         issues.extend(_check_derived_expected(fixture, repo_path))
     return issues
 
 
-def _check_hash_answer_shape(fixture: Fixture) -> list[FixtureSelfCheckIssue]:
+def _check_hash_answer_shape(
+    fixture: Fixture,
+    dynamic_expected: bool,
+) -> list[FixtureSelfCheckIssue]:
     prompt = fixture.prompt.lower()
-    scoring_type = fixture.scoring.get("type", "similarity")
     asks_for_hash = "hash" in prompt
-    dynamic_hash = scoring_type == "commit_hash_by_subject"
-    if asks_for_hash and not dynamic_hash and not _HASH_RE.fullmatch(fixture.expected.strip()):
+    if asks_for_hash and not dynamic_expected and not _HASH_RE.fullmatch(fixture.expected.strip()):
         return [
             FixtureSelfCheckIssue(
                 fixture.id,
@@ -44,11 +54,18 @@ def _check_hash_answer_shape(fixture: Fixture) -> list[FixtureSelfCheckIssue]:
     return []
 
 
-def _check_multiline_exact_order(fixture: Fixture) -> list[FixtureSelfCheckIssue]:
+def _check_multiline_exact_order(
+    fixture: Fixture,
+    order_sensitive: bool,
+) -> list[FixtureSelfCheckIssue]:
     if fixture.scoring.get("type") != "exact_match":
         return []
     lines = [line for line in fixture.expected.splitlines() if line.strip()]
-    if len(lines) <= 1 or fixture.scoring.get("order_matters") is True:
+    if (
+        len(lines) <= 1
+        or fixture.scoring.get("order_matters") is True
+        or not order_sensitive
+    ):
         return []
     return [
         FixtureSelfCheckIssue(

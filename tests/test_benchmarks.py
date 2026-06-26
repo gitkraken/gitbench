@@ -194,7 +194,8 @@ class TestMergeConflictsBenchmark:
         result = benchmark.score(fixture, incomplete_output)
 
         assert result.passed is False
-        assert result.similarity == 0.0
+        assert result.similarity == 0.5
+        assert "Missing files" in result.error
 
 
 class TestCommitSquashBenchmark:
@@ -275,8 +276,8 @@ class TestCommitSquashBenchmark:
         finally:
             executor.cleanup()
 
-    def test_hash_only_correct_answer_passes(self):
-        """Test that answers using commit hashes instead of messages pass."""
+    def test_hash_only_correct_answer_fails_for_subject_line_contract(self):
+        """Test that hash-only answers fail when fixtures request subject lines."""
         import subprocess
 
         benchmark = CommitSquashBenchmark()
@@ -296,6 +297,25 @@ class TestCommitSquashBenchmark:
                 hashes.append(result.stdout.strip())
 
             result = benchmark.score(fixture, ", ".join(hashes), repo_path=repo_path)
+
+            assert result.passed is False
+            assert result.similarity == 0.0
+            assert "Missing expected commit messages" in result.error
+        finally:
+            executor.cleanup()
+
+    def test_legacy_comma_separated_subject_output_still_passes(self):
+        """Test compatibility for comma-separated subject lists from older outputs."""
+        benchmark = CommitSquashBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(
+                fixture,
+                "WIP: add main.py, WIP: continue work",
+                repo_path=repo_path,
+            )
 
             assert result.passed is True
             assert result.similarity == 1.0
@@ -969,6 +989,60 @@ class TestGitCleanBenchmark:
         assert len(fixtures) == 12
         assert {fixture.id for fixture in fixtures} == {f"f{i:03d}" for i in range(1, 13)}
         assert all(fixture.scoring["type"] in {"state_assertions", "exact_match"} for fixture in fixtures)
+
+    def test_stateful_execution_uses_shared_command_normalizer(self, tmp_path):
+        import subprocess
+        from gitbench.harness.types import Fixture
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+        untracked = repo / "scratch.txt"
+        untracked.write_text("temporary\n", encoding="utf-8")
+        fixture = Fixture(
+            id="cmd_norm",
+            description="Command normalization",
+            setup=[],
+            prompt="Clean files",
+            expected="",
+            scoring={"type": "state_assertions"},
+        )
+        benchmark = GitCleanBenchmark()
+
+        benchmark.execute_model_output(
+            str(repo),
+            "```bash\ngit clean -f\n```",
+            fixture,
+        )
+
+        assert not untracked.exists()
+
+    def test_stateful_execution_rejects_prose_around_fenced_command(self, tmp_path):
+        import subprocess
+        from gitbench.harness.types import Fixture
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+        untracked = repo / "scratch.txt"
+        untracked.write_text("temporary\n", encoding="utf-8")
+        fixture = Fixture(
+            id="cmd_norm",
+            description="Command normalization",
+            setup=[],
+            prompt="Clean files",
+            expected="",
+            scoring={"type": "state_assertions"},
+        )
+        benchmark = GitCleanBenchmark()
+
+        benchmark.execute_model_output(
+            str(repo),
+            "Run this:\n```bash\ngit clean -f\n```",
+            fixture,
+        )
+
+        assert untracked.exists()
 
     @pytest.mark.parametrize("fixture_id", [f"f{i:03d}" for i in range(1, 13)])
     def test_expected_answer_passes_fixture_state_checks(self, fixture_id):

@@ -14,7 +14,16 @@ logger = logging.getLogger(__name__)
 
 
 def _expected_commit_messages(expected: str) -> list[str]:
-    """Parse the expected comma-separated commit messages for this benchmark."""
+    """Parse expected commit subject lines for this benchmark.
+
+    New fixtures store one subject per line. Comma-separated expected values are
+    still accepted for older fixtures during the migration window.
+    """
+    lines = [line.strip() for line in expected.splitlines() if line.strip()]
+    if len(lines) > 1:
+        return lines
+    if len(lines) == 1 and "," not in lines[0]:
+        return lines
     return [item.strip() for item in expected.split(",") if item.strip()]
 
 
@@ -50,12 +59,11 @@ class CommitSquashBenchmark(Benchmark):
         model_output: str,
         repo_path: str | None = None,
     ) -> Score:
-        """Score by detecting the expected commit messages in a free-form answer.
+        """Score by detecting the expected commit subject lines in an answer.
 
-        Commit-squash answers are often verbose: strong answers include hashes,
-        the target commit, and interactive-rebase instructions. Raw string
-        similarity penalizes those useful details, so this scorer evaluates the
-        actual selected commits listed in ``expected``.
+        Commit-squash answers can include useful interactive-rebase context, so
+        raw string similarity is too brittle. The deterministic contract is the
+        selected subject lines from ``expected``; hashes alone are not sufficient.
         """
         expected_messages = _expected_commit_messages(fixture.expected)
         if not expected_messages:
@@ -72,7 +80,7 @@ class CommitSquashBenchmark(Benchmark):
         found = [
             message
             for message in expected_messages
-            if self._mentions_commit(message, hashes_by_message, normalized_output)
+            if self._mentions_commit(message, normalized_output)
         ]
         extra = self._selected_extra_commits(
             model_output,
@@ -102,18 +110,10 @@ class CommitSquashBenchmark(Benchmark):
     def _mentions_commit(
         self,
         message: str,
-        hashes_by_message: dict[str, str],
         normalized_output: str,
     ) -> bool:
-        """Return True when output mentions a commit by subject or hash."""
-        if message.lower() in normalized_output:
-            return True
-
-        commit_hash = hashes_by_message.get(message)
-        if not commit_hash:
-            return False
-
-        return commit_hash[:7] in normalized_output or commit_hash in normalized_output
+        """Return True when output mentions a selected commit subject."""
+        return message.lower() in normalized_output
 
     def _commit_hashes_by_message(self, repo_path: str | None) -> dict[str, str]:
         """Return full commit hashes keyed by subject for the fixture repo."""

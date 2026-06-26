@@ -34,9 +34,15 @@ prompt: 'Resolve the rebase conflicts in main.py and utils.py. For main.py: bran
 expected: "main.py:\ndef main():\n    print(\"Running enterprise\")\n\nutils.py:\n\
   DEBUG = True\nPORT = 9000\n"
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    main.py: |
+      def main():
+          print("Running enterprise")
+    utils.py: |
+      DEBUG = True
+      PORT = 9000
+output_schema: resolved_file_blocks
 purpose: Tests ability to resolve simultaneous rebase conflicts in two files with
   different strategies. Evaluates multi-file rebase juggling.
 difficulty: hard

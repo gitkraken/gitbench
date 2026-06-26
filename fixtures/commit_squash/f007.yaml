@@ -18,9 +18,11 @@ setup:
 - git add test.py
 - git commit -m 'Complete tests'
 prompt: Identify the WIP commits that should be marked as squash/fixup for a cleaner
-  test file addition. Do not include the final complete-tests commit. Provide the
-  commit messages.
-expected: 'WIP: add test stub, WIP: expand test'
+  test file addition. Do not include the final complete-tests commit. Output ONLY
+  the selected commit subject lines, one per line, with no explanation.
+expected: |-
+  WIP: add test stub
+  WIP: expand test
 scoring:
   type: commit_selection
   threshold: 1.0

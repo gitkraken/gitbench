@@ -19,8 +19,11 @@ setup:
 prompt: Analyze this git history. Multiple consecutive WIP commits updating the same
   file suggest the changes should be combined. Identify the WIP commits that should
   be marked as squash/fixup in an interactive rebase. Do not include the initial or
-  final anchor commit. Provide the commit messages in order.
-expected: 'WIP: update app.js, WIP: more updates'
+  final anchor commit. Output ONLY the selected commit subject lines, one per line,
+  with no explanation.
+expected: |-
+  WIP: update app.js
+  WIP: more updates
 scoring:
   type: commit_selection
   threshold: 1.0

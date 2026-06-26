@@ -14,6 +14,67 @@ from gitbench.harness.types import Fixture, Score
 logger = logging.getLogger(__name__)
 
 
+class CommandAnswerNormalizationError(ValueError):
+    """Raised when a command answer is not a strict command-only response."""
+
+
+def normalize_command_answer(value: str, label: str = "model output") -> list[str]:
+    """Return command lines from plain text or one whole-answer code fence.
+
+    The helper intentionally does not extract commands from prose. If a response
+    contains a markdown fence, the entire response must be that single fence.
+    """
+    command_text = _strip_whole_answer_command_fence(value, label)
+    if "```" in command_text:
+        raise CommandAnswerNormalizationError(
+            f"Could not parse {label}: fenced commands must be one whole-answer block"
+        )
+
+    lines = [line.strip() for line in command_text.splitlines() if line.strip()]
+    if not lines:
+        raise CommandAnswerNormalizationError(
+            f"Could not parse {label}: no command lines found"
+        )
+
+    for line in lines:
+        try:
+            tokens = shlex.split(line)
+        except ValueError as e:
+            raise CommandAnswerNormalizationError(
+                f"Could not parse {label}: {e}"
+            ) from e
+        if not tokens:
+            raise CommandAnswerNormalizationError(
+                f"Could not parse {label}: empty command line"
+            )
+    return lines
+
+
+def _strip_whole_answer_command_fence(value: str, label: str) -> str:
+    stripped = value.strip()
+    if "```" not in stripped:
+        return stripped
+
+    match = re.fullmatch(
+        r"```(?:[\w+.-]+)?[ \t]*\n(?P<body>.*?)\n```",
+        stripped,
+        flags=re.DOTALL,
+    )
+    if not match:
+        raise CommandAnswerNormalizationError(
+            f"Could not parse {label}: prose around fenced commands is not accepted"
+        )
+    return match.group("body").strip()
+
+
+def normalize_command_sequence(value: str, label: str = "model output") -> list[list[str]]:
+    """Normalize a command answer into shlex token sequences."""
+    sequence = []
+    for line in normalize_command_answer(value, label):
+        sequence.append(shlex.split(line))
+    return sequence
+
+
 def _check_assertion(assertion: dict[str, Any], repo_path: str, model_output: str = "") -> bool:
     """Check a single state assertion against the repo.
 
@@ -392,20 +453,7 @@ class CommandEquivalenceScorer:
         return normalized
 
     def _normalize_command_sequence(self, value: str, label: str) -> list[list[str]]:
-        lines = [line.strip() for line in value.splitlines() if line.strip()]
-        if not lines:
-            raise ValueError(f"Could not parse {label}: no command lines found")
-
-        sequence = []
-        for line in lines:
-            try:
-                tokens = shlex.split(line)
-            except ValueError as e:
-                raise ValueError(f"Could not parse {label}: {e}") from e
-            if not tokens:
-                raise ValueError(f"Could not parse {label}: empty command line")
-            sequence.append(tokens)
-        return sequence
+        return normalize_command_sequence(value, label)
 
     def _score(
         self,
@@ -593,6 +641,142 @@ class JsonSemanticEqualScorer:
         )
 
 
+class ResolvedFileBlocksScorer:
+    """Scores answers containing resolved content for named files."""
+
+    _HEADING_RE = re.compile(
+        r"^\s*(?:#{1,6}\s*)?(?:---\s*)?`?"
+        r"(?P<filename>[A-Za-z0-9_.\-/]+)"
+        r"`?\s*:?\s*$"
+    )
+
+    def score(self, fixture: Fixture, model_output: str) -> Score:
+        expected_files = fixture.scoring.get("expected_files")
+        if not self._valid_expected_files(expected_files):
+            return _score_result(
+                fixture,
+                model_output,
+                False,
+                0.0,
+                "resolved_file_blocks scoring requires scoring.expected_files as a filename-to-content mapping",
+            )
+
+        expected = dict(expected_files)
+        try:
+            actual = self._parse_blocks(model_output)
+        except ValueError as e:
+            return _score_result(fixture, model_output, False, 0.0, str(e))
+
+        expected_names = set(expected)
+        actual_names = set(actual)
+        allow_extra = fixture.scoring.get("allow_extra_files") is True
+        missing = sorted(expected_names - actual_names)
+        extra = sorted(actual_names - expected_names)
+
+        mismatched = []
+        matched = 0
+        for filename in sorted(expected_names & actual_names):
+            expected_content = self._normalize_content(expected[filename])
+            actual_content = self._normalize_content(actual[filename])
+            if actual_content == expected_content:
+                matched += 1
+            else:
+                mismatched.append(filename)
+
+        passed = not missing and not mismatched and (allow_extra or not extra)
+        similarity = matched / len(expected) if expected else 0.0
+        errors = []
+        if missing:
+            errors.append(f"Missing files: {missing}")
+        if mismatched:
+            errors.append(f"Content mismatch: {mismatched}")
+        if extra and not allow_extra:
+            errors.append(f"Extra files: {extra}")
+
+        return _score_result(
+            fixture,
+            model_output,
+            passed,
+            similarity,
+            "; ".join(errors) if errors else None,
+        )
+
+    def _valid_expected_files(self, expected_files: Any) -> bool:
+        return (
+            isinstance(expected_files, dict)
+            and bool(expected_files)
+            and all(
+                isinstance(filename, str)
+                and filename.strip()
+                and isinstance(content, str)
+                for filename, content in expected_files.items()
+            )
+        )
+
+    def _parse_blocks(self, value: str) -> dict[str, str]:
+        blocks: dict[str, list[str]] = {}
+        current_filename: str | None = None
+        current_lines: list[str] = []
+
+        for raw_line in value.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+            heading = self._heading_filename(raw_line)
+            if heading is not None:
+                if current_filename is not None:
+                    blocks[current_filename] = current_lines
+                if heading in blocks:
+                    raise ValueError(f"Duplicate file block: {heading}")
+                current_filename = heading
+                current_lines = []
+                continue
+
+            if current_filename is None:
+                if raw_line.strip():
+                    raise ValueError("Expected file heading before file content")
+                continue
+            current_lines.append(raw_line)
+
+        if current_filename is not None:
+            blocks[current_filename] = current_lines
+
+        if not blocks:
+            raise ValueError("No file blocks found")
+
+        return {
+            filename: "\n".join(lines)
+            for filename, lines in blocks.items()
+        }
+
+    def _heading_filename(self, line: str) -> str | None:
+        match = self._HEADING_RE.fullmatch(line)
+        if not match:
+            return None
+        return match.group("filename")
+
+    def _normalize_content(self, value: str) -> str:
+        value = self._strip_per_file_fence(value)
+        value = value.replace("\r\n", "\n").replace("\r", "\n")
+        lines = value.split("\n")
+        while lines and lines[0] == "":
+            lines.pop(0)
+        while lines and lines[-1] == "":
+            lines.pop()
+        return "\n".join(line.rstrip(" \t") for line in lines)
+
+    def _strip_per_file_fence(self, value: str) -> str:
+        stripped = value.strip("\n")
+        lines = stripped.split("\n")
+        if len(lines) < 2:
+            return value
+        opening = lines[0].strip()
+        closing = lines[-1].strip()
+        if not opening.startswith("```") or closing != "```":
+            return value
+        tag = opening[3:].strip()
+        if tag and not re.fullmatch(r"[\w+.-]+", tag):
+            return value
+        return "\n".join(lines[1:-1])
+
+
 class Scorer:
     """Computes similarity scores for model outputs against expected values.
 
@@ -603,6 +787,7 @@ class Scorer:
     - numeric_exact: exact numeric comparison with optional one-number prose normalization
     - commit_hash_by_subject: repo-derived commit hash comparison
     - json_semantic_equal: parsed JSON value comparison
+    - resolved_file_blocks: strict named file-content comparison
     - command_equivalence: tokenized command sequence comparison
     - state_assertions: repo state checking (needs repo_path)
     - structured: per-field scoring
@@ -621,6 +806,7 @@ class Scorer:
         self._numeric_exact_scorer = NumericExactScorer()
         self._commit_hash_by_subject_scorer = CommitHashBySubjectScorer()
         self._json_semantic_equal_scorer = JsonSemanticEqualScorer()
+        self._resolved_file_blocks_scorer = ResolvedFileBlocksScorer()
         self._judge_client = judge_client
 
     def score(
@@ -774,6 +960,9 @@ class Scorer:
 
             elif scoring_type == "json_semantic_equal":
                 return self._json_semantic_equal_scorer.score(fixture, model_output)
+
+            elif scoring_type == "resolved_file_blocks":
+                return self._resolved_file_blocks_scorer.score(fixture, model_output)
 
             elif scoring_type == "state_assertions":
                 if repo_path is None:

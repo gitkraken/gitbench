@@ -7,7 +7,11 @@ from pathlib import Path
 
 from gitbench.benchmarks import Benchmark
 from gitbench.harness.loader import FixtureLoader
-from gitbench.harness.scorer import Scorer
+from gitbench.harness.scorer import (
+    CommandAnswerNormalizationError,
+    Scorer,
+    normalize_command_answer,
+)
 from gitbench.harness.types import Fixture, Score
 from gitbench.utils.git import FixtureGenerationContext, GitExecutor
 
@@ -105,7 +109,11 @@ class WorktreeUsageBenchmark(Benchmark):
             model_output: The model's command output.
             fixture: The fixture being scored.
         """
-        lines = [line.strip() for line in model_output.strip().split("\n") if line.strip()]
+        try:
+            lines = normalize_command_answer(model_output)
+        except CommandAnswerNormalizationError as e:
+            logger.warning(str(e))
+            return
 
         for line in lines:
             logger.info(f"Executing: {line}")

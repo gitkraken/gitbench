@@ -18,8 +18,11 @@ setup:
 - git commit -m 'Return value'
 prompt: Identify the WIP commits that should be marked as squash/fixup; these represent
   incremental implementation work that should be combined. Do not include the non-WIP
-  anchor commits. Provide the commit messages.
-expected: 'WIP: add logic, WIP: style fix'
+  anchor commits. Output ONLY the selected commit subject lines, one per line, with
+  no explanation.
+expected: |-
+  WIP: add logic
+  WIP: style fix
 scoring:
   type: commit_selection
   threshold: 1.0

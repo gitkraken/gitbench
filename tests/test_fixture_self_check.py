@@ -5,6 +5,7 @@ import subprocess
 from gitbench.benchmarks.blame_forensics import BlameForensicsBenchmark
 from gitbench.fixture_self_check import check_fixture
 from gitbench.harness.types import Fixture
+from gitbench.scorer_capabilities import capabilities_for_scorer
 
 
 def test_self_check_flags_non_hash_expected_for_hash_prompt():
@@ -61,6 +62,54 @@ def test_self_check_allows_multiline_exact_match_with_order_contract():
     )
 
     assert check_fixture(fixture) == []
+
+
+def test_capability_lookup_uses_benchmark_context_before_generic_fallback():
+    branch_caps = capabilities_for_scorer("exact_match", benchmark_name="branch_cleanup")
+    generic_caps = capabilities_for_scorer("exact_match")
+
+    assert branch_caps.order_sensitive is False
+    assert branch_caps.selection_parser == "branch_line_set"
+    assert generic_caps.order_sensitive is True
+
+
+def test_self_check_allows_branch_cleanup_exact_match_set_scoring():
+    fixture = Fixture(
+        id="branch_set",
+        description="Branch cleanup fixture",
+        setup=[],
+        prompt="List branches to delete, one per line",
+        expected="fix-typo\nold-feature",
+        scoring={"type": "exact_match"},
+    )
+
+    assert check_fixture(fixture, benchmark_name="branch_cleanup") == []
+
+
+def test_self_check_allows_reflog_dynamic_lookup_key_for_hash_prompt():
+    fixture = Fixture(
+        id="reflog_dynamic",
+        description="Reflog fixture",
+        setup=[],
+        prompt="Provide ONLY the 40-character commit hash recovered from reflog.",
+        expected="Add third version - important changes",
+        scoring={"type": "reflog_recovery"},
+    )
+
+    assert check_fixture(fixture, benchmark_name="reflog") == []
+
+
+def test_self_check_allows_git_bisect_subject_or_hash_behavior():
+    fixture = Fixture(
+        id="bisect_dynamic",
+        description="Bisect fixture",
+        setup=[],
+        prompt="Identify the bad commit hash or commit subject line.",
+        expected="change add operation",
+        scoring={"type": "bisect_regression"},
+    )
+
+    assert check_fixture(fixture, benchmark_name="git_bisect") == []
 
 
 def test_self_check_validates_git_derived_expected_value(tmp_path):

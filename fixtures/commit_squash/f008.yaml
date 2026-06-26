@@ -18,9 +18,11 @@ setup:
 - git commit -m 'Finalize config'
 prompt: These commits show incremental configuration changes. Identify the WIP commits
   that should be marked as squash/fixup to combine all config work into a single meaningful
-  commit. Do not include the initial or final config anchor commit. Provide the commit
-  messages.
-expected: 'WIP: add debug flag, WIP: add port'
+  commit. Do not include the initial or final config anchor commit. Output ONLY the
+  selected commit subject lines, one per line, with no explanation.
+expected: |-
+  WIP: add debug flag
+  WIP: add port
 scoring:
   type: commit_selection
   threshold: 1.0

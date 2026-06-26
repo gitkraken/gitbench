@@ -36,17 +36,21 @@ prompt: 'Resolve the merge conflicts in app.py and requirements.txt. For app.py:
   debug enabled. For requirements.txt: branch A updated requests to 2.28.0 keeping
   flask 2.0.0, branch B upgraded flask to 3.0.0 keeping requests 2.25.0. For app.py
   prefer disabling debug. For requirements.txt prefer keeping the older flask version
-  for compatibility but take the updated requests. Provide ONLY the resolved app.py
-  content (this is the primary conflict to resolve).'
-expected: 'app = Flask(__name__)
-
-  app.run(port=8080, debug=False)
-
-  '
+  for compatibility but take the updated requests. Provide ONLY the resolved contents
+  for both app.py and requirements.txt, with each file prefixed by its filename.'
+expected: "app.py:\napp = Flask(__name__)\n\napp.run(port=8080, debug=False)\n\nrequirements.txt:\nflask==2.0.0\n\nrequests==2.28.0\n"
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    app.py: |
+      app = Flask(__name__)
+
+      app.run(port=8080, debug=False)
+    requirements.txt: |
+      flask==2.0.0
+
+      requests==2.28.0
+output_schema: resolved_file_blocks
 purpose: Tests ability to resolve conflicts in two interdependent files with trade-off
   decisions. Evaluates dependency-aware merging.
 difficulty: hard

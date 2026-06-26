@@ -72,6 +72,17 @@ class TestSchemaRegistry:
         assert schema["type"] == "object"
         assert "resolved_content" in schema["properties"]
 
+    def test_resolved_file_blocks_schema(self):
+        contract = SCHEMA_REGISTRY["resolved_file_blocks"]
+        schema = contract.schema
+        assert schema["type"] == "object"
+        assert "files" in schema["properties"]
+        assert schema["properties"]["files"]["type"] == "object"
+        assert schema["properties"]["files"]["additionalProperties"] == {
+            "type": "string"
+        }
+        assert contract.primary_path == "files"
+
     def test_branch_list_schema(self):
         schema = SCHEMA_REGISTRY["branch_list"].schema
         assert schema["type"] == "object"
@@ -147,6 +158,23 @@ class TestCanonicalize:
         contract = SCHEMA_REGISTRY["command"]
         result = canonicalize({}, contract)
         assert result == ""
+
+    def test_file_blocks_rendering_preserves_filenames_and_contents(self):
+        contract = SCHEMA_REGISTRY["resolved_file_blocks"]
+        result = canonicalize(
+            {
+                "files": {
+                    "utils.py": "DEBUG = True\nPORT = 9000\n",
+                    "main.py": 'def main():\n    print("Running enterprise")\n',
+                }
+            },
+            contract,
+        )
+
+        assert "main.py:\n" in result
+        assert "utils.py:\n" in result
+        assert 'print("Running enterprise")' in result
+        assert "DEBUG = True" in result
 
 
 # ---------------------------------------------------------------------------
@@ -247,6 +275,70 @@ class TestExpectedAsPayload:
         payload = fixture_expected_as_payload(fixture, contract)
         assert payload == {"resolved_content": "Hello, Planet!!!"}
         assert roundtrip_check(fixture, contract)
+
+    def test_resolved_content_schema_remains_single_file_default(self):
+        fixture = _make_fixture("Hello, Planet!!!", "exact_match")
+        contract = contract_for_benchmark_fixture(fixture, "merge_conflicts")
+
+        assert contract is SCHEMA_REGISTRY["resolved_content"]
+
+    def test_resolved_file_blocks_roundtrip_from_expected_files(self):
+        fixture = Fixture(
+            id="resolved-files",
+            description="multi-file",
+            setup=[],
+            prompt="Resolve files",
+            expected="main.py:\nprint('ok')\n\nutils.py:\nDEBUG = True\n",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "main.py": "print('ok')\n",
+                    "utils.py": "DEBUG = True\n",
+                },
+            },
+            output_schema="resolved_file_blocks",
+        )
+        contract = contract_for_benchmark_fixture(fixture, "merge_conflicts")
+        payload = fixture_expected_as_payload(fixture, contract)
+
+        assert payload == {
+            "files": {
+                "main.py": "print('ok')\n",
+                "utils.py": "DEBUG = True\n",
+            }
+        }
+        assert roundtrip_check(fixture, contract)
+
+    def test_resolved_file_blocks_canonical_text_scores(self):
+        from gitbench.harness.scorer import Scorer
+
+        fixture = Fixture(
+            id="resolved-files",
+            description="multi-file",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "main.py": "print('ok')\n",
+                    "utils.py": "DEBUG = True\n",
+                },
+            },
+            output_schema="resolved_file_blocks",
+        )
+        contract = contract_for_benchmark_fixture(fixture, "merge_conflicts")
+        payload = {
+            "files": {
+                "utils.py": "DEBUG = True\n",
+                "main.py": "print('ok')\n",
+            }
+        }
+
+        validate_structured_payload(payload, contract)
+        result = Scorer().score(fixture, canonicalize(payload, contract))
+
+        assert result.passed is True
 
     def test_command_list_roundtrip(self):
         fixture = _make_fixture("git checkout main\ngit pull", "command_equivalence")

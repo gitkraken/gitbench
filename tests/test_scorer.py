@@ -6,7 +6,12 @@ from pathlib import Path
 import pytest
 
 from gitbench.harness.loader import FixtureLoader
-from gitbench.harness.scorer import Scorer, _strip_wrapping_fence
+from gitbench.harness.scorer import (
+    CommandAnswerNormalizationError,
+    Scorer,
+    _strip_wrapping_fence,
+    normalize_command_answer,
+)
 from gitbench.harness.types import Fixture, Score
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
@@ -496,6 +501,196 @@ class TestScorer:
         result = scorer.score(fixture, '{"version":"1.0.0"}')
 
         assert result.passed is False
+
+    def test_resolved_file_blocks_accepts_heading_variants_and_reordered_files(self, scorer):
+        fixture = Fixture(
+            id="files_001",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "main.py": 'def main():\n    print("Running enterprise")\n',
+                    "utils.py": "DEBUG = True\nPORT = 9000\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "### `utils.py`:\nDEBUG = True\nPORT = 9000\n\n"
+            "--- main.py\n"
+            'def main():\n    print("Running enterprise")\n',
+        )
+
+        assert result.passed is True
+        assert result.similarity == 1.0
+
+    def test_resolved_file_blocks_accepts_per_file_fences(self, scorer):
+        fixture = Fixture(
+            id="files_002",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "main.py": 'def main():\n    print("Running enterprise")\n',
+                    "utils.py": "DEBUG = True\nPORT = 9000\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "main.py:\n```python\n"
+            'def main():\n    print("Running enterprise")\n'
+            "```\n\n"
+            "utils.py:\n```\nDEBUG = True\nPORT = 9000\n```\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_rejects_missing_file(self, scorer):
+        fixture = Fixture(
+            id="files_003",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "main.py": 'def main():\n    print("Running enterprise")\n',
+                    "utils.py": "DEBUG = True\nPORT = 9000\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "main.py:\n"
+            'def main():\n    print("Running enterprise")\n',
+        )
+
+        assert result.passed is False
+        assert "Missing files" in result.error
+
+    def test_resolved_file_blocks_rejects_extra_file_by_default(self, scorer):
+        fixture = Fixture(
+            id="files_004",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"main.py": "print('ok')\n"},
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "main.py:\nprint('ok')\n\nREADME.md:\nextra\n",
+        )
+
+        assert result.passed is False
+        assert "Extra files" in result.error
+
+    def test_resolved_file_blocks_can_allow_extra_files(self, scorer):
+        fixture = Fixture(
+            id="files_005",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "allow_extra_files": True,
+                "expected_files": {"main.py": "print('ok')\n"},
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "main.py:\nprint('ok')\n\nREADME.md:\nextra\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_ignores_trailing_whitespace_and_final_newline(self, scorer):
+        fixture = Fixture(
+            id="files_006",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"main.py": "if ok:\n    return True\n"},
+            },
+        )
+
+        result = scorer.score(fixture, "main.py:\nif ok:   \n    return True")
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_rejects_indentation_changes(self, scorer):
+        fixture = Fixture(
+            id="files_007",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"main.py": "if ok:\n    return True\n"},
+            },
+        )
+
+        result = scorer.score(fixture, "main.py:\nif ok:\nreturn True\n")
+
+        assert result.passed is False
+        assert "Content mismatch" in result.error
+
+    def test_resolved_file_blocks_rejects_malformed_config(self, scorer):
+        fixture = Fixture(
+            id="files_008",
+            description="Malformed fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={"type": "resolved_file_blocks"},
+        )
+
+        result = scorer.score(fixture, "main.py:\nprint('ok')\n")
+
+        assert result.passed is False
+        assert "expected_files" in result.error
+
+
+class TestCommandAnswerNormalization:
+    def test_plain_command_text(self):
+        assert normalize_command_answer(" git status \n\ngit log --oneline ") == [
+            "git status",
+            "git log --oneline",
+        ]
+
+    def test_whole_answer_fence(self):
+        assert normalize_command_answer("```bash\ngit submodule status\n```") == [
+            "git submodule status"
+        ]
+
+    def test_prose_around_fence_is_rejected(self):
+        with pytest.raises(CommandAnswerNormalizationError, match="prose around"):
+            normalize_command_answer("Run this:\n```bash\ngit status\n```")
+
+    def test_invalid_command_syntax_is_rejected(self):
+        with pytest.raises(CommandAnswerNormalizationError, match="No closing quotation"):
+            normalize_command_answer("git status 'unterminated")
 
 
 class TestStripWrappingFence:

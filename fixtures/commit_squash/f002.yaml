@@ -16,8 +16,8 @@ setup:
 prompt: Analyze this git history and identify commits that are fixups of previous
   commits (like typo corrections). These should be marked as fixup/squash back into
   the original commit they fix. Do not include the original target commit as one of
-  the commits to squash. Output ONLY the selected commits, one per line, with no
-  explanation.
+  the commits to squash. Output ONLY the selected commit subject lines, one per line,
+  with no explanation.
 expected: 'fixup: Fix typo in hello.py'
 scoring:
   type: commit_selection
