@@ -16,6 +16,26 @@ function stripOutputModeSuffix(modelName: string): string {
     : modelName;
 }
 
+export function splitModelName(modelName: string): {
+  provider: string;
+  baseModel: string;
+  effort: string;
+  outputMode: string;
+} {
+  const [providerAndModel, effortAndOutputMode] = modelName.split(":");
+  const [provider, baseModel] = providerAndModel.split("/") || [];
+  const [effort, outputMode] = effortAndOutputMode?.split("__") || [];
+
+  const cleanOutput = (outputMode || "text").replace(/_schema/g, "");
+
+  return {
+    provider,
+    baseModel,
+    effort: effort || "default",
+    outputMode: cleanOutput,
+  };
+}
+
 export function modelPath(modelName: string): string {
   const cleanName = stripOutputModeSuffix(modelName);
   let provider = cleanName;
@@ -43,7 +63,7 @@ export function modelPath(modelName: string): string {
 
 export function modelResultAnchor(
   modelName: string,
-  outputMode = "text"
+  outputMode = "text",
 ): string {
   return `result-${modelSlug(modelName)}-${modelSlug(outputMode)}`;
 }
@@ -51,30 +71,30 @@ export function modelResultAnchor(
 export function fixturePath(
   benchmark: string,
   fixtureId: string,
-  result?: { modelName: string; outputMode?: string | null }
+  result?: { modelName: string; outputMode?: string | null },
 ): string {
   const path = `/fixtures/${encodeRouteSegment(benchmark)}/${encodeRouteSegment(
-    fixtureId
+    fixtureId,
   )}`;
   if (!result) return path;
   return `${path}#${modelResultAnchor(
     result.modelName,
-    result.outputMode || "text"
+    result.outputMode || "text",
   )}`;
 }
 
 export function modelGroupPath(provider: string, baseModel: string): string {
   return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(
-    baseModel
+    baseModel,
   )}/`;
 }
 
 export function modelLevelPath(
   provider: string,
   baseModel: string,
-  level: string
+  level: string,
 ): string {
   return `/models/${encodeRouteSegment(provider)}/${encodeRouteSegment(
-    baseModel
+    baseModel,
   )}/${encodeRouteSegment(level)}/`;
 }

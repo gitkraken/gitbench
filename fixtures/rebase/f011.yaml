@@ -25,9 +25,13 @@ prompt: 'Resolve the rebase conflict in settings.json. The base had name: app, v
   content as valid JSON.'
 expected: "{\n  \"name\": \"MyApp\",\n  \"version\": \"2.0.0\"\n}\n"
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    settings.json: |
+      {
+        "name": "MyApp",
+        "version": "2.0.0"
+      }
 purpose: Tests ability to resolve a JSON config conflict during rebase preserving
   valid syntax. Evaluates structured-data conflict in rebase.
 difficulty: medium

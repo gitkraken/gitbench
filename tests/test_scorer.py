@@ -6,7 +6,12 @@ from pathlib import Path
 import pytest
 
 from gitbench.harness.loader import FixtureLoader
-from gitbench.harness.scorer import Scorer, _strip_wrapping_fence
+from gitbench.harness.scorer import (
+    CommandAnswerNormalizationError,
+    Scorer,
+    _strip_wrapping_fence,
+    normalize_command_answer,
+)
 from gitbench.harness.types import Fixture, Score
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
@@ -496,6 +501,356 @@ class TestScorer:
         result = scorer.score(fixture, '{"version":"1.0.0"}')
 
         assert result.passed is False
+
+    def test_resolved_file_blocks_accepts_heading_variants_and_reordered_files(self, scorer):
+        fixture = Fixture(
+            id="files_001",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "main.py": 'def main():\n    print("Running enterprise")\n',
+                    "utils.py": "DEBUG = True\nPORT = 9000\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "### `utils.py`:\nDEBUG = True\nPORT = 9000\n\n"
+            "--- main.py\n"
+            'def main():\n    print("Running enterprise")\n',
+        )
+
+        assert result.passed is True
+        assert result.similarity == 1.0
+
+    def test_resolved_file_blocks_accepts_per_file_fences(self, scorer):
+        fixture = Fixture(
+            id="files_002",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "main.py": 'def main():\n    print("Running enterprise")\n',
+                    "utils.py": "DEBUG = True\nPORT = 9000\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "main.py:\n```python\n"
+            'def main():\n    print("Running enterprise")\n'
+            "```\n\n"
+            "utils.py:\n```\nDEBUG = True\nPORT = 9000\n```\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_rejects_missing_file(self, scorer):
+        fixture = Fixture(
+            id="files_003",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "main.py": 'def main():\n    print("Running enterprise")\n',
+                    "utils.py": "DEBUG = True\nPORT = 9000\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "main.py:\n"
+            'def main():\n    print("Running enterprise")\n',
+        )
+
+        assert result.passed is False
+        assert "Missing files" in result.error
+
+    def test_resolved_file_blocks_rejects_extra_file_by_default(self, scorer):
+        fixture = Fixture(
+            id="files_004",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"main.py": "print('ok')\n"},
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "main.py:\nprint('ok')\n\nREADME.md:\nextra\n",
+        )
+
+        assert result.passed is False
+        assert "Extra files" in result.error
+
+    def test_resolved_file_blocks_can_allow_extra_files(self, scorer):
+        fixture = Fixture(
+            id="files_005",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "allow_extra_files": True,
+                "expected_files": {"main.py": "print('ok')\n"},
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "main.py:\nprint('ok')\n\nREADME.md:\nextra\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_ignores_trailing_whitespace_and_final_newline(self, scorer):
+        fixture = Fixture(
+            id="files_006",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"main.py": "if ok:\n    return True\n"},
+            },
+        )
+
+        result = scorer.score(fixture, "main.py:\nif ok:   \n    return True")
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_accepts_expected_extensionless_filenames(self, scorer):
+        fixture = Fixture(
+            id="files_extensionless",
+            description="Extensionless file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "Dockerfile": "FROM python:3.12\n",
+                    "Makefile": "test:\n\tpytest\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "Dockerfile:\nFROM python:3.12\n\nMakefile:\ntest:\n\tpytest\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_accepts_unheaded_single_file_content(self, scorer):
+        fixture = Fixture(
+            id="files_single_001",
+            description="Single-file fixture",
+            setup=[],
+            prompt="Resolve greeting.txt",
+            expected="Hello, Planet!!!",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"greeting.txt": "Hello, Planet!!!"},
+            },
+        )
+
+        result = scorer.score(fixture, "Hello, Planet!!!")
+
+        assert result.passed is True
+        assert result.similarity == 1.0
+
+    def test_resolved_file_blocks_accepts_fenced_unheaded_single_file_content(self, scorer):
+        fixture = Fixture(
+            id="files_single_002",
+            description="Single-file fixture",
+            setup=[],
+            prompt="Resolve greeting.txt",
+            expected="Hello, Planet!!!",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"greeting.txt": "Hello, Planet!!!"},
+            },
+        )
+
+        result = scorer.score(fixture, "```text\nHello, Planet!!!\n```")
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_rejects_single_file_prose(self, scorer):
+        fixture = Fixture(
+            id="files_single_003",
+            description="Single-file fixture",
+            setup=[],
+            prompt="Resolve greeting.txt",
+            expected="Hello, Planet!!!",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"greeting.txt": "Hello, Planet!!!"},
+            },
+        )
+
+        result = scorer.score(fixture, "Here is the answer:\nHello, Planet!!!")
+
+        assert result.passed is False
+        assert "Content mismatch" in result.error
+
+    def test_resolved_file_blocks_does_not_treat_yaml_key_as_heading(self, scorer):
+        fixture = Fixture(
+            id="files_single_yaml",
+            description="Single-file YAML fixture",
+            setup=[],
+            prompt="Resolve config.yaml",
+            expected="server:\n  port: 443\n  host: 0.0.0.0\n",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "config.yaml": "server:\n  port: 443\n  host: 0.0.0.0\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "config.yaml:\nserver:\n  port: 443\n  host: 0.0.0.0\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_does_not_treat_dotted_yaml_key_as_raw_heading(self, scorer):
+        fixture = Fixture(
+            id="files_single_yaml_domain",
+            description="Single-file YAML fixture",
+            setup=[],
+            prompt="Resolve config.yaml",
+            expected="example.com:\n  enabled: true\n",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "config.yaml": "example.com:\n  enabled: true\n",
+                },
+            },
+        )
+
+        result = scorer.score(fixture, "example.com:\n  enabled: true\n")
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_does_not_treat_dotted_yaml_key_as_block_heading(self, scorer):
+        fixture = Fixture(
+            id="files_single_yaml_domain_block",
+            description="Single-file YAML fixture",
+            setup=[],
+            prompt="Resolve config.yaml",
+            expected="example.com:\n  enabled: true\n",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "config.yaml": "example.com:\n  enabled: true\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "config.yaml:\nexample.com:\n  enabled: true\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_rejects_prose_before_file_heading(self, scorer):
+        fixture = Fixture(
+            id="files_single_004",
+            description="Single-file fixture",
+            setup=[],
+            prompt="Resolve greeting.txt",
+            expected="Hello, Planet!!!",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"greeting.txt": "Hello, Planet!!!"},
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "Here is the file:\n\ngreeting.txt:\nHello, Planet!!!",
+        )
+
+        assert result.passed is False
+        assert result.error == "Expected file heading before file content"
+
+    def test_resolved_file_blocks_rejects_indentation_changes(self, scorer):
+        fixture = Fixture(
+            id="files_007",
+            description="Multi-file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"main.py": "if ok:\n    return True\n"},
+            },
+        )
+
+        result = scorer.score(fixture, "main.py:\nif ok:\nreturn True\n")
+
+        assert result.passed is False
+        assert "Content mismatch" in result.error
+
+    def test_resolved_file_blocks_rejects_malformed_config(self, scorer):
+        fixture = Fixture(
+            id="files_008",
+            description="Malformed fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={"type": "resolved_file_blocks"},
+        )
+
+        result = scorer.score(fixture, "main.py:\nprint('ok')\n")
+
+        assert result.passed is False
+        assert "expected_files" in result.error
+
+
+class TestCommandAnswerNormalization:
+    def test_plain_command_text(self):
+        assert normalize_command_answer(" git status \n\ngit log --oneline ") == [
+            "git status",
+            "git log --oneline",
+        ]
+
+    def test_whole_answer_fence(self):
+        assert normalize_command_answer("```bash\ngit submodule status\n```") == [
+            "git submodule status"
+        ]
+
+    def test_prose_around_fence_is_rejected(self):
+        with pytest.raises(CommandAnswerNormalizationError, match="prose around"):
+            normalize_command_answer("Run this:\n```bash\ngit status\n```")
+
+    def test_invalid_command_syntax_is_rejected(self):
+        with pytest.raises(CommandAnswerNormalizationError, match="No closing quotation"):
+            normalize_command_answer("git status 'unterminated")
 
 
 class TestStripWrappingFence:

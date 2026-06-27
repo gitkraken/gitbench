@@ -93,6 +93,7 @@ export default function PassRateBarChart({
         outputMode={outputMode}
         yDomain={yDomain}
         yTickFormatter={(value) => `${formatCompactDecimal(value, 2)}%`}
+        yAxisLabel="Pass Rate (%)"
         renderTooltip={(entry) => (
           <div style={tooltipStyle}>
             <div

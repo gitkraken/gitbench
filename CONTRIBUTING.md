@@ -284,9 +284,13 @@ Use the narrowest scorer that matches the fixture's intended answer.
 ### Fixture Self-Checks
 
 Run or extend `gitbench.fixture_self_check` when a fixture expectation can be checked
-without a model run. Current self-checks flag hash prompts with static non-hash
-expected values, multi-line `exact_match` fixtures that do not declare
-`order_matters: true`, and fixture-declared Git-derived expectations:
+without a model run. Suite-level validation must call
+`check_fixture(fixture, benchmark_name=Benchmark.name)` so self-checks use the
+benchmark's effective scoring behavior. Use `check_fixture_generically(...)` only
+for explicit fixture-only checks that intentionally ignore benchmark-local scorer
+behavior. Current self-checks flag hash prompts with static non-hash expected
+values, multi-line `exact_match` fixtures without `scoring.order_matters: true`,
+and fixture-declared Git-derived expectations:
 
 ```yaml
 scoring:

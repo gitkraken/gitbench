@@ -21,8 +21,10 @@ prompt: Resolve the merge conflict in version.txt. The base version was 'VERSION
   'VERSION=1.1.0'. Provide ONLY the resolved file content.
 expected: VERSION=2.0.0
 scoring:
-  type: exact_match
-  strip_fences: true
+  type: resolved_file_blocks
+  expected_files:
+    version.txt: |-
+      VERSION=2.0.0
 purpose: Tests ability to resolve a version number merge conflict. Evaluates semantic
   versioning awareness in conflict resolution.
 difficulty: easy

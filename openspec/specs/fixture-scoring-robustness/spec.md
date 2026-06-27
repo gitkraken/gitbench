@@ -47,6 +47,25 @@ The command equivalence scorer SHALL support accepted alternatives that are sequ
 - **WHEN** a fixture accepts `git submodule init` followed by `git submodule update`
 - **THEN** model output with the same commands in the opposite order fails
 
+### Requirement: Strict command answer wrapper normalization
+Command-answer scoring and execution SHALL tolerate one whole-answer markdown code fence while rejecting prose extraction.
+
+#### Scenario: Whole-answer fenced command passes normalization
+- **WHEN** model output is a complete fenced code block containing `git submodule status`
+- **THEN** command normalization returns `git submodule status`
+
+#### Scenario: Prose around fenced command is rejected
+- **WHEN** model output says `Run this:` before a fenced command block
+- **THEN** command normalization does not extract the command as a valid answer
+
+#### Scenario: Stateful command benchmarks use shared normalization
+- **WHEN** `git_clean`, `tag_management`, `worktree_usage`, or `submodule_usage` executes model command output
+- **THEN** the benchmark executes normalized command lines from the shared helper
+
+#### Scenario: Command equivalence uses shared normalization
+- **WHEN** `command_equivalence` scores a fenced command answer
+- **THEN** it compares the normalized command sequence to accepted alternatives
+
 ### Requirement: Strict selection pass criteria
 Selection-style scorers SHALL fail by default when model output includes extra incorrect selections, even if all expected selections are present.
 
@@ -72,6 +91,53 @@ Existing fixtures that use `similarity`, `exact_match`, `state_assertions`, `str
 #### Scenario: Existing state assertion fixture still scores
 - **WHEN** a fixture continues to use `state_assertions`
 - **THEN** scoring checks the configured expected state assertions after benchmark-specific command execution
+
+#### Scenario: Resolved file-block migration is opt-in
+- **WHEN** a conflict fixture remains on `exact_match`
+- **THEN** it does not use `resolved_file_blocks` behavior
+
+### Requirement: Resolved file-block scoring
+The scoring system SHALL support a `resolved_file_blocks` scoring type for answers that contain resolved content for one or more named files.
+
+#### Scenario: Correct files pass regardless of order
+- **WHEN** a fixture expects `main.py` and `utils.py` using `resolved_file_blocks`
+- **THEN** model output containing correct blocks for both files passes even if `utils.py` appears before `main.py`
+
+#### Scenario: Heading punctuation differences pass
+- **WHEN** a model labels an expected file block with `main.py`, `main.py:`, `--- main.py`, `### main.py`, or `` `main.py` ``
+- **THEN** the scorer recognizes the heading as the same file
+
+#### Scenario: Per-file fences pass
+- **WHEN** a model wraps the content for each file in a markdown code fence with or without a language tag
+- **THEN** the scorer compares the fenced content to the expected file content
+
+#### Scenario: Missing file fails
+- **WHEN** a fixture expects `main.py` and `utils.py`
+- **THEN** model output containing only `main.py` fails
+
+#### Scenario: Extra file fails by default
+- **WHEN** a fixture expects only `main.py` and `utils.py`
+- **THEN** model output containing an additional `README.md` file block fails
+
+#### Scenario: Extra file can be allowed explicitly
+- **WHEN** a fixture sets `allow_extra_files: true`
+- **THEN** extra file blocks do not fail the answer if all expected file contents match
+
+#### Scenario: Content comparison preserves meaningful structure
+- **WHEN** model output differs only by line endings, trailing spaces, or final newline
+- **THEN** the file content comparison passes
+- **AND** changed indentation or removed interior blank lines still fail
+
+### Requirement: File-block expectations are explicit
+Fixtures using `resolved_file_blocks` SHALL declare expected file contents in `scoring.expected_files`.
+
+#### Scenario: Explicit expected files score
+- **WHEN** a fixture declares `scoring.expected_files.main.py` and `scoring.expected_files.utils.py`
+- **THEN** the scorer uses those values as the correctness oracle
+
+#### Scenario: Missing expected files fail closed
+- **WHEN** a fixture uses `resolved_file_blocks` without valid `expected_files`
+- **THEN** scoring fails with a configuration error
 
 ### Requirement: Unordered line-set scoring
 The scoring system SHALL support an order-insensitive line-set scoring type for fixtures where the correct answer is a set of lines and order is not part of the skill under test.
@@ -218,3 +284,51 @@ Every benchmark setup override SHALL accept the deterministic fixture-generation
 - **THEN** setup SHALL complete without a signature error
 - **AND** generated Git identities SHALL use that context
 
+### Requirement: Commit selection uses deterministic subject lines
+The `commit_squash` benchmark SHALL request and score selected commit subject lines as its deterministic output contract.
+
+#### Scenario: Subject lines pass
+- **WHEN** a `commit_squash` fixture expects `WIP: add main.py` and `WIP: continue work`
+- **THEN** model output containing those subject lines passes
+
+#### Scenario: Bullet markers are tolerated
+- **WHEN** model output prefixes each expected subject line with `- `
+- **THEN** commit selection scoring still passes
+
+#### Scenario: Hash-only answer fails
+- **WHEN** model output contains only the hashes of the expected commits
+- **THEN** commit selection scoring fails because the prompt asks for subject lines
+
+#### Scenario: Extra selected subject fails
+- **WHEN** model output includes all expected subject lines plus `Initial commit`
+- **THEN** commit selection scoring fails with an extra-selection error
+
+#### Scenario: Legacy comma-separated subjects are tolerated
+- **WHEN** model output contains expected commit subjects separated by commas
+- **THEN** commit selection scoring may pass during the compatibility window
+
+### Requirement: Single-file conflict scorer migrations are evidence-gated
+Single-file conflict fixtures SHALL migrate to file-aware resolved-content scoring only after local replay evidence shows the migration preserves semantic correctness.
+
+#### Scenario: Expected answer passes before migration
+- **WHEN** a candidate single-file conflict fixture is evaluated with its expected answer
+- **THEN** the expected answer passes both before and after the candidate scoring change
+
+#### Scenario: Newly passing stored outputs are inspected
+- **WHEN** stored-attempt replay shows outputs that newly pass after scorer migration
+- **THEN** those outputs are manually inspected for semantic correctness before the migration is accepted
+
+#### Scenario: Newly failing stored outputs are reviewed
+- **WHEN** stored-attempt replay shows outputs that newly fail after scorer migration
+- **THEN** those outputs are reviewed to determine whether the stricter failure is intentional or caused by parser/prompt mismatch
+
+### Requirement: Single-file conflict migration decisions are documented
+Each candidate single-file conflict fixture SHALL have a recorded migration decision.
+
+#### Scenario: Fixture is migrated
+- **WHEN** evidence supports migrating a fixture to file-aware scoring
+- **THEN** the implementation records the fixture, reason, and replay outcome summary
+
+#### Scenario: Fixture remains unchanged
+- **WHEN** evidence does not support migration
+- **THEN** the implementation records why the fixture remains on its existing scorer

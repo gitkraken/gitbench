@@ -19,10 +19,11 @@ setup:
 prompt: Analyze this git history and identify which consecutive commits should be
   marked as squash/fixup in an interactive rebase to create a cleaner history. Focus
   on WIP (Work In Progress) commits that represent incomplete work. Do not include
-  the base/anchor commit they would be squashed into. Provide the commit hashes or
-  commit messages in the order they should be combined. Output ONLY the selected
-  commits, one per line, with no explanation and no base/anchor/final commits.
-expected: 'WIP: add main.py, WIP: continue work'
+  the base/anchor commit they would be squashed into. Output ONLY the selected commit
+  subject lines, one per line, with no explanation and no base/anchor/final commits.
+expected: |-
+  WIP: add main.py
+  WIP: continue work
 scoring:
   type: commit_selection
   threshold: 1.0

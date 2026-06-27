@@ -84,6 +84,7 @@ export default function TokenUsageChart() {
           outputMode={outputMode}
           yDomain={yDomain}
           yTickFormatter={formatTokens}
+          yAxisLabel="Tokens"
           renderTooltip={(entry) => (
             <div style={tooltipStyle}>
               <div

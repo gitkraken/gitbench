@@ -26,8 +26,10 @@ prompt: 'Resolve the rebase conflict in project.txt. Branch being rebased set Ti
   the higher version is more appropriate. Provide ONLY the resolved project.txt content.'
 expected: 'Title: My Project v3'
 scoring:
-  type: exact_match
-  strip_fences: true
+  type: resolved_file_blocks
+  expected_files:
+    project.txt: |-
+      Title: My Project v3
 purpose: Tests ability to handle rebase with partial conflicts across files. Evaluates
   understanding of clean vs conflicted files in rebase.
 difficulty: hard

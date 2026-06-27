@@ -164,6 +164,7 @@ CANONICALIZE_LINES = "lines"
 CANONICALIZE_COMMAND_LINES = "command_lines"
 CANONICALIZE_NUMERIC_STRING = "numeric_string"
 CANONICALIZE_FILE_BLOCK = "file_block"
+CANONICALIZE_FILE_BLOCKS = "file_blocks"
 CANONICALIZE_STASH_REF = "stash_ref"
 CANONICALIZE_REFLINE = "refline"
 
@@ -202,6 +203,15 @@ def canonicalize(payload: dict[str, Any], contract: StructuredOutputContract) ->
 
     elif strategy == CANONICALIZE_FILE_BLOCK:
         return str(value) if value is not None else ""
+
+    elif strategy == CANONICALIZE_FILE_BLOCKS:
+        if isinstance(value, dict):
+            parts = []
+            for filename in sorted(value):
+                content = str(value[filename]).rstrip("\n")
+                parts.append(f"{filename}:\n{content}")
+            return "\n\n".join(parts)
+        return ""
 
     elif strategy == CANONICALIZE_STASH_REF:
         return str(value) if value is not None else ""
@@ -337,6 +347,24 @@ SCHEMA_REGISTRY: dict[str, StructuredOutputContract] = {
         canonicalize=CANONICALIZE_FILE_BLOCK,
         title="ResolvedContent",
     ),
+    "resolved_file_blocks": StructuredOutputContract(
+        schema={
+            "title": "ResolvedFileBlocks",
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "object",
+                    "description": "Resolved file contents keyed by filename",
+                    "additionalProperties": {"type": "string"},
+                }
+            },
+            "required": ["files"],
+            "additionalProperties": False,
+        },
+        primary_path="files",
+        canonicalize=CANONICALIZE_FILE_BLOCKS,
+        display_label="Resolved Files",
+    ),
     "branch_list": _registry_entry(
         key="branches_to_delete",
         key_type="array",
@@ -457,6 +485,7 @@ SCORING_TYPE_FALLBACKS: dict[str, str] = {
     "llm_judge": "commit_message",
     "similarity": "commit_message",
     "state_assertions": "command_list",
+    "resolved_file_blocks": "resolved_file_blocks",
 }
 
 
@@ -565,6 +594,21 @@ def fixture_expected_as_payload(
     canonicalize_strategy = contract.canonicalize
     expected = fixture.expected
     schema = contract.schema
+
+    if canonicalize_strategy == CANONICALIZE_FILE_BLOCKS:
+        expected_files = fixture.scoring.get("expected_files")
+        if (
+            isinstance(expected_files, dict)
+            and expected_files
+            and all(
+                isinstance(filename, str)
+                and filename.strip()
+                and isinstance(content, str)
+                for filename, content in expected_files.items()
+            )
+        ):
+            return {primary_path: dict(expected_files)}
+        return None
 
     # Determine the target field type from the schema
     props = schema.get("properties", {})

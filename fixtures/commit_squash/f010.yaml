@@ -18,9 +18,11 @@ setup:
 - git commit -m 'Remove debug statements'
 prompt: The history contains debug commits that should be marked as squash/fixup and
   removed as part of the final feature commit. Identify the debug-related WIP commits
-  only. Do not include the cleanup commit that removes the debug statements. Provide
-  the commit messages.
-expected: 'WIP: debug commit 1, WIP: debug commit 2'
+  only. Do not include the cleanup commit that removes the debug statements. Output
+  ONLY the selected commit subject lines, one per line, with no explanation.
+expected: |-
+  WIP: debug commit 1
+  WIP: debug commit 2
 scoring:
   type: commit_selection
   threshold: 1.0

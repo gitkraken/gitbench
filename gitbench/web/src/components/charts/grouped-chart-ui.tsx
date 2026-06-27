@@ -262,6 +262,7 @@ interface VerticalGroupedMetricChartProps {
   outputMode: OutputMode;
   yDomain: [number, number];
   yTickFormatter: (value: number) => string;
+  yAxisLabel?: string;
   renderTooltip: (entry: GroupedMetricRow) => ReactNode;
 }
 
@@ -270,6 +271,7 @@ export function VerticalGroupedMetricChart({
   outputMode,
   yDomain,
   yTickFormatter,
+  yAxisLabel,
   renderTooltip,
 }: VerticalGroupedMetricChartProps) {
   const selectedBar = useState();
@@ -316,6 +318,18 @@ export function VerticalGroupedMetricChart({
               tickFormatter={yTickFormatter}
               axisLine={false}
               tickLine={false}
+              label={
+                yAxisLabel
+                  ? {
+                      value: yAxisLabel,
+                      angle: -90,
+                      position: "insideLeft",
+                      fill: "var(--text-dim)",
+                      fontSize: 11,
+                      fontFamily: "var(--font-mono)",
+                    }
+                  : undefined
+              }
             />
             {hasTokenSegments &&
               visibleModes.flatMap((mode) => {

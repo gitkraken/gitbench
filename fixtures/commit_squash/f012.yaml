@@ -41,9 +41,12 @@ setup:
 - git commit -m 'Complete feature'
 prompt: This repository has a feature built incrementally with many small commits.
   Identify all the WIP commits that should be marked as squash/fixup for a cleaner
-  history. Do not include the initial or final feature anchor commit. Provide the
-  commit messages.
-expected: 'WIP: add line1, WIP: add line2, WIP: add line3'
+  history. Do not include the initial or final feature anchor commit. Output ONLY
+  the selected commit subject lines, one per line, with no explanation.
+expected: |-
+  WIP: add line1
+  WIP: add line2
+  WIP: add line3
 scoring:
   type: commit_selection
   threshold: 1.0

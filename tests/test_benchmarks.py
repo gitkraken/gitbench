@@ -124,8 +124,12 @@ class TestCommitMessagesBenchmark:
     def mock_judge_client(self):
         """Create a mock JudgeClient that returns high similarity."""
         from unittest.mock import MagicMock
+        from gitbench.harness.campaign import JudgeEvidence
+
         mock = MagicMock()
-        mock.evaluate_commit_message.return_value = 0.95
+        mock.evaluate_commit_message_evidence.return_value = JudgeEvidence(
+            final_score=0.95,
+        )
         return mock
 
     def test_score_method_works(self, mock_judge_client):
@@ -148,11 +152,14 @@ class TestCommitMessagesBenchmark:
     def test_score_method_handles_different_output(self):
         """Test that the score method handles different outputs correctly."""
         from unittest.mock import MagicMock
+        from gitbench.harness.campaign import JudgeEvidence
         from gitbench.harness.scorer import Scorer
         from gitbench.harness.types import Fixture, Score
 
         mock_judge = MagicMock()
-        mock_judge.evaluate_commit_message.return_value = 0.2
+        mock_judge.evaluate_commit_message_evidence.return_value = JudgeEvidence(
+            final_score=0.2,
+        )
 
         benchmark = CommitMessagesBenchmark()
         benchmark._scorer = Scorer(judge_client=mock_judge)
@@ -194,7 +201,8 @@ class TestMergeConflictsBenchmark:
         result = benchmark.score(fixture, incomplete_output)
 
         assert result.passed is False
-        assert result.similarity == 0.0
+        assert result.similarity == 0.5
+        assert "Missing files" in result.error
 
 
 class TestCommitSquashBenchmark:
@@ -209,18 +217,13 @@ class TestCommitSquashBenchmark:
         assert len(fixtures) >= 10
         assert all(f.scoring["type"] == "commit_selection" for f in fixtures)
 
-    def test_verbose_correct_answer_passes(self):
-        """Test that correct verbose answers are not penalized."""
+    def test_bulleted_subject_lines_pass(self):
+        """Test that bullet markers around selected subjects are tolerated."""
         from gitbench.harness.types import Score
 
         benchmark = CommitSquashBenchmark()
         fixture = benchmark.load_fixtures()[0]
-        output = (
-            "Use interactive rebase and mark these commits as squash:\n"
-            "- abc1234 WIP: add main.py\n"
-            "- def5678 WIP: continue work\n"
-            "Keep the final Complete feature commit as the clean message."
-        )
+        output = "- WIP: add main.py\n- WIP: continue work"
 
         result = benchmark.score(fixture, output)
 
@@ -228,8 +231,8 @@ class TestCommitSquashBenchmark:
         assert result.passed is True
         assert result.similarity == 1.0
 
-    def test_target_commit_context_is_allowed(self):
-        """Test that mentioning the squash target for context does not fail."""
+    def test_prose_answer_fails_subject_line_contract(self):
+        """Test that prose mentions are not extracted as selected subjects."""
         benchmark = CommitSquashBenchmark()
         fixture = benchmark.load_fixtures()[1]
         output = (
@@ -239,15 +242,16 @@ class TestCommitSquashBenchmark:
 
         result = benchmark.score(fixture, output)
 
-        assert result.passed is True
-        assert result.similarity == 1.0
+        assert result.passed is False
+        assert result.similarity == 0.0
+        assert "Missing expected commit messages" in result.error
 
     def test_missing_expected_commit_fails(self):
         """Test that omitting an expected WIP commit fails."""
         benchmark = CommitSquashBenchmark()
         fixture = benchmark.load_fixtures()[0]
 
-        result = benchmark.score(fixture, "Only squash WIP: add main.py")
+        result = benchmark.score(fixture, "WIP: add main.py")
 
         assert result.passed is False
         assert result.similarity == 0.5
@@ -275,8 +279,44 @@ class TestCommitSquashBenchmark:
         finally:
             executor.cleanup()
 
-    def test_hash_only_correct_answer_passes(self):
-        """Test that answers using commit hashes instead of messages pass."""
+    def test_extra_plain_subject_line_fails(self):
+        """Test that an extra canonical newline-selected subject fails."""
+        benchmark = CommitSquashBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            output = "WIP: add main.py\nWIP: continue work\nInitial commit"
+
+            result = benchmark.score(fixture, output, repo_path=repo_path)
+
+            assert result.passed is False
+            assert result.similarity == 1.0
+            assert "Extra selected commit messages" in result.error
+            assert "Initial commit" in result.error
+        finally:
+            executor.cleanup()
+
+    def test_extra_unknown_selection_line_fails(self):
+        """Test that arbitrary non-subject lines are not ignored."""
+        benchmark = CommitSquashBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            output = "WIP: add main.py\nWIP: continue work\nThanks!"
+
+            result = benchmark.score(fixture, output, repo_path=repo_path)
+
+            assert result.passed is False
+            assert result.similarity == 1.0
+            assert "Extra selected commit messages" in result.error
+            assert "Thanks!" in result.error
+        finally:
+            executor.cleanup()
+
+    def test_hash_only_correct_answer_fails_for_subject_line_contract(self):
+        """Test that hash-only answers fail when fixtures request subject lines."""
         import subprocess
 
         benchmark = CommitSquashBenchmark()
@@ -296,6 +336,25 @@ class TestCommitSquashBenchmark:
                 hashes.append(result.stdout.strip())
 
             result = benchmark.score(fixture, ", ".join(hashes), repo_path=repo_path)
+
+            assert result.passed is False
+            assert result.similarity == 0.0
+            assert "Missing expected commit messages" in result.error
+        finally:
+            executor.cleanup()
+
+    def test_legacy_comma_separated_subject_output_still_passes(self):
+        """Test compatibility for comma-separated subject lists from older outputs."""
+        benchmark = CommitSquashBenchmark()
+        fixture = benchmark.load_fixtures()[0]
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(
+                fixture,
+                "WIP: add main.py, WIP: continue work",
+                repo_path=repo_path,
+            )
 
             assert result.passed is True
             assert result.similarity == 1.0
@@ -504,6 +563,25 @@ class TestRebaseBenchmark:
         assert isinstance(result, Score)
         assert result.fixture_id == fixture.id
         assert result.similarity > 0.8  # Should be very similar
+
+
+@pytest.mark.parametrize(
+    "benchmark_cls",
+    [MergeConflictsBenchmark, CherryPickBenchmark, RebaseBenchmark],
+)
+def test_conflict_fixtures_use_resolved_file_blocks(benchmark_cls):
+    benchmark = benchmark_cls()
+
+    for fixture in benchmark.load_fixtures():
+        expected_files = fixture.scoring.get("expected_files")
+
+        assert fixture.scoring["type"] == "resolved_file_blocks"
+        assert isinstance(expected_files, dict)
+        assert expected_files
+        assert benchmark.score(fixture, fixture.expected).passed is True
+        if len(expected_files) == 1:
+            filename = next(iter(expected_files))
+            assert benchmark.score(fixture, f"{filename}:\n{fixture.expected}").passed is True
 
 
 class TestReflogBenchmark:
@@ -715,6 +793,47 @@ class TestSubmoduleUsageBenchmark:
 
         assert result.passed is True
         assert result.similarity == 1.0
+
+    def test_add_and_commit_rejects_regular_directory_fake_submodule(self):
+        benchmark = SubmoduleUsageBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f005")
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            fake_submodule = (
+                "mkdir -p lib\n"
+                "echo fake > .gitmodules\n"
+                "echo not-a-submodule > lib/lib.py\n"
+                "git add .gitmodules lib\n"
+                "git commit -m fake-submodule"
+            )
+
+            result = benchmark.score(fixture, fake_submodule, repo_path=repo_path)
+
+            assert result.passed is False
+            assert "160000 commit" in result.error
+        finally:
+            executor.cleanup()
+
+    def test_add_and_commit_rejects_wrong_gitmodules_path(self):
+        benchmark = SubmoduleUsageBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f005")
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            wrong_path = (
+                "git submodule add ../lib-bare lib\n"
+                "git config -f .gitmodules submodule.lib.path library\n"
+                "git add .gitmodules lib\n"
+                "git commit -m fake-submodule"
+            )
+
+            result = benchmark.score(fixture, wrong_path, repo_path=repo_path)
+
+            assert result.passed is False
+            assert "'exact': 'lib'" in result.error
+        finally:
+            executor.cleanup()
 
 
 class TestWorktreeUsageBenchmark:
@@ -969,6 +1088,60 @@ class TestGitCleanBenchmark:
         assert len(fixtures) == 12
         assert {fixture.id for fixture in fixtures} == {f"f{i:03d}" for i in range(1, 13)}
         assert all(fixture.scoring["type"] in {"state_assertions", "exact_match"} for fixture in fixtures)
+
+    def test_stateful_execution_uses_shared_command_normalizer(self, tmp_path):
+        import subprocess
+        from gitbench.harness.types import Fixture
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+        untracked = repo / "scratch.txt"
+        untracked.write_text("temporary\n", encoding="utf-8")
+        fixture = Fixture(
+            id="cmd_norm",
+            description="Command normalization",
+            setup=[],
+            prompt="Clean files",
+            expected="",
+            scoring={"type": "state_assertions"},
+        )
+        benchmark = GitCleanBenchmark()
+
+        benchmark.execute_model_output(
+            str(repo),
+            "```bash\ngit clean -f\n```",
+            fixture,
+        )
+
+        assert not untracked.exists()
+
+    def test_stateful_execution_rejects_prose_around_fenced_command(self, tmp_path):
+        import subprocess
+        from gitbench.harness.types import Fixture
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+        untracked = repo / "scratch.txt"
+        untracked.write_text("temporary\n", encoding="utf-8")
+        fixture = Fixture(
+            id="cmd_norm",
+            description="Command normalization",
+            setup=[],
+            prompt="Clean files",
+            expected="",
+            scoring={"type": "state_assertions"},
+        )
+        benchmark = GitCleanBenchmark()
+
+        benchmark.execute_model_output(
+            str(repo),
+            "Run this:\n```bash\ngit clean -f\n```",
+            fixture,
+        )
+
+        assert untracked.exists()
 
     @pytest.mark.parametrize("fixture_id", [f"f{i:03d}" for i in range(1, 13)])
     def test_expected_answer_passes_fixture_state_checks(self, fixture_id):

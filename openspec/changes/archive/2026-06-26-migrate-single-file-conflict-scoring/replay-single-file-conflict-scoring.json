@@ -1,0 +1,907 @@
+{
+  "summary": {
+    "candidate_fixtures": 30,
+    "attempts": 3840,
+    "before_passes": 2782,
+    "after_passes": 2816,
+    "newly_passing": 35,
+    "newly_failing": 1
+  },
+  "fixtures": [
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f001",
+      "path": "fixtures/cherry_pick/f001.yaml",
+      "filename": "greeting.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 90,
+      "after_passes": 90,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f002",
+      "path": "fixtures/cherry_pick/f002.yaml",
+      "filename": "version.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 108,
+      "after_passes": 110,
+      "newly_passing": [
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_liquid_lfm-2-24b-a2b_text_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "text",
+          "before_error": "Expected 'VERSION=2.0.0', got 'version.txt\nVERSION=2.0.0'",
+          "after_error": null,
+          "output": "version.txt\nVERSION=2.0.0"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_liquid_lfm-2-24b-a2b_json_schema_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'VERSION=2.0.0', got 'version.txt\nVERSION=2.0.0'",
+          "after_error": null,
+          "output": "version.txt\nVERSION=2.0.0"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f003",
+      "path": "fixtures/cherry_pick/f003.yaml",
+      "filename": "status.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 114,
+      "after_passes": 116,
+      "newly_passing": [
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_liquid_lfm-2-24b-a2b_text_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "text",
+          "before_error": "Expected 'Status: Resolved', got 'status.txt\nStatus: Resolved'",
+          "after_error": null,
+          "output": "status.txt\nStatus: Resolved"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_liquid_lfm-2-24b-a2b_json_schema_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'Status: Resolved', got 'status.txt\nStatus: Resolved'",
+          "after_error": null,
+          "output": "status.txt\nStatus: Resolved"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f004",
+      "path": "fixtures/cherry_pick/f004.yaml",
+      "filename": "contact.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 20,
+      "after_passes": 22,
+      "newly_passing": [
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_nvidia_nemotron-3-super-120b-a12b-none_text_v0.3.0.json",
+          "model": "nvidia/nemotron-3-super-120b-a12b:none",
+          "output_mode": "text",
+          "before_error": "Expected 'Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n', got '--- contact.txt\nName: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876'",
+          "after_error": null,
+          "output": "--- contact.txt\nName: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_ibm-granite_granite-4.1-8b_json_schema_v0.3.0.json",
+          "model": "ibm-granite/granite-4.1-8b",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n', got '--- contact.txt\nName: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n'",
+          "after_error": null,
+          "output": "--- contact.txt\nName: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f005",
+      "path": "fixtures/cherry_pick/f005.yaml",
+      "filename": "greet.py",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 9,
+      "after_passes": 9,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f006",
+      "path": "fixtures/cherry_pick/f006.yaml",
+      "filename": "config.yaml",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 95,
+      "after_passes": 102,
+      "newly_passing": [
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_nvidia_nemotron-3-nano-30b-a3b-high_text_v0.3.0.json",
+          "model": "nvidia/nemotron-3-nano-30b-a3b:high",
+          "output_mode": "text",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_nvidia_nemotron-3-nano-30b-a3b-xhigh_text_v0.3.0.json",
+          "model": "nvidia/nemotron-3-nano-30b-a3b:xhigh",
+          "output_mode": "text",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_nvidia_nemotron-3-nano-30b-a3b-medium_json_schema_v0.3.0.json",
+          "model": "nvidia/nemotron-3-nano-30b-a3b:medium",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-high_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:high",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-medium_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:medium",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-none_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:none",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-xhigh_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:xhigh",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f007",
+      "path": "fixtures/cherry_pick/f007.yaml",
+      "filename": "config.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 116,
+      "after_passes": 116,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f008",
+      "path": "fixtures/cherry_pick/f008.yaml",
+      "filename": "project.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 115,
+      "after_passes": 115,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f009",
+      "path": "fixtures/cherry_pick/f009.yaml",
+      "filename": "author.txt",
+      "current_scoring": {
+        "type": "exact_match"
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 116,
+      "after_passes": 118,
+      "newly_passing": [
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_liquid_lfm-2-24b-a2b_text_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "text",
+          "before_error": "Expected 'Author: J. Doe', got '```txt\nAuthor: J. Doe\n```'",
+          "after_error": null,
+          "output": "```txt\nAuthor: J. Doe\n```"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_liquid_lfm-2-24b-a2b_json_schema_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'Author: J. Doe', got '```txt\nAuthor: J. Doe\n```'",
+          "after_error": null,
+          "output": "```txt\nAuthor: J. Doe\n```"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "cherry_pick",
+      "fixture_id": "f011",
+      "path": "fixtures/cherry_pick/f011.yaml",
+      "filename": "settings.json",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 102,
+      "after_passes": 102,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f001",
+      "path": "fixtures/merge_conflicts/f001.yaml",
+      "filename": "greeting.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 85,
+      "after_passes": 85,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f002",
+      "path": "fixtures/merge_conflicts/f002.yaml",
+      "filename": "version.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 114,
+      "after_passes": 114,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f003",
+      "path": "fixtures/merge_conflicts/f003.yaml",
+      "filename": "status.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 104,
+      "after_passes": 104,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f004",
+      "path": "fixtures/merge_conflicts/f004.yaml",
+      "filename": "contact.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 89,
+      "after_passes": 90,
+      "newly_passing": [
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_ibm-granite_granite-4.1-8b_text_v0.3.0.json",
+          "model": "ibm-granite/granite-4.1-8b",
+          "output_mode": "text",
+          "before_error": "Expected 'Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n', got 'Name: John Doe  \nEmail: johndoe@personal.com  \nPhone: 555-9876'",
+          "after_error": null,
+          "output": "Name: John Doe  \nEmail: johndoe@personal.com  \nPhone: 555-9876"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f005",
+      "path": "fixtures/merge_conflicts/f005.yaml",
+      "filename": "greet.py",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 25,
+      "after_passes": 25,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f006",
+      "path": "fixtures/merge_conflicts/f006.yaml",
+      "filename": "config.yaml",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 97,
+      "after_passes": 97,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f007",
+      "path": "fixtures/merge_conflicts/f007.yaml",
+      "filename": "config.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 112,
+      "after_passes": 112,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f008",
+      "path": "fixtures/merge_conflicts/f008.yaml",
+      "filename": "project.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 117,
+      "after_passes": 117,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f009",
+      "path": "fixtures/merge_conflicts/f009.yaml",
+      "filename": "author.txt",
+      "current_scoring": {
+        "type": "exact_match"
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 116,
+      "after_passes": 116,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "merge_conflicts",
+      "fixture_id": "f011",
+      "path": "fixtures/merge_conflicts/f011.yaml",
+      "filename": "settings.json",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 101,
+      "after_passes": 101,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f001",
+      "path": "fixtures/rebase/f001.yaml",
+      "filename": "greeting.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 85,
+      "after_passes": 85,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f002",
+      "path": "fixtures/rebase/f002.yaml",
+      "filename": "version.txt",
+      "current_scoring": {
+        "type": "exact_match"
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 114,
+      "after_passes": 116,
+      "newly_passing": [
+        {
+          "run": "gitbench-results/20260625T212156Z/2026-06-25T22-15-08_anthropic_claude-opus-4.8-max_text_v0.3.1.json",
+          "model": "anthropic/claude-opus-4.8:max",
+          "output_mode": "text",
+          "before_error": "Expected 'VERSION=1.1.0', got '```\nVERSION=1.1.0\n```'",
+          "after_error": null,
+          "output": "```\nVERSION=1.1.0\n```"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_liquid_lfm-2-24b-a2b_json_schema_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'VERSION=1.1.0', got 'version.txt\nVERSION=1.1.0'",
+          "after_error": null,
+          "output": "version.txt\nVERSION=1.1.0"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f003",
+      "path": "fixtures/rebase/f003.yaml",
+      "filename": "status.txt",
+      "current_scoring": {
+        "type": "exact_match"
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 117,
+      "after_passes": 117,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f004",
+      "path": "fixtures/rebase/f004.yaml",
+      "filename": "contact.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 74,
+      "after_passes": 75,
+      "newly_passing": [
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_ibm-granite_granite-4.1-8b_json_schema_v0.3.0.json",
+          "model": "ibm-granite/granite-4.1-8b",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n', got '--- contact.txt\nName: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n'",
+          "after_error": null,
+          "output": "--- contact.txt\nName: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f005",
+      "path": "fixtures/rebase/f005.yaml",
+      "filename": "greet.py",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 4,
+      "after_passes": 4,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f006",
+      "path": "fixtures/rebase/f006.yaml",
+      "filename": "config.yaml",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 95,
+      "after_passes": 105,
+      "newly_passing": [
+        {
+          "run": "gitbench-results/20260622T213630Z/2026-06-23T01-05-04_poolside_laguna-xs.2-high_json_schema_v0.3.1.json",
+          "model": "poolside/laguna-xs.2:high",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        },
+        {
+          "run": "gitbench-results/20260622T213630Z/2026-06-23T01-05-04_poolside_laguna-xs.2-none_json_schema_v0.3.1.json",
+          "model": "poolside/laguna-xs.2:none",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_nvidia_nemotron-3-nano-30b-a3b-medium_text_v0.3.0.json",
+          "model": "nvidia/nemotron-3-nano-30b-a3b:medium",
+          "output_mode": "text",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_nvidia_nemotron-3-super-120b-a12b-low_text_v0.3.0.json",
+          "model": "nvidia/nemotron-3-super-120b-a12b:low",
+          "output_mode": "text",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_nvidia_nemotron-3-nano-30b-a3b-medium_json_schema_v0.3.0.json",
+          "model": "nvidia/nemotron-3-nano-30b-a3b:medium",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-high_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:high",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-low_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:low",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-medium_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:medium",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-none_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:none",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T08-34-06_anthropic_claude-sonnet-4.6-xhigh_json_schema_v0.3.0.json",
+          "model": "anthropic/claude-sonnet-4.6:xhigh",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'server:\n  port: 443\n  host: 0.0.0.0\n', got '--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n'",
+          "after_error": null,
+          "output": "--- config.yaml\nserver:\n  port: 443\n  host: 0.0.0.0\n"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f007",
+      "path": "fixtures/rebase/f007.yaml",
+      "filename": "config.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 116,
+      "after_passes": 116,
+      "newly_passing": [],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f008",
+      "path": "fixtures/rebase/f008.yaml",
+      "filename": "project.txt",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 114,
+      "after_passes": 115,
+      "newly_passing": [
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_liquid_lfm-2-24b-a2b_text_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "text",
+          "before_error": "Expected 'Title: My Project v3', got 'project.txt\nTitle: My Project v3'",
+          "after_error": null,
+          "output": "project.txt\nTitle: My Project v3"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_liquid_lfm-2-24b-a2b_json_schema_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'Title: My Project v3', got 'project.txt\nTitle: My Project v3'",
+          "after_error": null,
+          "output": "project.txt\nTitle: My Project v3"
+        }
+      ],
+      "newly_failing": [
+        {
+          "run": "gitbench-results/20260622T213630Z/2026-06-23T01-05-04_deepseek_deepseek-v4-flash-high_json_schema_v0.3.1.json",
+          "model": "deepseek/deepseek-v4-flash:high",
+          "output_mode": "json_schema",
+          "before_error": null,
+          "after_error": "Content mismatch: ['project.txt']",
+          "output": " Title: My Project v3\n"
+        }
+      ]
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f009",
+      "path": "fixtures/rebase/f009.yaml",
+      "filename": "author.txt",
+      "current_scoring": {
+        "type": "exact_match"
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 117,
+      "after_passes": 121,
+      "newly_passing": [
+        {
+          "run": "gitbench-results/20260625T212156Z/2026-06-25T22-15-08_anthropic_claude-opus-4.8-max_text_v0.3.1.json",
+          "model": "anthropic/claude-opus-4.8:max",
+          "output_mode": "text",
+          "before_error": "Expected 'Author: J. Doe', got '```\nAuthor: J. Doe\n```'",
+          "after_error": null,
+          "output": "```\nAuthor: J. Doe\n```"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T02-02-15_liquid_lfm-2-24b-a2b_text_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "text",
+          "before_error": "Expected 'Author: J. Doe', got 'author.txt\nAuthor: J. Doe'",
+          "after_error": null,
+          "output": "author.txt\nAuthor: J. Doe"
+        },
+        {
+          "run": "gitbench-results-bak/20260616T192400Z/2026-06-17T10-04-30_liquid_lfm-2-24b-a2b_json_schema_v0.3.0.json",
+          "model": "liquid/lfm-2-24b-a2b",
+          "output_mode": "json_schema",
+          "before_error": "Expected 'Author: J. Doe', got 'author.txt\nAuthor: J. Doe'",
+          "after_error": null,
+          "output": "author.txt\nAuthor: J. Doe"
+        },
+        {
+          "run": "gitbench-results-bak/20260617T202311Z/2026-06-18T01-45-40_anthropic_claude-opus-4.8-high_text_v0.3.0.json",
+          "model": "anthropic/claude-opus-4.8:high",
+          "output_mode": "text",
+          "before_error": "Expected 'Author: J. Doe', got '```\nAuthor: J. Doe\n```'",
+          "after_error": null,
+          "output": "```\nAuthor: J. Doe\n```"
+        }
+      ],
+      "newly_failing": []
+    },
+    {
+      "benchmark": "rebase",
+      "fixture_id": "f011",
+      "path": "fixtures/rebase/f011.yaml",
+      "filename": "settings.json",
+      "current_scoring": {
+        "type": "exact_match",
+        "strip_fences": true
+      },
+      "expected_checks": {
+        "before_expected_passes": true,
+        "after_raw_expected_passes": true,
+        "after_block_expected_passes": true
+      },
+      "attempts": 128,
+      "before_passes": 101,
+      "after_passes": 101,
+      "newly_passing": [],
+      "newly_failing": []
+    }
+  ]
+}

@@ -19,8 +19,11 @@ setup:
 prompt: Find the intermediate commits that should be marked as squash/fixup to clean
   up experimental work. These are consecutive commits with similar purpose that were
   split during development. Do not include the final experiment commit as one of the
-  commits to squash. Provide the commit messages.
-expected: Experiment v1, Experiment v2
+  commits to squash. Output ONLY the selected commit subject lines, one per line,
+  with no explanation.
+expected: |-
+  Experiment v1
+  Experiment v2
 scoring:
   type: commit_selection
   threshold: 1.0

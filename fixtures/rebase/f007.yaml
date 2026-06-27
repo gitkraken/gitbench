@@ -35,9 +35,11 @@ expected: 'PORT=8443
 
   '
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    config.txt: |
+      PORT=8443
+      PROTOCOL=https
 purpose: Tests ability to resolve a three-way rebase conflict with port and protocol.
   Evaluates multi-dimensional conflict with rebase context.
 difficulty: hard

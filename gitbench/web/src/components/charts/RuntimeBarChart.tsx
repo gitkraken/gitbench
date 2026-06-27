@@ -95,6 +95,7 @@ export default function RuntimeBarChart() {
           outputMode={outputMode}
           yDomain={yDomain}
           yTickFormatter={formatAxis}
+          yAxisLabel="API Time (s)"
           renderTooltip={(entry) => (
             <div style={tooltipStyle}>
               <div

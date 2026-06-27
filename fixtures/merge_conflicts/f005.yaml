@@ -18,13 +18,17 @@ setup:
 - git merge feature
 prompt: Resolve the merge conflict in greet.py. The base was a simple greet with print("Hello").
   Branch A added f-string formatting with the name parameter. Branch B changed the
-  greeting text to "Hi there" and changed return to False. Resolve the conflict keeping
-  the most useful changes. Provide ONLY the resolved file content.
+  greeting text to "Hi there" and changed return to False. Resolve by taking Branch
+  A's name-aware greeting and keeping the successful return value; do not take Branch
+  B's greeting text or False return. Provide ONLY the resolved file content.
 expected: "def greet(name):\n    print(f\"Hello, {name}\")\n    return True\n"
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    greet.py: |
+      def greet(name):
+          print(f"Hello, {name}")
+          return True
 purpose: Tests ability to resolve a function-body merge conflict combining formatting
   and logic changes. Evaluates semantic code merging.
 difficulty: medium

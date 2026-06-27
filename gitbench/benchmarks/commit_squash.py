@@ -1,6 +1,7 @@
 """Git commit squash benchmark for GitBench."""
 
 import logging
+import re
 import subprocess
 from pathlib import Path
 
@@ -14,8 +15,41 @@ logger = logging.getLogger(__name__)
 
 
 def _expected_commit_messages(expected: str) -> list[str]:
-    """Parse the expected comma-separated commit messages for this benchmark."""
+    """Parse expected commit subject lines for this benchmark.
+
+    New fixtures store one subject per line. Comma-separated expected values are
+    still accepted for older fixtures during the migration window.
+    """
+    lines = [line.strip() for line in expected.splitlines() if line.strip()]
+    if len(lines) > 1:
+        return lines
+    if len(lines) == 1 and "," not in lines[0]:
+        return lines
     return [item.strip() for item in expected.split(",") if item.strip()]
+
+
+def _selected_commit_messages(model_output: str) -> list[str]:
+    """Parse selected subject lines from model output.
+
+    The canonical answer is one subject per line. Bullet markers are tolerated,
+    and a single comma-separated line remains accepted for older outputs.
+    """
+    lines = [
+        _strip_selection_bullet(line)
+        for line in model_output.splitlines()
+        if line.strip()
+    ]
+    if len(lines) == 1 and "," in lines[0]:
+        return [item.strip() for item in lines[0].split(",") if item.strip()]
+    return lines
+
+
+def _strip_selection_bullet(line: str) -> str:
+    return re.sub(r"^\s*[-*]\s+", "", line.strip()).strip()
+
+
+def _selection_key(value: str) -> str:
+    return value.strip().lower()
 
 
 class CommitSquashBenchmark(Benchmark):
@@ -50,12 +84,10 @@ class CommitSquashBenchmark(Benchmark):
         model_output: str,
         repo_path: str | None = None,
     ) -> Score:
-        """Score by detecting the expected commit messages in a free-form answer.
+        """Score by comparing selected subject lines to expected subjects.
 
-        Commit-squash answers are often verbose: strong answers include hashes,
-        the target commit, and interactive-rebase instructions. Raw string
-        similarity penalizes those useful details, so this scorer evaluates the
-        actual selected commits listed in ``expected``.
+        The deterministic contract is the selected subject lines from
+        ``expected``. Hashes alone are not sufficient.
         """
         expected_messages = _expected_commit_messages(fixture.expected)
         if not expected_messages:
@@ -67,15 +99,16 @@ class CommitSquashBenchmark(Benchmark):
                 error="No expected commit messages defined",
             )
 
-        normalized_output = model_output.lower()
+        selected_messages = _selected_commit_messages(model_output)
+        selected_keys = {_selection_key(message) for message in selected_messages}
         hashes_by_message = self._commit_hashes_by_message(repo_path)
         found = [
             message
             for message in expected_messages
-            if self._mentions_commit(message, hashes_by_message, normalized_output)
+            if _selection_key(message) in selected_keys
         ]
         extra = self._selected_extra_commits(
-            model_output,
+            selected_messages,
             expected_messages,
             hashes_by_message,
         )
@@ -98,22 +131,6 @@ class CommitSquashBenchmark(Benchmark):
             model_output=model_output,
             error=None if passed else "; ".join(error_parts),
         )
-
-    def _mentions_commit(
-        self,
-        message: str,
-        hashes_by_message: dict[str, str],
-        normalized_output: str,
-    ) -> bool:
-        """Return True when output mentions a commit by subject or hash."""
-        if message.lower() in normalized_output:
-            return True
-
-        commit_hash = hashes_by_message.get(message)
-        if not commit_hash:
-            return False
-
-        return commit_hash[:7] in normalized_output or commit_hash in normalized_output
 
     def _commit_hashes_by_message(self, repo_path: str | None) -> dict[str, str]:
         """Return full commit hashes keyed by subject for the fixture repo."""
@@ -139,37 +156,41 @@ class CommitSquashBenchmark(Benchmark):
 
     def _selected_extra_commits(
         self,
-        model_output: str,
+        selected_messages: list[str],
         expected_messages: list[str],
         hashes_by_message: dict[str, str],
     ) -> list[str]:
-        """Find clearly selected non-expected commits in model output.
-
-        Commit-selection answers can mention target/base commits as explanatory
-        context. To avoid rejecting that useful context, this only treats bullet
-        lines and comma-separated command-like lists as selected commits.
-        """
-        expected_set = {message.lower() for message in expected_messages}
-        selected_regions = []
-        for line in model_output.splitlines():
-            stripped = line.strip()
-            if stripped.startswith(("-", "*")) or "," in stripped:
-                selected_regions.append(stripped.lower())
+        """Find selected non-expected commits in parsed answer lines."""
+        expected_set = {_selection_key(message) for message in expected_messages}
 
         extras = []
-        for message, commit_hash in hashes_by_message.items():
-            if message.lower() in expected_set:
+        for selected in selected_messages:
+            selected_key = _selection_key(selected)
+            if selected_key in expected_set:
                 continue
-            abbreviated_hash = commit_hash[:7]
-            if any(
-                message.lower() in region
-                or commit_hash in region
-                or abbreviated_hash in region
-                for region in selected_regions
-            ):
-                extras.append(message)
+            extras.append(
+                self._commit_display_for_selection(selected_key, selected, hashes_by_message)
+            )
 
         return extras
+
+    def _commit_display_for_selection(
+        self,
+        selected_key: str,
+        selected: str,
+        hashes_by_message: dict[str, str],
+    ) -> str:
+        for message, commit_hash in hashes_by_message.items():
+            message_key = _selection_key(message)
+            abbreviated_hash = commit_hash[:7]
+            if (
+                selected_key == message_key
+                or message_key in selected_key
+                or commit_hash in selected_key
+                or abbreviated_hash in selected_key
+            ):
+                return message
+        return selected.strip()
 
     def get_diff(self, repo_path: str) -> str:
         """Get git log output for the repository.

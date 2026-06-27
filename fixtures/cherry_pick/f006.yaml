@@ -22,9 +22,12 @@ prompt: 'Resolve the cherry-pick conflict in config.yaml. The base had port: 808
   resolved file content.'
 expected: "server:\n  port: 443\n  host: 0.0.0.0\n"
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    config.yaml: |
+      server:
+        port: 443
+        host: 0.0.0.0
 purpose: Tests ability to resolve a config block conflict with port and host changes.
   Evaluates infrastructure configuration merging.
 difficulty: medium

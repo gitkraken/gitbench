@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
+  Label,
   ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
@@ -379,14 +380,38 @@ export default function QuadrantComparisonChart() {
 
   if (!data) return <div>Loading...</div>;
 
-  const xOptimal: { x1?: number; x2?: number } =
-    xMetric.better === "higher"
-      ? { x1: xMid, x2: xDomain[1] }
-      : { x1: xDomain[0], x2: xMid };
-  const yOptimal: { y1?: number; y2?: number } =
-    yMetric.better === "higher"
-      ? { y1: yMid, y2: yDomain[1] }
-      : { y1: yDomain[0], y2: yMid };
+  const xBetterIsRight = xMetric.better === "higher";
+  const yBetterIsTop = yMetric.better === "higher";
+
+  const quadrantLabels = [
+    {
+      x1: xMid, x2: xDomain[1], y1: yMid, y2: yDomain[1],
+      labelPos: "insideTopRight" as const,
+      xGood: xBetterIsRight, yGood: yBetterIsTop,
+    },
+    {
+      x1: xDomain[0], x2: xMid, y1: yMid, y2: yDomain[1],
+      labelPos: "insideTopLeft" as const,
+      xGood: !xBetterIsRight, yGood: yBetterIsTop,
+    },
+    {
+      x1: xMid, x2: xDomain[1], y1: yDomain[0], y2: yMid,
+      labelPos: "insideBottomRight" as const,
+      xGood: xBetterIsRight, yGood: !yBetterIsTop,
+    },
+    {
+      x1: xDomain[0], x2: xMid, y1: yDomain[0], y2: yMid,
+      labelPos: "insideBottomLeft" as const,
+      xGood: !xBetterIsRight, yGood: !yBetterIsTop,
+    },
+  ];
+
+  function quadrantLabelText(xGood: boolean, yGood: boolean): string {
+    if (xGood && yGood) return "Better on both";
+    if (!xGood && !yGood) return "Worse on both";
+    if (xGood && !yGood) return `Better ${xMetric.shortLabel} / Worse ${yMetric.shortLabel}`;
+    return `Worse ${xMetric.shortLabel} / Better ${yMetric.shortLabel}`;
+  }
 
   return (
     <div>
@@ -471,13 +496,30 @@ export default function QuadrantComparisonChart() {
                 margin={{ top: 18, right: 30, left: 16, bottom: 36 }}
               >
                 <CartesianGrid stroke="rgba(255,255,255,0.045)" />
-                <ReferenceArea
-                  {...xOptimal}
-                  {...yOptimal}
-                  fill="var(--accent)"
-                  fillOpacity={0.1}
-                  strokeOpacity={0}
-                />
+                {quadrantLabels.map((q, i) => {
+                  const isOptimal = q.xGood && q.yGood;
+                  return (
+                    <ReferenceArea
+                      key={i}
+                      x1={q.x1}
+                      x2={q.x2}
+                      y1={q.y1}
+                      y2={q.y2}
+                      fill={isOptimal ? "var(--accent)" : "transparent"}
+                      fillOpacity={isOptimal ? 0.1 : 0}
+                      strokeOpacity={0}
+                    >
+                      <Label
+                        position={q.labelPos}
+                        offset={8}
+                        value={quadrantLabelText(q.xGood, q.yGood)}
+                        fill="var(--text-dim)"
+                        fontSize={10}
+                        fontFamily="var(--font-mono)"
+                      />
+                    </ReferenceArea>
+                  );
+                })}
                 <ReferenceLine
                   x={xMid}
                   stroke="rgba(255,255,255,0.16)"
