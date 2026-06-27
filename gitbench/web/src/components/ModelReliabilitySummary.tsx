@@ -3,6 +3,10 @@ import { loadModelResults } from "@/lib/report-client";
 import type { FixtureResult } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { useCampaignId } from "@/lib/use-campaign";
+import {
+  resolveReportViewState,
+  type ReportOutputMode,
+} from "@/lib/report-url-state";
 
 interface ReliabilityCounts {
   stablePass: number;
@@ -28,21 +32,30 @@ function classifyFixture(
 export interface ModelReliabilitySummaryProps {
   model: string;
   outputMode?: string;
+  reportGroupId?: string;
+  availableOutputModes?: string[];
 }
 
-const OUTPUT_MODE_STORAGE_KEY = "gitbench-output-mode";
+function isOutputMode(value: string): value is ReportOutputMode {
+  return value === "text" || value === "json_schema" || value === "both";
+}
 
-function readInitialOutputMode(fallback: string): string {
+function readInitialOutputMode(
+  fallback: string,
+  reportGroupId: string,
+  availableOutputModes: string[]
+): string {
   if (typeof window === "undefined") return fallback;
-  try {
-    const stored = window.localStorage.getItem(OUTPUT_MODE_STORAGE_KEY);
-    if (stored === "text" || stored === "json_schema" || stored === "both") {
-      return stored;
+  const defaultOutputMode = isOutputMode(fallback) ? fallback : "text";
+  return resolveReportViewState(
+    window.location.search,
+    [{ id: reportGroupId }],
+    {
+      defaultSelectedGroups: [reportGroupId],
+      defaultOutputMode,
+      availableOutputModes,
     }
-  } catch {
-    // ignore
-  }
-  return fallback;
+  ).outputMode;
 }
 
 function fetchOutputMode(mode: string): string {
@@ -54,10 +67,12 @@ function fetchOutputMode(mode: string): string {
 export function ModelReliabilitySummary({
   model,
   outputMode = "text",
+  reportGroupId = "current",
+  availableOutputModes = [outputMode],
 }: ModelReliabilitySummaryProps) {
-  // Read initial output mode from localStorage, falling back to the prop
+  // Read initial output mode from URL state, falling back to the page default.
   const [activeOutputMode, setActiveOutputMode] = useState<string>(() =>
-    readInitialOutputMode(outputMode)
+    readInitialOutputMode(outputMode, reportGroupId, availableOutputModes)
   );
 
   const [results, setResults] = useState<Record<

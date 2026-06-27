@@ -1,6 +1,8 @@
 import type { GitBenchData } from "../../lib/types.ts";
 import {
+  deriveModelGroups,
   pairModelVariants,
+  sanitizeGroupSelection,
   visibleOutputModes,
   type ConcreteOutputMode,
   type ModelVariantPair,
@@ -37,6 +39,20 @@ export interface CompareBenchmarkChartData {
   rows: CompareBenchmarkRow[];
   series: CompareBenchmarkSeries[];
   seriesByDataKey: Map<string, CompareBenchmarkSeries>;
+}
+
+function outputModePriority(outputMode: OutputMode): ConcreteOutputMode[] {
+  return outputMode === "both" ? ["text", "json_schema"] : [outputMode];
+}
+
+function comparePassRateDesc(
+  a: { passRate: number | null },
+  b: { passRate: number | null }
+): number {
+  if (a.passRate == null && b.passRate == null) return 0;
+  if (a.passRate == null) return 1;
+  if (b.passRate == null) return -1;
+  return b.passRate - a.passRate;
 }
 
 function passRateForModel(
@@ -132,4 +148,34 @@ export function compareBenchmarkPairValues(
     values[item.outputMode] = typeof value === "number" ? value : null;
   }
   return values;
+}
+
+export function buildCompareReliabilityPair(
+  data: GitBenchData,
+  selectedGroupIds: string[],
+  outputMode: OutputMode
+): string[] {
+  const groups = deriveModelGroups(data);
+  const groupById = new Map(groups.map((group) => [group.id, group]));
+  const selectedGroups = sanitizeGroupSelection(selectedGroupIds, groups);
+  const modes = outputModePriority(outputMode);
+  const pair: string[] = [];
+
+  for (const groupId of selectedGroups) {
+    const group = groupById.get(groupId);
+    if (!group) continue;
+
+    for (const mode of modes) {
+      const effort = group.efforts
+        .filter((item) => item.outputMode === mode)
+        .sort(comparePassRateDesc)[0];
+      if (!effort) continue;
+      pair.push(effort.modelName);
+      break;
+    }
+
+    if (pair.length >= 2) break;
+  }
+
+  return pair;
 }

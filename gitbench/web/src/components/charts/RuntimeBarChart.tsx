@@ -7,7 +7,6 @@ import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelec
 import {
   buildGroupedMetricRows,
   runtimeMetric,
-  writeStoredOutputMode,
 } from "@/components/charts/model-groups";
 import {
   GroupedMetricTooltipSections,
@@ -74,10 +73,7 @@ export default function RuntimeBarChart() {
         selectedGroups={selectedGroups}
         onSelectedGroupsChange={setSelectedGroups}
         outputMode={outputMode}
-        onOutputModeChange={(mode) => {
-          setOutputMode(mode);
-          writeStoredOutputMode(mode);
-        }}
+        onOutputModeChange={setOutputMode}
         availableOutputModes={availableOutputModes}
       />
       {chartData.length === 0 ? (

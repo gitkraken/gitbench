@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildCompareBenchmarkData,
   buildCompareOverallRows,
+  buildCompareReliabilityPair,
   compareBenchmarkPairValues,
 } from "../src/components/charts/compare-chart-data.ts";
 
@@ -31,7 +32,29 @@ function cell(passAtK) {
 
 function data() {
   return {
-    models: [],
+    models: [
+      {
+        name: "openai/gpt-a:high",
+        provider: "openai",
+        baseModel: "gpt-a",
+        reasoningLevel: "high",
+        output_mode: "text",
+      },
+      {
+        name: "openai/gpt-a:high",
+        provider: "openai",
+        baseModel: "gpt-a",
+        reasoningLevel: "high",
+        output_mode: "json_schema",
+      },
+      {
+        name: "anthropic/claude-b:medium",
+        provider: "anthropic",
+        baseModel: "claude-b",
+        reasoningLevel: "medium",
+        output_mode: "text",
+      },
+    ],
     benchmarks: ["bench-a", "bench-b"],
     model_summaries: {
       "openai/gpt-a:high": summary(0.9),
@@ -88,6 +111,17 @@ test("Compare overall pairs variants and sorts by the mean available rate", () =
         sort: 80,
       },
     ].sort((a, b) => b.sort - a.sort)
+  );
+});
+
+test("Compare reliability pair uses one representative from each selected group", () => {
+  assert.deepEqual(
+    buildCompareReliabilityPair(
+      data(),
+      ["openai/gpt-a", "anthropic/claude-b"],
+      "both"
+    ),
+    ["openai/gpt-a:high", "anthropic/claude-b:medium"]
   );
 });
 

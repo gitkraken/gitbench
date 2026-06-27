@@ -8,7 +8,6 @@ import {
   buildGroupedMetricRows,
   passRateMetric,
   benchPassRateMetric,
-  writeStoredOutputMode,
 } from "@/components/charts/model-groups";
 import {
   GroupedMetricTooltipSections,
@@ -84,10 +83,7 @@ export default function PassRateBarChart({
         selectedGroups={selectedGroups}
         onSelectedGroupsChange={setSelectedGroups}
         outputMode={outputMode}
-        onOutputModeChange={(mode) => {
-          setOutputMode(mode);
-          writeStoredOutputMode(mode);
-        }}
+        onOutputModeChange={setOutputMode}
         availableOutputModes={availableOutputModes}
       />
       <VerticalGroupedMetricChart

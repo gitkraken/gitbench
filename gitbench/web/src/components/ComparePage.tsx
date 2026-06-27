@@ -16,19 +16,15 @@ import ModelSelector, {
 } from "@/components/charts/ModelSelector";
 import OutputModeSelector from "@/components/charts/OutputModeSelector";
 import ScatterPlot from "@/components/charts/ScatterPlot";
+import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
 import {
-  deriveModelGroups,
-  expandGroupSelectionWithMode,
   outputModeLabel,
-  sanitizeGroupSelection,
-  readStoredOutputMode,
   visibleOutputModes,
-  writeStoredOutputMode,
-  type OutputMode,
 } from "@/components/charts/model-groups";
 import {
   buildCompareBenchmarkData,
   buildCompareOverallRows,
+  buildCompareReliabilityPair,
   compareBenchmarkPairValues,
   type CompareBenchmarkRow,
 } from "@/components/charts/compare-chart-data";
@@ -83,28 +79,26 @@ function CompareModelLegend({
 
 export default function ComparePage() {
   const [data, setData] = useState<GitBenchData | null>(null);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [outputMode, setOutputMode] = useState<OutputMode>(
-    readStoredOutputMode()
+  const defaultSelectedGroups = useMemo(
+    () => (data ? defaultSelectionForCompare(data) : []),
+    [data]
   );
+  const {
+    selectedGroups,
+    setSelectedGroups,
+    selectedModels,
+    outputMode,
+    setOutputMode,
+    availableOutputModes,
+  } = useSyncedModelSelection(data, {
+    defaultSelectedGroups,
+    defaultOutputMode: "both",
+  });
 
   useEffect(() => {
-    loadData().then((d) => {
-      setData(d);
-      const params = new URLSearchParams(window.location.search);
-      const withModel = params.get("with");
-      const initial = withModel ? [withModel] : defaultSelectionForCompare(d);
-      setSelectedGroups(sanitizeGroupSelection(initial, deriveModelGroups(d)));
-    });
+    loadData().then(setData);
   }, []);
 
-  const selectedModels = useMemo(
-    () =>
-      data
-        ? expandGroupSelectionWithMode(selectedGroups, data, outputMode)
-        : [],
-    [data, selectedGroups, outputMode]
-  );
   const overallData = useMemo(
     () => (data ? buildCompareOverallRows(data, selectedModels) : []),
     [data, selectedModels]
@@ -134,12 +128,19 @@ export default function ComparePage() {
       })),
     [benchmarkChart.pairs]
   );
+  const reliabilityPair = useMemo(
+    () =>
+      data
+        ? buildCompareReliabilityPair(data, selectedGroups, outputMode)
+        : [],
+    [data, selectedGroups, outputMode]
+  );
   const reliabilityDeltas = useMemo(
     () =>
-      data && selectedModels.length >= 2
-        ? computeReliabilityDeltas(data, selectedModels[0], selectedModels[1])
+      data && reliabilityPair.length >= 2
+        ? computeReliabilityDeltas(data, reliabilityPair[0], reliabilityPair[1])
         : [],
-    [data, selectedModels]
+    [data, reliabilityPair]
   );
   const reliabilitySummary = useMemo(
     () => reliabilityDeltaSummary(reliabilityDeltas),
@@ -154,19 +155,14 @@ export default function ComparePage() {
         <div className="flex-1">
           <ModelSelector
             data={data}
-            initialSelected={selectedGroups}
+            value={selectedGroups}
             onChange={setSelectedGroups}
           />
         </div>
         <OutputModeSelector
           value={outputMode}
-          onChange={(mode) => {
-            setOutputMode(mode);
-            writeStoredOutputMode(mode);
-          }}
-          availableModes={
-            new Set(data.models.map((m) => m.output_mode ?? "text"))
-          }
+          onChange={setOutputMode}
+          availableModes={availableOutputModes}
         />
       </div>
 
@@ -175,7 +171,7 @@ export default function ComparePage() {
           <span>Fixture Reliability Delta</span>
         </div>
         <div className="card p-5">
-          {selectedModels.length < 2 ? (
+          {reliabilityPair.length < 2 ? (
             <p className="text-sm text-(--color-text-mid)">
               Select at least two models to compare fixture reliability.
             </p>
@@ -190,7 +186,7 @@ export default function ComparePage() {
                     More reliable
                   </div>
                   <div className="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
-                    {selectedModels[0]}
+                    {reliabilityPair[0]}
                   </div>
                 </div>
                 <div className="bg-fail-bg/30 rounded-md p-3 text-center">
@@ -201,7 +197,7 @@ export default function ComparePage() {
                     More reliable
                   </div>
                   <div className="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
-                    {selectedModels[1]}
+                    {reliabilityPair[1]}
                   </div>
                 </div>
                 <div className="bg-(--color-card) rounded-md p-3 text-center">
@@ -231,10 +227,10 @@ export default function ComparePage() {
                       <tr className="text-(--color-text-dim) border-b border-border">
                         <th className="pb-1.5 pr-3 font-normal">Fixture</th>
                         <th className="pb-1.5 pr-3 font-normal text-right">
-                          {selectedModels[0]}
+                          {reliabilityPair[0]}
                         </th>
                         <th className="pb-1.5 pr-3 font-normal text-right">
-                          {selectedModels[1]}
+                          {reliabilityPair[1]}
                         </th>
                         <th className="pb-1.5 font-normal text-right">Delta</th>
                       </tr>

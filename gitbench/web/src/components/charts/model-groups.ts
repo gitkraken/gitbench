@@ -523,8 +523,6 @@ export function getGroupedMetricSortValue(
   return values.reduce((total, value) => total + value, 0) / values.length;
 }
 
-const OUTPUT_MODE_STORAGE_KEY = "gitbench-output-mode";
-
 export function getAvailableOutputModes(data: GitBenchData): Set<string> {
   return new Set(data.models.map((m) => m.output_mode ?? "text"));
 }
@@ -535,22 +533,6 @@ export function filterEffortsByOutputMode(
 ): ModelGroupEffort[] {
   if (mode === "both") return efforts;
   return efforts.filter((e) => e.outputMode === mode);
-}
-
-export function readStoredOutputMode(): OutputMode {
-  try {
-    const stored = window.localStorage.getItem(OUTPUT_MODE_STORAGE_KEY);
-    if (stored === "text" || stored === "json_schema" || stored === "both") {
-      return stored;
-    }
-  } catch {
-    // ignore
-  }
-  return "text";
-}
-
-export function writeStoredOutputMode(mode: OutputMode): void {
-  window.localStorage.setItem(OUTPUT_MODE_STORAGE_KEY, mode);
 }
 
 /**

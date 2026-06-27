@@ -4,10 +4,7 @@ import { loadTokenChart } from "@/lib/report-client";
 import ProviderIcon from "@/components/ProviderIcon";
 import ModelOutputControls from "@/components/charts/ModelOutputControls";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
-import {
-  buildTokenUsageRows,
-  writeStoredOutputMode,
-} from "@/components/charts/model-groups";
+import { buildTokenUsageRows } from "@/components/charts/model-groups";
 import {
   GroupedMetricTooltipSections,
   VerticalGroupedMetricChart,
@@ -63,10 +60,7 @@ export default function TokenUsageChart() {
         selectedGroups={selectedGroups}
         onSelectedGroupsChange={setSelectedGroups}
         outputMode={outputMode}
-        onOutputModeChange={(mode) => {
-          setOutputMode(mode);
-          writeStoredOutputMode(mode);
-        }}
+        onOutputModeChange={setOutputMode}
         availableOutputModes={availableOutputModes}
       />
       {allZero ? (

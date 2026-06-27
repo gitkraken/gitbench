@@ -30,6 +30,8 @@ function heatColor(ratio: number): string {
 }
 
 import { useCampaignId } from "@/lib/use-campaign";
+import { encodeReportViewState } from "@/lib/report-url-state";
+import { deriveModelGroups } from "@/components/charts/model-groups";
 
 export default function BenchmarkHeatmap() {
   const [data, setData] = useState<HeatmapChartData | null>(null);
@@ -57,6 +59,31 @@ export default function BenchmarkHeatmap() {
     setOutputMode,
     availableOutputModes,
   } = useSyncedModelSelection(selectionData);
+  const reportGroups = useMemo(
+    () => (selectionData ? deriveModelGroups(selectionData) : []),
+    [selectionData]
+  );
+  const availableOutputModeKey = Array.from(availableOutputModes)
+    .sort()
+    .join(",");
+  const reportSearch = useMemo(
+    () =>
+      encodeReportViewState(
+        { selectedGroups, outputMode },
+        reportGroups,
+        {
+          availableOutputModes: availableOutputModeKey
+            ? availableOutputModeKey.split(",")
+            : [],
+        }
+      ),
+    [selectedGroups, outputMode, reportGroups, availableOutputModeKey]
+  );
+
+  function benchmarkHref(bench: string): string {
+    const path = `/benchmarks/${encodeURIComponent(bench)}`;
+    return `${path}?${reportSearch}`;
+  }
 
   useEffect(() => {
     loadHeatmapChart().then((d) => {
@@ -110,7 +137,7 @@ export default function BenchmarkHeatmap() {
               <tr key={bench}>
                 <td className="font-mono text-xs text-(--color-text-mid)">
                   <a
-                    href={`/benchmarks/${bench}`}
+                    href={benchmarkHref(bench)}
                     className="text-inherit no-underline"
                   >
                     {bench}
@@ -137,7 +164,7 @@ export default function BenchmarkHeatmap() {
                       key={m}
                       title={`${m} on ${bench}: ${passed}/${total} (${pct}%)`}
                     >
-                      <a href={`/benchmarks/${bench}`} className="no-underline">
+                      <a href={benchmarkHref(bench)} className="no-underline">
                         <Badge
                           variant="outline"
                           className="font-mono text-xs"

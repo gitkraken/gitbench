@@ -15,12 +15,14 @@ import {
 } from "@/lib/fixture-reliability";
 import { getReportStore } from "@/lib/node-sqlite-report-store";
 import type { GitBenchData, FixtureResult, BaseModelGroup } from "@/lib/types";
+import { encodeReportViewState } from "@/lib/report-url-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GitCompare } from "lucide-react";
 import ProviderIcon from "@/components/ProviderIcon.tsx";
 import { REASONING_LEVEL_ORDER, DIFFICULTY_ORDER } from "@/lib/sort-orders";
 import { formatAggregateTokenUsage } from "@/lib/token-usage";
+import { deriveModelGroups } from "@/components/charts/model-groups";
 
 export function getStaticPaths() {
   const data = loadDataSync();
@@ -98,7 +100,22 @@ if (!summary) {
 
 const outputMode = textModelName ? "text" : "json_schema";
 const outputModeLabel = outputMode === "text" ? "Text" : "JSON Schema";
-const encodedModelGroup = encodeURIComponent(`${provider}/${baseModel}`);
+const reportGroupId = `${provider}/${baseModel}`;
+const reportGroups = deriveModelGroups(data);
+const availableReportOutputModes = [
+  ...(textModelName ? ["text"] : []),
+  ...(jsonModelName ? ["json_schema"] : []),
+];
+const defaultReportOutputMode =
+  textModelName && jsonModelName ? "both" : outputMode;
+const compareReportState = encodeReportViewState(
+  { selectedGroups: [reportGroupId], outputMode: defaultReportOutputMode },
+  reportGroups,
+  {
+    availableOutputModes: availableReportOutputModes,
+    defaultOutputMode: defaultReportOutputMode,
+  },
+);
 const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
 
 // Check if both modes exist for comparison
@@ -387,6 +404,7 @@ const modelLevelDescription =
       id="header-stats-container"
       data-has-text={textModelName != null}
       data-has-json={jsonModelName != null}
+      data-report-group-id={reportGroupId}
     >
       {textStats && (
         <div data-stats="text">
@@ -451,7 +469,7 @@ const modelLevelDescription =
         </div>
       )}
     </div>
-    <a href={`/compare?with=${encodedModelGroup}`}>
+    <a href={`/compare?${compareReportState}`}>
       <Button
         variant="outline"
         size="sm"
@@ -472,7 +490,9 @@ const modelLevelDescription =
       <ModelReliabilitySummary
         client:load
         model={modelName}
-        outputMode={outputMode}
+        outputMode={defaultReportOutputMode}
+        reportGroupId={reportGroupId}
+        availableOutputModes={availableReportOutputModes}
       />
     </div>
   </section>
@@ -874,6 +894,11 @@ const modelLevelDescription =
 </Layout>
 
 <script>
+  import {
+    resolveReportViewState,
+    writeReportViewStateToHistory,
+  } from "@/lib/report-url-state";
+
   const filterParamMap = {
     "filter-bench": "benchmark",
     "filter-diff": "difficulty",
@@ -976,23 +1001,8 @@ const modelLevelDescription =
     getFilterSelect(id)?.addEventListener("change", () => applyFilters());
   });
 
-  // === Output mode toggle ===
-  var OUTPUT_MODE_KEY = "gitbench-output-mode";
-
   function isOutputMode(value: string | null): value is OutputMode {
     return value === "text" || value === "json_schema" || value === "both";
-  }
-
-  function getStoredOutputMode(): OutputMode {
-    try {
-      var stored = localStorage.getItem(OUTPUT_MODE_KEY);
-      if (isOutputMode(stored)) {
-        return stored;
-      }
-    } catch (e) {
-      // ignore
-    }
-    return "text";
   }
 
   function getReliabilityLabel(mode: OutputMode): string {
@@ -1000,11 +1010,57 @@ const modelLevelDescription =
     return "Text";
   }
 
-  function setOutputMode(mode: OutputMode, options: { skipEvent?: boolean } = {}) {
-    try {
-      localStorage.setItem(OUTPUT_MODE_KEY, mode);
-    } catch (e) {
-      // ignore
+  function getReportStateContext() {
+    var statsContainer = document.getElementById("header-stats-container");
+    var hasText = statsContainer
+      ? statsContainer.getAttribute("data-has-text") === "true"
+      : true;
+    var hasJson = statsContainer
+      ? statsContainer.getAttribute("data-has-json") === "true"
+      : false;
+    var groupId =
+      statsContainer?.getAttribute("data-report-group-id") || "current";
+    var availableOutputModes = [
+      ...(hasText ? ["text"] : []),
+      ...(hasJson ? ["json_schema"] : []),
+    ];
+    var defaultOutputMode: OutputMode =
+      hasText && hasJson ? "both" : hasJson ? "json_schema" : "text";
+
+    return {
+      groupId,
+      groups: [{ id: groupId }],
+      availableOutputModes,
+      defaultOutputMode,
+      hasText,
+      hasJson,
+    };
+  }
+
+  function initialOutputModeFromUrl(): OutputMode {
+    var context = getReportStateContext();
+    return resolveReportViewState(window.location.search, context.groups, {
+      defaultSelectedGroups: [context.groupId],
+      defaultOutputMode: context.defaultOutputMode,
+      availableOutputModes: context.availableOutputModes,
+    }).outputMode;
+  }
+
+  function setOutputMode(
+    mode: OutputMode,
+    options: { skipEvent?: boolean; syncUrl?: boolean } = {},
+  ) {
+    var context = getReportStateContext();
+    if (options.syncUrl !== false) {
+      writeReportViewStateToHistory(
+        { selectedGroups: [context.groupId], outputMode: mode },
+        context.groups,
+        {
+          defaultSelectedGroups: [context.groupId],
+          defaultOutputMode: context.defaultOutputMode,
+          availableOutputModes: context.availableOutputModes,
+        },
+      );
     }
 
     // Toggle card set visibility
@@ -1068,24 +1124,7 @@ const modelLevelDescription =
     if (!toggle) return; // No JSON variant, toggle not rendered
 
     // Determine available modes from the page
-    var statsContainer = document.getElementById("header-stats-container");
-    var hasText = statsContainer
-      ? statsContainer.getAttribute("data-has-text") === "true"
-      : true;
-    var hasJson = statsContainer
-      ? statsContainer.getAttribute("data-has-json") === "true"
-      : false;
-
-    var storedMode = getStoredOutputMode();
-
-    // If no text fixtures exist, default to json_schema
-    if (!hasText && hasJson && storedMode === "text") {
-      storedMode = "json_schema";
-    }
-    // If no JSON variant, force text
-    if (!hasJson) {
-      storedMode = "text";
-    }
+    var initialMode = initialOutputModeFromUrl();
 
     // Set up toggle button click handlers
     toggle.querySelectorAll<HTMLButtonElement>("button").forEach(function (btn) {
@@ -1096,8 +1135,15 @@ const modelLevelDescription =
     });
 
     // Apply initial mode
-    setOutputMode(storedMode, { skipEvent: false });
+    setOutputMode(initialMode, { skipEvent: false, syncUrl: false });
   })();
+
+  window.addEventListener("popstate", function () {
+    setOutputMode(initialOutputModeFromUrl(), {
+      skipEvent: false,
+      syncUrl: false,
+    });
+  });
 
   applyFilters();
 </script>

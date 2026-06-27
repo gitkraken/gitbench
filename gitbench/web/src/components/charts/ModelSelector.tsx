@@ -6,9 +6,11 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import ProviderIcon from "@/components/ProviderIcon";
 import {
   deriveModelGroups,
+  getAvailableOutputModes,
   sanitizeGroupSelection,
   type ModelGroup,
 } from "@/components/charts/model-groups";
+import { resolveReportViewState } from "@/lib/report-url-state";
 
 /**
  * Returns the top two provider/base-model group IDs sorted by mean pass
@@ -38,7 +40,6 @@ interface ModelSelectorProps {
   onChange?: (selected: string[]) => void;
 }
 
-const STORAGE_KEY = "gitbench-model-selection";
 const EVENT_NAME = "model-selection-changed";
 
 function getPassColor(passRate: number): string {
@@ -46,22 +47,6 @@ function getPassColor(passRate: number): string {
   if (passRate >= 0.5)
     return "text-(--color-warn) bg-warn-bg border-(--color-warn-border)";
   return "text-fail bg-fail-bg border-(--color-fail-border)";
-}
-
-function readStoredSelection(groups: ModelGroup[]): string[] | null {
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (!stored) return null;
-
-  try {
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) return null;
-    return sanitizeGroupSelection(
-      parsed.filter((value): value is string => typeof value === "string"),
-      groups
-    );
-  } catch {
-    return null;
-  }
 }
 
 function passRange(group: ModelGroup): { label: string; colorValue: number } {
@@ -76,6 +61,25 @@ function passRange(group: ModelGroup): { label: string; colorValue: number } {
     label: min === max ? `${max}%` : `${min}-${max}%`,
     colorValue: max / 100,
   };
+}
+
+function initialSelectionForGroups(
+  data: GitBenchData,
+  groups: ModelGroup[],
+  initialSelected: string[] | undefined
+): string[] {
+  if (initialSelected && initialSelected.length > 0) {
+    const selected = sanitizeGroupSelection(initialSelected, groups);
+    if (selected.length > 0) return selected;
+  }
+
+  if (typeof window !== "undefined") {
+    return resolveReportViewState(window.location.search, groups, {
+      availableOutputModes: getAvailableOutputModes(data),
+    }).selectedGroups;
+  }
+
+  return groups.map((group) => group.id);
 }
 
 export default function ModelSelector({
@@ -97,12 +101,7 @@ export default function ModelSelector({
       groupsRef.current = groups;
       if (isControlled) return;
 
-      const next = initialSelected
-        ? sanitizeGroupSelection(initialSelected, groups)
-        : readStoredSelection(groups);
-      setSelected(
-        next && next.length > 0 ? next : groups.map((group) => group.id)
-      );
+      setSelected(initialSelectionForGroups(providedData, groups, initialSelected));
       return;
     }
 
@@ -112,17 +111,17 @@ export default function ModelSelector({
       groupsRef.current = groups;
       if (isControlled) return;
 
-      const next = initialSelected
-        ? sanitizeGroupSelection(initialSelected, groups)
-        : readStoredSelection(groups);
-      setSelected(
-        next && next.length > 0 ? next : groups.map((group) => group.id)
-      );
+      setSelected(initialSelectionForGroups(loaded, groups, initialSelected));
     });
   }, [providedData, initialSelected, isControlled]);
 
   useEffect(() => {
-    if (!isControlled && initialSelected && groupsRef.current.length > 0) {
+    if (
+      !isControlled &&
+      initialSelected &&
+      initialSelected.length > 0 &&
+      groupsRef.current.length > 0
+    ) {
       setSelected(sanitizeGroupSelection(initialSelected, groupsRef.current));
     }
   }, [initialSelected?.join(","), isControlled]);
@@ -184,8 +183,6 @@ export default function ModelSelector({
         if (!isControlled) {
           setSelected(next);
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: next }));
         onChange?.(next);
       }}
       placeholder="Select models..."
