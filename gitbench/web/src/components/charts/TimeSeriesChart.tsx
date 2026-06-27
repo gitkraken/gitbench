@@ -107,6 +107,14 @@ export default function TimeSeriesChart() {
               tickFormatter={(v: number) => `${v}%`}
               axisLine={false}
               tickLine={false}
+              label={{
+                value: "Pass Rate (%)",
+                angle: -90,
+                position: "insideLeft",
+                fill: "var(--text-dim)",
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+              }}
             />
             <Tooltip
               content={({ active, payload, label }) => {
@@ -226,6 +234,14 @@ export default function TimeSeriesChart() {
               tickFormatter={(v: number) => `${v}%`}
               axisLine={false}
               tickLine={false}
+              label={{
+                value: "Pass Rate (%)",
+                angle: -90,
+                position: "insideLeft",
+                fill: "var(--text-dim)",
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+              }}
             />
             <Tooltip
               content={({ active, payload, label }) => {

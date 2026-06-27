@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import type { GitBenchData } from "@/lib/types";
 import { loadHeatmapChart, type HeatmapChartData } from "@/lib/report-client";
-import { modelPath } from "@/lib/routes";
+import { modelPath, splitModelName } from "@/lib/routes";
 import ModelOutputControls from "@/components/charts/ModelOutputControls";
 import { Badge } from "@/components/ui/badge";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
@@ -18,14 +18,13 @@ function classifyReliability(passAtK: number): {
 function heatBg(ratio: number): string {
   if (ratio >= 0.9) return "rgba(16,185,129,0.28)";
   if (ratio >= 0.8) return "rgba(16,185,129,0.18)";
-  if (ratio >= 0.5) return "rgba(245,158,11,0.18)";
-  if (ratio > 0) return "rgba(245,158,11,0.12)";
+  if (ratio >= 0.4) return "rgba(245,158,11,0.18)";
   return "rgba(244,63,94,0.15)";
 }
 
 function heatColor(ratio: number): string {
   if (ratio >= 0.8) return "var(--color-pass)";
-  if (ratio > 0) return "var(--color-warn)";
+  if (ratio > 0.4) return "var(--color-warn)";
   return "var(--color-fail)";
 }
 
@@ -81,13 +80,28 @@ export default function BenchmarkHeatmap() {
           <thead>
             <tr>
               <th>Benchmark</th>
-              {selectedModels.map((m) => (
-                <th key={m}>
-                  <a href={modelPath(m)} className="text-inherit no-underline">
-                    {m}
-                  </a>
-                </th>
-              ))}
+              {selectedModels.map((model) => {
+                const { provider, baseModel, effort, outputMode } =
+                  splitModelName(model);
+
+                return (
+                  <th key={model}>
+                    <a
+                      href={modelPath(model)}
+                      className="text-inherit no-underline"
+                    >
+                      <div className="text-[8px]">{provider}</div>
+                      <div className="text-[14px] text-(--color-text-mid)">
+                        {baseModel}
+                      </div>
+                      <div className="text-[10px]">
+                        {effort}
+                        {Boolean(outputMode) && <span> - {outputMode}</span>}
+                      </div>
+                    </a>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -117,12 +131,10 @@ export default function BenchmarkHeatmap() {
                   }
                   const [passAtK, passed, total] = cell;
                   const pct = Math.round(passAtK * 1000) / 10;
-                  const { label, title: reliabilityTitle } =
-                    classifyReliability(passAtK);
                   return (
                     <td
                       key={m}
-                      title={`${m} on ${bench}: ${passed}/${total} (${pct}%) — ${reliabilityTitle}`}
+                      title={`${m} on ${bench}: ${passed}/${total} (${pct}%)`}
                     >
                       <a href={`/benchmarks/${bench}`} className="no-underline">
                         <Badge
@@ -136,9 +148,6 @@ export default function BenchmarkHeatmap() {
                         >
                           {passed}/{total}
                         </Badge>
-                        <span className="font-mono text-[0.65rem] text-(--color-text-dim) ml-1">
-                          {label}
-                        </span>
                       </a>
                     </td>
                   );

@@ -36,7 +36,9 @@
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "@types/node": "^22.20.0",
+    "typescript": "^6.0.3",
     "vercel": "^54.5.0"
   }
 }

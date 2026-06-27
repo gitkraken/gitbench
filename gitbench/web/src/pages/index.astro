@@ -16,7 +16,7 @@ const defaultCampaign = store.getDefaultCampaign();
 const passRateData = {
   ...chartData(
     "pass-rate",
-    store.getSummary({ campaign_id: defaultCampaign?.campaign_id ?? null })
+    store.getSummary({ campaign_id: defaultCampaign?.campaign_id ?? null }),
   ),
   campaign_id: defaultCampaign?.campaign_id ?? null,
   campaign_metadata: defaultCampaign ?? null,
@@ -32,93 +32,113 @@ const passRateData = {
     <div class="card">
       <div class="section-label"><span>About</span></div>
       <div
-        class="space-y-3 text-sm text-(--color-text-mid) leading-relaxed max-w-3xl"
+        class="space-y-3 flex flex-col lg:flex-row lg:space-x-8 text-sm text-(--color-text-mid) leading-relaxed"
       >
-        <p>
-          <strong class="text-(--color-text)"
-            >Every AI model claims it can code. Git is a different beast.</strong
-          >
-          It's not about knowing the answer. It's about knowing the exact command.
-          GitBench puts that to the test.
+        <div>
+          <strong class="text-(--color-text)">
+            Every AI model claims it can code. Git is a different beast.
+          </strong>
+
+          <p>
+            GitBench is comprised of 204 fixtures across 12 benchmark suites.
+            Every test runs in an isolated git worktree. Fixture inputs are
+            deterministic within an evaluation run.
+          </p>
+        </div>
+        <div>
+          <strong class="text-(--color-text)">
+            Why is GitBench valuable?
+          </strong>
+          <p>
+            Picking an AI coding assistant? Fine-tuning your own model? Just
+            curious how the latest LLMs handle Git? This dashboard gives you
+            transparent, reproducible data.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <section class="my-8">
+      <EmailCta client:load />
+    </section>
+
+    <section>
+      <div class="info-tip">
+        <div class="section-label">
+          <span>Model Summary</span>
+        </div>
+        <p class="info-blurb">
+          The aggregated and averaged results for each model across all
+          benchmarks and effort levels. The whiskers show the range of values
+          from the effort levels to give you an idea of the range of results.
         </p>
-        <p>
-          204 fixtures. Each one asks a model to write a git command. The output
-          gets fuzzy-matched against the correct answer. Every test runs in an
-          isolated repo. Fixture inputs are deterministic within an evaluation run,
-          but hosted model inference is not fully reproducible. No cherry-picked
-          examples.
+      </div>
+      <PassRateBarChart client:load initialData={passRateData} />
+    </section>
+
+    <section class="mt-10">
+      <div class="info-tip">
+        <div class="section-label">
+          <span>Quadrant Comparison</span>
+        </div>
+        <p class="info-blurb">
+          Pick two criteria. The shaded quadrant is the optimal direction. For
+          example, lower cost with higher pass rate.
         </p>
-        <p>
-          Picking an AI coding assistant? Fine-tuning your own model? Just
-          curious how the latest LLMs handle Git? This dashboard gives you
-          transparent, reproducible data. Not marketing.
+      </div>
+      <QuadrantComparisonChart client:visible />
+    </section>
+
+    <section class="mt-10">
+      <div class="info-tip">
+        <div class="section-label">
+          <span>Cost per Full Run</span>
+        </div>
+        <p class="info-blurb">
+          Input and Output tokens as well as Reasoning tokens for models that
+          support it.
         </p>
       </div>
-    </div>
-  </section>
+      <CostValueChart client:visible />
+    </section>
 
-  <section class="mb-8">
-    <EmailCta client:load />
-  </section>
-
-  <section>
-    <div class="section-label">
-      <span>Model Summary</span>
-    </div>
-    <PassRateBarChart client:load initialData={passRateData} />
-  </section>
-
-  <section class="mt-10">
-    <div class="info-tip">
-      <div class="section-label">
-        <span>Quadrant Comparison</span>
+    <section class="mt-10">
+      <div class="info-tip">
+        <div class="section-label">
+          <span>API Time</span>
+        </div>
+        <p class="info-blurb">
+          API call latency across successful fixture calls. It excludes fixture
+          setup, scoring, and cleanup.
+        </p>
       </div>
-      <p class="info-blurb">
-        Pick two criteria. The shaded quadrant is the optimal direction. For
-        example, lower cost with higher pass rate.
-      </p>
-    </div>
-    <QuadrantComparisonChart client:visible />
-  </section>
+      <RuntimeBarChart client:load />
+    </section>
 
-  <section class="mt-10">
-    <div class="section-label">
-      <span>Cost per Full Run</span>
-    </div>
-    <CostValueChart client:visible />
-  </section>
-
-  <section class="mt-10">
-    <div class="info-tip">
-      <div class="section-label">
-        <span>API Time</span>
+    <section class="mt-10">
+      <div class="info-tip">
+        <div class="section-label">
+          <span>Token Usage</span>
+        </div>
+        <p class="info-blurb">
+          Input and Output tokens as well as Reasoning tokens for models that
+          support it.
+        </p>
       </div>
-      <p class="info-blurb">
-        API call latency across successful fixture calls. It excludes fixture
-        setup, scoring, and cleanup.
-      </p>
-    </div>
-    <RuntimeBarChart client:load />
-  </section>
+      <TokenUsageChart client:visible />
+    </section>
 
-  <section class="mt-10">
-    <div class="section-label">
-      <span>Token Usage</span>
-    </div>
-    <TokenUsageChart client:visible />
-  </section>
-
-  <section class="mt-10">
-    <div class="info-tip">
-      <div class="section-label">
-        <span>Benchmark Matrix</span>
+    <section class="mt-10">
+      <div class="info-tip">
+        <div class="section-label">
+          <span>Benchmark Matrix</span>
+        </div>
+        <p class="info-blurb">
+          Rows are Git task categories, columns are models. Green cells show
+          where a model excels. Red cells reveal weaknesses.
+        </p>
       </div>
-      <p class="info-blurb">
-        The deep dive. Rows are Git task categories, columns are models. Green
-        cells show where a model excels. Red cells reveal weaknesses. Look for
-        models that crush basics but fall apart on rebase or bisect.
-      </p>
-    </div>
-    <BenchmarkHeatmap client:visible />
+      <BenchmarkHeatmap client:visible />
+    </section>
   </section>
 </Layout>

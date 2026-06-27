@@ -92,6 +92,7 @@ export default function CostValueChart() {
           outputMode={outputMode}
           yDomain={yDomain}
           yTickFormatter={formatCost}
+          yAxisLabel="Cost (USD)"
           renderTooltip={(entry) => (
             <div style={tooltipStyle}>
               <div
