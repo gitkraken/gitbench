@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight, FileText, Mail } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -70,28 +70,35 @@ export default function EmailCta() {
         }
       }}
     >
-      <div className="card grid gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-        <div className="flex min-w-0 gap-4">
-          {/* <div className="flex size-11 shrink-0 items-center justify-center rounded-[8px] border border-(--color-border) bg-white/[0.04] text-(--color-accent)">
-            <Mail aria-hidden="true" className="size-5" />
-          </div> */}
-          <div className="min-w-0">
-            <div className="section-label mb-3">
-              <span>Analysis</span>
+      <div className="relative isolate overflow-hidden rounded-[8px] border border-[#01FEE0]/35 bg-[linear-gradient(135deg,rgba(39,39,39,0.98)_0%,rgba(42,23,61,0.96)_58%,rgba(1,183,161,0.16)_100%)] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.34),0_0_0_1px_rgba(236,127,255,0.08)] sm:p-6">
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-0 w-1/2 bg-[linear-gradient(90deg,transparent_0%,rgba(1,254,224,0.08)_100%)]" />
+        <Mail
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-10 -bottom-14 z-0 size-44 rotate-[-12deg] text-[#01FEE0]/[0.12] sm:-right-6 sm:-bottom-20 sm:size-64 md:-right-2 md:-bottom-24 md:size-72"
+        />
+        <div className="relative z-10 grid gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-6">
+          <div className="flex min-w-0 gap-4">
+            {/* <div className="flex size-11 shrink-0 items-center justify-center rounded-[8px] border border-[#01FEE0]/35 bg-[#01FEE0]/10 text-[#01FEE0] shadow-[0_0_22px_rgba(1,254,224,0.12)]">
+              <FileText aria-hidden="true" className="size-5" />
+            </div> */}
+            <div className="min-w-0">
+              <div className="section-label mb-3">
+                <span>Analysis PDF</span>
+              </div>
+              <h2 className="mb-2 text-xl font-bold leading-tight text-(--color-text)">
+                Get the GitBench analysis PDF
+              </h2>
+              <p className="max-w-2xl text-sm leading-relaxed text-(--color-text-mid)">
+                Request the GitBench analysis PDF and we&apos;ll follow up by
+                email with our read on the benchmark results.
+              </p>
             </div>
-            <h2 className="mb-2 text-xl font-bold leading-tight text-(--color-text)">
-              We have some thoughts about the data
-            </h2>
-            <p className="max-w-2xl text-sm leading-relaxed text-(--color-text-mid)">
-              We heavily encourage you to read and understand the results of our
-              benchmarks and come to your own conclusions. We have some thoughts
-              and we would love to share them with you.
-            </p>
           </div>
         </div>
+
         <DialogTrigger asChild>
-          <Button className="w-full md:w-auto">
-            Get the PDF
+          <Button className="w-full md:w-auto mt-4">
+            Get the analysis PDF
             <ArrowRight aria-hidden="true" className="size-4" />
           </Button>
         </DialogTrigger>
@@ -99,9 +106,10 @@ export default function EmailCta() {
 
       <DialogContent className="border-(--color-border) bg-(--color-bg) text-(--color-text) sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Get GitBench updates</DialogTitle>
+          <DialogTitle>Request the GitBench analysis PDF</DialogTitle>
           <DialogDescription className="text-(--color-text-mid)">
-            Enter your email to receive our analysis of the GitBench results.
+            Enter your email and we&apos;ll send the GitBench analysis PDF with
+            our notes on the benchmark results.
           </DialogDescription>
         </DialogHeader>
 
@@ -111,7 +119,8 @@ export default function EmailCta() {
             role="status"
           >
             <p className="text-sm font-semibold text-(--color-text)">
-              Thanks. We received {submittedEmail}.
+              Thanks. We received {submittedEmail} and will follow up with the
+              analysis PDF.
             </p>
           </div>
         ) : (
@@ -142,7 +151,7 @@ export default function EmailCta() {
               </p>
             )}
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? "Submitting..." : "Request PDF"}
               <ArrowRight aria-hidden="true" className="size-4" />
             </Button>
           </form>
