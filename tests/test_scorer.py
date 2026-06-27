@@ -638,6 +638,166 @@ class TestScorer:
 
         assert result.passed is True
 
+    def test_resolved_file_blocks_accepts_expected_extensionless_filenames(self, scorer):
+        fixture = Fixture(
+            id="files_extensionless",
+            description="Extensionless file fixture",
+            setup=[],
+            prompt="Resolve files",
+            expected="",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "Dockerfile": "FROM python:3.12\n",
+                    "Makefile": "test:\n\tpytest\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "Dockerfile:\nFROM python:3.12\n\nMakefile:\ntest:\n\tpytest\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_accepts_unheaded_single_file_content(self, scorer):
+        fixture = Fixture(
+            id="files_single_001",
+            description="Single-file fixture",
+            setup=[],
+            prompt="Resolve greeting.txt",
+            expected="Hello, Planet!!!",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"greeting.txt": "Hello, Planet!!!"},
+            },
+        )
+
+        result = scorer.score(fixture, "Hello, Planet!!!")
+
+        assert result.passed is True
+        assert result.similarity == 1.0
+
+    def test_resolved_file_blocks_accepts_fenced_unheaded_single_file_content(self, scorer):
+        fixture = Fixture(
+            id="files_single_002",
+            description="Single-file fixture",
+            setup=[],
+            prompt="Resolve greeting.txt",
+            expected="Hello, Planet!!!",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"greeting.txt": "Hello, Planet!!!"},
+            },
+        )
+
+        result = scorer.score(fixture, "```text\nHello, Planet!!!\n```")
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_rejects_single_file_prose(self, scorer):
+        fixture = Fixture(
+            id="files_single_003",
+            description="Single-file fixture",
+            setup=[],
+            prompt="Resolve greeting.txt",
+            expected="Hello, Planet!!!",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"greeting.txt": "Hello, Planet!!!"},
+            },
+        )
+
+        result = scorer.score(fixture, "Here is the answer:\nHello, Planet!!!")
+
+        assert result.passed is False
+        assert "Content mismatch" in result.error
+
+    def test_resolved_file_blocks_does_not_treat_yaml_key_as_heading(self, scorer):
+        fixture = Fixture(
+            id="files_single_yaml",
+            description="Single-file YAML fixture",
+            setup=[],
+            prompt="Resolve config.yaml",
+            expected="server:\n  port: 443\n  host: 0.0.0.0\n",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "config.yaml": "server:\n  port: 443\n  host: 0.0.0.0\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "config.yaml:\nserver:\n  port: 443\n  host: 0.0.0.0\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_does_not_treat_dotted_yaml_key_as_raw_heading(self, scorer):
+        fixture = Fixture(
+            id="files_single_yaml_domain",
+            description="Single-file YAML fixture",
+            setup=[],
+            prompt="Resolve config.yaml",
+            expected="example.com:\n  enabled: true\n",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "config.yaml": "example.com:\n  enabled: true\n",
+                },
+            },
+        )
+
+        result = scorer.score(fixture, "example.com:\n  enabled: true\n")
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_does_not_treat_dotted_yaml_key_as_block_heading(self, scorer):
+        fixture = Fixture(
+            id="files_single_yaml_domain_block",
+            description="Single-file YAML fixture",
+            setup=[],
+            prompt="Resolve config.yaml",
+            expected="example.com:\n  enabled: true\n",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {
+                    "config.yaml": "example.com:\n  enabled: true\n",
+                },
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "config.yaml:\nexample.com:\n  enabled: true\n",
+        )
+
+        assert result.passed is True
+
+    def test_resolved_file_blocks_rejects_prose_before_file_heading(self, scorer):
+        fixture = Fixture(
+            id="files_single_004",
+            description="Single-file fixture",
+            setup=[],
+            prompt="Resolve greeting.txt",
+            expected="Hello, Planet!!!",
+            scoring={
+                "type": "resolved_file_blocks",
+                "expected_files": {"greeting.txt": "Hello, Planet!!!"},
+            },
+        )
+
+        result = scorer.score(
+            fixture,
+            "Here is the file:\n\ngreeting.txt:\nHello, Planet!!!",
+        )
+
+        assert result.passed is False
+        assert result.error == "Expected file heading before file content"
+
     def test_resolved_file_blocks_rejects_indentation_changes(self, scorer):
         fixture = Fixture(
             id="files_007",

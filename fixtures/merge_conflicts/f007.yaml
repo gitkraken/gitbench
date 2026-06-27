@@ -36,9 +36,11 @@ expected: 'PORT=8443
 
   '
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    config.txt: |
+      PORT=8443
+      PROTOCOL=https
 purpose: Tests ability to resolve a three-way merge conflict with port and protocol
   settings. Evaluates multi-dimensional conflict resolution with explicit preferences.
 difficulty: hard

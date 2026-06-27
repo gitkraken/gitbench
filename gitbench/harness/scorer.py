@@ -664,12 +664,17 @@ class ResolvedFileBlocksScorer:
             )
 
         expected = dict(expected_files)
+        expected_names = set(expected)
+        single_file_fallback = next(iter(expected)) if len(expected) == 1 else None
         try:
-            actual = self._parse_blocks(model_output)
+            actual = self._parse_blocks(
+                model_output,
+                expected_names=expected_names,
+                single_file_fallback=single_file_fallback,
+            )
         except ValueError as e:
             return _score_result(fixture, model_output, False, 0.0, str(e))
 
-        expected_names = set(expected)
         actual_names = set(actual)
         allow_extra = fixture.scoring.get("allow_extra_files") is True
         missing = sorted(expected_names - actual_names)
@@ -715,32 +720,52 @@ class ResolvedFileBlocksScorer:
             )
         )
 
-    def _parse_blocks(self, value: str) -> dict[str, str]:
+    def _parse_blocks(
+        self,
+        value: str,
+        expected_names: set[str],
+        single_file_fallback: str | None = None,
+    ) -> dict[str, str]:
         blocks: dict[str, list[str]] = {}
         current_filename: str | None = None
         current_lines: list[str] = []
+        unheaded_lines: list[str] = []
+        previous_line_blank = True
 
         for raw_line in value.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
-            heading = self._heading_filename(raw_line)
+            heading = self._heading_filename(
+                raw_line,
+                expected_names=expected_names,
+                current_filename=current_filename,
+                previous_line_blank=previous_line_blank,
+                single_file_fallback=single_file_fallback,
+            )
             if heading is not None:
+                has_unheaded_content = any(line.strip() for line in unheaded_lines)
+                if current_filename is None and has_unheaded_content:
+                    raise ValueError("Expected file heading before file content")
                 if current_filename is not None:
                     blocks[current_filename] = current_lines
                 if heading in blocks:
                     raise ValueError(f"Duplicate file block: {heading}")
                 current_filename = heading
                 current_lines = []
+                previous_line_blank = False
                 continue
 
             if current_filename is None:
-                if raw_line.strip():
-                    raise ValueError("Expected file heading before file content")
+                unheaded_lines.append(raw_line)
+                previous_line_blank = raw_line.strip() == ""
                 continue
             current_lines.append(raw_line)
+            previous_line_blank = raw_line.strip() == ""
 
         if current_filename is not None:
             blocks[current_filename] = current_lines
 
         if not blocks:
+            if single_file_fallback is not None:
+                return {single_file_fallback: "\n".join(unheaded_lines)}
             raise ValueError("No file blocks found")
 
         return {
@@ -748,11 +773,28 @@ class ResolvedFileBlocksScorer:
             for filename, lines in blocks.items()
         }
 
-    def _heading_filename(self, line: str) -> str | None:
+    def _heading_filename(
+        self,
+        line: str,
+        *,
+        expected_names: set[str],
+        current_filename: str | None,
+        previous_line_blank: bool,
+        single_file_fallback: str | None,
+    ) -> str | None:
         match = self._HEADING_RE.fullmatch(line)
         if not match:
             return None
-        return match.group("filename")
+        filename = match.group("filename")
+        if filename in expected_names:
+            return filename
+        if "." not in filename and "/" not in filename:
+            return None
+        if current_filename is None and single_file_fallback is not None:
+            return None
+        if current_filename is not None and not previous_line_blank:
+            return None
+        return filename
 
     def _normalize_content(self, value: str) -> str:
         value = self._strip_per_file_fence(value)

@@ -124,8 +124,12 @@ class TestCommitMessagesBenchmark:
     def mock_judge_client(self):
         """Create a mock JudgeClient that returns high similarity."""
         from unittest.mock import MagicMock
+        from gitbench.harness.campaign import JudgeEvidence
+
         mock = MagicMock()
-        mock.evaluate_commit_message.return_value = 0.95
+        mock.evaluate_commit_message_evidence.return_value = JudgeEvidence(
+            final_score=0.95,
+        )
         return mock
 
     def test_score_method_works(self, mock_judge_client):
@@ -148,11 +152,14 @@ class TestCommitMessagesBenchmark:
     def test_score_method_handles_different_output(self):
         """Test that the score method handles different outputs correctly."""
         from unittest.mock import MagicMock
+        from gitbench.harness.campaign import JudgeEvidence
         from gitbench.harness.scorer import Scorer
         from gitbench.harness.types import Fixture, Score
 
         mock_judge = MagicMock()
-        mock_judge.evaluate_commit_message.return_value = 0.2
+        mock_judge.evaluate_commit_message_evidence.return_value = JudgeEvidence(
+            final_score=0.2,
+        )
 
         benchmark = CommitMessagesBenchmark()
         benchmark._scorer = Scorer(judge_client=mock_judge)
@@ -556,6 +563,25 @@ class TestRebaseBenchmark:
         assert isinstance(result, Score)
         assert result.fixture_id == fixture.id
         assert result.similarity > 0.8  # Should be very similar
+
+
+@pytest.mark.parametrize(
+    "benchmark_cls",
+    [MergeConflictsBenchmark, CherryPickBenchmark, RebaseBenchmark],
+)
+def test_conflict_fixtures_use_resolved_file_blocks(benchmark_cls):
+    benchmark = benchmark_cls()
+
+    for fixture in benchmark.load_fixtures():
+        expected_files = fixture.scoring.get("expected_files")
+
+        assert fixture.scoring["type"] == "resolved_file_blocks"
+        assert isinstance(expected_files, dict)
+        assert expected_files
+        assert benchmark.score(fixture, fixture.expected).passed is True
+        if len(expected_files) == 1:
+            filename = next(iter(expected_files))
+            assert benchmark.score(fixture, f"{filename}:\n{fixture.expected}").passed is True
 
 
 class TestReflogBenchmark:

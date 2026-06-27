@@ -23,9 +23,12 @@ prompt: Resolve the rebase conflict in greet.py. The base was a simple greet wit
   rebased branch's name-aware greeting. Provide ONLY the resolved file content.
 expected: "def greet(name):\n    print(\"Hi there\")\n    return False\n"
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    greet.py: |
+      def greet(name):
+          print("Hi there")
+          return False
 purpose: Tests ability to resolve a function-body conflict during rebase. Evaluates
   semantic merging of code with rebase direction awareness.
 difficulty: medium

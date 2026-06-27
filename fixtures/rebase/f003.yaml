@@ -22,7 +22,10 @@ prompt: 'Resolve the rebase conflict in status.txt. The base was ''Status: OK''.
   Provide ONLY the resolved file content.'
 expected: 'Status: Failed'
 scoring:
-  type: exact_match
+  type: resolved_file_blocks
+  expected_files:
+    status.txt: |-
+      Status: Failed
 purpose: Tests ability to resolve a status-message conflict during rebase. Evaluates
   choosing between contradictory values in rebase context.
 difficulty: easy

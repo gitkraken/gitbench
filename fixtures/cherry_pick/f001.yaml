@@ -21,8 +21,10 @@ prompt: Resolve the cherry-pick conflict in greeting.txt. The base version was '
   has 'Hello, Planet!'. Provide ONLY the resolved file content, nothing else.
 expected: Hello, Planet!!!
 scoring:
-  type: exact_match
-  strip_fences: true
+  type: resolved_file_blocks
+  expected_files:
+    greeting.txt: |-
+      Hello, Planet!!!
 purpose: Tests ability to resolve a simple single-line cherry-pick conflict in a greeting
   file. Evaluates basic conflict marker understanding and merge strategy.
 difficulty: easy

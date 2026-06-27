@@ -22,7 +22,10 @@ prompt: 'Resolve the cherry-pick conflict in author.txt. The base was ''Author: 
   ONLY the resolved file content.'
 expected: 'Author: J. Doe'
 scoring:
-  type: exact_match
+  type: resolved_file_blocks
+  expected_files:
+    author.txt: |-
+      Author: J. Doe
 purpose: Tests ability to resolve a three-way author-name conflict where base, incoming,
   and current all differ. Evaluates complex multi-value merge decisions.
 difficulty: medium

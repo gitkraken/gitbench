@@ -21,8 +21,10 @@ prompt: 'Resolve the merge conflict in status.txt. The base was ''Status: OK''. 
   Provide ONLY the resolved file content.'
 expected: 'Status: Resolved'
 scoring:
-  type: exact_match
-  strip_fences: true
+  type: resolved_file_blocks
+  expected_files:
+    status.txt: |-
+      Status: Resolved
 purpose: Tests ability to resolve a status-message merge conflict. Evaluates choosing
   between contradictory status values.
 difficulty: easy

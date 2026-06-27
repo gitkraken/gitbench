@@ -27,8 +27,10 @@ prompt: 'Resolve the cherry-pick conflict in project.txt. The incoming commit se
   content.'
 expected: 'Title: My Project v3'
 scoring:
-  type: exact_match
-  strip_fences: true
+  type: resolved_file_blocks
+  expected_files:
+    project.txt: |-
+      Title: My Project v3
 purpose: Tests ability to handle cherry-pick where some files conflict and others
   merge cleanly. Evaluates understanding of partial-conflict scenarios.
 difficulty: hard

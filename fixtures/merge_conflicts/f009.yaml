@@ -25,7 +25,10 @@ prompt: 'Resolve the merge conflict in author.txt. Three different authors were 
   from the second merge side. Provide ONLY the resolved file content.'
 expected: 'Author: J. Doe'
 scoring:
-  type: exact_match
+  type: resolved_file_blocks
+  expected_files:
+    author.txt: |-
+      Author: J. Doe
 purpose: Tests ability to resolve a three-way author-name conflict where all three
   values differ. Evaluates complex merge decisions.
 difficulty: medium

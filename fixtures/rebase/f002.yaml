@@ -22,7 +22,10 @@ prompt: Resolve the rebase conflict in version.txt. The base version was 'VERSIO
   ONLY the resolved file content.
 expected: VERSION=1.1.0
 scoring:
-  type: exact_match
+  type: resolved_file_blocks
+  expected_files:
+    version.txt: |-
+      VERSION=1.1.0
 purpose: Tests ability to resolve a version number conflict during rebase. Evaluates
   handling of semantic version clashes with rebase polarity.
 difficulty: easy

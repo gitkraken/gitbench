@@ -40,9 +40,12 @@ expected: 'Name: John Doe
 
   '
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    contact.txt: |
+      Name: John Doe
+      Email: johndoe@personal.com
+      Phone: 555-9876
 purpose: Tests ability to resolve a multi-line address block conflict during rebase.
   Evaluates combining partial updates with correct polarity.
 difficulty: medium

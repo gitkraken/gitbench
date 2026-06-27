@@ -24,9 +24,12 @@ prompt: Resolve the cherry-pick conflict in greet.py. The base was a simple gree
   return. Provide ONLY the resolved file content.
 expected: "def greet(name):\n    print(f\"Hello, {name}\")\n    return True\n"
 scoring:
-  type: exact_match
-  strip_fences: true
-  order_matters: true
+  type: resolved_file_blocks
+  expected_files:
+    greet.py: |
+      def greet(name):
+          print(f"Hello, {name}")
+          return True
 purpose: Tests ability to resolve a function-body conflict combining formatting changes
   from both branches. Evaluates semantic merging of code logic.
 difficulty: medium

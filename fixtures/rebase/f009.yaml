@@ -22,7 +22,10 @@ prompt: 'Resolve the rebase conflict in author.txt. Base was ''Author: John''. T
   file content.'
 expected: 'Author: J. Doe'
 scoring:
-  type: exact_match
+  type: resolved_file_blocks
+  expected_files:
+    author.txt: |-
+      Author: J. Doe
 purpose: Tests ability to resolve a three-way author-name conflict in rebase. Evaluates
   complex merge decisions with rebase polarity.
 difficulty: medium
