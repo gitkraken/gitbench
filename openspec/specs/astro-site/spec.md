@@ -14,7 +14,7 @@ The project SHALL include an Astro project at `gitbench/ui/` with `package.json`
 - **THEN** it includes `react()` in the integrations array
 
 ### Requirement: Static Layout component with sidebar
-The site SHALL have a `Layout.astro` component that wraps all pages with a header, a minimal `Sidebar.astro` component, a content area via `<slot />`, and a footer. The sidebar SHALL contain seven navigation links: Overview, Models, Benchmarks, Explore, Compare, History, Methodology. The shared layout SHALL NOT render a campaign selector, campaign status control, or "No campaigns" text in ordinary page headers.
+The site SHALL have a `Layout.astro` component that wraps all pages with a header, a minimal `Sidebar.astro` component, a content area via `<slot />`, and a footer. The sidebar SHALL contain six visible navigation links: Overview, Models, Benchmarks, Explore, Compare, Methodology. The History page exists but SHALL be hidden from the sidebar navigation for now. The shared layout SHALL NOT render a campaign selector, campaign status control, or "No campaigns" text in ordinary page headers.
 
 At viewport widths greater than 960px, the sidebar SHALL render as a fixed 220px left sidebar with all icons and labels visible.
 
@@ -26,7 +26,7 @@ The "GitBench" title and "by GitKraken" subtitle text SHALL be visible at all vi
 
 #### Scenario: Layout wraps page content
 - **WHEN** any page is rendered
-- **THEN** it includes the sidebar with seven navigation links and the page-specific content in the main area
+- **THEN** it includes the sidebar with six visible navigation links (History is hidden) and the page-specific content in the main area
 
 #### Scenario: Active page is highlighted in sidebar
 - **WHEN** the current route is `/models`

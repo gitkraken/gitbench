@@ -38,14 +38,6 @@ The CTA SHALL include a large decorative mail icon in the card background. The i
 - **THEN** the decorative background mail icon is hidden from the accessible name and reading order
 - **AND** it does not intercept pointer events intended for the CTA button
 
-### Requirement: CTA includes a foreground visual cue
-The CTA SHALL include a smaller foreground icon or icon tile that quickly communicates the email/PDF action. The foreground cue SHALL use `lucide-react` icons already available in the web app.
-
-#### Scenario: Foreground cue is visible
-- **WHEN** the CTA renders
-- **THEN** a small foreground icon or icon tile appears near the CTA copy
-- **AND** it is visually distinct from the oversized decorative background icon
-
 ### Requirement: CTA and dialog copy describe one offer
 The CTA card, trigger button, dialog title, and dialog description SHALL consistently frame the interaction as requesting the GitBench analysis PDF or analysis by email. The dialog SHALL NOT switch to unrelated generic update or newsletter language.
 
@@ -76,7 +68,7 @@ The CTA SHALL remain readable and free of visual overlap on desktop, tablet, and
 
 #### Scenario: Mobile CTA layout remains clear
 - **WHEN** the CTA renders on a mobile viewport
-- **THEN** the headline, body copy, foreground cue, background icon, and button do not overlap incoherently
+- **THEN** the headline, body copy, background icon, and button do not overlap incoherently
 - **AND** the primary button is usable as a touch target
 
 #### Scenario: Desktop CTA layout remains clear

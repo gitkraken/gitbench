@@ -5,15 +5,15 @@ Lucide icons provide a consistent, lightweight icon set used throughout the GitB
 ## Requirements
 
 ### Requirement: Sidebar uses Lucide icons
-The Sidebar component SHALL render Lucide SVG icons instead of unicode emoji characters for all six navigation links. Icons SHALL be imported from `lucide-react` and rendered server-side by Astro (no `client:*` directive) to avoid client-side JavaScript for static icons.
+The Sidebar component SHALL render Lucide SVG icons instead of unicode emoji characters for all navigation links. Icons SHALL be imported from `lucide-react` and rendered server-side by Astro (no `client:*` directive) to avoid client-side JavaScript for static icons. The History link has an icon mapping (`History`) but is hidden from the sidebar per the astro-site spec.
 
 #### Scenario: Dashboard icon renders as SVG
 - **WHEN** the page loads
 - **THEN** the Dashboard nav link displays a `LayoutDashboard` Lucide SVG icon, not the unicode character `◉`
 
-#### Scenario: All six icons are Lucide SVGs
+#### Scenario: All visible icons are Lucide SVGs
 - **WHEN** the sidebar renders
-- **THEN** each nav link displays its mapped Lucide icon: LayoutDashboard, Cpu, BarChart3, Search, GitCompare, History
+- **THEN** each visible nav link displays its mapped Lucide icon: LayoutDashboard, Cpu, BarChart3, Search, GitCompare, BookOpen
 
 ### Requirement: Icon sizes are consistent
 All sidebar icons SHALL render at 18×18 pixels (1.125rem) with `stroke-width="2"`. Icons SHALL inherit the current text color via `currentColor` so they respond to the sidebar's active/hover states.
