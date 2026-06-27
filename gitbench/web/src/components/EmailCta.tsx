@@ -78,9 +78,9 @@ export default function EmailCta() {
         />
         <div className="relative z-10 grid gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-6">
           <div className="flex min-w-0 gap-4">
-            {/* <div className="flex size-11 shrink-0 items-center justify-center rounded-[8px] border border-[#01FEE0]/35 bg-[#01FEE0]/10 text-[#01FEE0] shadow-[0_0_22px_rgba(1,254,224,0.12)]">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-[8px] border border-[#01FEE0]/35 bg-[#01FEE0]/10 text-[#01FEE0] shadow-[0_0_22px_rgba(1,254,224,0.12)]">
               <FileText aria-hidden="true" className="size-5" />
-            </div> */}
+            </div>
             <div className="min-w-0">
               <div className="section-label mb-3">
                 <span>Analysis PDF</span>
@@ -94,14 +94,14 @@ export default function EmailCta() {
               </p>
             </div>
           </div>
-        </div>
 
-        <DialogTrigger asChild>
-          <Button className="w-full md:w-auto mt-4">
-            Get the analysis PDF
-            <ArrowRight aria-hidden="true" className="size-4" />
-          </Button>
-        </DialogTrigger>
+          <DialogTrigger asChild>
+            <Button className="w-full md:w-auto">
+              Get the analysis PDF
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Button>
+          </DialogTrigger>
+        </div>
       </div>
 
       <DialogContent className="border-(--color-border) bg-(--color-bg) text-(--color-text) sm:max-w-[480px]">
