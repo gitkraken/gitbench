@@ -10,7 +10,7 @@ Documented, repeatable process for adding brand logos when a new model provider 
 
 When adding a new model provider to GitBench, the developer SHALL follow a documented process to provide a brand logo. The process document SHALL be located at `docs/agents/provider-logos.md`. The process SHALL cover two tiers in priority order:
 
-1. **Custom inline SVG**: Create an inline React SVG component in `gitbench/web/src/lib/custom-provider-icons.tsx` and register it in the `PROVIDER_ICONS` lookup table in `ProviderIcon.tsx`.
+1. **Custom inline SVG**: Create an inline React SVG component in `web/src/lib/custom-provider-icons.tsx` and register it in the `PROVIDER_ICONS` lookup table in `ProviderIcon.tsx`.
 2. **Automatic fallback**: If no SVG is provided, the system automatically renders a colored circle with the provider's first letter — no code changes needed.
 
 #### Scenario: Developer follows documented process for new provider
@@ -30,7 +30,7 @@ When adding a new model provider to GitBench, the developer SHALL follow a docum
 
 ### Requirement: Custom provider icons module is documented for discoverability
 
-The `gitbench/web/src/lib/custom-provider-icons.tsx` file SHALL include a JSDoc comment at the top explaining its purpose as the canonical source of brand logos for GitBench providers. Each SVG component in the file SHALL include a JSDoc comment identifying the provider name and its icon source (e.g., `@thesvg/react` export name).
+The `web/src/lib/custom-provider-icons.tsx` file SHALL include a JSDoc comment at the top explaining its purpose as the canonical source of brand logos for GitBench providers. Each SVG component in the file SHALL include a JSDoc comment identifying the provider name and its icon source (e.g., `@thesvg/react` export name).
 
 #### Scenario: Module has explanatory header
 

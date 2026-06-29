@@ -1,0 +1,1149 @@
+---
+import { ModelReliabilitySummary } from "@/components/ModelReliabilitySummary";
+import Layout from "@/components/Layout.astro";
+import FixtureCard from "@/components/fixtures/FixtureCard.astro";
+import FixtureCardBoth from "@/components/fixtures/FixtureCardBoth.astro";
+import { loadDataSync } from "@/lib/data";
+import { modelLevelPath } from "@/lib/routes";
+import {
+  computeModeComparison,
+  jsonSchemaModelName,
+} from "@/lib/model-comparison";
+import {
+  computeReliabilityDeltas,
+  reliabilityDeltaSummary,
+} from "@/lib/fixture-reliability";
+import { getReportStore } from "@/lib/node-sqlite-report-store";
+import type { GitBenchData, FixtureResult, BaseModelGroup } from "@/lib/types";
+import { encodeReportViewState } from "@/lib/report-url-state";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { GitCompare } from "lucide-react";
+import ProviderIcon from "@/components/ProviderIcon.tsx";
+import { REASONING_LEVEL_ORDER, DIFFICULTY_ORDER } from "@/lib/sort-orders";
+import { formatAggregateTokenUsage } from "@/lib/token-usage";
+import { deriveModelGroups } from "@/components/charts/model-groups";
+
+export function getStaticPaths() {
+  const data = loadDataSync();
+  const paths: {
+    params: { provider: string; model: string; level: string };
+    props: any;
+  }[] = [];
+  for (const g of data.base_model_groups) {
+    // Group levels by normalized level (strip __json_schema suffix)
+    const levelMap = new Map<
+      string,
+      { textModelName: string | null; jsonModelName: string | null }
+    >();
+    for (const l of g.levels) {
+      const lvl = l.level || "default";
+      const normLevel = lvl.replace(/__json_schema$/, "");
+      if (!levelMap.has(normLevel)) {
+        levelMap.set(normLevel, { textModelName: null, jsonModelName: null });
+      }
+      const entry = levelMap.get(normLevel)!;
+      if (
+        lvl.endsWith("__json_schema") ||
+        l.modelName.endsWith("__json_schema")
+      ) {
+        entry.jsonModelName = l.modelName;
+      } else {
+        entry.textModelName = l.modelName;
+      }
+    }
+    for (const [normLevel, { textModelName, jsonModelName }] of levelMap) {
+      const primaryModelName = textModelName || jsonModelName;
+      if (!primaryModelName) continue;
+      paths.push({
+        params: {
+          provider: g.provider,
+          model: g.baseModel,
+          level: normLevel,
+        },
+        props: {
+          provider: g.provider,
+          baseModel: g.baseModel,
+          level: normLevel,
+          modelName: primaryModelName,
+          jsonModelName: jsonModelName || null,
+          group: g,
+          data,
+        },
+      });
+    }
+  }
+  return paths;
+}
+
+const { provider, baseModel, level, modelName, jsonModelName, group, data } =
+  Astro.props as {
+    provider: string;
+    baseModel: string;
+    level: string;
+    modelName: string;
+    jsonModelName: string | null;
+    group: BaseModelGroup;
+    data: GitBenchData;
+  };
+
+// Derive text model name: when modelName === jsonModelName, only JSON exists
+const textModelName =
+  jsonModelName != null && modelName === jsonModelName ? null : modelName;
+
+const hasJsonVariant = jsonModelName != null;
+
+const summary = data.model_summaries[modelName];
+if (!summary) {
+  return new Response("Model not found", { status: 404 });
+}
+
+const outputMode = textModelName ? "text" : "json_schema";
+const outputModeLabel = outputMode === "text" ? "Text" : "JSON Schema";
+const reportGroupId = `${provider}/${baseModel}`;
+const reportGroups = deriveModelGroups(data);
+const availableReportOutputModes = [
+  ...(textModelName ? ["text"] : []),
+  ...(jsonModelName ? ["json_schema"] : []),
+];
+const defaultReportOutputMode =
+  textModelName && jsonModelName ? "both" : outputMode;
+const compareReportState = encodeReportViewState(
+  { selectedGroups: [reportGroupId], outputMode: defaultReportOutputMode },
+  reportGroups,
+  {
+    availableOutputModes: availableReportOutputModes,
+    defaultOutputMode: defaultReportOutputMode,
+  },
+);
+const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+
+// Check if both modes exist for comparison
+const hasComparison =
+  jsonModelName != null && data.model_summaries[jsonModelName] != null;
+
+// Collect fixture results for text model
+const textFixtures: (FixtureResult & { benchmark: string })[] = [];
+if (textModelName) {
+  for (const bench of data.benchmarks) {
+    const results = data.fixtures[textModelName]?.[bench] || [];
+    for (const r of results) {
+      textFixtures.push({ ...r, benchmark: bench });
+    }
+  }
+}
+
+// Collect fixture results for JSON model
+const jsonFixtures: (FixtureResult & { benchmark: string })[] = [];
+if (jsonModelName) {
+  for (const bench of data.benchmarks) {
+    const results = data.fixtures[jsonModelName]?.[bench] || [];
+    for (const r of results) {
+      jsonFixtures.push({ ...r, benchmark: bench });
+    }
+  }
+}
+
+// Build merged "both" fixtures by joining text and JSON per fixture ID + benchmark
+const bothFixtures: Array<{
+  fixture_id: string;
+  benchmark: string;
+  textResult: (FixtureResult & { benchmark: string }) | null;
+  jsonResult: (FixtureResult & { benchmark: string }) | null;
+}> = [];
+{
+  const textMap = new Map<string, FixtureResult & { benchmark: string }>();
+  for (const fx of textFixtures) {
+    textMap.set(`${fx.benchmark}/${fx.fixture_id}`, fx);
+  }
+  const jsonMap = new Map<string, FixtureResult & { benchmark: string }>();
+  for (const fx of jsonFixtures) {
+    jsonMap.set(`${fx.benchmark}/${fx.fixture_id}`, fx);
+  }
+  const allKeys = new Set([...textMap.keys(), ...jsonMap.keys()]);
+  for (const key of allKeys) {
+    const textResult = textMap.get(key) ?? null;
+    const jsonResult = jsonMap.get(key) ?? null;
+    const ref = textResult || jsonResult;
+    if (!ref) continue;
+    bothFixtures.push({
+      fixture_id: ref.fixture_id,
+      benchmark: ref.benchmark,
+      textResult,
+      jsonResult,
+    });
+  }
+}
+
+// Keep allFixtures for backward compat (gallery count, existing logic)
+const allFixtures = textFixtures.length > 0 ? textFixtures : jsonFixtures;
+
+// Compute text-vs-structured comparison when both modes exist
+let comparison: import("@/lib/model-comparison").ModeComparison | null = null;
+if (hasComparison) {
+  try {
+    const store = getReportStore();
+    comparison = computeModeComparison(store, modelName, jsonModelName!);
+  } catch {
+    // Fall back to summary-only comparison if DB not available
+    const textSummary = data.model_summaries[modelName];
+    const jsonSummary = data.model_summaries[jsonModelName];
+    if (textSummary && jsonSummary) {
+      comparison = {
+        textModelName: modelName,
+        jsonModelName: jsonModelName,
+        textPassRate: textSummary.pass_at_k,
+        jsonPassRate: jsonSummary.pass_at_k,
+        passRateDelta: jsonSummary.pass_at_k - textSummary.pass_at_k,
+        gained: 0,
+        lost: 0,
+        unchangedPass: 0,
+        unchangedFail: 0,
+        totalFixtures: 0,
+        benchmarkDeltas: [],
+        changedFixtures: [],
+      };
+      for (const bench of data.benchmarks) {
+        const tc = data.matrix[modelName]?.[bench];
+        const jc = data.matrix[jsonModelName]?.[bench];
+        if (tc && jc) {
+          comparison.benchmarkDeltas.push({
+            benchmark: bench,
+            textPassRate: tc.pass_at_k,
+            jsonPassRate: jc.pass_at_k,
+            delta: jc.pass_at_k - tc.pass_at_k,
+          });
+        }
+      }
+      comparison.benchmarkDeltas.sort(
+        (a, b) => Math.abs(b.delta) - Math.abs(a.delta),
+      );
+    }
+  }
+}
+
+// Benchmark list for filter
+const benchmarkList = data.benchmarks;
+
+// All unique difficulties / tags
+const diffs = new Set<string>();
+const allTags = new Set<string>();
+for (const fid in data.fixture_index) {
+  const fi = data.fixture_index[fid];
+  if (fi.difficulty) diffs.add(fi.difficulty);
+  for (const t of fi.tags) allTags.add(t);
+}
+
+const hasReasoningLevel = level && level !== "default";
+
+function formatModelSummary(
+  summary: GitBenchData["model_summaries"][string]
+): string {
+  if (
+    summary.total_valid_attempts !== undefined &&
+    summary.total_passing_attempts !== undefined
+  ) {
+    return `${summary.total_passing_attempts} / ${summary.total_valid_attempts} valid attempts · ${summary.total_fixtures} fixtures · ${summary.total_runs} trial round(s)`;
+  }
+  return `${summary.total_passed} / ${summary.total_fixtures} fixtures · ${summary.total_runs} run(s)`;
+}
+
+interface HeaderStats {
+  summary: typeof summary;
+  passRate: number;
+  passCls: string;
+  passColor: string;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalReasoningTokens: number;
+  hasReasoningTelemetry: boolean;
+  totalCost: number;
+  hasCost: boolean;
+  aggregateTokenLabel: string | null;
+}
+
+function computeStatsForModel(model: string | null): HeaderStats | null {
+  if (!model) return null;
+  const s = data.model_summaries[model];
+  if (!s) return null;
+
+  const pr = Math.round(s.pass_at_k * 1000) / 10;
+  const pc = s.pass_at_k >= 0.8 ? "pass" : s.pass_at_k < 0.5 ? "fail" : "warn";
+  const pcolor =
+    s.pass_at_k >= 0.8
+      ? "bg-pass-bg text-pass border-pass-border"
+      : s.pass_at_k < 0.5
+        ? "bg-fail-bg text-fail border-(--color-fail-border)"
+        : "bg-warn-bg text-(--color-warn) border-(--color-warn-border)";
+
+  let tin = 0;
+  let tout = 0;
+  let treason = 0;
+  let hasRT = false;
+  let cost = 0;
+  let hasCost = false;
+  for (const bench of data.benchmarks) {
+    const results = data.fixtures[model]?.[bench] || [];
+    for (const r of results) {
+      tin += r.input_tokens || 0;
+      tout += r.output_tokens || 0;
+      if (r.reasoning_tokens != null) {
+        treason += r.reasoning_tokens;
+        hasRT = true;
+      }
+      if (r.cost_usd != null) {
+        cost += r.cost_usd;
+        hasCost = true;
+      }
+    }
+  }
+
+  const tokenLabel = formatAggregateTokenUsage(
+    tin,
+    tout,
+    hasReasoningLevel ? level : null,
+    hasRT ? treason : null,
+  );
+
+  return {
+    summary: s,
+    passRate: pr,
+    passCls: pc,
+    passColor: pcolor,
+    totalInputTokens: tin,
+    totalOutputTokens: tout,
+    totalReasoningTokens: treason,
+    hasReasoningTelemetry: hasRT,
+    totalCost: cost,
+    hasCost,
+    aggregateTokenLabel: tokenLabel,
+  };
+}
+
+const textStats = computeStatsForModel(textModelName);
+const jsonStats = computeStatsForModel(jsonModelName);
+
+// Keep existing variable names mapped from the primary model's stats
+const primaryStats = textStats ?? jsonStats!;
+const passRate = primaryStats.passRate;
+const passCls = primaryStats.passCls;
+const passColor = primaryStats.passColor;
+const totalInputTokens = primaryStats.totalInputTokens;
+const totalOutputTokens = primaryStats.totalOutputTokens;
+const hasReasoningTelemetry = primaryStats.hasReasoningTelemetry;
+const totalCost = primaryStats.totalCost;
+const hasCost = primaryStats.hasCost;
+const aggregateTokenLabel = primaryStats.aggregateTokenLabel;
+const levelLabel = level || "default";
+const outputEvidenceDescription = hasComparison
+  ? "text and JSON Schema output comparisons"
+  : `${outputModeLabel.toLowerCase()} output evidence`;
+const modelLevelDescription =
+  `${providerName} ${baseModel} ${levelLabel} GitBench results: ` +
+  `${passRate}% pass rate across ${summary.total_fixtures} fixtures, ` +
+  `with ${outputEvidenceDescription}.`;
+---
+
+<Layout
+  title={`${providerName} / ${baseModel} / ${levelLabel}`}
+  description={modelLevelDescription}
+  image="/og/model-detail.png"
+>
+  <!-- Header with provider icon -->
+  <div class="flex items-center gap-3 mb-2">
+    <ProviderIcon provider={provider} size={24} client:load />
+    <div>
+      <div class="text-xs font-mono text-(--color-text-dim)">
+        {providerName} / {baseModel}
+      </div>
+      <h1 class="text-xl font-bold text-(--color-text)">{level}</h1>
+    </div>
+  </div>
+
+  <!-- Reasoning level tab bar (de-duplicated by normalized level) -->
+  <div class="flex gap-1.5 flex-wrap mb-6">
+    {
+      Array.from(
+        new Map(
+          group.levels.map((l) => {
+            const lvl = l.level || "default";
+            const normLevel = lvl.replace(/__json_schema$/, "");
+            return [normLevel, normLevel];
+          }),
+        ).values(),
+      )
+        .sort((a, b) => {
+          const aOrder = REASONING_LEVEL_ORDER[a] ?? 99;
+          const bOrder = REASONING_LEVEL_ORDER[b] ?? 99;
+          return aOrder - bOrder;
+        })
+        .map((lvl) => {
+          const isCurrent = lvl === level;
+          const href = modelLevelPath(provider, baseModel, lvl);
+          return (
+            <a
+              href={href}
+              data-effort-link
+              class={`no-underline px-3 py-1.5 rounded-md font-mono text-[0.7rem] transition-colors ${
+                isCurrent
+                  ? "bg-accent text-white"
+                  : "bg-(--color-card) text-(--color-text-mid) hover:text-(--color-text)"
+              }`}
+            >
+              {lvl}
+            </a>
+          );
+        })
+    }
+  </div>
+
+  <!-- Stats + Compare -->
+  <div class="flex items-start flex-wrap gap-4 mb-8">
+    <div
+      class="flex flex-col gap-2"
+      id="header-stats-container"
+      data-has-text={textModelName != null}
+      data-has-json={jsonModelName != null}
+      data-report-group-id={reportGroupId}
+    >
+      {textStats && (
+        <div data-stats="text">
+          <div class="flex gap-2 items-center flex-wrap mb-2">
+            <Badge
+              variant="outline"
+              className={`font-mono text-xs ${textStats.passColor}`}
+            >
+              {textStats.passRate}%
+            </Badge>
+            <span class="font-mono text-xs text-(--color-text-dim)">
+              {formatModelSummary(textStats.summary)}
+            </span>
+          </div>
+          <div
+            class="font-mono text-[0.68rem] text-(--color-text-dim) opacity-60 mt-1"
+          >
+            {
+              (textStats.totalInputTokens > 0 ||
+                textStats.totalOutputTokens > 0) &&
+              textStats.aggregateTokenLabel && (
+                <span class="mr-3">
+                  {textStats.aggregateTokenLabel}
+                </span>
+              )
+            }
+            {textStats.hasCost && (
+              <span>${textStats.totalCost.toFixed(8)}</span>
+            )}
+          </div>
+        </div>
+      )}
+      {jsonStats && (
+        <div data-stats="json" style={textStats ? "display:none" : ""}>
+          <div class="flex gap-2 items-center flex-wrap mb-2">
+            <Badge
+              variant="outline"
+              className={`font-mono text-xs ${jsonStats.passColor}`}
+            >
+              {jsonStats.passRate}%
+            </Badge>
+            <span class="font-mono text-xs text-(--color-text-dim)">
+              {formatModelSummary(jsonStats.summary)}
+            </span>
+          </div>
+          <div
+            class="font-mono text-[0.68rem] text-(--color-text-dim) opacity-60 mt-1"
+          >
+            {
+              (jsonStats.totalInputTokens > 0 ||
+                jsonStats.totalOutputTokens > 0) &&
+              jsonStats.aggregateTokenLabel && (
+                <span class="mr-3">
+                  {jsonStats.aggregateTokenLabel}
+                </span>
+              )
+            }
+            {jsonStats.hasCost && (
+              <span>${jsonStats.totalCost.toFixed(8)}</span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+    <a href={`/compare?${compareReportState}`}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="font-mono text-xs border-(--color-border-accent) text-accent"
+      >
+        <GitCompare className="size-3.5" />
+        Compare
+      </Button>
+    </a>
+  </div>
+
+  <!-- Reliability summary -->
+  <section class="mb-8">
+    <div class="section-label">
+      <span>Reliability by Benchmark (<span id="reliability-mode-label">{outputModeLabel}</span>)</span>
+    </div>
+    <div class="card p-5">
+      <ModelReliabilitySummary
+        client:load
+        model={modelName}
+        outputMode={defaultReportOutputMode}
+        reportGroupId={reportGroupId}
+        availableOutputModes={availableReportOutputModes}
+      />
+    </div>
+  </section>
+
+  <!-- Text vs JSON Schema Comparison -->
+  {
+    comparison && (
+      <section class="mb-8">
+        <div class="section-label">
+          <span>Text vs JSON Schema Comparison</span>
+        </div>
+
+        <div class="card p-5">
+          {/* Aggregate delta */}
+          <div class="flex gap-4 items-center flex-wrap mb-4">
+            <div class="text-xs font-mono text-(--color-text-dim)">
+              Pass Rate Delta
+            </div>
+            <Badge
+              variant="outline"
+              className={`font-mono text-sm ${
+                comparison.passRateDelta > 0
+                  ? "bg-pass-bg text-pass border-pass-border"
+                  : comparison.passRateDelta < 0
+                    ? "bg-fail-bg text-fail border-(--color-fail-border)"
+                    : "bg-(--color-card) text-(--color-text-mid) border-border"
+              }`}
+            >
+              {comparison.passRateDelta >= 0 ? "+" : ""}
+              {Math.round(comparison.passRateDelta * 1000) / 10}%
+            </Badge>
+            <span class="font-mono text-[0.68rem] text-(--color-text-dim) opacity-60">
+              Text: {Math.round(comparison.textPassRate * 1000) / 10}% &rarr;
+              JSON: {Math.round(comparison.jsonPassRate * 1000) / 10}%
+            </span>
+          </div>
+
+          {/* Agreement counts */}
+          <div class="grid grid-cols-4 gap-3 mb-5">
+            <div class="bg-pass-bg/30 rounded-md p-3 text-center">
+              <div class="text-lg font-bold text-pass">
+                +{comparison.gained}
+              </div>
+              <div class="text-[0.6rem] font-mono text-pass opacity-70">
+                Gained
+              </div>
+              <div class="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                JSON pass / text fail
+              </div>
+            </div>
+            <div class="bg-fail-bg/30 rounded-md p-3 text-center">
+              <div class="text-lg font-bold text-fail">
+                &minus;{comparison.lost}
+              </div>
+              <div class="text-[0.6rem] font-mono text-fail opacity-70">
+                Lost
+              </div>
+              <div class="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                Text pass / JSON fail
+              </div>
+            </div>
+            <div class="bg-(--color-card) rounded-md p-3 text-center">
+              <div class="text-lg font-bold text-(--color-text-mid)">
+                {comparison.unchangedPass}
+              </div>
+              <div class="text-[0.6rem] font-mono text-(--color-text-dim)">
+                Unchanged Pass
+              </div>
+              <div class="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                Both pass
+              </div>
+            </div>
+            <div class="bg-(--color-card) rounded-md p-3 text-center">
+              <div class="text-lg font-bold text-(--color-text-dim)">
+                {comparison.unchangedFail}
+              </div>
+              <div class="text-[0.6rem] font-mono text-(--color-text-dim)">
+                Unchanged Fail
+              </div>
+              <div class="text-[0.55rem] font-mono text-(--color-text-dim) opacity-50">
+                Both fail
+              </div>
+            </div>
+          </div>
+
+          {/* Reliability deltas */}
+          {comparison && data && jsonModelName && (
+            <>
+              <div class="text-xs font-mono text-(--color-text-dim) mt-5 mb-2">
+                Fixture Reliability Delta
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left font-mono text-[0.65rem]">
+                  <thead>
+                    <tr class="text-(--color-text-dim) border-b border-border">
+                      <th class="pb-1.5 pr-3 font-normal">Fixture</th>
+                      <th class="pb-1.5 pr-3 font-normal text-right">Text</th>
+                      <th class="pb-1.5 pr-3 font-normal text-right">JSON</th>
+                      <th class="pb-1.5 font-normal text-right">Delta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {
+                      (() => {
+                        const deltas = computeReliabilityDeltas(
+                          data,
+                          modelName,
+                          jsonModelName,
+                        );
+                        return deltas
+                          .filter(
+                            (d) =>
+                              d.classification !== "equal" &&
+                              d.classification !== "unknown",
+                          )
+                          .slice(0, 20)
+                          .map((d) => (
+                            <tr class="border-b border-(--color-border-dim)">
+                              <td class="py-1.5 pr-3">
+                                <a
+                                  href={`/fixtures/${d.benchmark}/${d.fixtureId}`}
+                                  class="text-accent hover:underline"
+                                >
+                                  {d.fixtureId}
+                                </a>
+                              </td>
+                              <td class="py-1.5 pr-3 text-right">
+                                {d.a?.ratio != null
+                                  ? `${(d.a.ratio * 100).toFixed(0)}% (${d.a.passCount}/${d.a.validCount})`
+                                  : "—"}
+                              </td>
+                              <td class="py-1.5 pr-3 text-right">
+                                {d.b?.ratio != null
+                                  ? `${(d.b.ratio * 100).toFixed(0)}% (${d.b.passCount}/${d.b.validCount})`
+                                  : "—"}
+                              </td>
+                              <td
+                                class={`py-1.5 text-right font-medium ${
+                                  (d.delta ?? 0) > 0
+                                    ? "text-pass"
+                                    : (d.delta ?? 0) < 0
+                                      ? "text-fail"
+                                      : "text-(--color-text-dim)"
+                                }`}
+                              >
+                                {d.delta != null
+                                  ? `${d.delta >= 0 ? "+" : ""}${(d.delta * 100).toFixed(0)}%`
+                                  : "—"}
+                              </td>
+                            </tr>
+                          ));
+                      })()
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Per-benchmark deltas */}
+          {comparison.benchmarkDeltas.length > 0 && (
+            <>
+              <div class="text-xs font-mono text-(--color-text-dim) mb-2">
+                Benchmark Deltas
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left font-mono text-[0.68rem]">
+                  <thead>
+                    <tr class="text-(--color-text-dim) border-b border-border">
+                      <th class="pb-1.5 pr-3 font-normal">Benchmark</th>
+                      <th class="pb-1.5 pr-3 font-normal text-right">Text</th>
+                      <th class="pb-1.5 pr-3 font-normal text-right">JSON</th>
+                      <th class="pb-1.5 font-normal text-right">Delta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparison.benchmarkDeltas.map((bd) => (
+                      <tr class="border-b border-(--color-border-dim)">
+                        <td class="py-1.5 pr-3">
+                          <a
+                            href={`/benchmarks/${bd.benchmark}`}
+                            class="text-accent hover:underline"
+                          >
+                            {bd.benchmark}
+                          </a>
+                        </td>
+                        <td class="py-1.5 pr-3 text-right">
+                          {Math.round(bd.textPassRate * 1000) / 10}%
+                        </td>
+                        <td class="py-1.5 pr-3 text-right">
+                          {Math.round(bd.jsonPassRate * 1000) / 10}%
+                        </td>
+                        <td
+                          class={`py-1.5 text-right font-medium ${
+                            bd.delta > 0
+                              ? "text-pass"
+                              : bd.delta < 0
+                                ? "text-fail"
+                                : "text-(--color-text-dim)"
+                          }`}
+                        >
+                          {bd.delta >= 0 ? "+" : ""}
+                          {Math.round(bd.delta * 1000) / 10}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Changed fixture links */}
+          {comparison.changedFixtures.length > 0 && (
+            <>
+              <div class="text-xs font-mono text-(--color-text-dim) mt-4 mb-2">
+                Changed Fixtures ({comparison.changedFixtures.length})
+              </div>
+              <div class="flex gap-1.5 flex-wrap">
+                {comparison.changedFixtures.map((cf) => {
+                  const passedInJson = cf.jsonPassed;
+                  const statusLabel = passedInJson ? "+gain" : "-loss";
+                  const statusCls = passedInJson
+                    ? "text-pass border-pass-border/30"
+                    : "text-fail border-(--color-fail-border)/30";
+                  return (
+                    <a
+                      href={`/fixtures/${cf.benchmark}/${cf.fixtureId}`}
+                      class={`no-underline px-2 py-1 rounded-md border font-mono text-[0.65rem] transition-colors hover:border-(--color-border-accent) ${statusCls} bg-(--color-card)`}
+                      title={`${cf.benchmark}/${cf.fixtureId}: text=${cf.textPassed ? "pass" : "fail"}, json=${cf.jsonPassed ? "pass" : "fail"}`}
+                    >
+                      {cf.fixtureId}
+                      <span class="opacity-50 ml-1">{statusLabel}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <section>
+    <div class="section-label">
+      <span>Fixture Gallery ({allFixtures.length})</span>
+    </div>
+
+    <!-- Filter controls -->
+    <div id="filter-bar" class="flex gap-1.5 flex-wrap mb-4 items-center">
+      {hasJsonVariant && (
+        <div
+          id="output-mode-toggle"
+          class="flex items-center gap-0.5 rounded-lg border border-border bg-(--color-surface) p-0.5"
+        >
+          <button
+            type="button"
+            data-mode="text"
+            class="rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-colors bg-(--color-accent) text-(--color-accent-fg)"
+          >
+            Text
+          </button>
+          <button
+            type="button"
+            data-mode="json_schema"
+            class="rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-colors text-(--color-text-dim) hover:text-(--color-text)"
+          >
+            JSON
+          </button>
+          <button
+            type="button"
+            data-mode="both"
+            class="rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-colors text-(--color-text-dim) hover:text-(--color-text)"
+          >
+            Both
+          </button>
+        </div>
+      )}
+      <span>
+        <select id="filter-bench" class="brand-select text-xs">
+          <option value="">All benchmarks</option>
+          {benchmarkList.map((b) => <option value={b}>{b}</option>)}
+        </select>
+      </span>
+      <span>
+        <select id="filter-diff" class="brand-select text-xs">
+          <option value="">All difficulties</option>
+          {
+            Array.from(diffs)
+              .sort(
+                (a, b) =>
+                  (DIFFICULTY_ORDER[a] ?? 99) - (DIFFICULTY_ORDER[b] ?? 99) ||
+                  a.localeCompare(b),
+              )
+              .map((d) => <option value={d}>{d}</option>)
+          }
+        </select>
+      </span>
+      <span>
+        <select id="filter-tag" class="brand-select text-xs">
+          <option value="">All tags</option>
+          {
+            Array.from(allTags)
+              .sort()
+              .map((t) => <option value={t}>{t}</option>)
+          }
+        </select>
+      </span>
+      <button
+        onclick="resetFilters()"
+        class="bg-transparent border border-border text-(--color-text-dim) rounded-md px-2.5 py-1.5 font-mono text-[0.65rem] cursor-pointer"
+      >
+        Reset
+      </button>
+    </div>
+
+    <div
+      class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3"
+      id="fixture-gallery"
+    >
+      {textFixtures.length > 0 && (
+        <div class="fixture-set contents" data-mode="text">
+          {
+            textFixtures.map((fx) => {
+              const fi = data.fixture_index[`${fx.benchmark}/${fx.fixture_id}`];
+              const simPct = Math.round(fx.similarity * 1000) / 10;
+              return (
+                <FixtureCard
+                  fixtureId={fx.fixture_id}
+                  benchmark={fx.benchmark || fi?.benchmark || ""}
+                  passed={fx.passed}
+                  similarity={simPct}
+                  difficulty={fi?.difficulty || ""}
+                  tags={fi?.tags || []}
+                  inputTokens={fx.input_tokens}
+                  outputTokens={fx.output_tokens}
+                  reasoningTokens={fx.reasoning_tokens}
+                  reasoningLevel={fx.reasoning_level}
+                  modelName={textModelName}
+                  outputMode="text"
+                />
+              );
+            })
+          }
+        </div>
+      )}
+      {jsonFixtures.length > 0 && (
+        <div class="fixture-set contents" data-mode="json" style="display:none">
+          {
+            jsonFixtures.map((fx) => {
+              const fi = data.fixture_index[`${fx.benchmark}/${fx.fixture_id}`];
+              const simPct = Math.round(fx.similarity * 1000) / 10;
+              return (
+                <FixtureCard
+                  fixtureId={fx.fixture_id}
+                  benchmark={fx.benchmark || fi?.benchmark || ""}
+                  passed={fx.passed}
+                  similarity={simPct}
+                  difficulty={fi?.difficulty || ""}
+                  tags={fi?.tags || []}
+                  inputTokens={fx.input_tokens}
+                  outputTokens={fx.output_tokens}
+                  reasoningTokens={fx.reasoning_tokens}
+                  reasoningLevel={fx.reasoning_level}
+                  modelName={jsonModelName}
+                  outputMode="json_schema"
+                />
+              );
+            })
+          }
+        </div>
+      )}
+      {bothFixtures.length > 0 && (
+        <div class="fixture-set contents" data-mode="both" style="display:none">
+          {
+            bothFixtures.map((bf) => {
+              const fi = data.fixture_index[`${bf.benchmark}/${bf.fixture_id}`];
+              return (
+                <FixtureCardBoth
+                  fixtureId={bf.fixture_id}
+                  benchmark={bf.benchmark || fi?.benchmark || ""}
+                  textPassed={bf.textResult?.passed ?? null}
+                  textSimilarity={bf.textResult?.similarity ?? null}
+                  jsonPassed={bf.jsonResult?.passed ?? null}
+                  jsonSimilarity={bf.jsonResult?.similarity ?? null}
+                  difficulty={fi?.difficulty || ""}
+                  tags={fi?.tags || []}
+                  textModelName={textModelName}
+                  jsonModelName={jsonModelName}
+                />
+              );
+            })
+          }
+        </div>
+      )}
+    </div>
+  </section>
+</Layout>
+
+<script>
+  import {
+    resolveReportViewState,
+    writeReportViewStateToHistory,
+  } from "@/lib/report-url-state";
+
+  const filterParamMap = {
+    "filter-bench": "benchmark",
+    "filter-diff": "difficulty",
+    "filter-tag": "tag",
+  } as const;
+  type FilterSelectId = keyof typeof filterParamMap;
+  type FilterOptions = { syncUrl?: boolean };
+  type OutputMode = "text" | "json_schema" | "both";
+  const filterSelectIds = Object.keys(filterParamMap) as FilterSelectId[];
+
+  function getFilterSelect(id: FilterSelectId): HTMLSelectElement | null {
+    const el = document.getElementById(id);
+    return el instanceof HTMLSelectElement ? el : null;
+  }
+
+  function setSelectValueFromParam(
+    id: FilterSelectId,
+    params: URLSearchParams,
+  ): void {
+    const select = getFilterSelect(id);
+    if (!select) return;
+
+    const value = params.get(filterParamMap[id]) || "";
+    const hasOption = Array.from(select.options).some(
+      (option) => option.value === value,
+    );
+    select.value = hasOption ? value : "";
+  }
+
+  function syncUrlFromFilters() {
+    const url = new URL(window.location.href);
+    filterSelectIds.forEach((id) => {
+      const param = filterParamMap[id];
+      const value = getFilterSelect(id)?.value || "";
+      if (value) {
+        url.searchParams.set(param, value);
+      } else {
+        url.searchParams.delete(param);
+      }
+    });
+    window.history.replaceState(
+      {},
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+    updateEffortLinks();
+  }
+
+  function updateEffortLinks() {
+    document.querySelectorAll("a[data-effort-link]").forEach((link) => {
+      if (!(link instanceof HTMLAnchorElement)) return;
+
+      const url = new URL(link.href, window.location.origin);
+      Object.values(filterParamMap).forEach((param) => {
+        url.searchParams.delete(param);
+      });
+
+      const currentParams = new URLSearchParams(window.location.search);
+      currentParams.forEach((value, param) => {
+        url.searchParams.set(param, value);
+      });
+
+      link.href = `${url.pathname}${url.search}${url.hash}`;
+    });
+  }
+
+  function applyFilters(options: FilterOptions = {}) {
+    const bench = getFilterSelect("filter-bench")?.value || "";
+    const diff = getFilterSelect("filter-diff")?.value || "";
+    const tag = getFilterSelect("filter-tag")?.value || "";
+    const cards = document.querySelectorAll<HTMLElement>(".fixture-card");
+    cards.forEach(function (card) {
+      const cBench = card.dataset.benchmark || "";
+      const cDiff = card.dataset.difficulty || "";
+      const cTags = card.dataset.tags || "";
+      const show =
+        (!bench || cBench === bench) &&
+        (!diff || cDiff === diff) &&
+        (!tag || cTags.split(",").includes(tag));
+      card.style.display = show ? "" : "none";
+    });
+    if (options.syncUrl !== false) syncUrlFromFilters();
+  }
+  function resetFilters() {
+    filterSelectIds.forEach((id) => {
+      const el = getFilterSelect(id);
+      if (el) el.value = "";
+    });
+    applyFilters();
+  }
+  (window as unknown as Window & { resetFilters: () => void }).resetFilters =
+    resetFilters;
+
+  const initialParams = new URLSearchParams(window.location.search);
+  filterSelectIds.forEach((id) =>
+    setSelectValueFromParam(id, initialParams),
+  );
+
+  filterSelectIds.forEach((id) => {
+    getFilterSelect(id)?.addEventListener("change", () => applyFilters());
+  });
+
+  function isOutputMode(value: string | null): value is OutputMode {
+    return value === "text" || value === "json_schema" || value === "both";
+  }
+
+  function getReliabilityLabel(mode: OutputMode): string {
+    if (mode === "json_schema") return "JSON";
+    return "Text";
+  }
+
+  function getReportStateContext() {
+    var statsContainer = document.getElementById("header-stats-container");
+    var hasText = statsContainer
+      ? statsContainer.getAttribute("data-has-text") === "true"
+      : true;
+    var hasJson = statsContainer
+      ? statsContainer.getAttribute("data-has-json") === "true"
+      : false;
+    var groupId =
+      statsContainer?.getAttribute("data-report-group-id") || "current";
+    var availableOutputModes = [
+      ...(hasText ? ["text"] : []),
+      ...(hasJson ? ["json_schema"] : []),
+    ];
+    var defaultOutputMode: OutputMode =
+      hasText && hasJson ? "both" : hasJson ? "json_schema" : "text";
+
+    return {
+      groupId,
+      groups: [{ id: groupId }],
+      availableOutputModes,
+      defaultOutputMode,
+      hasText,
+      hasJson,
+    };
+  }
+
+  function initialOutputModeFromUrl(): OutputMode {
+    var context = getReportStateContext();
+    return resolveReportViewState(window.location.search, context.groups, {
+      defaultSelectedGroups: [context.groupId],
+      defaultOutputMode: context.defaultOutputMode,
+      availableOutputModes: context.availableOutputModes,
+    }).outputMode;
+  }
+
+  function setOutputMode(
+    mode: OutputMode,
+    options: { skipEvent?: boolean; syncUrl?: boolean } = {},
+  ) {
+    var context = getReportStateContext();
+    if (options.syncUrl !== false) {
+      writeReportViewStateToHistory(
+        { selectedGroups: [context.groupId], outputMode: mode },
+        context.groups,
+        {
+          defaultSelectedGroups: [context.groupId],
+          defaultOutputMode: context.defaultOutputMode,
+          availableOutputModes: context.availableOutputModes,
+        },
+      );
+    }
+
+    // Toggle card set visibility
+    document.querySelectorAll<HTMLElement>(".fixture-set").forEach(function (set) {
+      var setMode = set.getAttribute("data-mode");
+      if (mode === "both") {
+        // Show both sets; text and json sets hidden, both set visible
+        set.style.display = setMode === "both" ? "" : "none";
+      } else if (mode === "text") {
+        set.style.display = setMode === "text" ? "" : "none";
+      } else if (mode === "json_schema") {
+        set.style.display = setMode === "json" ? "" : "none";
+      } else {
+        set.style.display = "";
+      }
+    });
+
+    // Toggle header stats visibility
+    var textStatsEl = document.querySelector<HTMLElement>('[data-stats="text"]');
+    var jsonStatsEl = document.querySelector<HTMLElement>('[data-stats="json"]');
+    if (mode === "both") {
+      if (textStatsEl) textStatsEl.style.display = "";
+      if (jsonStatsEl) jsonStatsEl.style.display = "";
+    } else if (mode === "json_schema") {
+      if (textStatsEl) textStatsEl.style.display = "none";
+      if (jsonStatsEl) jsonStatsEl.style.display = "";
+    } else {
+      // text mode
+      if (textStatsEl) textStatsEl.style.display = "";
+      if (jsonStatsEl) jsonStatsEl.style.display = "none";
+    }
+
+    // Update toggle button states
+    document
+      .querySelectorAll<HTMLButtonElement>("#output-mode-toggle button")
+      .forEach(function (btn) {
+        var isActive = btn.getAttribute("data-mode") === mode;
+        btn.className = isActive
+          ? "rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-colors bg-(--color-accent) text-(--color-accent-fg)"
+          : "rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-colors text-(--color-text-dim) hover:text-(--color-text)";
+      });
+
+    // Update reliability section label
+    var labelEl = document.getElementById("reliability-mode-label");
+    if (labelEl) labelEl.textContent = getReliabilityLabel(mode);
+
+    // Re-apply filters to the newly visible card set
+    applyFilters({ syncUrl: false });
+
+    // Dispatch event for React islands (ModelReliabilitySummary)
+    if (!options.skipEvent) {
+      window.dispatchEvent(
+        new CustomEvent("output-mode-change", { detail: { mode: mode } })
+      );
+    }
+  }
+
+  // Initialize output mode on page load
+  (function initOutputMode() {
+    var toggle = document.getElementById("output-mode-toggle");
+    if (!toggle) return; // No JSON variant, toggle not rendered
+
+    // Determine available modes from the page
+    var initialMode = initialOutputModeFromUrl();
+
+    // Set up toggle button click handlers
+    toggle.querySelectorAll<HTMLButtonElement>("button").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const mode = btn.getAttribute("data-mode");
+        if (isOutputMode(mode)) setOutputMode(mode);
+      });
+    });
+
+    // Apply initial mode
+    setOutputMode(initialMode, { skipEvent: false, syncUrl: false });
+  })();
+
+  window.addEventListener("popstate", function () {
+    setOutputMode(initialOutputModeFromUrl(), {
+      skipEvent: false,
+      syncUrl: false,
+    });
+  });
+
+  applyFilters();
+</script>

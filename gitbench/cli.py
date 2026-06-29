@@ -56,7 +56,7 @@ from gitbench.harness.model import (
 from gitbench.harness.reasoning import parse_model_reasoning
 from gitbench.harness.runner import BenchmarkRunner, RunProgress
 from gitbench.harness.types import BenchmarkResult, Fixture, ModelMessage, Score
-from gitbench.render import _run_sort_key, aggregate_runs, write_sqlite_report_db
+from gitbench.render import _run_sort_key
 from gitbench.result_doctoring import (
     RerunPlan,
     ZeroPassFixture,
@@ -2908,6 +2908,55 @@ def list_profiles():
         click.echo(f"  - {name}: {', '.join(parts)}")
 
 
+def _warn_deprecated_report_flags(*, no_build: bool, open_browser: bool, dev: bool) -> None:
+    deprecated_flags = []
+    if no_build:
+        deprecated_flags.append("--no-build")
+    if open_browser:
+        deprecated_flags.append("--open")
+    if dev:
+        deprecated_flags.append("--dev")
+
+    for flag in deprecated_flags:
+        click.echo(
+            f"Warning: `gitbench report {flag}` is deprecated; the flag is now a no-op.",
+            err=True,
+        )
+    if deprecated_flags:
+        click.echo(
+            "Use the top-level web module commands after JSON publication instead.",
+            err=True,
+        )
+
+
+def _print_report_next_steps() -> None:
+    click.echo("Next web commands:", err=True)
+    click.echo("  cd web && pnpm build:db       # derive web/data/gitbench.db", err=True)
+    click.echo("  cd web && pnpm build          # derive SQLite and build static pages", err=True)
+    click.echo("  cd web && pnpm dev:api        # run local API-backed report", err=True)
+
+
+def _resolve_report_output_path(output_path: str | None) -> str:
+    if output_path:
+        return output_path
+
+    required_web_paths = (
+        Path("web/package.json"),
+        Path("web/scripts/build-db.mjs"),
+    )
+    missing = [path for path in required_web_paths if not path.is_file()]
+    if missing:
+        missing_list = ", ".join(str(path) for path in missing)
+        raise click.ClickException(
+            "Default report output requires the top-level web module in the "
+            "current working directory. Run `gitbench report` from the "
+            "repository root, or pass `--output <path>` to write standalone "
+            f"JSON. Missing: {missing_list}"
+        )
+
+    return "web/public/results.json"
+
+
 @cli.command("report")
 @click.option(
     "--input-dir",
@@ -2934,36 +2983,33 @@ def list_profiles():
 @click.option(
     "--no-build",
     is_flag=True,
-    help="Skip the Astro build step (only write report data artifacts)",
+    help="Deprecated no-op; report generation now only writes compatibility JSON",
 )
 @click.option(
     "--open",
     "open_browser",
     is_flag=True,
-    help="Start preview server and open the report in the default browser",
+    help="Deprecated no-op; use web module commands to preview or open the report",
 )
 @click.option(
     "--dev",
     is_flag=True,
-    help="Start Astro dev server with hot reload (skips build)",
+    help="Deprecated no-op; use `cd web && pnpm dev:api` for local development",
 )
 def report(input_dir: str | None, input_file: str | None, output_path: str | None, no_build: bool, open_browser: bool, dev: bool):
-    """Generate the Astro static report from benchmark results.
+    """Publish compatibility JSON from benchmark results.
 
     Reads run results from gitbench-results/ (or --input-dir / --input),
-    aggregates them into web/public/results.json and web/data/gitbench.db, builds the Astro site
-    to web/dist/, and optionally opens the report in a browser.
+    aggregates them into web/public/results.json, and prints the web module
+    commands used to derive SQLite or view the report.
 
     \b
     Examples:
-      gitbench report                            # aggregate + build from gitbench-results/
-      gitbench report --no-build                 # only generate report data artifacts
-      gitbench report --open                     # build and open
-      gitbench report -d my-results/ -i extra.jsonl --open
+      gitbench report                            # publish JSON from gitbench-results/
+      gitbench report --no-build                 # deprecated no-op flag
+      gitbench report --open                     # deprecated no-op flag
+      gitbench report -d my-results/ -i extra.jsonl
     """
-    import subprocess
-    import webbrowser
-
     from gitbench.render import (
         aggregate_runs,
         load_aggregate_report,
@@ -2973,13 +3019,16 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
         load_runs_from_jsonl,
         merge_aggregate_reports,
         render_json,
-        write_sqlite_report_db,
+    )
+    from gitbench.report_contract import (
+        ReportArtifactContractError,
+        validate_report_json_contract,
     )
 
     # Determine input directory
     results_dir = input_dir or "gitbench-results"
-    web_dir = Path(__file__).parent / "web"
-    json_output = output_path or str(web_dir / "public" / "results.json")
+    json_output = _resolve_report_output_path(output_path)
+    _warn_deprecated_report_flags(no_build=no_build, open_browser=open_browser, dev=dev)
     config = load_config()
     try:
         report_safety_config = load_result_safety_config(config)
@@ -3111,63 +3160,13 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
             validate_payload_safety(data, artifact_name="generated report data")
         except SafetyValidationError as exc:
             raise click.ClickException(str(exc)) from exc
+    try:
+        validate_report_json_contract(data)
+    except ReportArtifactContractError as exc:
+        raise click.ClickException(str(exc)) from exc
     render_json(data, json_output)
     click.echo(f"JSON data written to: {json_output}", err=True)
-    db_output = web_dir / "data" / "gitbench.db"
-    write_sqlite_report_db(data, db_output)
-    click.echo(f"SQLite report database written to: {db_output}", err=True)
-
-    if no_build:
-        click.echo("Skipping Astro build (--no-build).", err=True)
-        return
-
-    if dev:
-        click.echo("Starting Astro dev server...", err=True)
-        subprocess.run(
-            ["pnpm", "dev"],
-            cwd=str(web_dir),
-        )
-        return
-
-    # Build Astro site
-    if not web_dir.exists():
-        raise click.ClickException(
-            f"Web directory not found: {web_dir}. "
-            f"Run 'pnpm install' in gitbench/web/ first."
-        )
-
-    click.echo("Building Astro site...", err=True)
-    result = subprocess.run(
-        ["pnpm", "build"],
-        cwd=str(web_dir),
-        capture_output=True,
-        text=True,
-    )
-
-    if result.returncode != 0:
-        click.echo(result.stderr, err=True)
-        raise click.ClickException("Astro build failed. See output above.")
-
-    click.echo(result.stdout, err=True)
-
-    dist_index = web_dir / "dist" / "index.html"
-    click.echo(f"Report built to: {web_dir / 'dist'}/", err=True)
-
-    if open_browser:
-        # Use Astro's preview server to avoid CORS/pathing issues with file://
-        import threading
-        import time
-
-        def _launch_preview():
-            # Give the server a moment to start, then open browser
-            time.sleep(1.5)
-            webbrowser.open("http://localhost:4321")
-
-        threading.Thread(target=_launch_preview, daemon=True).start()
-        subprocess.run(
-            ["pnpm", "preview"],
-            cwd=str(web_dir),
-        )
+    _print_report_next_steps()
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ The `ProviderIcon` component resolves logos in this order:
 
 ## Step 1: Create the SVG component
 
-Open `gitbench/web/src/lib/custom-provider-icons.ts`.
+Open `web/src/lib/custom-provider-icons.ts`.
 
 Add a new exported function component following this pattern for **monochrome** logos:
 
@@ -54,7 +54,7 @@ The key must be the **lowercase provider slug** — this matches what `ProviderI
 
 ## Step 3: Add a palette color
 
-Open `gitbench/web/src/lib/provider-colors.ts`.
+Open `web/src/lib/provider-colors.ts`.
 
 Add an entry to `PROVIDER_COLORS`:
 

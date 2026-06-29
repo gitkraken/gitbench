@@ -54,25 +54,19 @@ The JSON output SHALL preserve the relationship between base models and reasonin
 - **WHEN** a model is `claude-sonnet` (no `#` suffix)
 - **THEN** the model entry has `name: "claude-sonnet"`, `baseModel: "claude-sonnet"`, `reasoningLevel: null`
 
-### Requirement: CLI supports render --format json
-The `gitbench render` CLI command SHALL support a `--format json` option that calls `render_json()` instead of `render_html()`. It SHALL accept `--output` to specify the output path, defaulting to `ui/public/results.json`.
-
-#### Scenario: render --format json writes JSON
-- **WHEN** `gitbench render --format json --output ui/public/results.json` is executed
-- **THEN** the aggregated data is written as JSON to the specified path
-
 ### Requirement: CLI provides gitbench report command
-The CLI SHALL provide a `gitbench report` command that: (1) aggregates legacy run results from `gitbench-results/`, (2) ingests campaign artifacts from campaign directories containing `campaign.json`, (3) writes `gitbench/web/public/results.json`, (4) writes the generated SQLite report database, (5) runs `pnpm build` in `gitbench/web/` unless skipped, and (6) opens the built report or prints the path when requested.
+The CLI SHALL provide a `gitbench report` command that aggregates legacy run results from `gitbench-results/`, ingests campaign artifacts from campaign directories containing `campaign.json`, validates configured result-safety publication requirements, and writes compatibility JSON to `web/public/results.json`. The command SHALL NOT run Astro build, dev-server, preview, or browser-opening workflows.
 
-#### Scenario: report command builds and opens
-- **WHEN** `gitbench report --open` is executed
-- **THEN** the Astro site is built to `gitbench/web/dist/`
-- **AND** the dashboard page is opened through the supported preview flow
+#### Scenario: report command publishes compatibility JSON
+- **WHEN** `gitbench report` completes successfully
+- **THEN** `web/public/results.json` contains the aggregated report JSON
+- **AND** the command prints guidance for running web module commands when a user wants to build or view the report
 
-#### Scenario: report command skips build if --no-build
-- **WHEN** `gitbench report --no-build` is executed
-- **THEN** report JSON and SQLite data artifacts are written
-- **AND** the Astro build step is skipped
+#### Scenario: deprecated web flags do not run web workflows
+- **WHEN** `gitbench report --open`, `gitbench report --dev`, or `gitbench report --no-build` is executed
+- **THEN** the command prints a deprecation warning for the flag
+- **AND** it does not run Astro build, dev-server, preview, or browser-opening behavior
+- **AND** it still publishes compatibility JSON when valid report inputs are present
 
 #### Scenario: report command ingests campaign artifacts
 - **WHEN** `gitbench report` scans a result directory containing `campaign.json` and raw campaign attempt envelopes

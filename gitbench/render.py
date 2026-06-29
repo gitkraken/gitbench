@@ -11,7 +11,7 @@ from gitbench.harness.model import parse_model_name
 
 logger = logging.getLogger(__name__)
 
-WEB_DIR = Path(__file__).parent / "web"
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 REPORT_DB_PATH = WEB_DIR / "data" / "gitbench.db"
 REPORT_SCHEMA_PATH = WEB_DIR / "data" / "schema.sql"
 
@@ -707,7 +707,11 @@ def write_sqlite_report_db(
     output_path: str | Path = REPORT_DB_PATH,
     schema_path: str | Path = REPORT_SCHEMA_PATH,
 ) -> None:
-    """Rebuild the generated SQLite report database from aggregate data."""
+    """Legacy helper for SQLite parity tests.
+
+    Production report publication writes compatibility JSON. The supported
+    SQLite derivation path is ``web/scripts/build-db.mjs``.
+    """
     db_path = Path(output_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     if db_path.exists():

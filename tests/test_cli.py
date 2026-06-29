@@ -2,7 +2,6 @@
 
 import json
 import logging
-import sqlite3
 import sys
 import threading
 import time
@@ -1372,8 +1371,7 @@ class TestRunCommand:
         )
         output_path = tmp_path / "report-results.json"
 
-        with patch("gitbench.cli.load_config", return_value={}), \
-             patch("gitbench.render.write_sqlite_report_db"):
+        with patch("gitbench.cli.load_config", return_value={}):
             result = runner.invoke(
                 cli,
                 [
@@ -1390,6 +1388,80 @@ class TestRunCommand:
         data = json.loads(output_path.read_text())
         assert data["model_summaries"]["openai/gpt-test:high"]["pass_at_k"] == 1.0
         assert data["model_summaries"]["openai/gpt-test:high__json_schema"]["pass_at_k"] == 0.0
+
+    def test_report_default_output_requires_repo_web_module(self, runner, tmp_path):
+        """The implicit web/public output must not create a fake web tree."""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with patch("gitbench.cli.load_config") as load_config:
+                result = runner.invoke(cli, ["report"])
+
+            assert result.exit_code != 0
+            assert "Default report output requires the top-level web module" in result.output
+            assert "pass `--output <path>`" in result.output
+            assert not Path("web").exists()
+            load_config.assert_not_called()
+
+    def test_report_explicit_output_does_not_require_web_module(self, runner, tmp_path):
+        """Standalone JSON publication remains available with --output."""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            results_root = Path("gitbench-results")
+            run_dir = results_root / "20260606T010203Z"
+            run_dir.mkdir(parents=True)
+            (run_dir / f"run_text_v{BENCHMARK_SUITE_VERSION}.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "schema_version": 1,
+                        "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+                        "timestamp": "2026-06-06T01:02:03+00:00",
+                        "git_sha": "abc123",
+                        "model": "openai/gpt-test:high",
+                        "profile": "(inline)",
+                        "output_mode": "text",
+                        "summary": {
+                            "total_benchmarks": 1,
+                            "total_fixtures": 1,
+                            "total_passed": 1,
+                            "overall_pass_at_k": 1.0,
+                        },
+                        "results": [
+                            {
+                                "benchmark": "commit_messages",
+                                "total": 1,
+                                "passed": 1,
+                                "pass_at_k": 1.0,
+                                "scores": [
+                                    {
+                                        "fixture_id": "f001",
+                                        "passed": True,
+                                        "similarity": 1.0,
+                                        "model_output": "answer",
+                                        "error": None,
+                                        "output_mode": "text",
+                                    }
+                                ],
+                                "errors": 0,
+                            }
+                        ],
+                    }
+                )
+            )
+
+            with patch("gitbench.cli.load_config", return_value={}):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "report",
+                        "--input-dir",
+                        str(results_root),
+                        "--output",
+                        "report-results.json",
+                    ],
+                )
+
+            assert result.exit_code == 0, result.output
+            assert Path("report-results.json").is_file()
+            assert not Path("web").exists()
 
     def test_report_rejects_legacy_non_finite_payload_without_traceback(
         self, runner, tmp_path
@@ -1453,10 +1525,10 @@ class TestRunCommand:
         assert "not deterministically JSON serializable" in result.output
         assert "Traceback" not in result.output
 
-    def test_report_no_build_ingests_campaign_artifacts_into_json_and_sqlite(
+    def test_report_deprecated_flags_ingest_campaign_artifacts_into_json(
         self, runner, tmp_path
     ):
-        """Report generation discovers campaign artifacts through the CLI path."""
+        """Report generation discovers campaign artifacts without running web workflows."""
         from gitbench.harness.campaign import (
             AttemptIdentity,
             AttemptStatus,
@@ -1465,7 +1537,6 @@ class TestRunCommand:
             make_campaign,
         )
         from gitbench.harness.campaign_store import CampaignStore
-        from gitbench.render import write_sqlite_report_db as real_write_sqlite_report_db
 
         results_root = tmp_path / "gitbench-results"
         identity = AttemptIdentity(
@@ -1505,13 +1576,9 @@ class TestRunCommand:
         )
 
         output_path = tmp_path / "report-results.json"
-        db_path = tmp_path / "gitbench.db"
-
-        def write_temp_db(data, _db_output):
-            real_write_sqlite_report_db(data, db_path)
 
         with patch("gitbench.cli.load_config", return_value={}), \
-             patch("gitbench.render.write_sqlite_report_db", side_effect=write_temp_db):
+             patch("subprocess.run") as run_web_workflow:
             result = runner.invoke(
                 cli,
                 [
@@ -1521,32 +1588,23 @@ class TestRunCommand:
                     "--output",
                     str(output_path),
                     "--no-build",
+                    "--open",
+                    "--dev",
                 ],
             )
 
         assert result.exit_code == 0, result.output
+        assert "Warning: `gitbench report --no-build` is deprecated" in result.output
+        assert "Warning: `gitbench report --open` is deprecated" in result.output
+        assert "Warning: `gitbench report --dev` is deprecated" in result.output
+        assert "Next web commands:" in result.output
+        assert "pnpm build" in result.output
+        assert "pnpm dev:api" in result.output
+        run_web_workflow.assert_not_called()
+
         data = json.loads(output_path.read_text())
         assert data["campaigns"][0]["campaign_id"] == "cmp-cli-report"
         assert data["campaigns"][0]["raw_attempts"][0]["identity"]["benchmark"] == "commit_messages"
-
-        with sqlite3.connect(db_path) as conn:
-            assert conn.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0] == 1
-            assert conn.execute("SELECT COUNT(*) FROM raw_attempts").fetchone()[0] == 1
-            row = conn.execute(
-                """
-                SELECT campaign_id, model_name, reasoning_level, output_mode,
-                       benchmark_name, fixture_id
-                FROM raw_attempts
-                """
-            ).fetchone()
-        assert row == (
-            "cmp-cli-report",
-            "mock",
-            "none",
-            "text",
-            "commit_messages",
-            "f001",
-        )
 
     def test_report_preserves_aggregate_report_artifacts_with_real_model_data(self, runner, tmp_path):
         """Already-aggregated report JSON remains usable as report input."""
@@ -1663,8 +1721,7 @@ class TestRunCommand:
         )
         output_path = tmp_path / "report-results.json"
 
-        with patch("gitbench.cli.load_config", return_value={}), \
-             patch("gitbench.render.write_sqlite_report_db"):
+        with patch("gitbench.cli.load_config", return_value={}):
             result = runner.invoke(
                 cli,
                 [

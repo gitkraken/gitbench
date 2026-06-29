@@ -109,7 +109,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Rank zero-pass and low-pass fixtures for calibration audit."
     )
-    parser.add_argument("--db", type=Path, default=Path("gitbench/web/data/gitbench.db"))
+    parser.add_argument("--db", type=Path, default=Path("web/data/gitbench.db"))
     parser.add_argument("--fixtures", type=Path, default=Path("fixtures"))
     parser.add_argument("--threshold", type=float, default=0.50)
     parser.add_argument("--representative-failures", type=int, default=3)

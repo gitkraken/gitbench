@@ -3,16 +3,16 @@
 ## Purpose
 TBD - created by archiving change add-sqlite-report-api. Update Purpose after archive.
 ## Requirements
-### Requirement: Report generation writes SQLite database
-`gitbench report` SHALL write a read-only SQLite report database at a stable path under the web project, using the latest repository schema as the source of truth.
+### Requirement: Web module derives SQLite database
+The web module SHALL write a read-only SQLite report database at `web/data/gitbench.db` by deriving it from `web/public/results.json` using `web/data/schema.sql`. `gitbench report` SHALL NOT be the supported production writer for the SQLite database.
 
-#### Scenario: Report writes database artifact
-- **WHEN** `gitbench report` completes successfully
-- **THEN** the web project contains a generated SQLite database for report API queries
+#### Scenario: Web command writes database artifact
+- **WHEN** the supported database build command runs from `web/`
+- **THEN** `web/data/gitbench.db` contains generated SQLite data for report API queries
 
 #### Scenario: Existing database is rebuilt
-- **WHEN** `gitbench report` runs and a previous generated report database exists
-- **THEN** the previous report data is replaced with data generated from the current benchmark results and latest schema
+- **WHEN** the database build command runs and a previous generated report database exists
+- **THEN** the previous report data is replaced with data generated from the current compatibility JSON and latest schema
 
 ### Requirement: Report database schema supports queryable report data
 The report database SHALL normalize models, runs, benchmarks, fixtures, fixture results, tags, model summaries, benchmark summaries, runtime summaries, and base-model group data enough to serve report views without parsing `results.json`.
@@ -61,10 +61,10 @@ The web project SHALL expose Vercel API routes that return report data for summa
 - **THEN** the client can read `runs_meta` from the summary API response
 
 ### Requirement: Report API stays within Vercel function budget
-The web project SHALL expose the report API with no more than 11 Vercel serverless function route files under `gitbench/web/api`.
+The web project SHALL expose the report API with no more than 11 Vercel serverless function route files under `web/api`.
 
 #### Scenario: Consolidated API file count
-- **WHEN** the report API route files are enumerated under `gitbench/web/api`
+- **WHEN** the report API route files are enumerated under `web/api`
 - **THEN** there are no more than 11 TypeScript API route files
 
 #### Scenario: Chart endpoints share one dynamic function
@@ -329,4 +329,3 @@ Report APIs SHALL continue accepting explicit campaign IDs for compatible intern
 - **WHEN** a request includes a campaign that is incompatible with the requested benchmark, model, or output mode
 - **THEN** the endpoint SHALL avoid returning misleading campaign-scoped aggregates
 - **AND** it SHALL preserve existing validation or null-fallback semantics
-

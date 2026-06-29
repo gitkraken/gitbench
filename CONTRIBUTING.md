@@ -363,12 +363,12 @@ gitbench report
 
 ## UI Development
 
-The report UI is an Astro static site at `gitbench/web/`.
+The report UI is an Astro static site at top-level `web/`.
 
 **Prerequisites:** Node.js >= 22.12.0
 
 ```bash
-cd gitbench/web
+cd web
 npm install
 ```
 
@@ -376,10 +376,10 @@ npm install
 
 ```bash
 # Generate results.json from benchmark data
-gitbench report --no-build
+gitbench report
 
 # Start Astro dev server with hot reload
-cd gitbench/web && npm run dev
+cd web && npm run dev
 ```
 
 **Tech stack:**
@@ -392,7 +392,7 @@ cd gitbench/web && npm run dev
 
 **Adding shadcn components:**
 ```bash
-cd gitbench/web
+cd web
 npx shadcn@latest add <component-name>
 ```
 
@@ -400,7 +400,7 @@ Components are stored in `src/components/ui/` and imported via `@/components/ui/
 
 **Build:**
 ```bash
-cd gitbench/web && npm run build
+cd web && npm run build
 # Output: dist/
 ```
 

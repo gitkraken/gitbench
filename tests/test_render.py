@@ -805,8 +805,8 @@ class TestAggregateRunsFixtureIndex:
         assert fixture["total_tokens"] == 300
 
 
-class TestSqliteReportDb:
-    """Tests for generated SQLite report database."""
+class TestLegacySqliteReportDbHelper:
+    """Parity tests for the legacy Python SQLite helper."""
 
     def test_schema_includes_expected_indexes(self):
         """Test that common report access path indexes are checked in."""

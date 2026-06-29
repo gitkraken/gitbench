@@ -2,15 +2,15 @@
 
 The Astro site provides the static frontend for GitBench benchmark results, rendering aggregated data from `results.json` into interactive charts and navigable model/fixture pages.
 ## Requirements
-### Requirement: Astro project scaffolded at gitbench/ui/
-The project SHALL include an Astro project at `gitbench/ui/` with `package.json`, `astro.config.mjs` (with `@astrojs/react` integration), `tsconfig.json`, and a `src/` directory structure containing `pages/`, `components/`, `lib/`, and `styles/`.
+### Requirement: Astro project scaffolded at top-level web/
+The project SHALL include an Astro project at top-level `web/` with `package.json`, `astro.config.mjs` (with `@astrojs/react` integration), `tsconfig.json`, and a `src/` directory structure containing `pages/`, `components/`, `lib/`, and `styles/`.
 
 #### Scenario: Project structure exists
-- **WHEN** a developer lists `gitbench/ui/`
+- **WHEN** a developer lists `web/`
 - **THEN** the directory contains `package.json`, `astro.config.mjs`, `tsconfig.json`, and a `src/` directory
 
 #### Scenario: Astro config includes React integration
-- **WHEN** reading `astro.config.mjs`
+- **WHEN** reading `web/astro.config.mjs`
 - **THEN** it includes `react()` in the integrations array
 
 ### Requirement: Static Layout component with sidebar
@@ -84,15 +84,16 @@ All routes SHALL be defined as `.astro` files in `src/pages/`. Dynamic routes SH
 - **THEN** the Fixture Detail page (`fixtures/[fixture].astro`) is rendered with fixture data for `f001`
 
 ### Requirement: results.json served as static asset
-The aggregated benchmark data MAY be written to `ui/public/results.json` by the Python CLI as a compatibility artifact. The Astro site SHALL NOT embed the full report data in page HTML. React islands SHALL load query-specific report data through the report API client instead of fetching the full `/results.json` payload. The overview page's first chart (PassRateBarChart) MAY receive chart-specific data via an `initialData` prop computed at build time, but that payload SHALL use the same default latest-evaluation semantics as the corresponding chart API when campaign rows exist. If no campaign rows exist, the initial payload MAY use aggregate summary data as a compatibility fallback. This exception is limited to the pass-rate chart on the overview page. All other charts and pages SHALL continue to load data through the report API client.
+The aggregated benchmark data SHALL be written to `web/public/results.json` by the Python CLI as a checked-in compatibility artifact. The Astro site SHALL NOT embed the full report data in page HTML. React islands SHALL load query-specific report data through the report API client instead of fetching the full `/results.json` payload. The overview page's first chart (PassRateBarChart) MAY receive chart-specific data via an `initialData` prop computed at build time, but that payload SHALL use the same default latest-evaluation semantics as the corresponding chart API when campaign rows exist. If no campaign rows exist, the initial payload MAY use aggregate summary data as a compatibility fallback. This exception is limited to the pass-rate chart on the overview page. All other charts and pages SHALL continue to load data through the report API client.
 
 #### Scenario: results.json is accessible when emitted
 - **WHEN** the built site is served and compatibility JSON was emitted during report generation
 - **THEN** `GET /results.json` returns the aggregated benchmark data as JSON
 
-#### Scenario: results.json is gitignored
-- **WHEN** checking the gitignore
-- **THEN** `ui/public/results.json` and `ui/dist/` are listed
+#### Scenario: results.json is checked in under web
+- **WHEN** checking tracked report artifacts
+- **THEN** `web/public/results.json` is present as the compatibility JSON artifact
+- **AND** `web/public/results.json` is not excluded by `.gitignore`
 
 #### Scenario: React islands do not fetch full report payload
 - **WHEN** a hydrated React chart or interactive table loads in the browser
@@ -117,14 +118,14 @@ The aggregated benchmark data MAY be written to `ui/public/results.json` by the 
 - **THEN** PassRateBarChart falls back to fetching from `/api/charts/pass-rate?campaign=<id>` to obtain campaign-scoped data and metadata
 
 ### Requirement: Build produces static dist/ directory
-Running `npm run build` in `gitbench/ui/` SHALL produce a static Astro site in `ui/dist/` with HTML, CSS, JS, and static assets. The Astro page output SHALL remain static, while API-backed report data SHALL be served by deployment-specific API functions during local development and hosted production.
+Running `npm run build` or `pnpm build` in top-level `web/` SHALL produce a static Astro site in `web/dist/` with HTML, CSS, JS, and static assets. The Astro page output SHALL remain static, while API-backed report data SHALL be served by deployment-specific API functions during local development and hosted production.
 
 #### Scenario: Build completes successfully
-- **WHEN** `npm run build` is executed
-- **THEN** `ui/dist/` contains `index.html`, subdirectories for routes, and static assets
+- **WHEN** `npm run build` or `pnpm build` is executed from `web/`
+- **THEN** `web/dist/` contains `index.html`, subdirectories for routes, and static assets
 
 #### Scenario: Static page output is deployable
-- **WHEN** `ui/dist/` is served by a static file server
+- **WHEN** `web/dist/` is served by a static file server
 - **THEN** statically generated Astro routes and assets are accessible
 
 #### Scenario: API-backed deployment provides report queries

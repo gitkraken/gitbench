@@ -18,7 +18,7 @@ This assessment covers every YAML benchmark fixture under `fixtures/`.
 - Structured-output validation: 204 fixtures with contracts, 0 missing contracts, 0 issues.
 - Runtime setup pass: 204 fixture repos set up successfully, 0 setup failures.
 - Expected-answer runtime pass: 179 non-judge fixtures passed when scored with their expected answer, 12 `llm_judge` fixtures skipped, 13 expected-answer failures were dynamic target fixtures where `expected` stores a stable subject while the scorer requires a live hash or reflog selector.
-- Existing low-pass audit source: `gitbench/web/data/gitbench.db`, 14 stored attempts per fixture.
+- Existing low-pass audit source: `web/data/gitbench.db`, 14 stored attempts per fixture.
 - Targeted tests: `tests/test_loader.py`, `tests/test_fixture_self_check.py`, `tests/test_structured_output.py`, and `tests/test_benchmarks.py` yielded 323 passing tests and 1 failure in `TestCommitMessagesBenchmark.test_score_method_works`. The failure is a mock/test compatibility issue with judge evidence, not an observed fixture YAML defect.
 
 ## Rating Key

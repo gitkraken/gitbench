@@ -17,12 +17,60 @@ The Dashboard SHALL include React island charts: an overall pass rate bar chart,
 - **WHEN** a user clicks a cell in the heatmap
 - **THEN** the browser navigates to the corresponding Benchmark Detail page
 
+### Requirement: Report pages use URL-backed view state
+Report pages with comparative model or output-mode controls SHALL resolve model selection and output mode from report URL state. Missing or invalid report URL state SHALL fall back to the page default instead of reading stale browser storage.
+
+#### Scenario: Bare overview uses current defaults
+- **WHEN** a user opens `/` with no report URL state
+- **THEN** the Overview page selects all current model groups and defaults to both output modes when both are available
+
+#### Scenario: Bare benchmark uses current defaults
+- **WHEN** a user opens `/benchmarks/rebase` with no report URL state
+- **THEN** the Benchmark Detail page selects all current model groups and defaults to both output modes when both are available
+
+#### Scenario: Sidebar navigation resets view state
+- **WHEN** a user has a narrowed model selection on Overview
+- **AND** the user clicks a top-level sidebar link such as Compare or Methodology
+- **THEN** the destination URL does not carry the narrowed model selection unless that link is explicitly an analytical drilldown
+
+#### Scenario: Invalid state falls back
+- **WHEN** a report page URL contains invalid compressed report view state
+- **THEN** the page renders using its default model selection and output mode
+
+### Requirement: Analytical drilldowns preserve report view state
+Report pages SHALL preserve report view state only for links that continue the same comparative analysis context. Ordinary navigation links SHALL remain bare.
+
+#### Scenario: Overview heatmap to benchmark preserves state
+- **WHEN** a user has selected `["openai/gpt-5"]` and output mode `json_schema` on Overview
+- **AND** the user follows a heatmap link to `/benchmarks/rebase`
+- **THEN** the Benchmark Detail URL contains report view state resolving to the same selection and output mode
+
+#### Scenario: Ordinary model directory link does not preserve state
+- **WHEN** a user has selected `["openai/gpt-5"]` on Overview
+- **AND** the user navigates to `/models` through the sidebar
+- **THEN** the `/models` URL does not include model-selection report view state
+
+### Requirement: Compare page accepts legacy with links
+The Compare page SHALL accept existing `/compare?with=<model-or-group>` links as a backward-compatible seed for selected model groups. After resolving a valid legacy seed, Compare SHALL use the new report URL state for subsequent selection changes.
+
+#### Scenario: Legacy with parameter still preselects
+- **WHEN** navigating to `/compare?with=gpt-4o%23high`
+- **THEN** `gpt-4o#high` is pre-selected in the model picker when it maps to a known model group
+
+#### Scenario: URL state wins over legacy seed
+- **WHEN** a Compare URL contains both valid report URL state and `with=gpt-4o%23high`
+- **THEN** the report URL state determines the selected model groups
+
 ### Requirement: Model Detail page includes "Compare" button
-The Model Detail page SHALL include a "Compare →" button that navigates to `/compare?with=<encoded-model-name>`, pre-selecting the current model.
+The Model Detail page SHALL include a "Compare" button that navigates to `/compare` with report URL state pre-selecting the current model group. The Compare page SHALL also accept existing `/compare?with=<encoded-model-name>` links for backward compatibility.
 
 #### Scenario: Compare button navigates to Compare page
-- **WHEN** a user clicks "Compare →" on `/models/gpt-4o%23high`
-- **THEN** the browser navigates to `/compare?with=gpt-4o%23high` with that model pre-selected
+- **WHEN** a user clicks "Compare" on `/models/gpt-4o%23high`
+- **THEN** the browser navigates to `/compare` with report URL state that pre-selects that model's provider/base-model group
+
+#### Scenario: Legacy Compare URL remains accepted
+- **WHEN** a user opens `/compare?with=gpt-4o%23high`
+- **THEN** the Compare page pre-selects the model group containing `gpt-4o#high`
 
 ### Requirement: Model Detail page shows reasoning level comparison when applicable
 When a base model has been run at multiple reasoning levels, the Model Detail page SHALL display a reasoning level comparison section showing the pass rate delta per benchmark between levels, sorted by delta magnitude.
@@ -36,11 +84,15 @@ When a base model has been run at multiple reasoning levels, the Model Detail pa
 - **THEN** no reasoning comparison section is displayed
 
 ### Requirement: Benchmark Detail page shows leaderboard and per-fixture comparison
-The Benchmark Detail page (`benchmarks/[name].astro`) SHALL render the benchmark description, a model leaderboard bar chart (React island) showing pass rates for this specific benchmark only, a per-fixture comparison table (`FixtureComparisonTable` React island) showing pass/fail and similarity for each selected model with its own synced `ModelSelector`, and a tag breakdown chart.
+The Benchmark Detail page (`benchmarks/[name].astro`) SHALL render the benchmark description, a model leaderboard bar chart (React island) showing pass rates for this specific benchmark only, a per-fixture comparison table (`FixtureComparisonTable` React island) showing pass/fail and similarity for each selected model with its own synced `ModelSelector`, and a tag breakdown chart. Model and output-mode selection SHALL initialize from report URL state when present, otherwise from the Benchmark Detail page defaults.
 
-#### Scenario: Leaderboard shows per-benchmark pass rates for all selected models
-- **WHEN** navigating to `/benchmarks/commit_messages`
-- **THEN** the `PassRateBarChart` is rendered with `benchmarkName="commit_messages"` and displays pass rates computed only from the `commit_messages` fixture set, not the global 204-fixture average
+#### Scenario: Leaderboard shows per-benchmark pass rates for selected models
+- **WHEN** navigating to `/benchmarks/commit_messages` with report URL state for model selection `["anthropic/claude-opus-4.7", "openai/gpt-4o"]`
+- **THEN** the `PassRateBarChart` is rendered with `benchmarkName="commit_messages"` and displays pass rates computed only from the `commit_messages` fixture set for that selection
+
+#### Scenario: Bare benchmark selects all model groups
+- **WHEN** navigating to `/benchmarks/commit_messages` without report URL state
+- **THEN** the model leaderboard and fixture comparison table select all current model groups
 
 #### Scenario: Per-fixture table uses synced model selection
 - **WHEN** navigating to `/benchmarks/commit_messages` with model selection `["anthropic/claude-opus-4.7", "openai/gpt-4o"]`
@@ -48,7 +100,7 @@ The Benchmark Detail page (`benchmarks/[name].astro`) SHALL render the benchmark
 
 #### Scenario: Per-fixture table has its own ModelSelector
 - **WHEN** viewing the per-fixture comparison section
-- **THEN** a `ModelSelector` widget appears above the table; changing it updates the table columns and syncs across all other selectors on the site
+- **THEN** a `ModelSelector` widget appears above the table; changing it updates the table columns and syncs across all other selectors on the page
 
 #### Scenario: Clicking a fixture row navigates
 - **WHEN** a user clicks a fixture row in the comparison table
@@ -60,7 +112,7 @@ The Benchmark Detail page (`benchmarks/[name].astro`) SHALL render the benchmark
 
 #### Scenario: Missing fixture results show dash
 - **WHEN** a model has no result for a fixture
-- **THEN** the cell displays "—" in dim text
+- **THEN** the cell displays "-" in dim text
 
 ### Requirement: Fixture Detail page shows full prompt, expected, and all model outputs
 The Fixture Detail page (`fixtures/[fixture].astro`) SHALL render the fixture metadata (id, description, purpose, difficulty, tags), the full prompt text in a monospace block, the full expected text in a monospace block, and all model outputs as static `ModelOutputCard` components showing model name, pass/fail badge, similarity score, and full output text. Each block SHALL include a copy-to-clipboard button. For JSON-schema mode outputs with structured-output parse or schema errors, the output card SHALL display a clear structured-output failure message that includes the raw model output.
@@ -221,17 +273,17 @@ The base model overview page (`/models/[provider]/[model]/`) SHALL display the p
 - **THEN** the page heading includes the Anthropic icon and "Anthropic / claude-opus-4.7"
 
 ### Requirement: Model level drill-down page shows fixture gallery
-The model level page (`/models/[provider]/[model]/[level]/`) SHALL display: the full model identity (provider icon, base model, level), a reasoning level tab bar linking to sibling levels of the same base model and sorted by effort order, a summary stats area (pass rate, total cost, input/output token counts), a "Compare" button linking to `/compare?with=<encoded-full-model-name>`, and a fixture gallery with filter controls (benchmark, difficulty, tag). Fixture gallery filter controls SHALL be implemented using plain JavaScript (no TypeScript syntax) so they execute correctly in the browser. Difficulty values in the filter dropdown SHALL be sorted by difficulty order (trivial, easy, medium, hard, expert), not alphabetically. The token summary in the header SHALL display separate input and output token counts (e.g., "15.2K in / 48.7K out tokens") rather than a single total.
+The model level page (`/models/[provider]/[model]/[level]/`) SHALL display: the full model identity (provider icon, base model, level), a reasoning level tab bar linking to sibling levels of the same base model and sorted by effort order, a summary stats area (pass rate, total cost, input/output token counts), a "Compare" button linking to `/compare` with report URL state for the current model group, and a fixture gallery with filter controls (benchmark, difficulty, tag). Fixture gallery filter controls SHALL be implemented using plain JavaScript (no TypeScript syntax) so they execute correctly in the browser. Difficulty values in the filter dropdown SHALL be sorted by difficulty order (trivial, easy, medium, hard, expert), not alphabetically. The token summary in the header SHALL display separate input and output token counts (e.g., "15.2K in / 48.7K out tokens") rather than a single total.
 
-The page SHALL include a page-wide output mode toggle (Text, JSON, Both) in the fixture gallery filter bar. This toggle SHALL control the header stats, reliability summary, and fixture gallery. The toggle SHALL use the same `gitbench-output-mode` localStorage key used by the rest of the site, so output mode preference persists across page navigations. When the model has no JSON-schema variant, the toggle SHALL be hidden and the page SHALL display text-mode results only (current behavior).
+The page SHALL include a page-wide output mode toggle (Text, JSON, Both) in the fixture gallery filter bar. This toggle SHALL control the header stats, reliability summary, and fixture gallery. The toggle SHALL initialize from report URL state, write report URL state when changed, and default to Both when both modes exist and no valid URL mode is present. When the model has no JSON-schema variant, the toggle SHALL be hidden and the page SHALL display text-mode results only.
 
 The fixture gallery SHALL pre-render three card sets at build time: text-mode cards, JSON-schema cards, and "both" compact cards. The toggle SHALL control which card set is visible via client-side visibility toggling. Existing filter controls (benchmark, difficulty, tag) SHALL apply to whichever card set is visible.
 
-In single-mode view (Text or JSON), fixture cards SHALL display fixture ID, benchmark, pass/fail status, similarity percentage, and token counts (current `FixtureCard` behavior). In "Both" view, fixture cards SHALL display fixture ID, benchmark, and stacked text and JSON scores (e.g., "T 87% ✓" / "J 91% ✓") without token details. When a fixture exists in one mode but not the other, the missing mode SHALL show "—" for its score.
+In single-mode view (Text or JSON), fixture cards SHALL display fixture ID, benchmark, pass/fail status, similarity percentage, and token counts (current `FixtureCard` behavior). In Both view, fixture cards SHALL display fixture ID, benchmark, and stacked text and JSON scores (e.g., "T 87% pass" / "J 91% pass") without token details. When a fixture exists in one mode but not the other, the missing mode SHALL show "-" for its score.
 
-The header stats area SHALL pre-render both text and JSON summary blocks at build time. In single-mode view, the matching stats block SHALL be visible. In "Both" view, both stat blocks SHALL be shown stacked (text first, then JSON). The `ModelReliabilitySummary` React island SHALL read the persisted output mode from localStorage for its initial fetch and SHALL listen for the `output-mode-change` custom event to refetch when the toggle changes. In "Both" mode, the reliability summary SHALL show text-mode results (the "Text vs JSON Comparison" section below already covers cross-mode deltas).
+The header stats area SHALL pre-render both text and JSON summary blocks at build time. In single-mode view, the matching stats block SHALL be visible. In Both view, both stat blocks SHALL be shown stacked (text first, then JSON). The `ModelReliabilitySummary` React island SHALL read output mode from report URL state for its initial fetch and SHALL listen for the `output-mode-change` custom event to refetch when the toggle changes. In Both mode, the reliability summary SHALL show text-mode results (the "Text vs JSON Comparison" section below already covers cross-mode deltas).
 
-The "Text vs JSON Schema Comparison" section SHALL remain unchanged — it is inherently about both modes and continues to render only when both variants exist.
+The "Text vs JSON Schema Comparison" section SHALL remain unchanged. It is inherently about both modes and continues to render only when both variants exist.
 
 #### Scenario: Tabs link to sibling levels sorted by effort order
 - **WHEN** viewing `/models/anthropic/claude-opus-4.7/low/`
@@ -263,19 +315,20 @@ The "Text vs JSON Schema Comparison" section SHALL remain unchanged — it is in
 
 #### Scenario: Compare button navigates correctly
 - **WHEN** user clicks "Compare" on the page for `anthropic/claude-opus-4.7:low`
-- **THEN** the browser navigates to `/compare?with=anthropic%2Fclaude-opus-4.7%3Alow`
+- **THEN** the browser navigates to `/compare` with report URL state pre-selecting `anthropic/claude-opus-4.7`
 
-#### Scenario: Output mode toggle defaults to text
-- **WHEN** the page loads with no persisted output mode in localStorage
-- **THEN** text-mode fixture cards are visible, JSON and both card sets are hidden, and the toggle shows "Text" as active
+#### Scenario: Output mode toggle defaults to both
+- **WHEN** the page loads with no report output-mode URL state
+- **AND** the model has both text and JSON-schema variants
+- **THEN** compact both-mode cards are visible and the toggle shows "Both" as active
 
-#### Scenario: Output mode toggle reads persisted preference
-- **WHEN** the page loads and localStorage contains `gitbench-output-mode` = `json_schema`
+#### Scenario: Output mode toggle reads URL state
+- **WHEN** the page loads and report URL state contains output mode `json_schema`
 - **THEN** JSON fixture cards are visible and the toggle shows "JSON" as active
 
-#### Scenario: Output mode toggle writes to localStorage
+#### Scenario: Output mode toggle writes URL state
 - **WHEN** user clicks "Both" on the toggle
-- **THEN** `gitbench-output-mode` is set to `both` in localStorage and compact both-mode cards are visible
+- **THEN** the page URL contains report view state resolving to output mode `both` and compact both-mode cards are visible
 
 #### Scenario: Toggle hidden when no JSON variant exists
 - **WHEN** the model has no JSON-schema variant (`jsonModelName` is null)
@@ -283,11 +336,11 @@ The "Text vs JSON Schema Comparison" section SHALL remain unchanged — it is in
 
 #### Scenario: Both-mode card shows stacked scores
 - **WHEN** the toggle is set to "Both" and fixture f001 has text similarity 87% (pass) and JSON similarity 91% (pass)
-- **THEN** the card displays "T 87% ✓" and "J 91% ✓" stacked, without token details
+- **THEN** the card displays "T 87% pass" and "J 91% pass" stacked, without token details
 
 #### Scenario: Both-mode card shows dash for missing mode
 - **WHEN** the toggle is set to "Both" and fixture f001 has text results but no JSON results
-- **THEN** the card displays "T 87% ✓" and "J —"
+- **THEN** the card displays "T 87% pass" and "J -"
 
 #### Scenario: Header stats toggle between modes
 - **WHEN** the user switches the toggle from "Text" to "JSON"
@@ -321,15 +374,20 @@ Any card displaying model cost data SHALL show `total_cost_usd` (total cost of t
 - **THEN** no cost information is displayed on the card
 
 ### Requirement: Report pages support output-mode selection
-Report pages with model selection SHALL provide an output-mode control that lets users view text results, JSON-schema results, or both when both modes exist in the report data.
+Report pages with model selection SHALL provide an output-mode control that lets users view text results, JSON-schema results, or both when both modes exist in the report data. Missing output-mode URL state SHALL default to both modes when both modes are available.
 
-#### Scenario: Output mode defaults to text
+#### Scenario: Output mode defaults to both
 - **WHEN** a report page loads and no output mode is selected
-- **THEN** text-mode results are shown by default
+- **AND** both text and JSON-schema modes are available
+- **THEN** both output modes are shown by default
 
 #### Scenario: Both modes expand selected models
 - **WHEN** the user selects both output modes
 - **THEN** charts and tables show separate text and JSON-schema variants for each selected model effort
+
+#### Scenario: Single-mode report falls back
+- **WHEN** a report page loads and only text-mode results are available
+- **THEN** text-mode results are shown
 
 ### Requirement: Model detail page compares text and structured modes
 The model level detail page SHALL show an output-mode comparison section when the current provider/base-model/reasoning level has both text and JSON-schema results.
@@ -481,8 +539,8 @@ The history page SHALL use campaigns as primary rows or points and SHALL expose 
 
 ### Requirement: Model detail page lays out comparison sections without an empty central column
 
-The Model Detail page
-(`/models/[provider]/[model]/[level]`) SHALL render the
+The Model Detail page SHALL render
+(`/models/[provider]/[model]/[level]`) with the
 "Reliability by Benchmark" section and the "Text vs JSON Schema
 Comparison" section as full-width blocks at desktop and tablet widths.
 Neither section SHALL use a multi-column grid that leaves more than

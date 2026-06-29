@@ -6,7 +6,7 @@ Run this report from the repository root:
 .venv/bin/python -m gitbench.fixture_audit --threshold 0.5 --representative-failures 3
 ```
 
-The report ranks fixtures by pass rate from `gitbench/web/data/gitbench.db`, joins
+The report ranks fixtures by pass rate from `web/data/gitbench.db`, joins
 fixture YAML metadata for scoring type and difficulty, and includes representative
 failed outputs.
 

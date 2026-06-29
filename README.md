@@ -359,25 +359,31 @@ classification or required backup leaves the source artifact unchanged.
 
 ## Report generation
 
-After running benchmarks, generate a static report site:
+After running benchmarks, publish the compatibility JSON used by the web report:
 
 ```bash
 gitbench report
 ```
 
-This aggregates results from `gitbench-results/`, generates `web/public/results.json`, builds the Astro site to `web/dist/`, and starts a preview server.
+This aggregates results from `gitbench-results/` and writes
+`web/public/results.json`. The web module derives `web/data/gitbench.db` from
+that JSON and builds the Astro report.
 
 When result safety is configured, report generation validates every raw or
-aggregate input before writing report JSON or SQLite data. Missing, stale, or
+aggregate input before writing report JSON. Missing, stale, or
 modified safety metadata is rejected with the artifact path and a direction to
 run `gitbench safety-doctor`. Report validation never calls the reviewer model.
 
 ```bash
-gitbench report --open       # build and open in browser
-gitbench report --dev        # start dev server with hot reload
-gitbench report --no-build   # only generate results.json (skip build)
-gitbench report -d my-results/ --open   # use custom input dir
+gitbench report -d my-results/   # use custom input dir
+cd web && pnpm build:db          # derive web/data/gitbench.db
+cd web && pnpm build             # derive SQLite and build web/dist/
+cd web && pnpm dev:api           # run local API-backed report
 ```
+
+The transition flags `gitbench report --open`, `gitbench report --dev`, and
+`gitbench report --no-build` still parse, but they are deprecated no-ops that
+print the replacement `web/` commands.
 
 ## Export formats
 
@@ -690,6 +696,17 @@ gitbench/
 │   └── format.py          # Duration, cost, and human-readable formatting
 └── utils/
     └── git.py             # GitExecutor: sandboxed git repo management
+web/
+├── package.json           # Astro report app scripts and dependencies
+├── api/                   # Vercel report API functions
+├── data/
+│   ├── schema.sql         # SQLite schema owned by the web module
+│   └── gitbench.db        # Derived SQLite report artifact
+├── public/
+│   └── results.json       # Compatibility JSON published by gitbench report
+├── scripts/
+│   └── build-db.mjs       # JSON-to-SQLite derivation command
+└── src/                   # Astro pages, React islands, and report clients
 fixtures/
 ├── blame_forensics/       # 12 YAML fixtures
 ├── branch_cleanup/        # 12 YAML fixtures

@@ -34,10 +34,10 @@ Each icon SHALL be vertically centered with its adjacent label text. The existin
 - **THEN** the SVG icon and the label text are vertically centered within the link row
 
 ### Requirement: lucide-react is a project dependency
-The `lucide-react` package SHALL be added to `gitbench/web/package.json` as a production dependency.
+The `lucide-react` package SHALL be added to `web/package.json` as a production dependency.
 
 #### Scenario: Build succeeds with lucide-react
-- **WHEN** `npm run build` is executed
+- **WHEN** `npm run build` or `pnpm build` is executed from `web/`
 - **THEN** the Astro build completes without errors related to Lucide imports
 
 #### Scenario: No client JS for sidebar icons

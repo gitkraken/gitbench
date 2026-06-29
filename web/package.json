@@ -1,0 +1,46 @@
+{
+  "name": "gitbench-web",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "dev:api": "vercel dev",
+    "build:db": "node scripts/build-db.mjs",
+    "build:og": "node scripts/build-og-images.mjs",
+    "validate:artifacts": "node scripts/validate-artifacts.mjs",
+    "test:api": "node --experimental-strip-types --experimental-transform-types --test test/*.test.mjs",
+    "build": "node scripts/build-db.mjs && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "fmt": "prettier src --write"
+  },
+  "dependencies": {
+    "@astrojs/react": "^5.0.4",
+    "@tailwindcss/vite": "^4.3.0",
+    "@thesvg/icons": "^2.1.10",
+    "@thesvg/react": "^2.1.10",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "astro": "^6.3.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "fflate": "^0.8.3",
+    "lucide-react": "^1.14.0",
+    "radix-ui": "^1.4.3",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "recharts": "^3.8.1",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@types/node": "^22.20.0",
+    "typescript": "^6.0.3",
+    "vercel": "^54.5.0"
+  }
+}

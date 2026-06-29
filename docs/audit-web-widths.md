@@ -5,7 +5,7 @@ and mobile (390×1200) viewports. Screenshots: `/tmp/gitbench-crawl/`.
 
 Stack: Astro 6 + React 19, Tailwind v4, fixed 220px sidebar, sidebar
 collapses to 64px icons ≤960px, sticky mobile header ≤600px.
-Global layout: `gitbench/web/src/styles/global.css:138-166`.
+Global layout: `web/src/styles/global.css:138-166`.
 
 ## Decisions (round 1)
 
@@ -34,7 +34,7 @@ becomes a proposal.
   `_home_mobile.png` (text clipped on right, chart bars cut off).
   Likely culprit: `ResponsiveContainer` width="100%" inheriting a parent
   that itself has no `min-w-0` somewhere up the chain.
-  Files: `gitbench/web/src/styles/global.css:323-326` (`.page-content`),
+  Files: `web/src/styles/global.css:323-326` (`.page-content`),
   all chart components in `src/components/charts/`.
 
 - [ ] **Cost per Full Run chart: y-axis shows "$0.00e+0"**
