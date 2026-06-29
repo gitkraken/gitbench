@@ -1371,8 +1371,7 @@ class TestRunCommand:
         )
         output_path = tmp_path / "report-results.json"
 
-        with patch("gitbench.cli.load_config", return_value={}), \
-             patch("gitbench.render.write_sqlite_report_db"):
+        with patch("gitbench.cli.load_config", return_value={}):
             result = runner.invoke(
                 cli,
                 [
@@ -1389,6 +1388,80 @@ class TestRunCommand:
         data = json.loads(output_path.read_text())
         assert data["model_summaries"]["openai/gpt-test:high"]["pass_at_k"] == 1.0
         assert data["model_summaries"]["openai/gpt-test:high__json_schema"]["pass_at_k"] == 0.0
+
+    def test_report_default_output_requires_repo_web_module(self, runner, tmp_path):
+        """The implicit web/public output must not create a fake web tree."""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with patch("gitbench.cli.load_config") as load_config:
+                result = runner.invoke(cli, ["report"])
+
+            assert result.exit_code != 0
+            assert "Default report output requires the top-level web module" in result.output
+            assert "pass `--output <path>`" in result.output
+            assert not Path("web").exists()
+            load_config.assert_not_called()
+
+    def test_report_explicit_output_does_not_require_web_module(self, runner, tmp_path):
+        """Standalone JSON publication remains available with --output."""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            results_root = Path("gitbench-results")
+            run_dir = results_root / "20260606T010203Z"
+            run_dir.mkdir(parents=True)
+            (run_dir / f"run_text_v{BENCHMARK_SUITE_VERSION}.json").write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "schema_version": 1,
+                        "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
+                        "timestamp": "2026-06-06T01:02:03+00:00",
+                        "git_sha": "abc123",
+                        "model": "openai/gpt-test:high",
+                        "profile": "(inline)",
+                        "output_mode": "text",
+                        "summary": {
+                            "total_benchmarks": 1,
+                            "total_fixtures": 1,
+                            "total_passed": 1,
+                            "overall_pass_at_k": 1.0,
+                        },
+                        "results": [
+                            {
+                                "benchmark": "commit_messages",
+                                "total": 1,
+                                "passed": 1,
+                                "pass_at_k": 1.0,
+                                "scores": [
+                                    {
+                                        "fixture_id": "f001",
+                                        "passed": True,
+                                        "similarity": 1.0,
+                                        "model_output": "answer",
+                                        "error": None,
+                                        "output_mode": "text",
+                                    }
+                                ],
+                                "errors": 0,
+                            }
+                        ],
+                    }
+                )
+            )
+
+            with patch("gitbench.cli.load_config", return_value={}):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "report",
+                        "--input-dir",
+                        str(results_root),
+                        "--output",
+                        "report-results.json",
+                    ],
+                )
+
+            assert result.exit_code == 0, result.output
+            assert Path("report-results.json").is_file()
+            assert not Path("web").exists()
 
     def test_report_rejects_legacy_non_finite_payload_without_traceback(
         self, runner, tmp_path
@@ -1648,8 +1721,7 @@ class TestRunCommand:
         )
         output_path = tmp_path / "report-results.json"
 
-        with patch("gitbench.cli.load_config", return_value={}), \
-             patch("gitbench.render.write_sqlite_report_db"):
+        with patch("gitbench.cli.load_config", return_value={}):
             result = runner.invoke(
                 cli,
                 [

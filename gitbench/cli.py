@@ -2936,6 +2936,27 @@ def _print_report_next_steps() -> None:
     click.echo("  cd web && pnpm dev:api        # run local API-backed report", err=True)
 
 
+def _resolve_report_output_path(output_path: str | None) -> str:
+    if output_path:
+        return output_path
+
+    required_web_paths = (
+        Path("web/package.json"),
+        Path("web/scripts/build-db.mjs"),
+    )
+    missing = [path for path in required_web_paths if not path.is_file()]
+    if missing:
+        missing_list = ", ".join(str(path) for path in missing)
+        raise click.ClickException(
+            "Default report output requires the top-level web module in the "
+            "current working directory. Run `gitbench report` from the "
+            "repository root, or pass `--output <path>` to write standalone "
+            f"JSON. Missing: {missing_list}"
+        )
+
+    return "web/public/results.json"
+
+
 @cli.command("report")
 @click.option(
     "--input-dir",
@@ -3006,7 +3027,7 @@ def report(input_dir: str | None, input_file: str | None, output_path: str | Non
 
     # Determine input directory
     results_dir = input_dir or "gitbench-results"
-    json_output = output_path or "web/public/results.json"
+    json_output = _resolve_report_output_path(output_path)
     _warn_deprecated_report_flags(no_build=no_build, open_browser=open_browser, dev=dev)
     config = load_config()
     try:

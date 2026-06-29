@@ -1,12 +1,5 @@
 ## MODIFIED Requirements
 
-### Requirement: CLI supports render --format json
-The `gitbench render` CLI command SHALL support a `--format json` option that calls `render_json()` instead of `render_html()`. It SHALL accept `--output` to specify the output path, defaulting to `web/public/results.json`.
-
-#### Scenario: render --format json writes JSON
-- **WHEN** `gitbench render --format json --output web/public/results.json` is executed
-- **THEN** the aggregated data is written as JSON to the specified path
-
 ### Requirement: CLI provides gitbench report command
 The CLI SHALL provide a `gitbench report` command that aggregates legacy run results from `gitbench-results/`, ingests campaign artifacts from campaign directories containing `campaign.json`, validates configured result-safety publication requirements, and writes compatibility JSON to `web/public/results.json`. The command SHALL NOT run Astro build, dev-server, preview, or browser-opening workflows.
 
@@ -25,3 +18,10 @@ The CLI SHALL provide a `gitbench report` command that aggregates legacy run res
 - **WHEN** `gitbench report` scans a result directory containing `campaign.json` and raw campaign attempt envelopes
 - **THEN** the generated report JSON SHALL include campaign metadata, trials, exact raw-attempt references, fixture aggregates, and campaign summaries
 - **AND** it SHALL NOT require a separate manual campaign export step
+
+## REMOVED Requirements
+
+### Requirement: CLI supports render --format json
+**Reason**: The public JSON publication surface is `gitbench report`; there is no `gitbench render` command in the CLI.
+
+**Migration**: Use `gitbench report --output <path>` when a custom compatibility JSON path is required.

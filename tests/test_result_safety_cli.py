@@ -389,10 +389,7 @@ class TestReportSafetyGate:
             result_path.write_text(json.dumps(_envelope("safe content")))
             output_path = Path("report.json")
 
-            with (
-                patch("gitbench.cli.get_model_client") as get_model_client,
-                patch("gitbench.render.write_sqlite_report_db") as write_db,
-            ):
+            with patch("gitbench.cli.get_model_client") as get_model_client:
                 result = runner.invoke(
                     cli,
                     [
@@ -409,7 +406,6 @@ class TestReportSafetyGate:
             assert str(result_path) in result.output
             assert "safety-doctor" in result.output
             assert not output_path.exists()
-            write_db.assert_not_called()
             get_model_client.assert_not_called()
 
     def test_accepts_reviewed_input_and_stamps_generated_report(self, runner, tmp_path):
@@ -420,10 +416,7 @@ class TestReportSafetyGate:
             result_path.write_text(json.dumps(_reviewed_envelope()))
             output_path = Path("report.json")
 
-            with (
-                patch("gitbench.cli.get_model_client") as get_model_client,
-                patch("gitbench.render.write_sqlite_report_db"),
-            ):
+            with patch("gitbench.cli.get_model_client") as get_model_client:
                 result = runner.invoke(
                     cli,
                     [
