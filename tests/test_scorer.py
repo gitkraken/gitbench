@@ -13,6 +13,7 @@ from gitbench.harness.scorer import (
     normalize_command_answer,
 )
 from gitbench.harness.types import Fixture, Score
+from gitbench.utils.git import benchmark_git_env
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
@@ -407,10 +408,19 @@ class TestScorer:
     def test_commit_hash_by_subject_accepts_short_hash(self, scorer, tmp_path):
         repo = tmp_path / "repo"
         repo.mkdir()
-        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+        env = benchmark_git_env()
+        subprocess.run(
+            ["git", "init"],
+            cwd=repo,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         subprocess.run(
             ["git", "config", "user.email", "test@test.com"],
             cwd=repo,
+            env=env,
             check=True,
             capture_output=True,
             text=True,
@@ -418,15 +428,24 @@ class TestScorer:
         subprocess.run(
             ["git", "config", "user.name", "Test User"],
             cwd=repo,
+            env=env,
             check=True,
             capture_output=True,
             text=True,
         )
         (repo / "app.py").write_text("v1\n", encoding="utf-8")
-        subprocess.run(["git", "add", "app.py"], cwd=repo, check=True, capture_output=True, text=True)
+        subprocess.run(
+            ["git", "add", "app.py"],
+            cwd=repo,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         subprocess.run(
             ["git", "commit", "-m", "Fix null pointer bug"],
             cwd=repo,
+            env=env,
             check=True,
             capture_output=True,
             text=True,
@@ -434,6 +453,7 @@ class TestScorer:
         short_hash = subprocess.run(
             ["git", "rev-parse", "--short=7", "HEAD"],
             cwd=repo,
+            env=env,
             check=True,
             capture_output=True,
             text=True,

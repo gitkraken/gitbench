@@ -7,11 +7,72 @@ from pathlib import Path
 
 import pytest
 
-from gitbench.utils.git import FixtureGenerationContext, GitExecutor
+from gitbench.utils.git import FixtureGenerationContext, GitExecutor, benchmark_git_env
+
+
+def _set_git_config_env(monkeypatch, entries):
+    monkeypatch.setenv("GIT_CONFIG_COUNT", str(len(entries)))
+    for index, (key, value) in enumerate(entries):
+        monkeypatch.setenv(f"GIT_CONFIG_KEY_{index}", key)
+        monkeypatch.setenv(f"GIT_CONFIG_VALUE_{index}", value)
 
 
 class TestGitExecutor:
     """Tests for GitExecutor class."""
+
+    def test_benchmark_git_env_disables_commit_and_tag_signing(self):
+        env = benchmark_git_env({})
+
+        assert env["GIT_CONFIG_COUNT"] == "2"
+        assert env["GIT_CONFIG_KEY_0"] == "commit.gpgsign"
+        assert env["GIT_CONFIG_VALUE_0"] == "false"
+        assert env["GIT_CONFIG_KEY_1"] == "tag.gpgSign"
+        assert env["GIT_CONFIG_VALUE_1"] == "false"
+
+    def test_benchmark_git_env_appends_existing_git_config_entries(self):
+        env = benchmark_git_env(
+            {
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "init.defaultBranch",
+                "GIT_CONFIG_VALUE_0": "main",
+            }
+        )
+
+        assert env["GIT_CONFIG_COUNT"] == "3"
+        assert env["GIT_CONFIG_KEY_0"] == "init.defaultBranch"
+        assert env["GIT_CONFIG_VALUE_0"] == "main"
+        assert env["GIT_CONFIG_KEY_1"] == "commit.gpgsign"
+        assert env["GIT_CONFIG_VALUE_1"] == "false"
+        assert env["GIT_CONFIG_KEY_2"] == "tag.gpgSign"
+        assert env["GIT_CONFIG_VALUE_2"] == "false"
+
+    def test_benchmark_git_env_preserves_context_and_caller_env(self):
+        context = FixtureGenerationContext(
+            author_name="Context Author",
+            author_email="context@example.com",
+            committer_name="Context Committer",
+            committer_email="committer@example.com",
+            date="2024-02-03T04:05:06+0000",
+            tz="UTC",
+            locale="C",
+        )
+
+        env = benchmark_git_env(
+            {"CUSTOM_ENV": "preserved"},
+            fixture_generation_context=context,
+        )
+
+        assert env["CUSTOM_ENV"] == "preserved"
+        assert env["GIT_AUTHOR_NAME"] == "Context Author"
+        assert env["GIT_AUTHOR_EMAIL"] == "context@example.com"
+        assert env["GIT_COMMITTER_NAME"] == "Context Committer"
+        assert env["GIT_COMMITTER_EMAIL"] == "committer@example.com"
+        assert env["GIT_AUTHOR_DATE"] == "2024-02-03T04:05:06+0000"
+        assert env["GIT_COMMITTER_DATE"] == "2024-02-03T04:05:06+0000"
+        assert env["TZ"] == "UTC"
+        assert env["LC_ALL"] == "C"
+        assert env["LANG"] == "C"
+        assert env["GIT_CONFIG_VALUE_0"] == "false"
 
     def test_init_raises_when_git_not_found(self, monkeypatch):
         """Test that GitExecutor raises RuntimeError when git is not found."""
@@ -70,6 +131,92 @@ class TestGitExecutor:
         # Verify git commit was recorded
         result = os.system(f"git -C {repo_path} log --oneline | grep 'initial commit' > /dev/null")
         assert result == 0
+
+    def test_setup_repo_ignores_global_commit_signing(self, tmp_path, monkeypatch):
+        """Fixture setup commits do not require a signing key."""
+        _set_git_config_env(
+            monkeypatch,
+            [
+                ("commit.gpgsign", "true"),
+                ("gpg.program", "false"),
+            ],
+        )
+        executor = GitExecutor(base_dir=str(tmp_path))
+
+        repo_path = executor.setup_repo(
+            "unsigned_commits",
+            [
+                "git init",
+                "git config user.email 'test@example.com'",
+                "git config user.name 'Test User'",
+                "echo content > file.txt",
+                "git add file.txt",
+                "git commit -m initial",
+            ],
+        )
+
+        result = subprocess.run(
+            ["git", "log", "--oneline", "-1"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert "initial" in result.stdout
+        executor.cleanup()
+
+    def test_nested_setup_repo_ignores_global_commit_signing(
+        self, tmp_path, monkeypatch
+    ):
+        """Nested fixture repositories inherit unsigned Git behavior."""
+        _set_git_config_env(
+            monkeypatch,
+            [
+                ("commit.gpgsign", "true"),
+                ("gpg.program", "false"),
+            ],
+        )
+        executor = GitExecutor(base_dir=str(tmp_path))
+
+        repo_path = executor.setup_repo(
+            "nested_unsigned_commits",
+            [
+                "git init",
+                "mkdir nested",
+                "cd nested && git init",
+                "cd nested && git config user.email 'test@example.com'",
+                "cd nested && git config user.name 'Test User'",
+                "cd nested && echo nested > file.txt",
+                "cd nested && git add file.txt",
+                "cd nested && git commit -m nested",
+            ],
+        )
+
+        result = subprocess.run(
+            ["git", "log", "--oneline", "-1"],
+            cwd=Path(repo_path) / "nested",
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert "nested" in result.stdout
+        executor.cleanup()
+
+    def test_setup_repo_preserves_default_branch_config(self, tmp_path, monkeypatch):
+        _set_git_config_env(monkeypatch, [("init.defaultBranch", "main")])
+        executor = GitExecutor(base_dir=str(tmp_path))
+
+        repo_path = executor.setup_repo("default_branch", ["git init"])
+        result = subprocess.run(
+            ["git", "symbolic-ref", "--short", "HEAD"],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        assert result.stdout.strip() == "main"
+        executor.cleanup()
 
     def test_cleanup_removes_tree(self, tmp_path):
         """Test that cleanup removes the repository directory."""

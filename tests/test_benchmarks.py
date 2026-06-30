@@ -22,6 +22,13 @@ from gitbench.benchmarks.git_show import GitShowBenchmark
 from gitbench.benchmarks.git_clean import GitCleanBenchmark
 
 
+def _set_git_config_env(monkeypatch, entries):
+    monkeypatch.setenv("GIT_CONFIG_COUNT", str(len(entries)))
+    for index, (key, value) in enumerate(entries):
+        monkeypatch.setenv(f"GIT_CONFIG_KEY_{index}", key)
+        monkeypatch.setenv(f"GIT_CONFIG_VALUE_{index}", value)
+
+
 class TestBenchmarkABC:
     """Test that Benchmark ABC properly enforces the interface."""
 
@@ -835,6 +842,28 @@ class TestSubmoduleUsageBenchmark:
         finally:
             executor.cleanup()
 
+    def test_model_executed_commit_ignores_global_commit_signing(
+        self, monkeypatch
+    ):
+        _set_git_config_env(
+            monkeypatch,
+            [
+                ("commit.gpgsign", "true"),
+                ("gpg.program", "false"),
+            ],
+        )
+        benchmark = SubmoduleUsageBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f005")
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(fixture, fixture.expected, repo_path=repo_path)
+
+            assert result.passed is True, result.error
+            assert result.similarity == 1.0
+        finally:
+            executor.cleanup()
+
 
 class TestWorktreeUsageBenchmark:
     """Test the worktree_usage benchmark against its real fixtures."""
@@ -922,6 +951,26 @@ class TestTagManagementBenchmark:
             result = benchmark.score(fixture, "git status", repo_path=repo_path)
 
             assert result.passed is False
+        finally:
+            executor.cleanup()
+
+    def test_annotated_tag_ignores_global_tag_signing(self, monkeypatch):
+        _set_git_config_env(
+            monkeypatch,
+            [
+                ("tag.gpgSign", "true"),
+                ("gpg.program", "false"),
+            ],
+        )
+        benchmark = TagManagementBenchmark()
+        fixture = next(f for f in benchmark.load_fixtures() if f.id == "f002")
+        executor, repo_path = benchmark.setup_fixture(fixture)
+
+        try:
+            result = benchmark.score(fixture, fixture.expected, repo_path=repo_path)
+
+            assert result.passed is True, result.error
+            assert result.similarity == 1.0
         finally:
             executor.cleanup()
 

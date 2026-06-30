@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,9 +31,9 @@ class FixtureGenerationContext:
     tz: str = "UTC"
     locale: str = "C.UTF-8"
 
-    def git_env(self) -> dict[str, str]:
+    def git_env(self, base_env: Mapping[str, str] | None = None) -> dict[str, str]:
         """Return a copy of the current process environment with stable Git inputs."""
-        env = os.environ.copy()
+        env = dict(os.environ if base_env is None else base_env)
         env.update(
             {
                 "GIT_AUTHOR_NAME": self.author_name,
@@ -47,6 +48,35 @@ class FixtureGenerationContext:
             }
         )
         return env
+
+
+def benchmark_git_env(
+    base_env: Mapping[str, str] | None = None,
+    *,
+    fixture_generation_context: FixtureGenerationContext | None = None,
+) -> dict[str, str]:
+    """Return a Git subprocess environment for benchmark execution.
+
+    The returned environment preserves inherited Git config entries and appends
+    unsigned commit/tag settings so benchmark repos do not depend on signing
+    keys configured on the host.
+    """
+    if fixture_generation_context is not None:
+        env = fixture_generation_context.git_env(base_env)
+    else:
+        env = dict(os.environ if base_env is None else base_env)
+
+    config_count = int(env.get("GIT_CONFIG_COUNT", "0"))
+    overrides = (
+        ("commit.gpgsign", "false"),
+        ("tag.gpgSign", "false"),
+    )
+    for offset, (key, value) in enumerate(overrides):
+        index = config_count + offset
+        env[f"GIT_CONFIG_KEY_{index}"] = key
+        env[f"GIT_CONFIG_VALUE_{index}"] = value
+    env["GIT_CONFIG_COUNT"] = str(config_count + len(overrides))
+    return env
 
 
 class GitExecutor:
@@ -76,10 +106,8 @@ class GitExecutor:
         self._cleanup_targets: list[str] = []
         self._created_branches: list[str] = []
         self._fixture_generation_context = fixture_generation_context
-        self._env = (
-            fixture_generation_context.git_env()
-            if fixture_generation_context
-            else os.environ.copy()
+        self._env = benchmark_git_env(
+            fixture_generation_context=fixture_generation_context,
         )
 
         # Verify git is available

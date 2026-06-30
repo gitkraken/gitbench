@@ -13,7 +13,7 @@ from gitbench.harness.scorer import (
     normalize_command_answer,
 )
 from gitbench.harness.types import Fixture, Score
-from gitbench.utils.git import GitExecutor
+from gitbench.utils.git import GitExecutor, benchmark_git_env
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +78,9 @@ class SubmoduleUsageBenchmark(Benchmark):
         for line in lines:
             logger.info(f"Executing: {line}")
             try:
-                env = os.environ.copy()
-                env["GIT_ALLOW_PROTOCOL"] = "file:git:ssh:https"
+                env = benchmark_git_env(
+                    {**os.environ, "GIT_ALLOW_PROTOCOL": "file:git:ssh:https"}
+                )
                 result = subprocess.run(
                     line,
                     shell=True,

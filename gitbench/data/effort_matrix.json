@@ -86,13 +86,49 @@
       "mappings": {
         "none": "none",
         "high": "high",
-        "xhigh": "xhigh"
+        "xhigh": "xhigh",
+        "low": "low",
+        "medium": "medium"
       }
     },
     "laguna-m.1": {
       "mappings": {
         "none": "none",
         "medium": "medium",
+        "xhigh": "xhigh"
+      }
+    },
+    "qwen3.6-flash": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "minimax-m2.5": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "trinity-mini": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "glm-4.7-flash": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
         "xhigh": "xhigh"
       }
     }
