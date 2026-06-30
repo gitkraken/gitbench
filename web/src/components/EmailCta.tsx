@@ -78,9 +78,6 @@ export default function EmailCta() {
         />
         <div className="relative z-10 grid gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-6">
           <div className="flex min-w-0 gap-4">
-            {/* <div className="flex size-11 shrink-0 items-center justify-center rounded-[8px] border border-[#01FEE0]/35 bg-[#01FEE0]/10 text-[#01FEE0] shadow-[0_0_22px_rgba(1,254,224,0.12)]">
-              <FileText aria-hidden="true" className="size-5" />
-            </div> */}
             <div className="min-w-0">
               <div className="section-label mb-3">
                 <span>Analysis PDF</span>
@@ -89,8 +86,8 @@ export default function EmailCta() {
                 Get the GitBench analysis PDF
               </h2>
               <p className="max-w-2xl text-sm leading-relaxed text-(--color-text-mid)">
-                Request the GitBench analysis PDF and we&apos;ll follow up by
-                email with our read on the benchmark results.
+                Enter your email and we'll send you the PDF with our notes on
+                what the results mean.
               </p>
             </div>
           </div>
@@ -106,10 +103,9 @@ export default function EmailCta() {
 
       <DialogContent className="border-(--color-border) bg-(--color-bg) text-(--color-text) sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Request the GitBench analysis PDF</DialogTitle>
+          <DialogTitle>Get the GitBench analysis PDF</DialogTitle>
           <DialogDescription className="text-(--color-text-mid)">
-            Enter your email and we&apos;ll send the GitBench analysis PDF with
-            our notes on the benchmark results.
+            We'll send it straight to your inbox.
           </DialogDescription>
         </DialogHeader>
 
@@ -151,7 +147,7 @@ export default function EmailCta() {
               </p>
             )}
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Request PDF"}
+              {isSubmitting ? "Submitting..." : "Send me the PDF"}
               <ArrowRight aria-hidden="true" className="size-4" />
             </Button>
           </form>
