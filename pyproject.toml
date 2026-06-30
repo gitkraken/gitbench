@@ -58,6 +58,9 @@ Repository = "https://github.com/gitbench/gitbench"
 where = ["."]
 include = ["gitbench*"]
 
+[tool.setuptools.package-data]
+gitbench = ["data/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

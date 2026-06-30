@@ -15,6 +15,7 @@ from gitbench.harness.capabilities import (
     fetch_model_capabilities,
     load_effort_matrix,
     resolve_capabilities,
+    save_effort_mapping,
     validate_models,
 )
 
@@ -211,6 +212,34 @@ class TestLoadEffortMatrix:
         with monkeypatch.context() as m:
             m.setattr(mod, "_EFFORT_MATRIX_PATH", "/nonexistent/path.json")
             assert load_effort_matrix() == {}
+
+
+# ---------------------------------------------------------------------------
+# save_effort_mapping
+# ---------------------------------------------------------------------------
+
+class TestSaveEffortMapping:
+    """Tests for save_effort_mapping."""
+
+    def test_creates_missing_parent_directory(self, monkeypatch, tmp_path):
+        """Saving a preflight result bootstraps a missing data directory."""
+        import gitbench.harness.capabilities as mod
+
+        test_matrix = tmp_path / "missing" / "effort_matrix.json"
+
+        with monkeypatch.context() as m:
+            m.setattr(mod, "_EFFORT_MATRIX_PATH", test_matrix)
+            save_effort_mapping(
+                model_id="nemotron-3-nano-30b-a3b",
+                requested="none",
+                effective="none",
+            )
+
+        data = json.loads(test_matrix.read_text())
+        assert data["_preflight_version"] == 1
+        assert data["models"]["nemotron-3-nano-30b-a3b"]["mappings"] == {
+            "none": "none",
+        }
 
 
 # ---------------------------------------------------------------------------

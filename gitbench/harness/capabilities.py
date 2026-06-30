@@ -154,11 +154,16 @@ def save_effort_mapping(
     effective: str,
 ) -> None:
     """Persist a verified effort mapping to the matrix file."""
+    matrix_path = Path(_EFFORT_MATRIX_PATH)
     try:
-        with open(_EFFORT_MATRIX_PATH, "r") as f:
+        with open(matrix_path, "r") as f:
             data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        data = {"_comment": "", "_preflight_version": _EFFORT_MATRIX_VERSION, "models": {}}
+        data = {
+            "_comment": "",
+            "_preflight_version": _EFFORT_MATRIX_VERSION,
+            "models": {},
+        }
 
     data["_preflight_version"] = _EFFORT_MATRIX_VERSION
     models = data.get("models", {})
@@ -167,7 +172,8 @@ def save_effort_mapping(
     models[model_id]["mappings"][requested] = effective
     data["models"] = models
 
-    with open(_EFFORT_MATRIX_PATH, "w") as f:
+    matrix_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(matrix_path, "w") as f:
         json.dump(data, f, indent=2)
 
 
