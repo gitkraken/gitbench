@@ -255,13 +255,11 @@
         "poolside/laguna-xs.2:high",
         "poolside/laguna-xs.2:xhigh",
 
-        "minimax/minimax-m2.5:none",
         "minimax/minimax-m2.5:low",
         "minimax/minimax-m2.5:medium",
         "minimax/minimax-m2.5:high",
         "minimax/minimax-m2.5:xhigh",
 
-        "arcee-ai/trinity-mini:none",
         "arcee-ai/trinity-mini:low",
         "arcee-ai/trinity-mini:medium",
         "arcee-ai/trinity-mini:high",
