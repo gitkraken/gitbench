@@ -324,7 +324,7 @@ class TestRunSafetyGate:
             assert combined["passed"] == 1
             assert combined["scores"][0]["similarity"] == 0.75
 
-    def test_review_failure_writes_no_normal_output(self, runner, tmp_path):
+    def test_review_failure_records_pending_json_outputs(self, runner, tmp_path):
         with runner.isolated_filesystem(temp_dir=tmp_path):
             Path("gitbench.json").write_text(json.dumps(_config()))
             output_dir = Path("per-run")
@@ -371,9 +371,15 @@ class TestRunSafetyGate:
 
             assert result.exit_code != 0
             assert "review failed" in result.output
-            assert not output_dir.exists()
+            assert "safety-doctor" in result.output
+            per_run_path = next(output_dir.glob("*.json"))
+            per_run = json.loads(per_run_path.read_text())
+            combined = json.loads(combined_path.read_text())
+            assert per_run["safety_review"]["status"] == "pending"
+            assert combined["safety_review"]["status"] == "pending"
+            assert "unsafe content" in json.dumps(per_run)
+            assert "unsafe content" in json.dumps(combined)
             assert not jsonl_path.exists()
-            assert not combined_path.exists()
             assert not export_path.exists()
             assert not Path("gitbench-results-nsfw").exists()
 

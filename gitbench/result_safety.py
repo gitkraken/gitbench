@@ -387,6 +387,29 @@ def stamp_artifact_safety(
     }
 
 
+def mark_artifact_safety_pending(
+    payload: dict[str, Any],
+    *,
+    profile_name: str,
+    model_name: str,
+    error: str,
+    failed_at: str | None = None,
+) -> None:
+    """Attach artifact-level metadata for a review that must be retried later."""
+    scores = list(iter_score_dicts(payload))
+    payload["safety_review"] = {
+        "status": "pending",
+        "policy_version": POLICY_VERSION,
+        "reviewer": {
+            "profile": profile_name,
+            "model": model_name,
+        },
+        "failed_at": failed_at or datetime.now(timezone.utc).isoformat(),
+        "pending_score_count": len(scores),
+        "error": error,
+    }
+
+
 def refresh_derived_safety_hashes(payload: dict[str, Any]) -> None:
     """Refresh current hashes after a validated artifact is structurally derived."""
     for score in iter_score_dicts(payload):

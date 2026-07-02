@@ -95,7 +95,9 @@
       "mappings": {
         "none": "none",
         "medium": "medium",
-        "xhigh": "xhigh"
+        "xhigh": "xhigh",
+        "low": "low",
+        "high": "high"
       }
     },
     "qwen3.6-flash": {
@@ -124,6 +126,100 @@
       }
     },
     "glm-4.7-flash": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "trinity-large-thinking": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "minimax-m3": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "qwen3.6-35b-a3b": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "kimi-k2.7-code": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "qwen3.6-27b": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "mistral-medium-3-5": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "deepseek-v4-pro": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "minimax-m2.7": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "qwen3.7-plus": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "kimi-k2.6": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "qwen3.7-max": {
       "mappings": {
         "none": "none",
         "low": "low",

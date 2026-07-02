@@ -76,8 +76,10 @@ from gitbench.result_safety import (
     ResultSafetyError,
     ResultSafetyProcessor,
     ResultSafetyReviewer,
+    SafetyReviewError,
     SafetyValidationError,
     find_timestamped_result_files as find_safety_result_files,
+    mark_artifact_safety_pending,
     refresh_derived_safety_hashes,
     sanitize_result_file,
     stamp_artifact_safety,
@@ -989,6 +991,24 @@ def _replace_envelope_results_in_place(
     for key, value in sanitized.items():
         if key != "results":
             envelope[key] = value
+
+
+def _payload_has_pending_safety(payload: Any) -> bool:
+    metadata = payload.get("safety_review") if isinstance(payload, dict) else None
+    return isinstance(metadata, dict) and metadata.get("status") == "pending"
+
+
+def _mark_payload_safety_pending(
+    payload: dict[str, Any],
+    processor: ResultSafetyProcessor,
+    error: str,
+) -> None:
+    mark_artifact_safety_pending(
+        payload,
+        profile_name=processor.reviewer.profile_name,
+        model_name=processor.reviewer.model_name,
+        error=error,
+    )
 
 
 def _validate_report_safety_input(path: Path) -> None:
@@ -2277,6 +2297,8 @@ def run(
 
     # Collect all run envelopes for combined aggregation when running "both"
     all_mode_envelopes: list[dict] = []
+    safety_failures: list[str] = []
+    pending_safety_paths: list[Path] = []
 
     # Pre-compute fixture count for campaign-aware progress displays.
     fixture_ids: list[str] = []
@@ -2298,6 +2320,7 @@ def run(
             # Run each (profile, models) entry
             all_profile_results: list[dict] = []
             pending_outputs: list[tuple[str, dict]] = []
+            mode_safety_error: str | None = None
             progress_model_names_by_run = _progress_model_names_for_runs(runs)
             all_models_flat = [name for names in progress_model_names_by_run for name in names]
             progress_kwargs: dict[str, Any] = {"verbose": verbose}
@@ -2678,16 +2701,41 @@ def run(
 
             if result_safety_processor is not None:
                 reviewed_outputs: list[
-                    tuple[dict[str, Any], dict[str, Any], int]
+                    tuple[dict[str, Any], dict[str, Any], int, bool]
                 ] = []
                 for _profile_name, envelope in pending_outputs:
-                    reviewed = result_safety_processor.review_payload(envelope)
+                    if mode_safety_error is not None:
+                        _mark_payload_safety_pending(
+                            envelope,
+                            result_safety_processor,
+                            mode_safety_error,
+                        )
+                        reviewed_outputs.append((envelope, envelope, 0, True))
+                        continue
+
+                    try:
+                        reviewed = result_safety_processor.review_payload(envelope)
+                    except SafetyReviewError as exc:
+                        mode_safety_error = str(exc)
+                        safety_failures.append(
+                            f"{output_mode} mode {_profile_name}/{envelope.get('model', 'unknown')}: {exc}"
+                        )
+                        _mark_payload_safety_pending(
+                            envelope,
+                            result_safety_processor,
+                            mode_safety_error,
+                        )
+                        reviewed_outputs.append((envelope, envelope, 0, True))
+                        continue
+
                     reviewed_outputs.append(
-                        (envelope, reviewed.payload, reviewed.redacted_scores)
+                        (envelope, reviewed.payload, reviewed.redacted_scores, False)
                     )
 
                 # Required original backups complete before any normal writer runs.
-                for envelope, _sanitized, redacted_scores in reviewed_outputs:
+                for envelope, _sanitized, redacted_scores, pending in reviewed_outputs:
+                    if pending:
+                        continue
                     if redacted_scores:
                         try:
                             write_new_run_backup(copy.deepcopy(envelope))
@@ -2696,17 +2744,29 @@ def run(
                                 f"Could not write required result-safety backup: {exc}"
                             ) from exc
 
-                for envelope, sanitized, _redacted_scores in reviewed_outputs:
+                for envelope, sanitized, _redacted_scores, pending in reviewed_outputs:
+                    if pending:
+                        continue
                     _replace_envelope_results_in_place(envelope, sanitized)
 
             for _profile_name, envelope in pending_outputs:
                 if output_dir:
                     written = write_output_dir(envelope, output_dir)
                     click.echo(f"  Saved: {written}", err=True)
+                    if _payload_has_pending_safety(envelope):
+                        pending_safety_paths.append(written)
 
                 if jsonl_path:
-                    written = write_jsonl(envelope, jsonl_path)
-                    click.echo(f"  Appended: {written}", err=True)
+                    if _payload_has_pending_safety(envelope):
+                        click.echo(
+                            "  Skipped JSONL append because result-safety review "
+                            "failed; repair the saved JSON artifact with "
+                            "`gitbench safety-doctor` first.",
+                            err=True,
+                        )
+                    else:
+                        written = write_jsonl(envelope, jsonl_path)
+                        click.echo(f"  Appended: {written}", err=True)
 
                 # Collect for cross-mode aggregation when running "both"
                 all_mode_envelopes.append(envelope)
@@ -2733,7 +2793,25 @@ def run(
                         "benchmark_suite_version": BENCHMARK_SUITE_VERSION,
                         "results": combined,
                     }
-                combined = result_safety_processor.review_payload(combined).payload
+                if mode_safety_error is not None:
+                    _mark_payload_safety_pending(
+                        combined,
+                        result_safety_processor,
+                        mode_safety_error,
+                    )
+                else:
+                    try:
+                        combined = result_safety_processor.review_payload(combined).payload
+                    except SafetyReviewError as exc:
+                        mode_safety_error = str(exc)
+                        safety_failures.append(
+                            f"{output_mode} mode combined JSON: {exc}"
+                        )
+                        _mark_payload_safety_pending(
+                            combined,
+                            result_safety_processor,
+                            mode_safety_error,
+                        )
 
             # ── Build run envelope (shared by exports + HTML) ──────────────────────────
             # Compute profile name before building envelope
@@ -2764,44 +2842,80 @@ def run(
                 )
 
             if result_safety_processor is not None:
-                _envelope = result_safety_processor.review_payload(_envelope).payload
+                if mode_safety_error is not None:
+                    _mark_payload_safety_pending(
+                        _envelope,
+                        result_safety_processor,
+                        mode_safety_error,
+                    )
+                else:
+                    try:
+                        _envelope = result_safety_processor.review_payload(_envelope).payload
+                    except SafetyReviewError as exc:
+                        mode_safety_error = str(exc)
+                        safety_failures.append(
+                            f"{output_mode} mode export envelope: {exc}"
+                        )
+                        _mark_payload_safety_pending(
+                            _envelope,
+                            result_safety_processor,
+                            mode_safety_error,
+                        )
 
             # ── Export files ────────────────────────────────────────────────────────
 
             if export_list:
-                for export_file_format in export_list:
-                    try:
-                        export_func = FORMAT_REGISTRY[export_file_format]
-                        if export_path:
-                            target_path = export_path
-                        else:
-                            ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-                            model_name = all_model_results[0]["model"] if all_model_results else "unknown"
-                            safe_model = _sanitize_filename(model_name)
-                            ext = export_file_format  # csv → .csv, json → .json
-                            version = _version_slug(BENCHMARK_SUITE_VERSION)
-                            target_path = f"gitbench_export_{safe_model}_v{version}_{ts}.{ext}"
-                        content = export_func(_envelope)
-                        write_text_file(target_path, content)
-                        click.echo(f"  Exported: {target_path}", err=True)
-                    except KeyError:
-                        available = get_available_formats()
-                        click.echo(
-                            f"Unknown export format: '{export_file_format}'. "
-                            f"Available: {', '.join(available)}",
-                            err=True,
-                        )
-                        sys.exit(1)
+                if _payload_has_pending_safety(_envelope):
+                    click.echo(
+                        "  Skipped exports because result-safety review failed; "
+                        "repair the saved JSON artifact with "
+                        "`gitbench safety-doctor` first.",
+                        err=True,
+                    )
+                else:
+                    for export_file_format in export_list:
+                        try:
+                            export_func = FORMAT_REGISTRY[export_file_format]
+                            if export_path:
+                                target_path = export_path
+                            else:
+                                ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+                                model_name = all_model_results[0]["model"] if all_model_results else "unknown"
+                                safe_model = _sanitize_filename(model_name)
+                                ext = export_file_format  # csv → .csv, json → .json
+                                version = _version_slug(BENCHMARK_SUITE_VERSION)
+                                target_path = f"gitbench_export_{safe_model}_v{version}_{ts}.{ext}"
+                            content = export_func(_envelope)
+                            write_text_file(target_path, content)
+                            click.echo(f"  Exported: {target_path}", err=True)
+                        except KeyError:
+                            available = get_available_formats()
+                            click.echo(
+                                f"Unknown export format: '{export_file_format}'. "
+                                f"Available: {', '.join(available)}",
+                                err=True,
+                            )
+                            sys.exit(1)
 
             # Write per-mode combined JSON only when running a single mode.
             # For "both" mode, aggregation happens after all modes complete.
             if len(modes_to_run) == 1:
                 output_json = json.dumps(combined, indent=2, allow_nan=False)
-                write_text_file(mode_json_output, output_json)
+                written = write_text_file(mode_json_output, output_json)
                 click.echo(f"\nJSON results written to: {mode_json_output}", err=True)
+                if _payload_has_pending_safety(combined):
+                    pending_safety_paths.append(written)
 
                 if stdout_json_enabled:
-                    click.echo(output_json)
+                    if _payload_has_pending_safety(combined):
+                        click.echo(
+                            "Stdout JSON suppressed because result-safety review "
+                            "failed; repair the saved JSON artifact with "
+                            "`gitbench safety-doctor` first.",
+                            err=True,
+                        )
+                    else:
+                        click.echo(output_json)
 
         except Exception as e:
             if progress_display is not None:
@@ -2821,10 +2935,25 @@ def run(
     # run envelope per model/mode.  Keep the default results-v*.json path raw as
     # well so `gitbench report` can ingest newly produced artifacts directly.
     if len(modes_to_run) > 1 and all_mode_envelopes:
-        if not output_dir and not jsonl_path:
+        if not output_dir and (not jsonl_path or safety_failures):
             for envelope in all_mode_envelopes:
                 written = write_output_dir(envelope, str(Path(resolved_json_output).parent))
                 click.echo(f"  Saved: {written}", err=True)
+                if _payload_has_pending_safety(envelope):
+                    pending_safety_paths.append(written)
+
+    if safety_failures:
+        unique_pending_paths = list(dict.fromkeys(str(path) for path in pending_safety_paths))
+        if unique_pending_paths:
+            pending = ", ".join(unique_pending_paths)
+            repair_hint = f" Pending artifact(s): {pending}."
+        else:
+            repair_hint = ""
+        raise click.ClickException(
+            "Result-safety review failed after benchmark results were recorded."
+            f"{repair_hint} Run `gitbench safety-doctor <path>` before report "
+            f"generation or publication. First failure: {safety_failures[0]}"
+        )
 
     # Integrate campaign publication with result-safety review when configured.
     if campaign_id and result_safety_processor is not None:
