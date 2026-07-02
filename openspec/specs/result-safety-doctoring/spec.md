@@ -162,7 +162,7 @@ The system SHALL provide a `gitbench safety-doctor` command that reviews either 
 - **AND** does not mark the artifact as safety reviewed
 
 ### Requirement: New result serialization safety gate
-When result safety is configured, the run command SHALL complete safety review before serializing result content to any normal destination. A single sanitized payload SHALL feed JSON files, output directories, JSONL, exports, stdout, and cross-mode aggregation.
+When result safety is configured, the run command SHALL attempt safety review before serializing result content to any normal destination. When review completes, a single sanitized payload SHALL feed JSON files, output directories, JSONL, exports, stdout, and cross-mode aggregation. When review fails because the reviewer cannot complete, the run command SHALL still write doctorable JSON result artifacts with pending safety metadata, SHALL suppress non-doctorable outputs for that payload, and SHALL keep report publication blocked until `gitbench safety-doctor` completes.
 
 #### Scenario: Successful configured run review
 - **WHEN** a benchmark run completes and every score is reviewed successfully
@@ -172,7 +172,9 @@ When result safety is configured, the run command SHALL complete safety review b
 #### Scenario: Configured run review fails
 - **WHEN** any score in a completed run cannot be reviewed successfully
 - **THEN** the run command exits non-zero
-- **AND** writes no normal result, JSONL, export, stdout JSON, or aggregate artifact for that payload
+- **AND** writes doctorable JSON result artifacts for completed benchmark work
+- **AND** marks those JSON artifacts with pending result-safety metadata
+- **AND** suppresses JSONL, export, and stdout JSON serialization for that payload
 
 #### Scenario: Redaction does not change score
 - **WHEN** a newly generated score is classified for redaction
@@ -199,4 +201,3 @@ When result safety is configured, report generation SHALL reject every input art
 - **WHEN** report validation encounters an unsafe-to-publish artifact
 - **THEN** the report command performs no model request
 - **AND** produces no updated report artifacts
-
