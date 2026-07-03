@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 144,
-    "overall_pass_at_k": 0.7059
+    "total_passed": 146,
+    "overall_pass_at_k": 0.7157
   },
   "results": [
     {
@@ -6862,8 +6862,8 @@
     {
       "benchmark": "git_clean",
       "total": 12,
-      "passed": 5,
-      "pass_at_k": 0.4167,
+      "passed": 7,
+      "pass_at_k": 0.5833,
       "scores": [
         {
           "fixture_id": "f001",
@@ -7126,30 +7126,58 @@
         },
         {
           "fixture_id": "f005",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "git clean -f -x",
+          "error": null,
           "reasoning_level": "high",
+          "input_tokens": 50,
+          "output_tokens": 329,
+          "total_tokens": 379,
+          "cost_usd": 5.16e-05,
+          "reasoning_tokens": 350,
+          "api_duration_ms": 2656.78,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Remove all untracked and ignored files (but not directories). Output ONLY the git command, nothing else.\n\nStatus:\n?? notes.txt\n\nUntracked files:\nnotes.txt\n\nIgnored files:\ndebug.log\n"
+            },
+            {
+              "role": "assistant",
+              "content": "git clean -f -x",
+              "reasoning_content": "Okay, let's see. The user wants to remove all untracked and ignored files but not directories. They specified that the output should only be the git command, nothing else.\n\nFirst, I need to recall the git commands for removing untracked files. The standard command is `git clean -f`, which removes untracked files. But wait, the user also wants to remove ignored files. The `-f` flag is for files, but how do we handle ignored ones?\n\nI remember that `git clean` has a `-x` option that removes ignored files as well. So combining `-f` and `-x` would target both untracked and ignored files. The command would be `git clean -f -x`. \n\nWait, but the user mentioned not to remove directories. The `git clean` command by default doesn't remove directories unless specified with `-d`. Since the user wants to exclude directories, we shouldn't include `-d`. So the correct command is `git clean -f -x`.\n\nLet me double-check the options. The `-f` is for forcing the removal of files, and `-x` ensures that ignored files are also removed. The `-d` is for directories, which we don't want. So yes, the command should be `git clean -f -x`.\n\nThe user's status shows an untracked file \"notes.txt\" and ignored files like \"debug.log\". The command should handle both. Also, the output should only be the command, so no extra text. Therefore, the correct answer is `git clean -f -x`.\n"
+            }
+          ],
+          "purpose": "Tests ability to remove both untracked and ignored files with git clean -fx. Evaluates comprehensive cleanup flags.",
+          "difficulty": "medium",
+          "tags": [
+            "git-clean",
+            "untracked",
+            "ignored",
+            "comprehensive"
+          ],
           "prompt": "Remove all untracked and ignored files (but not directories). Output ONLY the git command, nothing else.",
           "expected": "git clean -f -x",
           "description": "Remove all untracked and ignored files",
-          "duration_ms": 723192.03,
+          "duration_ms": 2839.17,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "high",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -7157,9 +7185,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:20:08.045226+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:53:51.032976+00:00",
+            "pre_review_content_sha256": "2f68318ec5ce79c382de51fb18027cdb5520cb6e07969b932c5bf29fa0c8fa27",
+            "current_content_sha256": "2f68318ec5ce79c382de51fb18027cdb5520cb6e07969b932c5bf29fa0c8fa27"
           }
         },
         {
@@ -7228,30 +7256,59 @@
         },
         {
           "fixture_id": "f007",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "\n\ngit clean -f -e important.tmp",
+          "error": null,
           "reasoning_level": "high",
+          "input_tokens": 65,
+          "output_tokens": 480,
+          "total_tokens": 545,
+          "cost_usd": 7.4925e-05,
+          "reasoning_tokens": 530,
+          "api_duration_ms": 3208.1,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else.\n\nStatus:\n?? important.tmp\n?? junk1.tmp\n?? junk2.txt\n\nUntracked files:\nimportant.tmp\njunk1.tmp\njunk2.txt\n\nIgnored files:\n(none)"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\ngit clean -f -e important.tmp",
+              "reasoning_content": "Okay, let's see. The user wants to remove all untracked files except important.tmp. The status shows that important.tmp is marked as untracked, along with junk1.tmp and junk2.txt. The goal is to remove the junk files but keep important.tmp.\n\nFirst, I need to figure out the correct Git command to do this. The standard way to remove untracked files is using `git clean -f`, but that removes all untracked files. Since we need to keep important.tmp, we can't use that directly. \n\nWait, maybe there's a way to exclude specific files. I recall that Git allows excluding files with a .gitignore, but in this case, the user wants to keep important.tmp, which is already untracked. Alternatively, perhaps using `git clean` with the -n option to dry run first. But the user wants the actual command to remove the junk files.\n\nAnother approach: maybe using `git clean` with the -f option and then adding back important.tmp. But that seems complicated. Alternatively, using `git clean` with the -e option to exclude certain files. Let me check the Git documentation. Oh right, the -e option allows excluding files. So the command would be `git clean -f -e important.tmp`. That should remove all untracked files except important.tmp. \n\nWait, but the user's status shows that important.tmp is already untracked. So using `git clean -f -e important.tmp` would remove junk1.tmp and junk2.txt but leave important.tmp. That should work. Let me confirm the syntax. Yes, the -e option takes a pattern, so excluding important.tmp. \n\nAlternatively, maybe using `git clean -f` and then adding important.tmp back, but that's more steps. The user wants a single command. So the correct command is `git clean -f -e important.tmp`. \n\nI should make sure that the command is exactly as required. The user specified to output ONLY the Git command, nothing else. So the answer should be that command. Also, check if there are any other options. The -f is necessary to force removal. The -e is to exclude important.tmp. \n\nYes, that should do it. So the final command is `git clean -f -e important.tmp`.\n"
+            }
+          ],
+          "purpose": "Tests ability to exclude specific files from cleaning with git clean -e. Evaluates exclusion-pattern usage.",
+          "difficulty": "medium",
+          "tags": [
+            "git-clean",
+            "exclusion",
+            "pattern"
+          ],
           "prompt": "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else.",
           "expected": "git clean -f -e important.tmp",
           "description": "Exclude specific files from cleaning",
-          "duration_ms": 723178.82,
+          "duration_ms": 246412.54,
           "request_telemetry": {
             "attempts": 3,
             "local_retry_wait_ms": 3000.0,
             "capacity_cooldown_wait_ms": 0.0,
             "retry_reasons": {
-              "TimeoutError": 3
+              "TimeoutError": 2
             }
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "high",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -7259,9 +7316,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:20:08.588647+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:53:51.562675+00:00",
+            "pre_review_content_sha256": "1873231ad59d4c518cfe7d1d6bd83beaeea8dc7a00b7cc44e4f0a228ee22150e",
+            "current_content_sha256": "1873231ad59d4c518cfe7d1d6bd83beaeea8dc7a00b7cc44e4f0a228ee22150e"
           }
         },
         {
@@ -7590,8 +7647,8 @@
           }
         }
       ],
-      "errors": 7,
-      "total_duration_ms": 1967382.26
+      "errors": 5,
+      "total_duration_ms": 770263.12
     },
     {
       "benchmark": "git_bisect",
@@ -12972,28 +13029,56 @@
           "fixture_id": "f002",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "model_output": "\n\nVERSION=1.1.0",
+          "error": "Content mismatch: ['version.txt']",
           "reasoning_level": "high",
+          "input_tokens": 113,
+          "output_tokens": 515,
+          "total_tokens": 628,
+          "cost_usd": 8.2335e-05,
+          "reasoning_tokens": 487,
+          "api_duration_ms": 3331.59,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in version.txt. The base version was 'VERSION=1.0.0'. The incoming commit (release) changed it to 'VERSION=2.0.0'. The current branch (main) has 'VERSION=1.1.0'. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- version.txt\n<<<<<<< HEAD\nVERSION=1.1.0\n=======\nVERSION=2.0.0\n>>>>>>> 84fb264 (Bump major version)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\nVERSION=1.1.0",
+              "reasoning_content": "Okay, let's see. The user wants me to resolve a cherry-pick conflict in the version.txt file. The base version was 'VERSION=1.0.0', the incoming commit (release) changed it to 'VERSION=2.0.0', and the current branch (main) has 'VERSION=1.1.0'. The conflicted file content shows that the current branch's version is '1.1.0' and the incoming commit's version is '2.0.0', with the base being '1.0.0'.\n\nHmm, the user specified that I should provide only the resolved file content. So I need to figure out which version to keep. The base is '1.0.0', the incoming is '2.0.0', and the current branch is '1.1.0'. Since the user mentioned that the base was '1.0.0' and the incoming commit changed it to '2.0.0', but the current branch has '1.1.0', which is a minor version update. \n\nWait, the conflict is between the current branch's '1.1.0' and the incoming '2.0.0'. The user probably wants the resolved version to be the one that's in the current branch, which is '1.1.0', because that's the version that's already on main. Alternatively, maybe they want to merge the changes, but the instruction says to resolve the conflict. Since the user is asking for the resolved content, and the current branch's version is '1.1.0', which is a valid version, I should output that. \n\nBut wait, the base was '1.0.0', and the incoming commit is '2.0.0'. The current branch has '1.1.0'. The user might be expecting that the resolved version is the one that's in the current branch, which is '1.1.0'. So the resolved file should have 'VERSION=1.1.0'. \n\nI need to make sure that the output is only the resolved content. The conflicted lines are between the current branch's version and the incoming commit's version. The user wants the resolved version, which is the current branch's version. So the resolved file should have 'VERSION=1.1.0' without any conflict markers. \n\nTherefore, the resolved file content is just 'VERSION=1.1.0'.\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a version number conflict during cherry-pick. Evaluates handling of semantic versioning clashes between branches.",
+          "difficulty": "easy",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "version-number",
+            "semver"
+          ],
           "prompt": "Resolve the cherry-pick conflict in version.txt. The base version was 'VERSION=1.0.0'. The incoming commit (release) changed it to 'VERSION=2.0.0'. The current branch (main) has 'VERSION=1.1.0'. Provide ONLY the resolved file content.",
           "expected": "VERSION=2.0.0",
           "description": "Single-line version number conflict",
-          "duration_ms": 723306.39,
+          "duration_ms": 3616.0,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "high",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -13001,9 +13086,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:20:35.762699+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:53:52.046941+00:00",
+            "pre_review_content_sha256": "e5dd3ccccfa33536640ed488b89376843f8aece2b40d771b7b2d17ecac2234e7",
+            "current_content_sha256": "e5dd3ccccfa33536640ed488b89376843f8aece2b40d771b7b2d17ecac2234e7"
           }
         },
         {
@@ -13661,7 +13746,7 @@
         }
       ],
       "errors": 4,
-      "total_duration_ms": 1249929.49
+      "total_duration_ms": 530239.1
     }
   ],
   "safety_review": {
@@ -13671,7 +13756,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:00.705834+00:00",
+    "reviewed_at": "2026-07-03T19:53:52.047143+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

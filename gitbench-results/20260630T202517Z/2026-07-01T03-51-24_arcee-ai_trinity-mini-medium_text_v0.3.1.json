@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 141,
-    "overall_pass_at_k": 0.6912
+    "total_passed": 142,
+    "overall_pass_at_k": 0.6961
   },
   "results": [
     {
@@ -3886,8 +3886,8 @@
     {
       "benchmark": "merge_conflicts",
       "total": 12,
-      "passed": 1,
-      "pass_at_k": 0.0833,
+      "passed": 2,
+      "pass_at_k": 0.1667,
       "scores": [
         {
           "fixture_id": "f001",
@@ -4021,30 +4021,57 @@
         },
         {
           "fixture_id": "f003",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "\n\nStatus: Resolved",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 78,
+          "output_tokens": 911,
+          "total_tokens": 989,
+          "cost_usd": 0.00014016,
+          "reasoning_tokens": 1057,
+          "api_duration_ms": 5528.84,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- status.txt\n<<<<<<< HEAD\nStatus: Failed\n=======\nStatus: Resolved\n>>>>>>> fix\n"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\nStatus: Resolved",
+              "reasoning_content": "Okay, let's see. The user wants me to resolve a merge conflict in the status.txt file. The base was originally 'Status: OK'. Branch A changed it to 'Status: Resolved', and Branch B changed it to 'Status: Failed'. The conflicted content shows that the HEAD (which is probably Branch B) has 'Status: Failed', while the other branch (fix) has 'Status: Resolved'. \n\nHmm, the user provided the conflicted file content with the merge markers. The base is 'Status: OK', but since both branches have different changes, the conflict arises. The user wants only the resolved file content, not the conflict markers.\n\nWait, the user mentioned that the base was 'Status: OK', but in the conflicted content, the base isn't shown. Maybe the base is the original version before any changes. The user probably wants the final merged version. But how to decide between 'Status: Resolved' and 'Status: Failed'? \n\nThe user didn't specify which branch to keep. But looking at the conflict markers, the HEAD (Branch B) has 'Status: Failed', and the other branch (fix) has 'Status: Resolved'. Since the user didn't specify, maybe they want both changes merged. But the problem says to resolve the conflict, so perhaps the correct approach is to choose one. \n\nWait, the original base was 'Status: OK'. Maybe the user wants to combine both changes. But how? The resolved file should have a single line. The user might expect a compromise, like 'Status: Resolved' or 'Status: Failed'. But without more context, it's hard to tell. \n\nAlternatively, maybe the user wants to keep the changes from both branches. But since it's a merge conflict, the resolution would typically involve choosing one or combining. However, the user's instruction says to provide the resolved file content. Since the base was 'Status: OK', and both branches changed it, perhaps the resolved version should be a combination. But how to represent that? \n\nWait, the user might have intended that the resolved version should be 'Status: Resolved' because that's one of the options. Or maybe 'Status: Failed'. But without more info, I need to make a decision. Let me check the conflict markers again. The HEAD (Branch B) has 'Status: Failed', and the other branch (fix) has 'Status: Resolved'. The user might prefer one over the other. \n\nAlternatively, maybe the correct resolution is to keep the base 'Status: OK' since that's the original. But both branches changed it, so that's not possible. Hmm. \n\nWait, the user's instruction says to resolve the merge conflict. The standard way is to choose one of the branches. Since the user didn't specify, perhaps the answer is to pick 'Status: Resolved' as the resolved content. Or maybe 'Status: Failed'. But I need to make a choice. \n\nAlternatively, maybe the resolved file should have both changes. But the file can't have two lines. So the correct approach is to choose one. Let me think about the context. The base was 'Status: OK', Branch A changed to 'Status: Resolved', Branch B to 'Status: Failed'. The user might want the final status to be 'Status: Resolved' as it's a positive resolution. Or maybe 'Status: Failed' if it's a failure. \n\nBut since the user didn't specify, and the problem is to resolve the conflict, perhaps the answer is to output 'Status: Resolved' as the resolved content. Alternatively, maybe the user expects the resolved file to have the base plus both changes, but that's not possible. \n\nWait, the user provided the conflicted content with the markers. The resolved file should remove the markers and have the chosen line. Since the user wants only the resolved content, I need to decide which line to keep. \n\nI think the best approach is to choose 'Status: Resolved' as the resolved content, assuming that's the preferred resolution. Alternatively, maybe the user wants to keep the base. But since both branches changed it, that's not possible. \n\nAlternatively, maybe the resolved file should be 'Status: OK' again, but that's not possible because both branches modified it. \n\nHmm. The user might have intended that the resolved version is 'Status: Resolved' because that's one of the options. So I'll go with that.\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a status-message merge conflict. Evaluates choosing between contradictory status values.",
+          "difficulty": "easy",
+          "tags": [
+            "merge-conflict",
+            "status-message",
+            "resolution"
+          ],
           "prompt": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.",
           "expected": "Status: Resolved",
           "description": "Single-line status message conflict",
-          "duration_ms": 723310.91,
+          "duration_ms": 5818.01,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "medium",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -4052,9 +4079,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:18:40.708914+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:53:52.524113+00:00",
+            "pre_review_content_sha256": "45000c22f284c873247ad791f7963a1f166c96755e7fe30cf7984a6330bf13a0",
+            "current_content_sha256": "45000c22f284c873247ad791f7963a1f166c96755e7fe30cf7984a6330bf13a0"
           }
         },
         {
@@ -4648,8 +4675,8 @@
           }
         }
       ],
-      "errors": 11,
-      "total_duration_ms": 1239860.63
+      "errors": 10,
+      "total_duration_ms": 522367.73
     },
     {
       "benchmark": "git_log_format",
@@ -13680,7 +13707,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:00.846839+00:00",
+    "reviewed_at": "2026-07-03T19:53:52.525559+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

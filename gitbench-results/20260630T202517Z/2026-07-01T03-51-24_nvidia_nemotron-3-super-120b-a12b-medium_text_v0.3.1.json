@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 166,
-    "overall_pass_at_k": 0.8137
+    "total_passed": 191,
+    "overall_pass_at_k": 0.9363
   },
   "results": [
     {
@@ -7625,8 +7625,8 @@
     {
       "benchmark": "git_bisect",
       "total": 12,
-      "passed": 6,
-      "pass_at_k": 0.5,
+      "passed": 12,
+      "pass_at_k": 1.0,
       "scores": [
         {
           "fixture_id": "f001",
@@ -7860,16 +7860,50 @@
         },
         {
           "fixture_id": "f005",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "e4ee556",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 216,
+          "output_tokens": 143,
+          "total_tokens": 359,
+          "cost_usd": 8.379e-05,
+          "reasoning_tokens": 124,
+          "api_duration_ms": 3946.08,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.\n\nGit commit history (newest first):\n63dca15 add test_two\nffe55fe add test_one\ne4ee556 setup pytest\n11d79fd Initial commit\n\nTest results by commit (oldest first):\n11d79fd Initial commit: PASS (exit code 0)\ne4ee556 setup pytest: FAIL (exit code 1)\nffe55fe add test_one: FAIL (exit code 1)\n63dca15 add test_two: FAIL (exit code 1)"
+            },
+            {
+              "role": "assistant",
+              "content": "e4ee556",
+              "reasoning_content": "We need to find which commit introduced the bug (first failing test). The test results: Initial commit passes, then after \"setup pytest\" it fails. So the bad commit is e4ee556 \"setup pytest\". However, we need to see if maybe later commits also fail but the first failure is at e4ee556. So answer: e4ee556 or its subject line \"setup pytest\". The problem says answer should be commit hash (first 7 characters) or commit subject line. So output either e4ee556 or \"setup pytest\". Choose hash. So answer: e4ee556.\n\n"
+            }
+          ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
           "expected": "setup pytest",
           "description": "Linear history with bad commit second from beginning - model identifies second commit",
-          "duration_ms": 5207.17,
-          "operational_failure": true,
+          "duration_ms": 4317.11,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -7877,23 +7911,57 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:03.706955+00:00",
-            "pre_review_content_sha256": "8bf1ee947f9bab37d85a935882ebafa53e153c8263cd234408d50c2759a5853c",
-            "current_content_sha256": "8bf1ee947f9bab37d85a935882ebafa53e153c8263cd234408d50c2759a5853c"
+            "reviewed_at": "2026-07-03T19:54:44.957474+00:00",
+            "pre_review_content_sha256": "fc128ae07c8da8be8dda134fe21fec41b49afa0922a9487a84fb0cd5a01437e4",
+            "current_content_sha256": "fc128ae07c8da8be8dda134fe21fec41b49afa0922a9487a84fb0cd5a01437e4"
           }
         },
         {
           "fixture_id": "f006",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "744d8d3",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 254,
+          "output_tokens": 162,
+          "total_tokens": 416,
+          "cost_usd": 9.576e-05,
+          "reasoning_tokens": 142,
+          "api_duration_ms": 7240.38,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.\n\nGit commit history (newest first):\nee0a6e3 add port constant\nc3ab089 add feature flag\n744d8d3 change port\n79f0b6d add default config\n3d5a000 Initial commit\n\nTest results by commit (oldest first):\n3d5a000 Initial commit: PASS (exit code 0)\n79f0b6d add default config: PASS (exit code 0)\n744d8d3 change port: FAIL (exit code 1)\nc3ab089 add feature flag: FAIL (exit code 1)\nee0a6e3 add port constant: FAIL (exit code 1)"
+            },
+            {
+              "role": "assistant",
+              "content": "744d8d3",
+              "reasoning_content": "We need to find the bad commit that broke the build. The test results: Starting at oldest: Initial commit passes. Next: add default config passes. Next: change port fails. So the first failing commit is 744d8d3 change port. After that, all later commits also fail (likely because they inherit the bug). So the bad commit is 744d8d3 change port. The answer should be first 7 characters or commit subject line. So \"744d8d3\" or \"change port\". The prompt says answer should be commit hash (e.g., 'abc1234') or commit subject line. I'll give hash: 744d8d3.\n\n"
+            }
+          ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
           "expected": "change port",
           "description": "Linear history with bad commit third from beginning - model identifies third commit",
-          "duration_ms": 1295.49,
-          "operational_failure": true,
+          "duration_ms": 7654.76,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -7901,9 +7969,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:04.140124+00:00",
-            "pre_review_content_sha256": "4735d38bf796c3b37368400f33acaab3c5fbaa70537893c4e865771ff10a49e7",
-            "current_content_sha256": "4735d38bf796c3b37368400f33acaab3c5fbaa70537893c4e865771ff10a49e7"
+            "reviewed_at": "2026-07-03T19:54:45.464886+00:00",
+            "pre_review_content_sha256": "0ab305b189cbed2e56317646bacea2b859ba35e976d162b29cbc08aa207b29ce",
+            "current_content_sha256": "0ab305b189cbed2e56317646bacea2b859ba35e976d162b29cbc08aa207b29ce"
           }
         },
         {
@@ -7965,16 +8033,50 @@
         },
         {
           "fixture_id": "f008",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "ac60add",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 222,
+          "output_tokens": 235,
+          "total_tokens": 457,
+          "cost_usd": 0.000153545,
+          "reasoning_tokens": 199,
+          "api_duration_ms": 28261.51,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.\n\nGit commit history (newest first):\nb8f7b11 add auth logging\nac60add remove validation logic\n0664816 add validation function\n7ec478c Initial commit\n\nTest results by commit (oldest first):\n7ec478c Initial commit: PASS (exit code 0)\n0664816 add validation function: PASS (exit code 0)\nac60add remove validation logic: FAIL (exit code 1)\nb8f7b11 add auth logging: FAIL (exit code 1)"
+            },
+            {
+              "role": "assistant",
+              "content": "ac60add",
+              "reasoning_content": "We need to parse the information.\n\nWe have git commit history from newest to oldest:\n\nb8f7b11 add auth logging\nac60add remove validation logic\n0664816 add validation function\n7ec478c Initial commit\n\nTest results by commit (oldest first):\n\n7ec478c Initial commit: PASS (exit code 0)\n0664816 add validation function: PASS (exit code 0)\nac60add remove validation logic: FAIL (exit code 1)\nb8f7b11 add auth logging: FAIL (exit code 1)\n\nThus the bug introduced somewhere before ac60add, because ac60add fails (starting at that commit, fails). The commit 0664816 passes. So the bad commit is the one that introduced the bug: ac60add remove validation logic. So answer should be ac60add (first 7 characters) or the commit subject line.\n\nThus answer: ac60add.\n\nAlternatively, \"remove validation logic\".\n\n"
+            }
+          ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
           "expected": "remove validation logic",
           "description": "Branching history with bad commit that removes validation - model identifies the bad commit",
-          "duration_ms": 1346.21,
-          "operational_failure": true,
+          "duration_ms": 28652.5,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -7982,23 +8084,57 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:05.256149+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:46.010049+00:00",
+            "pre_review_content_sha256": "9b42b9ee86960c2b96ec3157aa4a498d39c46584bea4504ba9f8974d40f5627f",
+            "current_content_sha256": "9b42b9ee86960c2b96ec3157aa4a498d39c46584bea4504ba9f8974d40f5627f"
           }
         },
         {
           "fixture_id": "f009",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "cf8558f",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 222,
+          "output_tokens": 133,
+          "total_tokens": 355,
+          "cost_usd": 7.207e-05,
+          "reasoning_tokens": 104,
+          "api_duration_ms": 2741.58,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.\n\nGit commit history (newest first):\nb000dda add logging hook\ncf8558f replace helper import\n6b0b4b5 add import\n515b66d Initial commit\n\nTest results by commit (oldest first):\n515b66d Initial commit: PASS (exit code 0)\n6b0b4b5 add import: PASS (exit code 0)\ncf8558f replace helper import: FAIL (exit code 1)\nb000dda add logging hook: FAIL (exit code 1)"
+            },
+            {
+              "role": "assistant",
+              "content": "cf8558f",
+              "reasoning_content": "We need to determine which commit introduced the bug. Given test results: 515b66d PASS, 6b0b4b5 PASS, cf8558f FAIL, b000dda FAIL. So the bug introduced at cf8558f replace helper import, as that is first failing commit. The later commit also fails (since it includes the bug). So answer is cf8558f (first 7 characters) or commit subject line \"replace helper import\". Probably they want hash. Provide cf8558f.\n\n"
+            }
+          ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
           "expected": "replace helper import",
           "description": "Branching history with bad commit that breaks import - model identifies the broken import",
-          "duration_ms": 1314.36,
-          "operational_failure": true,
+          "duration_ms": 3119.67,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8006,9 +8142,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:05.256210+00:00",
-            "pre_review_content_sha256": "8bf1ee947f9bab37d85a935882ebafa53e153c8263cd234408d50c2759a5853c",
-            "current_content_sha256": "8bf1ee947f9bab37d85a935882ebafa53e153c8263cd234408d50c2759a5853c"
+            "reviewed_at": "2026-07-03T19:54:46.526639+00:00",
+            "pre_review_content_sha256": "e9dc58583856c3827e96fe0f9f6aeceea694961c8e63e56d8595ccf000dd39e6",
+            "current_content_sha256": "e9dc58583856c3827e96fe0f9f6aeceea694961c8e63e56d8595ccf000dd39e6"
           }
         },
         {
@@ -8070,16 +8206,50 @@
         },
         {
           "fixture_id": "f011",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "5a6ce15 change to red",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 224,
+          "output_tokens": 119,
+          "total_tokens": 343,
+          "cost_usd": 7.371e-05,
+          "reasoning_tokens": 99,
+          "api_duration_ms": 2539.5,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.\n\nGit commit history (newest first):\nc19e04e add theme title\n5a6ce15 change to red\n72c14fc add blue styling\neb62e2a Initial commit\n\nTest results by commit (oldest first):\neb62e2a Initial commit: PASS (exit code 0)\n72c14fc add blue styling: PASS (exit code 0)\n5a6ce15 change to red: FAIL (exit code 1)\nc19e04e add theme title: FAIL (exit code 1)"
+            },
+            {
+              "role": "assistant",
+              "content": "5a6ce15 change to red",
+              "reasoning_content": "We need to identify the bad commit that introduced the bug, given test results for each commit (oldest first). The bug appears from commit 5a6ce15 onward (since 72c14fc passes, then 5a6ce15 fails, and the later c19e04e also fails). Therefore the first failing commit is 5a6ce15 change to red. So answer: 5a6ce15 (or its subject line \"change to red\").\n\n"
+            }
+          ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
           "expected": "change to red",
           "description": "Bad commit changes index.js and styles.css - model identifies multi-file bad commit",
-          "duration_ms": 1549.38,
-          "operational_failure": true,
+          "duration_ms": 2870.62,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8087,23 +8257,57 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:07.870153+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:47.021082+00:00",
+            "pre_review_content_sha256": "5a78e77794c28bd7898392e115b51a9f0052e3fca6b7b8809d08eac8f7d07476",
+            "current_content_sha256": "5a78e77794c28bd7898392e115b51a9f0052e3fca6b7b8809d08eac8f7d07476"
           }
         },
         {
           "fixture_id": "f012",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "85f3d5d",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 252,
+          "output_tokens": 168,
+          "total_tokens": 420,
+          "cost_usd": 8.862e-05,
+          "reasoning_tokens": 117,
+          "api_duration_ms": 2879.12,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.\n\nGit commit history (newest first):\n381f2ea add port config\nd80c558 add pool config\n85f3d5d switch to prod\nc705774 configure localhost\nfafce08 Initial commit\n\nTest results by commit (oldest first):\nfafce08 Initial commit: PASS (exit code 0)\nc705774 configure localhost: PASS (exit code 0)\n85f3d5d switch to prod: FAIL (exit code 1)\nd80c558 add pool config: FAIL (exit code 1)\n381f2ea add port config: FAIL (exit code 1)"
+            },
+            {
+              "role": "assistant",
+              "content": "85f3d5d",
+              "reasoning_content": "We need to find the first bad commit that introduced the bug. The test results by commit (oldest first) are:\n\n- fafce08: PASS\n- c705774: PASS\n- 85f3d5d: FAIL\n- d80c558: FAIL\n- 381f2ea: FAIL\n\nThus, the bad commit is the first FAIL after passes: 85f3d5d switch to prod.\n\nThus answer: 85f3d5d (or the commit subject line \"switch to prod\").\n\nWe need to output the hash (first 7 characters) or commit subject line. So \"85f3d5d\".\n\n"
+            }
+          ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
           "expected": "switch to prod",
           "description": "Bad commit changes database.py and api.py - model identifies the multi-file bad commit",
-          "duration_ms": 1451.76,
-          "operational_failure": true,
+          "duration_ms": 3257.02,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8111,14 +8315,14 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:08.347162+00:00",
-            "pre_review_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc",
-            "current_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc"
+            "reviewed_at": "2026-07-03T19:54:47.477482+00:00",
+            "pre_review_content_sha256": "b99c4e18e18290ceb624fbd6a80b13379ecc2a65293e27206dd8a20b3cb718a2",
+            "current_content_sha256": "b99c4e18e18290ceb624fbd6a80b13379ecc2a65293e27206dd8a20b3cb718a2"
           }
         }
       ],
-      "errors": 6,
-      "total_duration_ms": 95421.81
+      "errors": 0,
+      "total_duration_ms": 133129.12
     },
     {
       "benchmark": "commit_messages",
@@ -8130,14 +8334,56 @@
           "fixture_id": "f001",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "model_output": "Add hello.txt with Hello, World!",
+          "error": "Scoring error: llm_judge requires a judge client",
           "reasoning_level": "medium",
+          "input_tokens": 122,
+          "output_tokens": 177,
+          "total_tokens": 299,
+          "cost_usd": 8.117e-05,
+          "reasoning_tokens": 111,
+          "api_duration_ms": 2375.15,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').\n\nGit diff:\ndiff --git a/hello.txt b/hello.txt\nnew file mode 100644\nindex 0000000..8ab686e\n--- /dev/null\n+++ b/hello.txt\n@@ -0,0 +1 @@\n+Hello, World!\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Add hello.txt with Hello, World!",
+              "reasoning_content": "We need to output a concise commit message max 50 characters, focusing on action. The diff adds hello.txt with \"Hello, World!\". So message: \"Add hello.txt with Hello, World!\" Count characters: Let's count: \"Add hello.txt with Hello, World!\" \nCharacters: A(1)d2 d3 space4 h5 e6 l7 l8 o9 .10 t11 x12 t13 space14 w15 i16 t17 h18 space19 H20 e21 l22 l23 o24 ,25 space26 W27 o28 r29 l30 d31 !32. So length 32, within 50. Output just that.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to generate a concise commit message for a single new file addition (hello.txt). Evaluates basic commit message generation from a trivial diff.",
+          "difficulty": "trivial",
+          "tags": [
+            "commit-message",
+            "single-file",
+            "add",
+            "basic"
+          ],
           "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').",
           "expected": "Add hello.txt with greeting message",
           "description": "Single file added",
-          "duration_ms": 995.75,
-          "operational_failure": true,
+          "duration_ms": 2475.11,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8145,23 +8391,65 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:08.347223+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:49.946447+00:00",
+            "pre_review_content_sha256": "eb8efe65695e88fc7b06341cc497578fba4c4db9048d979abc3b40fa58b3fe5f",
+            "current_content_sha256": "eb8efe65695e88fc7b06341cc497578fba4c4db9048d979abc3b40fa58b3fe5f"
           }
         },
         {
           "fixture_id": "f002",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "model_output": "Add config, main, and utils files",
+          "error": "Scoring error: llm_judge requires a judge client",
           "reasoning_level": "medium",
+          "input_tokens": 239,
+          "output_tokens": 304,
+          "total_tokens": 543,
+          "cost_usd": 0.000141915,
+          "reasoning_tokens": 211,
+          "api_duration_ms": 5227.25,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').\n\nGit diff:\ndiff --git a/config.py b/config.py\nnew file mode 100644\nindex 0000000..04204c7\n--- /dev/null\n+++ b/config.py\n@@ -0,0 +1 @@\n+config\ndiff --git a/main.py b/main.py\nnew file mode 100644\nindex 0000000..ba2906d\n--- /dev/null\n+++ b/main.py\n@@ -0,0 +1 @@\n+main\ndiff --git a/utils.py b/utils.py\nnew file mode 100644\nindex 0000000..9487075\n--- /dev/null\n+++ b/utils.py\n@@ -0,0 +1 @@\n+utils\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Add config, main, and utils files",
+              "reasoning_content": "We need to generate concise commit message max 50 chars, focusing on action. The diff shows adding three new files: config.py, main.py, utils.py each with a single line. So action: Add config, main, utils files. Could be \"Add config, main, and utils files\". Count characters: let's count.\n\n\"Add config, main, and utils files\" = characters: A d d (3) + space (1)=4, c o n f i g (6) -> total 10, comma (1)=11, space=12, m a i n (4)=16, space=17, a n d (3)=20, space=21, u t i l s (5)=26, space=27, f i l e s (5)=32. So 32 characters, within 50.\n\nAlternatively \"Add three new source files\". Count: A d d (3) + space=4, t h r e e (5)=9, space=10, n e w (3)=13, space=14, s o u r c e (6)=20, space=21, f i l e s (5)=26. That's 26.\n\nWe need concise commit message. Probably \"Add config, main, and utils files\". Provide that.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to generate a commit message summarizing multiple new files (config.py, main.py, utils.py). Evaluates grouping related file additions.",
+          "difficulty": "easy",
+          "tags": [
+            "commit-message",
+            "multi-file",
+            "add",
+            "summarization"
+          ],
           "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').",
           "expected": "Add initial project files",
           "description": "Multiple files added",
-          "duration_ms": 1017.67,
-          "operational_failure": true,
+          "duration_ms": 5317.37,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8169,23 +8457,64 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:08.864881+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-03T19:54:50.471346+00:00",
+            "pre_review_content_sha256": "6c612d0b9fed43fa6176d23607e55f399f268dc202a14db477133e3db2f1a14d",
+            "current_content_sha256": "6c612d0b9fed43fa6176d23607e55f399f268dc202a14db477133e3db2f1a14d"
           }
         },
         {
           "fixture_id": "f003",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "model_output": "Rename oldname.txt to newname.txt",
+          "error": "Scoring error: llm_judge requires a judge client",
           "reasoning_level": "medium",
+          "input_tokens": 94,
+          "output_tokens": 319,
+          "total_tokens": 413,
+          "cost_usd": 0.00013559,
+          "reasoning_tokens": 197,
+          "api_duration_ms": 6472.28,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Rename').\n\nGit diff:\ndiff --git a/oldname.txt b/newname.txt\nsimilarity index 100%\nrename from oldname.txt\nrename to newname.txt\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Rename oldname.txt to newname.txt",
+              "reasoning_content": "We need to generate concise commit message max 50 characters describing action: rename file from oldname.txt to newname.txt. Action: Rename file. Could be \"Rename oldname.txt to newname.txt\". Count characters: Let's count: \"Rename oldname.txt to newname.txt\". Count: R(1) e2 n3 a4 m5 e6 space7 o8 l9 d10 n11 a12 m13 e14 .15 t16 x17 t18 space19 t20 o21 space22 n23 e24 w25 n26 a27 m28 e29 .30 t31 x32 t33. That's 33 characters. Under 50. Good.\n\nAlternatively \"Rename file oldname.txt to newname.txt\". Count: Rename (6) space7 file8 space9 o10 l11 d12 n13 a14 m15 e16 .17 t18 x19 t20 space21 t22 o23 space24 n25 e26 w27 n28 a29 m30 e31 .32 t33 x34 t35. That's 35.\n\nWe just need a concise commit message, max 50 chars, focusing on action taken. Provide just the message.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to generate a commit message for a file rename. Evaluates recognizing rename operations in diffs.",
+          "difficulty": "easy",
+          "tags": [
+            "commit-message",
+            "rename",
+            "file-operations"
+          ],
           "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Rename').",
           "expected": "Rename oldname.txt to newname.txt",
           "description": "File renamed",
-          "duration_ms": 1285.11,
-          "operational_failure": true,
+          "duration_ms": 6586.01,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8193,9 +8522,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:08.864944+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-03T19:54:51.093375+00:00",
+            "pre_review_content_sha256": "c736de0d0dca8ed675cdb36ebe2bc5eaacdec98051484e6fd4018feaea7865b3",
+            "current_content_sha256": "c736de0d0dca8ed675cdb36ebe2bc5eaacdec98051484e6fd4018feaea7865b3"
           }
         },
         {
@@ -8332,14 +8661,55 @@
           "fixture_id": "f005",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "model_output": "Update original content",
+          "error": "Scoring error: llm_judge requires a judge client",
           "reasoning_level": "medium",
+          "input_tokens": 116,
+          "output_tokens": 70,
+          "total_tokens": 186,
+          "cost_usd": 3.786e-05,
+          "reasoning_tokens": 75,
+          "api_duration_ms": 1347.92,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').\n\nGit diff:\ndiff --git a/app.py b/app.py\nindex 2fd0152..e5d142a 100644\n--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n-original content\n+updated content\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Update original content",
+              "reasoning_content": "The user wants a concise commit message max 50 characters describing changes. The diff shows one line changed from \"original content\" to \"updated content\". Action taken: \"Update\". So commit message could be \"Update original content\". That's 24 characters. Ensure max 50. Provide just that.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to generate a commit message for a single-file content modification. Evaluates describing incremental changes.",
+          "difficulty": "easy",
+          "tags": [
+            "commit-message",
+            "modification",
+            "update"
+          ],
           "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').",
           "expected": "Update app.py with new content",
           "description": "File modification",
-          "duration_ms": 3242.67,
-          "operational_failure": true,
+          "duration_ms": 1489.64,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8347,9 +8717,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:08.864994+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-03T19:54:51.652865+00:00",
+            "pre_review_content_sha256": "f219639f02a3a6a77242d1b6943d0ca9058acb17ccc0e3525ccd6d0770a0af33",
+            "current_content_sha256": "f219639f02a3a6a77242d1b6943d0ca9058acb17ccc0e3525ccd6d0770a0af33"
           }
         },
         {
@@ -8485,14 +8855,56 @@
           "fixture_id": "f007",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "model_output": "Add Component1.jsx and Component2.jsx",
+          "error": "Scoring error: llm_judge requires a judge client",
           "reasoning_level": "medium",
+          "input_tokens": 204,
+          "output_tokens": 249,
+          "total_tokens": 453,
+          "cost_usd": 0.00011694,
+          "reasoning_tokens": 186,
+          "api_duration_ms": 5883.39,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').\n\nGit diff:\ndiff --git a/src/components/Component1.jsx b/src/components/Component1.jsx\nnew file mode 100644\nindex 0000000..e3a377b\n--- /dev/null\n+++ b/src/components/Component1.jsx\n@@ -0,0 +1 @@\n+component1\ndiff --git a/src/components/Component2.jsx b/src/components/Component2.jsx\nnew file mode 100644\nindex 0000000..efd23f4\n--- /dev/null\n+++ b/src/components/Component2.jsx\n@@ -0,0 +1 @@\n+component2\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Add Component1.jsx and Component2.jsx",
+              "reasoning_content": "We need a concise commit message max 50 chars describing changes. The diff shows adding two new files Component1.jsx and Component2.jsx, each containing just \"component1\" and \"component2\". So commit message: \"Add Component1 and Component2 files\". Count characters: Let's count: \"Add Component1 and Component2 files\". That's A(1) d2 d? Actually count: \"Add\" (3) + space (1)=4, \"Component1\" (10)=14, space=15, \"and\"(3)=18, space=19, \"Component2\"(10)=29, space=30, \"files\"(5)=35. So 35 chars, within limit. Could also be \"Add Component1.jsx and Component2.jsx\". Count: \"Add\"(3)+space=4, \"Component1.jsx\"(14)=18, space=19, \"and\"(3)=22, space=23, \"Component2.jsx\"(14)=37. 37 chars. Both fine. Choose concise. Provide just the commit message.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to generate a commit message for changes in a subdirectory (src/). Evaluates path-aware commit descriptions.",
+          "difficulty": "easy",
+          "tags": [
+            "commit-message",
+            "subdirectory",
+            "add",
+            "path-aware"
+          ],
           "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').",
           "expected": "Add React components to src",
           "description": "Subdirectory changes",
-          "duration_ms": 3217.31,
-          "operational_failure": true,
+          "duration_ms": 5981.4,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8500,23 +8912,65 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:08.865039+00:00",
-            "pre_review_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc",
-            "current_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc"
+            "reviewed_at": "2026-07-03T19:54:52.188428+00:00",
+            "pre_review_content_sha256": "fa0eaf12e746c027201fab434f67bd24983003af9b61fa7ad19984dca1441c2e",
+            "current_content_sha256": "fa0eaf12e746c027201fab434f67bd24983003af9b61fa7ad19984dca1441c2e"
           }
         },
         {
           "fixture_id": "f008",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "model_output": "Make build.sh executable",
+          "error": "Scoring error: llm_judge requires a judge client",
           "reasoning_level": "medium",
+          "input_tokens": 87,
+          "output_tokens": 408,
+          "total_tokens": 495,
+          "cost_usd": 0.000170595,
+          "reasoning_tokens": 407,
+          "api_duration_ms": 8253.24,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').\n\nGit diff:\ndiff --git a/build.sh b/build.sh\nold mode 100644\nnew mode 100755\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Make build.sh executable",
+              "reasoning_content": "Okay, the user wants me to generate a concise commit message based on a git diff. Let me look at the diff they provided.\n\nThe diff shows a change in the build.sh file. The old mode was 100644 and the new mode is 100755. I remember that in Unix-like systems, file modes indicate permissions. 100644 is read/write for owner, read for group and others (644), while 100755 is read/write/execute for owner, read/execute for group and others (755).\n\nSo this change is making the build.sh file executable. The action here is changing the file permissions to add execute permission.\n\nThe user specified that the commit message should be max 50 characters and focus on the action taken, like 'Add', 'Fix', 'Update'. For permission changes, common commit messages are things like \"Make script executable\" or \"Add execute permission\".\n\nLet me check the character count. \"Make build.sh executable\" is 24 characters. That's well under 50. Alternatively, \"Add execute permission to build.sh\" is 33 characters. Both are concise.\n\nI should make sure it's action-oriented. \"Make build.sh executable\" starts with a verb, which is good. The user said to focus on the action taken, so this fits.\n\nIs there a more standard way? Sometimes people say \"chmod +x build.sh\" but that's too technical for a commit message. Better to describe what it does.\n\n\"Make build.sh executable\" seems perfect. Let me count: M-a-k-e- -b-u-i-l-d-.-s-h- -e-x-e-c-u-t-a-b-l-e. That's 24 characters. Yes, under 50.\n\nI think that's the best option. The user didn't specify any other constraints, so I'll go with that.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to generate a commit message for an executable permission change. Evaluates recognizing metadata changes vs content changes.",
+          "difficulty": "medium",
+          "tags": [
+            "commit-message",
+            "permissions",
+            "executable",
+            "metadata"
+          ],
           "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update').",
           "expected": "Make build.sh executable",
           "description": "Executable permission change",
-          "duration_ms": 1307.72,
-          "operational_failure": true,
+          "duration_ms": 8385.71,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8524,9 +8978,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:08.865065+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:53.224271+00:00",
+            "pre_review_content_sha256": "0350cae2ebaf5b3fb5454da2702039cead772d8b715c6732821adc76f39a0967",
+            "current_content_sha256": "0350cae2ebaf5b3fb5454da2702039cead772d8b715c6732821adc76f39a0967"
           }
         },
         {
@@ -9046,13 +9500,13 @@
         }
       ],
       "errors": 6,
-      "total_duration_ms": 319434.98
+      "total_duration_ms": 338603.99
     },
     {
       "benchmark": "submodule_usage",
       "total": 12,
-      "passed": 11,
-      "pass_at_k": 0.9167,
+      "passed": 12,
+      "pass_at_k": 1.0,
       "scores": [
         {
           "fixture_id": "f001",
@@ -9572,16 +10026,58 @@
         },
         {
           "fixture_id": "f009",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "\n\ngit submodule sync",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 106,
+          "output_tokens": 97,
+          "total_tokens": 203,
+          "cost_usd": 5.319e-05,
+          "reasoning_tokens": 82,
+          "api_duration_ms": 2879.44,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Sync the submodule URLs from .gitmodules to .git/config. Output ONLY the git command, nothing else.\n\n.gitmodules:\n[submodule \"lib\"]\n\tpath = lib\n\turl = ../lib-bare\n\nSubmodule status:\n 158cab8c4b928186e32c304fc446cbb92f9f32d7 lib (heads/main)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\ngit submodule sync",
+              "reasoning_content": "We need to output only the git command that syncs submodule URLs from .gitmodules to .git/config. Usually: git submodule sync --recursive? Actually git submodule sync updates each submodule's URL in .git/config to match .gitmodules. So command: git submodule sync. Possibly need to include path? But they said output ONLY the git command, nothing else.\n\nThus answer: `git submodule sync`.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to sync submodule remote URLs after upstream changes. Evaluates submodule-sync workflow knowledge.",
+          "difficulty": "medium",
+          "tags": [
+            "submodule",
+            "sync",
+            "url",
+            "upstream"
+          ],
           "prompt": "Sync the submodule URLs from .gitmodules to .git/config. Output ONLY the git command, nothing else.",
           "expected": "git submodule sync",
           "description": "Sync submodule URLs",
-          "duration_ms": 1479.5,
-          "operational_failure": true,
+          "duration_ms": 3417.13,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -9589,9 +10085,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:10.707813+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:55.447078+00:00",
+            "pre_review_content_sha256": "a329f3acb9fd6f9beedf76acc857060848cadd0f333f8f4e342bdd551cf0c60b",
+            "current_content_sha256": "a329f3acb9fd6f9beedf76acc857060848cadd0f333f8f4e342bdd551cf0c60b"
           }
         },
         {
@@ -9790,14 +10286,14 @@
           }
         }
       ],
-      "errors": 1,
-      "total_duration_ms": 70903.99
+      "errors": 0,
+      "total_duration_ms": 72841.62
     },
     {
       "benchmark": "git_grep",
       "total": 12,
-      "passed": 10,
-      "pass_at_k": 0.8333,
+      "passed": 12,
+      "pass_at_k": 1.0,
       "scores": [
         {
           "fixture_id": "f001",
@@ -10121,16 +10617,57 @@
         },
         {
           "fixture_id": "f006",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "no",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 49,
+          "output_tokens": 179,
+          "total_tokens": 228,
+          "cost_usd": 7.5765e-05,
+          "reasoning_tokens": 205,
+          "api_duration_ms": 3652.03,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Here is the output of a git grep command run on this repository. Did the search find any matches? Output ONLY 'yes' or 'no', nothing else.\n\n"
+            },
+            {
+              "role": "assistant",
+              "content": "no",
+              "reasoning_content": "We need to output yes or no depending on whether the git grep command found any matches. The user hasn't provided the output of git grep; they just gave instructions: \"Here is the output of a git grep command run on this repository. Did the search find any matches? Output ONLY 'yes' or 'no', nothing else.\" But they didn't actually paste the output. Possibly they expect us to infer that there is no output given, meaning no matches? However, maybe the system expects us to see that the user didn't provide any output, thus we cannot determine? But the instruction: \"Here is the output of a git grep command run on this repository.\" Then they didn't include any output. Could be a trick: they intentionally omitted output, meaning the output is empty, thus no matches. So answer 'no'.\n\nThus output: no.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to handle searches with no results (empty output). Evaluates edge-case handling in search operations.",
+          "difficulty": "easy",
+          "tags": [
+            "git-grep",
+            "no-results",
+            "edge-case"
+          ],
           "prompt": "Here is the output of a git grep command run on this repository. Did the search find any matches? Output ONLY 'yes' or 'no', nothing else.",
           "expected": "no",
           "description": "Search with no results returns empty output",
-          "duration_ms": 1041.61,
-          "operational_failure": true,
+          "duration_ms": 3804.88,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -10138,23 +10675,64 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:10.707998+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:55.903125+00:00",
+            "pre_review_content_sha256": "bff80e2143e149d77578a2f6a64d66edaa29ae704b74a2e9c3c0b1855cec0956",
+            "current_content_sha256": "bff80e2143e149d77578a2f6a64d66edaa29ae704b74a2e9c3c0b1855cec0956"
           }
         },
         {
           "fixture_id": "f007",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "13",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 169,
+          "output_tokens": 343,
+          "total_tokens": 512,
+          "cost_usd": 0.000151565,
+          "reasoning_tokens": 320,
+          "api_duration_ms": 7058.89,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Here is the output of a git grep -C 2 command showing 2 lines of context around matches for 'port'. How many total lines (including context) appear in the output? Output ONLY the number, nothing else.\n\nserver.py:import sys\nserver.py:import os\nserver.py-\nserver.py-CONFIG = {\nserver.py-    \"host\": \"localhost\",\nserver.py:    \"port\": 8080,\nserver.py-    \"debug\": True,\nserver.py-    \"workers\": 4,\n--\nserver.py-def start_server():\nserver.py-    host = CONFIG[\"host\"]\nserver.py:    port = CONFIG[\"port\"]\nserver.py:    print(f\"Starting on {host}:{port}\")\n"
+            },
+            {
+              "role": "assistant",
+              "content": "13",
+              "reasoning_content": "We need to count total lines in the output shown, including context lines. The output includes lines with markers indicating context? Let's examine.\n\nThe output given:\n\n```\nserver.py:import sys\nserver.py:import os\nserver.py-\nserver.py-CONFIG = {\nserver.py-    \"host\": \"localhost\",\nserver.py:    \"port\": 8080,\nserver.py-    \"debug\": True,\nserver.py-    \"workers\": 4,\n--\nserver.py-def start_server():\nserver.py-    host = CONFIG[\"host\"]\nserver.py:    port = CONFIG[\"port\"]\nserver.py:    print(f\"Starting on {host}:{port}\")\n```\n\nWe need to count lines. Let's copy and count.\n\nLine1: server.py:import sys\nLine2: server.py:import os\nLine3: server.py-\nLine4: server.py-CONFIG = {\nLine5: server.py-    \"host\": \"localhost\",\nLine6: server.py:    \"port\": 8080,\nLine7: server.py-    \"debug\": True,\nLine8: server.py-    \"workers\": 4,\nLine9: --\nLine10: server.py-def start_server():\nLine11: server.py-    host = CONFIG[\"host\"]\nLine12: server.py:    port = CONFIG[\"port\"]\nLine13: server.py:    print(f\"Starting on {host}:{port}\")\n\nThus total lines = 13.\n\nCheck if there are any blank lines? None visible.\n\nThus answer: 13.\n\nWe need to output only the number.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to show context lines with git grep -C. Evaluates understanding of surrounding-line output.",
+          "difficulty": "medium",
+          "tags": [
+            "git-grep",
+            "context-lines",
+            "surrounding"
+          ],
           "prompt": "Here is the output of a git grep -C 2 command showing 2 lines of context around matches for 'port'. How many total lines (including context) appear in the output? Output ONLY the number, nothing else.",
           "expected": "13",
           "description": "Context lines with git grep -C",
-          "duration_ms": 1023.99,
-          "operational_failure": true,
+          "duration_ms": 7211.57,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -10162,9 +10740,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:10.708024+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:56.420136+00:00",
+            "pre_review_content_sha256": "94ea4e0dd76d1a1ba6276ea4dca0bbbb41dcaeedadc80e98ca2277e00c8c833a",
+            "current_content_sha256": "94ea4e0dd76d1a1ba6276ea4dca0bbbb41dcaeedadc80e98ca2277e00c8c833a"
           }
         },
         {
@@ -10489,14 +11067,14 @@
           }
         }
       ],
-      "errors": 2,
-      "total_duration_ms": 72588.31
+      "errors": 0,
+      "total_duration_ms": 81539.16
     },
     {
       "benchmark": "git_show",
       "total": 12,
-      "passed": 6,
-      "pass_at_k": 0.5,
+      "passed": 11,
+      "pass_at_k": 0.9167,
       "scores": [
         {
           "fixture_id": "f001",
@@ -10567,14 +11145,55 @@
           "fixture_id": "f002",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "model_output": "(no output)",
+          "error": "Expected 'a.txt', got '(no output)'",
           "reasoning_level": "medium",
+          "input_tokens": 204,
+          "output_tokens": 194,
+          "total_tokens": 398,
+          "cost_usd": 0.00013111,
+          "reasoning_tokens": 185,
+          "api_duration_ms": 12561.27,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Using git show --stat, which file was modified in the commit with message 'Modify only a.txt'? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 30bbb3461a167f93a3bab43d8e4b477fe7bebb7b\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:21:35 2026 -0700\n\n    Modify only b.txt\n---\n b.txt | 1 +\n 1 file changed, 1 insertion(+)\n\ndiff --git a/b.txt b/b.txt\nindex 65b2df8..c868515 100644\n--- a/b.txt\n+++ b/b.txt\n@@ -1 +1,2 @@\n beta\n+changed\n"
+            },
+            {
+              "role": "assistant",
+              "content": "(no output)",
+              "reasoning_content": "We need to answer: using git show --stat, which file was modified in commit with message 'Modify only a.txt'? But given commits list only includes commit with message \"Modify only b.txt\". There's no commit with message \"Modify only a.txt\". Possibly the answer is none? But the instruction: Output ONLY the filename, nothing else. If none, maybe output nothing? But maybe there is an implied commit with that message not shown? Possibly they want answer \"a.txt\". However based on provided data, no commit with that message exists, so maybe answer is empty? The instruction: Output ONLY the filename, nothing else. If no such commit, maybe there is no file? Could respond with nothing (blank). Usually they'd expect \"a.txt\". But logically they gave commit b.txt only. Could be a trick: there is no such commit, so output nothing. I'll answer with blank line.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to identify which files changed in a specific commit. Evaluates file-list extraction from git show.",
+          "difficulty": "easy",
+          "tags": [
+            "git-show",
+            "files-changed",
+            "file-list"
+          ],
           "prompt": "Using git show --stat, which file was modified in the commit with message 'Modify only a.txt'? Output ONLY the filename, nothing else.",
           "expected": "a.txt",
           "description": "Show which files changed in a specific commit",
-          "duration_ms": 1380.04,
-          "operational_failure": true,
+          "duration_ms": 12804.68,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -10582,23 +11201,64 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:10.708149+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:56.946492+00:00",
+            "pre_review_content_sha256": "40ea4284a5ef144c1373e3d2f6fa4c1b610aa95eb3cad18375471a5a1dc279da",
+            "current_content_sha256": "40ea4284a5ef144c1373e3d2f6fa4c1b610aa95eb3cad18375471a5a1dc279da"
           }
         },
         {
           "fixture_id": "f003",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "Release version 1.0",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 671,
+          "output_tokens": 360,
+          "total_tokens": 1031,
+          "cost_usd": 0.000201035,
+          "reasoning_tokens": 285,
+          "api_duration_ms": 7970.66,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Using git show, what is the commit message of the commit that the lightweight tag 'v1.0.0' points to? Output ONLY the commit message, nothing else.\n\nAll commits:\ncommit e5b51edcb3ecde4c35a64297516bd0c2035eefee\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:21:48 2026 -0700\n\n    Release version 1.1\n---\n app.txt | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/app.txt b/app.txt\nindex 17f1424..c0347ee 100644\n--- a/app.txt\n+++ b/app.txt\n@@ -1 +1 @@\n-v1 content\n+v2 content\n\ncommit ac8ef85fcce0a3da0b646ef2d617040fbaccb2f3\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:21:47 2026 -0700\n\n    Release version 1.0\n---\n app.txt | 1 +\n 1 file changed, 1 insertion(+)\n\ndiff --git a/app.txt b/app.txt\nnew file mode 100644\nindex 0000000..17f1424\n--- /dev/null\n+++ b/app.txt\n@@ -0,0 +1 @@\n+v1 content\n\nTag 'v1.0.0':\ncommit ac8ef85fcce0a3da0b646ef2d617040fbaccb2f3\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:21:47 2026 -0700\n\n    Release version 1.0\n\ndiff --git a/app.txt b/app.txt\nnew file mode 100644\nindex 0000000..17f1424\n--- /dev/null\n+++ b/app.txt\n@@ -0,0 +1 @@\n+v1 content\n\nTag 'v1.1.0':\ncommit e5b51edcb3ecde4c35a64297516bd0c2035eefee\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:21:48 2026 -0700\n\n    Release version 1.1\n\ndiff --git a/app.txt b/app.txt\nindex 17f1424..c0347ee 100644\n--- a/app.txt\n+++ b/app.txt\n@@ -1 +1 @@\n-v1 content\n+v2 content\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Release version 1.0",
+              "reasoning_content": "We need to parse the user request: \"Using git show, what is the commit message of the commit that the lightweight tag 'v1.0.0' points to? Output ONLY the commit message, nothing else.\"\n\nGiven the context: They provided a list of commits and tag definitions. The tag 'v1.0.0' points to commit ac8ef85fcce0a3da0b646ef2d617040fbaccb2f3. Its commit message: \"Release version 1.0\". The output should be exactly that string, nothing else.\n\nThus answer: Release version 1.0\n\nCheck formatting: The commit message lines: there is a blank line after the message? Actually in the given commit block:\n\ncommit ac8ef85fcce0a3da0b646ef2d617040fbaccb2f3\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:21:47 2026 -0700\n\n    Release version 1.0\n---\n app.txt | 1 +\n 1 file changed, 1 insertion(+)\n\ndiff --git a/app.txt b/app.txt\nnew file mode 100644\nindex 0000000..17f1424\n--- /dev/null\n+++ b/app.txt\n@@ -0,0 +1 @@\n+v1 content\n\nThus the commit message line is \"Release version 1.0\". No extra whitespace. So answer exactly that.\n\nThus final: Release version 1.0\n\n"
+            }
+          ],
+          "purpose": "Tests ability to inspect a lightweight tag pointing to a commit. Evaluates tag-to-commit resolution.",
+          "difficulty": "easy",
+          "tags": [
+            "git-show",
+            "lightweight-tag",
+            "tag"
+          ],
           "prompt": "Using git show, what is the commit message of the commit that the lightweight tag 'v1.0.0' points to? Output ONLY the commit message, nothing else.",
           "expected": "Release version 1.0",
           "description": "Show lightweight tag pointing to a commit",
-          "duration_ms": 1143.26,
-          "operational_failure": true,
+          "duration_ms": 8183.78,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -10606,9 +11266,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:10.708176+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-03T19:54:57.495677+00:00",
+            "pre_review_content_sha256": "20bcc1089621b95d7415dee07babd2dfa16f22ac008f263b03d408d60aa8c719",
+            "current_content_sha256": "20bcc1089621b95d7415dee07babd2dfa16f22ac008f263b03d408d60aa8c719"
           }
         },
         {
@@ -10937,16 +11597,57 @@
         },
         {
           "fixture_id": "f009",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "2",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 324,
+          "output_tokens": 148,
+          "total_tokens": 472,
+          "cost_usd": 0.00013538,
+          "reasoning_tokens": 123,
+          "api_duration_ms": 18208.09,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Using git show --merges -s --format=%P, how many parent commits does the merge commit have? Output ONLY the number, nothing else.\n\nAll commits:\ncommit 652743a8484da3f0ada8069826bb1da3c0a479a6\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:21:56 2026 -0700\n\n    Feature work\n---\n feature.txt | 1 +\n 1 file changed, 1 insertion(+)\n\ndiff --git a/feature.txt b/feature.txt\nnew file mode 100644\nindex 0000000..a7453f0\n--- /dev/null\n+++ b/feature.txt\n@@ -0,0 +1 @@\n+feature\n\ncommit b0800ec8baa48e1430ce370c29b1cfedb1f2a519\nMerge: 75b5b11 652743a\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:21:56 2026 -0700\n\n    Merge feature branch\n\n feature.txt | 1 +\n 1 file changed, 1 insertion(+)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "2",
+              "reasoning_content": "We need to parse the question: \"Using git show --merges -s --format=%P, how many parent commits does the merge commit have? Output ONLY the number, nothing else.\"\n\nGiven the commit log: two commits: first commit (652743a) is feature work, then commit b0800ec8baa48e1430ce370c29b1cfedb1f2a519 is a merge with parents 75b5b11 and 652743a.\n\nThus the merge commit has two parent commits.\n\nTherefore answer: 2.\n\nWe must output only the number.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to inspect a merge commit and identify its parents. Evaluates merge-commit structure comprehension.",
+          "difficulty": "medium",
+          "tags": [
+            "git-show",
+            "merge-commit",
+            "parents"
+          ],
           "prompt": "Using git show --merges -s --format=%P, how many parent commits does the merge commit have? Output ONLY the number, nothing else.",
           "expected": "2",
           "description": "Show merge commit and its parents",
-          "duration_ms": 1695.56,
-          "operational_failure": true,
+          "duration_ms": 18463.45,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -10954,23 +11655,64 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.224663+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:57.495774+00:00",
+            "pre_review_content_sha256": "0011830641f751cda37a44d6b1f73f16d23734b050f6e05729dbe59a73ce567f",
+            "current_content_sha256": "0011830641f751cda37a44d6b1f73f16d23734b050f6e05729dbe59a73ce567f"
           }
         },
         {
           "fixture_id": "f010",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "R",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 204,
+          "output_tokens": 86,
+          "total_tokens": 290,
+          "cost_usd": 5.706e-05,
+          "reasoning_tokens": 81,
+          "api_duration_ms": 2245.58,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Using git show --name-status, what is the status code for the file rename in the 'Rename file' commit? Output ONLY the single letter code (e.g. R for rename), nothing else.\n\nAll commits:\ncommit d06bb72c0d4867b8cf0358b4c6c518363260a2f6\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:22:14 2026 -0700\n\n    Rename file\n---\n old_name.txt => new_name.txt | 0\n 1 file changed, 0 insertions(+), 0 deletions(-)\n\ndiff --git a/old_name.txt b/new_name.txt\nsimilarity index 100%\nrename from old_name.txt\nrename to new_name.txt\n"
+            },
+            {
+              "role": "assistant",
+              "content": "R",
+              "reasoning_content": "The user asks: \"Using git show --name-status, what is the status code for the file rename in the 'Rename file' commit? Output ONLY the single letter code (e.g. R for rename), nothing else.\"\n\nWe need to answer with just the single letter code for rename: that is 'R'.\n\nThus output: R.\n\nWe must ensure no extra characters or spaces. Just R.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to detect file rename in a commit. Evaluates rename-detection awareness in commit inspection.",
+          "difficulty": "medium",
+          "tags": [
+            "git-show",
+            "rename",
+            "detection"
+          ],
           "prompt": "Using git show --name-status, what is the status code for the file rename in the 'Rename file' commit? Output ONLY the single letter code (e.g. R for rename), nothing else.",
           "expected": "R",
           "description": "Show file rename detection in commit",
-          "duration_ms": 1508.24,
-          "operational_failure": true,
+          "duration_ms": 2404.45,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -10978,23 +11720,64 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.224694+00:00",
-            "pre_review_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc",
-            "current_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc"
+            "reviewed_at": "2026-07-03T19:54:58.084825+00:00",
+            "pre_review_content_sha256": "c7084a7e6afdd64741f8284b4dd1f26f2b191267f3171720f01220016144a7b5",
+            "current_content_sha256": "c7084a7e6afdd64741f8284b4dd1f26f2b191267f3171720f01220016144a7b5"
           }
         },
         {
           "fixture_id": "f011",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "image.png",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 236,
+          "output_tokens": 35,
+          "total_tokens": 271,
+          "cost_usd": 3.406e-05,
+          "reasoning_tokens": 39,
+          "api_duration_ms": 3699.04,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 1293f039dd120a1e6717e312066e3870fafc93ab\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:22:17 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
+            },
+            {
+              "role": "assistant",
+              "content": "image.png",
+              "reasoning_content": "We need to parse the commit message. The diff shows file image.png changed. Output only the filename, nothing else.\n\nThus answer: image.png\n\n"
+            }
+          ],
+          "purpose": "Tests ability to inspect a binary file change in a commit. Evaluates binary-change handling in commit display.",
+          "difficulty": "medium",
+          "tags": [
+            "git-show",
+            "binary",
+            "file-change"
+          ],
           "prompt": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.",
           "expected": "image.png",
           "description": "Show binary file change in commit",
-          "duration_ms": 1001.78,
-          "operational_failure": true,
+          "duration_ms": 3857.63,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11002,23 +11785,64 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.224722+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:58.946090+00:00",
+            "pre_review_content_sha256": "cd118dee3932f74e277bac9a5b13e37c1510a653ef533e3d7c2bac352117b6e3",
+            "current_content_sha256": "cd118dee3932f74e277bac9a5b13e37c1510a653ef533e3d7c2bac352117b6e3"
           }
         },
         {
           "fixture_id": "f012",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "3",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 340,
+          "output_tokens": 72,
+          "total_tokens": 412,
+          "cost_usd": 6.3e-05,
+          "reasoning_tokens": 68,
+          "api_duration_ms": 2583.42,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Using git show --stat, how many files were added in the commit 'Add all project files'? Output ONLY the number, nothing else.\n\nAll commits:\ncommit fe847e8dd2501c2f1fcddc973fac3ae2d41b15cf\nAuthor: Test User <test@test.com>\nDate:   Thu Jul 2 21:22:20 2026 -0700\n\n    Add all project files\n---\n README.md    | 1 +\n main.py      | 1 +\n test_main.py | 1 +\n 3 files changed, 3 insertions(+)\n\ndiff --git a/README.md b/README.md\nnew file mode 100644\nindex 0000000..d8f8d46\n--- /dev/null\n+++ b/README.md\n@@ -0,0 +1 @@\n+docs\ndiff --git a/main.py b/main.py\nnew file mode 100644\nindex 0000000..85de9cf\n--- /dev/null\n+++ b/main.py\n@@ -0,0 +1 @@\n+src\ndiff --git a/test_main.py b/test_main.py\nnew file mode 100644\nindex 0000000..9daeafb\n--- /dev/null\n+++ b/test_main.py\n@@ -0,0 +1 @@\n+test\n"
+            },
+            {
+              "role": "assistant",
+              "content": "3",
+              "reasoning_content": "We need to output only the number of files added in commit 'Add all project files'. The commit message is \"Add all project files\". The commit shows 3 files changed: README.md, main.py, test_main.py. All are new files (added). So number of files added = 3.\n\nThus answer: 3.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to inspect a commit touching multiple files. Evaluates multi-file commit comprehension.",
+          "difficulty": "medium",
+          "tags": [
+            "git-show",
+            "multi-file",
+            "comprehensive"
+          ],
           "prompt": "Using git show --stat, how many files were added in the commit 'Add all project files'? Output ONLY the number, nothing else.",
           "expected": "3",
           "description": "Show commit touching multiple files",
-          "duration_ms": 1049.15,
-          "operational_failure": true,
+          "duration_ms": 2706.17,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11026,33 +11850,67 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.224748+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:58.946155+00:00",
+            "pre_review_content_sha256": "9a2bf0cd9f99da1b4b9965fd427d953331446b7c93e81d8cdb4044fd44afb277",
+            "current_content_sha256": "9a2bf0cd9f99da1b4b9965fd427d953331446b7c93e81d8cdb4044fd44afb277"
           }
         }
       ],
-      "errors": 6,
-      "total_duration_ms": 23931.5
+      "errors": 1,
+      "total_duration_ms": 64573.63
     },
     {
       "benchmark": "commit_squash",
       "total": 12,
-      "passed": 8,
-      "pass_at_k": 0.6667,
+      "passed": 12,
+      "pass_at_k": 1.0,
       "scores": [
         {
           "fixture_id": "f001",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "WIP: continue work\nWIP: add main.py\n",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 154,
+          "output_tokens": 499,
+          "total_tokens": 653,
+          "cost_usd": 0.00021269,
+          "reasoning_tokens": 452,
+          "api_duration_ms": 7173.03,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Analyze this git history and identify which consecutive commits should be marked as squash/fixup in an interactive rebase to create a cleaner history. Focus on WIP (Work In Progress) commits that represent incomplete work. Do not include the base/anchor commit they would be squashed into. Output ONLY the selected commit subject lines, one per line, with no explanation and no base/anchor/final commits.\n\nGit commit history (newest first):\nc4105e2 Complete feature\na14f319 WIP: continue work\n648e0bd WIP: add main.py\n0a2c12f Initial commit\n"
+            },
+            {
+              "role": "assistant",
+              "content": "WIP: continue work\nWIP: add main.py\n",
+              "reasoning_content": "We need to analyze git history: newest first commit list: c4105e2 Complete feature, a14f319 WIP: continue work, 648e0bd WIP: add main.py, 0a2c12f Initial commit.\n\nWe need to mark consecutive commits that are WIP and should be squashed/fixup into the base (which is likely the earliest non-WIP commit they belong to). We need to output only the selected commit subject lines (the WIP commits) one per line, no explanation, and no base/anchor/final commits.\n\nWe have two WIP commits: a14f319 WIP: continue work, and 648e0bd WIP: add main.py. They are consecutive? In order newest first: c4105e2 (Complete feature) then a14f319 (WIP: continue work) then 648e0bd (WIP: add main.py) then initial.\n\nSo the WIP commits are after the final commit? Actually the final commit is \"Complete feature\". The two WIP commits are before that? Wait newest first: c4105e2 Complete feature (most recent), then a14f319 WIP: continue work, then 648e0bd WIP: add main.py, then 0a2c12f Initial commit (oldest). So the WIP commits are older than the final commit. Typically we want to squash WIP commits into the final commit (or into the base commit they are building towards). The base/anchor commit they would be squashed into is the \"Complete feature\" commit? Actually we want to squash the WIP commits into the commit that completes the feature. Usually you'd have WIP commits leading up to a final commit; you'd squash the WIP commits into the final commit (or into the base commit before the WIP series). The instruction: \"Do not include the base/anchor commit they would be squashed into.\" So we should output the WIP commits subject lines only.\n\nThus we output:\n\nWIP: continue work\nWIP: add main.py\n\nEach on its own line.\n\nCheck if any other WIP? No.\n\nThus answer.\n\n"
+            }
+          ],
           "prompt": "Analyze this git history and identify which consecutive commits should be marked as squash/fixup in an interactive rebase to create a cleaner history. Focus on WIP (Work In Progress) commits that represent incomplete work. Do not include the base/anchor commit they would be squashed into. Output ONLY the selected commit subject lines, one per line, with no explanation and no base/anchor/final commits.",
           "expected": "WIP: add main.py\nWIP: continue work",
           "description": "WIP commits - two consecutive WIP commits should be squashed",
-          "duration_ms": 1205.98,
-          "operational_failure": true,
+          "duration_ms": 7458.8,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11060,23 +11918,57 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.224774+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:54:59.471299+00:00",
+            "pre_review_content_sha256": "1b3f7d0c21a0e4cb457eee5b73a42c921add4325e3b97bdc6f0b5755dad94e23",
+            "current_content_sha256": "1b3f7d0c21a0e4cb457eee5b73a42c921add4325e3b97bdc6f0b5755dad94e23"
           }
         },
         {
           "fixture_id": "f002",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "fixup: Fix typo in hello.py",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 129,
+          "output_tokens": 129,
+          "total_tokens": 258,
+          "cost_usd": 8.5785e-05,
+          "reasoning_tokens": 113,
+          "api_duration_ms": 8972.24,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Analyze this git history and identify commits that are fixups of previous commits (like typo corrections). These should be marked as fixup/squash back into the original commit they fix. Do not include the original target commit as one of the commits to squash. Output ONLY the selected commit subject lines, one per line, with no explanation.\n\nGit commit history (newest first):\n204bd0e fixup: Fix typo in hello.py\n3bc36ab Add hello world program\nd8e544e Initial commit\n"
+            },
+            {
+              "role": "assistant",
+              "content": "fixup: Fix typo in hello.py",
+              "reasoning_content": "We need to analyze git history: newest first list: 204bd0e fixup: Fix typo in hello.py; 3bc36ab Add hello world program; d8e544e Initial commit.\n\nFixups are commits that correct previous commits. The commit \"fixup: Fix typo in hello.py\" is a fixup of the previous commit (Add hello world program). So we output that commit subject line only. No other fixups. Output exactly the subject line: \"fixup: Fix typo in hello.py\". Ensure no extra explanation.\n\n"
+            }
+          ],
           "prompt": "Analyze this git history and identify commits that are fixups of previous commits (like typo corrections). These should be marked as fixup/squash back into the original commit they fix. Do not include the original target commit as one of the commits to squash. Output ONLY the selected commit subject lines, one per line, with no explanation.",
           "expected": "fixup: Fix typo in hello.py",
           "description": "Fixup commits - typo fixes should be squashed into original",
-          "duration_ms": 1181.5,
-          "operational_failure": true,
+          "duration_ms": 9173.52,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11084,9 +11976,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.224800+00:00",
-            "pre_review_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc",
-            "current_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc"
+            "reviewed_at": "2026-07-03T19:55:00.060092+00:00",
+            "pre_review_content_sha256": "371693737e5b9e8ef5c2807a84f4799fa819d5ced92efd98ac3bb3281b350aa3",
+            "current_content_sha256": "371693737e5b9e8ef5c2807a84f4799fa819d5ced92efd98ac3bb3281b350aa3"
           }
         },
         {
@@ -11148,16 +12040,50 @@
         },
         {
           "fixture_id": "f004",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "WIP: continue data\nWIP: adding data",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 134,
+          "output_tokens": 271,
+          "total_tokens": 405,
+          "cost_usd": 0.00013401,
+          "reasoning_tokens": 243,
+          "api_duration_ms": 6195.62,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "This repository has a series of commits that incrementally build up a feature. Identify the WIP commits that should be marked as squash/fixup into a single clean commit. Do not include the final completed-feature commit. Output ONLY the selected commit subject lines, one per line, with no explanation.\n\nGit commit history (newest first):\n50646c2 Add complete data\n7f76dcf WIP: continue data\na41772b WIP: adding data\n81e66b4 Add initial file\n"
+            },
+            {
+              "role": "assistant",
+              "content": "WIP: continue data\nWIP: adding data",
+              "reasoning_content": "We need to output selected commit subject lines that are WIP commits that should be marked as squash/fixup into a single clean commit. Do not include final completed-feature commit. The history (newest first):\n\n50646c2 Add complete data\n7f76dcf WIP: continue data\na41772b WIP: adding data\n81e66b4 Add initial file\n\nFeature commits: presumably the final completed-feature commit is \"Add complete data\". The WIP commits are \"WIP: continue data\" and \"WIP: adding data\". So we output those subject lines (as they appear). Probably \"WIP: continue data\" then \"WIP: adding data\" (order as they appear in list? They want only selected commit subject lines, one per line, no explanation. Likely order from oldest to newest? Not specified. Usually they'd list them as they appear in the list (newest first) but they said \"Identify the WIP commits that should be marked as squash/fixup into a single clean commit.\" We can output each line. I'd output:\n\nWIP: continue data\nWIP: adding data\n\nOne per line.\n\n"
+            }
+          ],
           "prompt": "This repository has a series of commits that incrementally build up a feature. Identify the WIP commits that should be marked as squash/fixup into a single clean commit. Do not include the final completed-feature commit. Output ONLY the selected commit subject lines, one per line, with no explanation.",
           "expected": "WIP: adding data\nWIP: continue data",
           "description": "Rebase/Squash style - intermediate commits",
-          "duration_ms": 2471.44,
-          "operational_failure": true,
+          "duration_ms": 6447.67,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11165,9 +12091,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.224845+00:00",
-            "pre_review_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc",
-            "current_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc"
+            "reviewed_at": "2026-07-03T19:55:00.520847+00:00",
+            "pre_review_content_sha256": "e64647623aa16fb498b671f81818de9668cf97591df26365b0d357a90ee59ccc",
+            "current_content_sha256": "e64647623aa16fb498b671f81818de9668cf97591df26365b0d357a90ee59ccc"
           }
         },
         {
@@ -11571,16 +12497,50 @@
         },
         {
           "fixture_id": "f012",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "WIP: add line3\nWIP: add line2\nWIP: add line1",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 146,
+          "output_tokens": 208,
+          "total_tokens": 354,
+          "cost_usd": 9.561e-05,
+          "reasoning_tokens": 167,
+          "api_duration_ms": 2609.2,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "This repository has a feature built incrementally with many small commits. Identify all the WIP commits that should be marked as squash/fixup for a cleaner history. Do not include the initial or final feature anchor commit. Output ONLY the selected commit subject lines, one per line, with no explanation.\n\nGit commit history (newest first):\n2bf3f0b Complete feature\na1c1a55 WIP: add line3\n2763e78 WIP: add line2\nf2cddc1 WIP: add line1\n781b280 Initial feature\n"
+            },
+            {
+              "role": "assistant",
+              "content": "WIP: add line3\nWIP: add line2\nWIP: add line1",
+              "reasoning_content": "We need to output selected commit subject lines for WIP commits that should be marked as squash/fixup. Exclude initial and final feature anchor commit. The commit list newest first: 2bf3f0b Complete feature (final), a1c1a55 WIP: add line3, 2763e78 WIP: add line2, f2cddc1 WIP: add line1, 781b280 Initial feature (initial). We need to output only the WIP commit subjects, each on its own line, no explanation. So output:\n\nWIP: add line3\nWIP: add line2\nWIP: add line1\n\nProbably in the same order as they appear? The instruction: Output ONLY the selected commit subject lines, one per line, with no explanation. So we output those three lines.\n\n"
+            }
+          ],
           "prompt": "This repository has a feature built incrementally with many small commits. Identify all the WIP commits that should be marked as squash/fixup for a cleaner history. Do not include the initial or final feature anchor commit. Output ONLY the selected commit subject lines, one per line, with no explanation.",
           "expected": "WIP: add line1\nWIP: add line2\nWIP: add line3",
           "description": "Long-running feature with many small commits",
-          "duration_ms": 1375.07,
-          "operational_failure": true,
+          "duration_ms": 2893.23,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11588,33 +12548,75 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.995971+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-03T19:55:01.144745+00:00",
+            "pre_review_content_sha256": "06a38ec915884ba25cd9356292ae73d675200abfde26d43c89e60a15ade10ace",
+            "current_content_sha256": "06a38ec915884ba25cd9356292ae73d675200abfde26d43c89e60a15ade10ace"
           }
         }
       ],
-      "errors": 4,
-      "total_duration_ms": 50632.19
+      "errors": 0,
+      "total_duration_ms": 70371.42
     },
     {
       "benchmark": "cherry_pick",
       "total": 12,
-      "passed": 4,
-      "pass_at_k": 0.3333,
+      "passed": 11,
+      "pass_at_k": 0.9167,
       "scores": [
         {
           "fixture_id": "f001",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "Hello, Planet!!!",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 109,
+          "output_tokens": 280,
+          "total_tokens": 389,
+          "cost_usd": 0.00015029,
+          "reasoning_tokens": 267,
+          "api_duration_ms": 27332.76,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in greeting.txt. The base version was 'Hello, World!'. The incoming commit changed it to 'Hello, World!!!'. The current branch has 'Hello, Planet!'. Provide ONLY the resolved file content, nothing else.\n\nConflicted file content:\n--- greeting.txt\n<<<<<<< HEAD\nHello, Planet!\n=======\nHello, World!!!\n>>>>>>> 971dae9 (Add excitement)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Hello, Planet!!!",
+              "reasoning_content": "We need to resolve conflict between base 'Hello, World!', incoming 'Hello, World!!!', and current 'Hello, Planet!'.\n\nWe need to produce resolved file content. How to decide? Likely we need to manually resolve based on context: The base says Hello, World!; incoming adds extra exclamation marks; current changed World to Planet. The merge conflict shows HEAD (current branch) Hello, Planet! vs incoming Hello, World!!!.\n\nWe need to produce a merged version combining changes: base Hello, World!; current changed World->Planet (Hello, Planet!); incoming added exclamation marks: Hello, World!!! (still World). So we need to merge: the change from current is \"World\" -> \"Planet\". The change from incoming is adding extra exclamation marks. So result should be Hello, Planet!!! (Planet plus three exclamation marks). Or maybe we keep base exclamation count? Incoming adds two extra exclamation marks (base had one!). Actually base 'Hello, World!' has one !. Incoming 'Hello, World!!!' has three !. So incoming added two more !. Current 'Hello, Planet!' has one !. So merging should give Hello, Planet!!! (Planet with three !). That seems logical.\n\nThus resolved file content: Hello, Planet!!!\n\nProvide only that.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a simple single-line cherry-pick conflict in a greeting file. Evaluates basic conflict marker understanding and merge strategy.",
+          "difficulty": "easy",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "single-line",
+            "basic"
+          ],
           "prompt": "Resolve the cherry-pick conflict in greeting.txt. The base version was 'Hello, World!'. The incoming commit changed it to 'Hello, World!!!'. The current branch has 'Hello, Planet!'. Provide ONLY the resolved file content, nothing else.",
           "expected": "Hello, Planet!!!",
           "description": "Single-line greeting conflict",
-          "duration_ms": 1308.35,
-          "operational_failure": true,
+          "duration_ms": 27577.15,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11622,23 +12624,65 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.995998+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-03T19:55:01.144803+00:00",
+            "pre_review_content_sha256": "6cc45a39ecf32945a69a97905a58c0fa93ee6539a3464340da8e2123d3789915",
+            "current_content_sha256": "6cc45a39ecf32945a69a97905a58c0fa93ee6539a3464340da8e2123d3789915"
           }
         },
         {
           "fixture_id": "f002",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "VERSION=2.0.0",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 136,
+          "output_tokens": 216,
+          "total_tokens": 352,
+          "cost_usd": 0.00012684,
+          "reasoning_tokens": 200,
+          "api_duration_ms": 13838.63,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in version.txt. The base version was 'VERSION=1.0.0'. The incoming commit (release) changed it to 'VERSION=2.0.0'. The current branch (main) has 'VERSION=1.1.0'. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- version.txt\n<<<<<<< HEAD\nVERSION=1.1.0\n=======\nVERSION=2.0.0\n>>>>>>> 6917a4d (Bump major version)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "VERSION=2.0.0",
+              "reasoning_content": "We need to resolve conflict. Base version 'VERSION=1.0.0'. Incoming commit (release) changed to 'VERSION=2.0.0'. Current branch (main) has 'VERSION=1.1.0'. Conflict resolution should decide which version to use. Usually cherry-pick picks changes from incoming commit onto current branch, but base is 1.0.0. Since main changed to 1.1.0 (increment minor), incoming changed to 2.0.0 (major bump). Which is correct? Usually you'd want to take the incoming change (major bump) because it's a release bump? However main already bumped minor. Might need to decide based on semantic versioning: main had 1.1.0 (patch? Actually minor). Incoming major bump to 2.0.0 supersedes. So resolved version should be 2.0.0. Provide only file content: VERSION=2.0.0.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a version number conflict during cherry-pick. Evaluates handling of semantic versioning clashes between branches.",
+          "difficulty": "easy",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "version-number",
+            "semver"
+          ],
           "prompt": "Resolve the cherry-pick conflict in version.txt. The base version was 'VERSION=1.0.0'. The incoming commit (release) changed it to 'VERSION=2.0.0'. The current branch (main) has 'VERSION=1.1.0'. Provide ONLY the resolved file content.",
           "expected": "VERSION=2.0.0",
           "description": "Single-line version number conflict",
-          "duration_ms": 1690.18,
-          "operational_failure": true,
+          "duration_ms": 14066.03,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11646,23 +12690,65 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.996025+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:55:01.144822+00:00",
+            "pre_review_content_sha256": "44efa4eb3e3873a83a743f9a1963bb194f52b26709aa1d57ee3e7b9bb3cea0e2",
+            "current_content_sha256": "44efa4eb3e3873a83a743f9a1963bb194f52b26709aa1d57ee3e7b9bb3cea0e2"
           }
         },
         {
           "fixture_id": "f003",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "Status: Resolved",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 103,
+          "output_tokens": 450,
+          "total_tokens": 553,
+          "cost_usd": 0.00021177,
+          "reasoning_tokens": 437,
+          "api_duration_ms": 7624.1,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in status.txt. The base was 'Status: OK'. The incoming commit changed it to 'Status: Resolved'. The current branch has 'Status: Failed'. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- status.txt\n<<<<<<< HEAD\nStatus: Failed\n=======\nStatus: Resolved\n>>>>>>> 3ae9d39 (Fix status)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Status: Resolved",
+              "reasoning_content": "We need to resolve conflict. Base was 'Status: OK'. Incoming changed to 'Status: Resolved'. Current branch has 'Status: Failed'. Need to decide what the resolved content should be. Usually we need to choose appropriate resolution: maybe base OK changed to Resolved in incoming, but current says Failed. Conflict: we need to decide final content. Possibly we want to keep incoming? Or maybe we need to incorporate both? The instruction: \"Resolve the cherry-pick conflict in status.txt. The base was 'Status: OK'. The incoming commit changed it to 'Status: Resolved'. The current branch has 'Status: Failed'. Provide ONLY the resolved file content.\"\n\nWe must decide. Likely we want to keep the incoming change (Resolved) as it's the fix? But we need to think: The base was OK, incoming changed to Resolved (maybe a fix), current branch says Failed (maybe a regression). Conflict resolution: we need to decide what the correct status should be. Could be that we want to keep the incoming change (Resolved) because it's the fix, overriding the Failed. Or we might want to keep Failed because it's current branch? Usually when cherry-picking, you apply incoming commit onto current branch; if there's a conflict, you need to resolve manually. The base is OK, incoming changed to Resolved, current says Failed. The correct resolution likely is to keep the incoming change (Resolved) because it's the intended change from the commit being cherry-picked. However, if the current branch already had a different status (Failed) that maybe is more recent, you might want to keep Failed? But the conflict arises because the file changed in both branches relative to base. The base OK, incoming changed to Resolved, current changed to Failed. To resolve, we need to decide which change to keep, or maybe combine? There's no obvious combination. The typical resolution would be to choose one side. Since the incoming commit is \"Fix status\", likely they intended to set status to Resolved. So we should resolve to Resolved.\n\nThus resolved file content: \"Status: Resolved\". Provide only that.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a status-message conflict. Evaluates choosing between conflicting status values from different branches.",
+          "difficulty": "easy",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "status-message",
+            "text-merge"
+          ],
           "prompt": "Resolve the cherry-pick conflict in status.txt. The base was 'Status: OK'. The incoming commit changed it to 'Status: Resolved'. The current branch has 'Status: Failed'. Provide ONLY the resolved file content.",
           "expected": "Status: Resolved",
           "description": "Single-line status message conflict",
-          "duration_ms": 1324.61,
-          "operational_failure": true,
+          "duration_ms": 7856.03,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11670,23 +12756,65 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:11.996050+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:55:01.144839+00:00",
+            "pre_review_content_sha256": "2d43d4d3b7a10c9e617b0da741387d7d9d031c4e8ffcdae39514e2b34c654167",
+            "current_content_sha256": "2d43d4d3b7a10c9e617b0da741387d7d9d031c4e8ffcdae39514e2b34c654167"
           }
         },
         {
           "fixture_id": "f004",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 176,
+          "output_tokens": 688,
+          "total_tokens": 864,
+          "cost_usd": 0.00035,
+          "reasoning_tokens": 597,
+          "api_duration_ms": 50839.59,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in contact.txt. The base had john@example.com and 555-1234. The incoming commit kept john@example.com but updated the email to john@company.com. The current branch updated both to johndoe@personal.com and 555-9876. Provide ONLY the resolved file content with the most complete updates.\n\nConflicted file content:\n--- contact.txt\nName: John Doe\n<<<<<<< HEAD\nEmail: johndoe@personal.com\nPhone: 555-9876\n=======\nEmail: john@company.com\nPhone: 555-1234\n>>>>>>> de493c1 (Use work email)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876",
+              "reasoning_content": "We need to resolve the conflict: base had Email: john@example.com and Phone: 555-1234.\n\nIncoming commit (other side) kept john@example.com but updated the email to john@company.com. Wait: description says incoming commit kept john@example.com but updated the email to john@company.com. That seems contradictory: kept? Perhaps they meant they updated email from john@example.com to john@company.com (i.e., changed email) while phone remained as base? Actually they said \"kept john@example.com but updated the email to john@company.com.\" That doesn't make sense. Possibly they meant they kept the phone? Let's parse: base had john@example.com and 555-1234. Incoming commit kept john@example.com (i.e., kept email?) but updated the email to john@company.com? Hmm.\n\nMaybe they meant incoming commit kept the phone (555-1234) but updated email to john@company.com. Meanwhile current branch updated both to johndoe@personal.com and 555-9876. That matches the conflict: HEAD side (current) has johndoe@personal.com and 555-9876. The other side (incoming) has Email: john@company.com and Phone: 555-1234. So phone from incoming is unchanged from base (555-1234). That fits \"kept john@example.com\"? Actually they said \"kept john@example.com but updated the email to john@company.com.\" Might be a mistake; but we can infer they kept phone as base and changed email.\n\nThus we need most complete updates: \"most complete updates\" meaning choose the side that has more changes? Both changed email, both changed phone? HEAD changed both email and phone. Incoming changed email only (phone unchanged). Most complete updates likely means we take changes from both sides where possible, but conflict is on same lines. We need to decide final content.\n\nInterpretation: we want to incorporate both updates: email from incoming (john@company.com) and phone from HEAD (555-9876) because HEAD updated phone, incoming kept base phone. Or maybe we want to take the most recent changes: incoming changed email, HEAD changed both email and phone. Most complete updates could be HEAD because it updated both fields. However \"most complete updates\" could mean we want to keep the changes that are more extensive (i.e., both fields changed). So choose HEAD's version.\n\nBut they said \"Provide ONLY the resolved file content with the most complete updates.\" So we need to decide which side provides more complete updates. HEAD changed email and phone; incoming changed email only. So HEAD is more complete. So we choose HEAD's lines: Email: johndoe@personal.com and Phone: 555-9876.\n\nThus resolved file:\n\nName: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n\nReturn only that.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a multi-line hunk conflict with address/contact information. Evaluates combining partial changes from both sides.",
+          "difficulty": "medium",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "multi-line",
+            "hunk-merge"
+          ],
           "prompt": "Resolve the cherry-pick conflict in contact.txt. The base had john@example.com and 555-1234. The incoming commit kept john@example.com but updated the email to john@company.com. The current branch updated both to johndoe@personal.com and 555-9876. Provide ONLY the resolved file content with the most complete updates.",
           "expected": "Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n",
           "description": "Multi-line hunk: address block conflict",
-          "duration_ms": 1121.86,
-          "operational_failure": true,
+          "duration_ms": 51074.52,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11694,23 +12822,65 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:12.656342+00:00",
-            "pre_review_content_sha256": "191685f87993b6c66ed469f435c642e7f238fc76746c9042a9dce49cbbe66c04",
-            "current_content_sha256": "191685f87993b6c66ed469f435c642e7f238fc76746c9042a9dce49cbbe66c04"
+            "reviewed_at": "2026-07-03T19:55:01.144857+00:00",
+            "pre_review_content_sha256": "4ef6766c51d672b158da04dbae138eb033047137f75dfd0af29e22de6c12fe8e",
+            "current_content_sha256": "4ef6766c51d672b158da04dbae138eb033047137f75dfd0af29e22de6c12fe8e"
           }
         },
         {
           "fixture_id": "f005",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "def greet(name):\n    print(f\"Hello, {name}\")\n    return True",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 163,
+          "output_tokens": 110,
+          "total_tokens": 273,
+          "cost_usd": 5.7855e-05,
+          "reasoning_tokens": 107,
+          "api_duration_ms": 2609.91,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in greet.py. The base was a simple greet with print(\"Hello\"). The incoming commit added f-string formatting with the name parameter. The current branch changed the greeting text to \"Hi there\" and changed return to False. Resolve by taking the incoming name-aware greeting and keeping the successful return value; do not take the current branch's greeting text or False return. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- greet.py\ndef greet(name):\n<<<<<<< HEAD\n    print(\"Hi there\")\n    return False\n=======\n    print(f\"Hello, {name}\")\n    return True\n>>>>>>> dc34b5e (Add name parameter)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "def greet(name):\n    print(f\"Hello, {name}\")\n    return True",
+              "reasoning_content": "We need to resolve conflict: choose incoming (name-aware greeting) and keep successful return value. Incoming branch prints f\"Hello, {name}\" and returns True. Current branch prints \"Hi there\" and returns False. We need to take the incoming (f-string) and keep successful return value (True). So final content:\n\ndef greet(name):\n    print(f\"Hello, {name}\")\n    return True\n\nProvide only file content.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a function-body conflict combining formatting changes from both branches. Evaluates semantic merging of code logic.",
+          "difficulty": "medium",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "function-body",
+            "code-merge"
+          ],
           "prompt": "Resolve the cherry-pick conflict in greet.py. The base was a simple greet with print(\"Hello\"). The incoming commit added f-string formatting with the name parameter. The current branch changed the greeting text to \"Hi there\" and changed return to False. Resolve by taking the incoming name-aware greeting and keeping the successful return value; do not take the current branch's greeting text or False return. Provide ONLY the resolved file content.",
           "expected": "def greet(name):\n    print(f\"Hello, {name}\")\n    return True\n",
           "description": "Multi-line hunk: function body conflict",
-          "duration_ms": 1238.41,
-          "operational_failure": true,
+          "duration_ms": 2838.98,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11718,23 +12888,65 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:12.656405+00:00",
-            "pre_review_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1",
-            "current_content_sha256": "fe1ce10105da1379cf2c5991fdb6ccb0320a170f450343a56a24f541fab89ba1"
+            "reviewed_at": "2026-07-03T19:55:01.732026+00:00",
+            "pre_review_content_sha256": "da6a8d96066e510de19c87b68eac8a10cb08a416187454967b963ab09b930c69",
+            "current_content_sha256": "da6a8d96066e510de19c87b68eac8a10cb08a416187454967b963ab09b930c69"
           }
         },
         {
           "fixture_id": "f006",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "server:\n  port: 443\n  host: 0.0.0.0",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 155,
+          "output_tokens": 436,
+          "total_tokens": 591,
+          "cost_usd": 0.000187575,
+          "reasoning_tokens": 397,
+          "api_duration_ms": 7492.07,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in config.yaml. The base had port: 8080 and host: localhost. The incoming commit changed port to 443 (HTTPS) keeping localhost. The current branch kept port 8080 but changed host to 0.0.0.0. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- config.yaml\nserver:\n<<<<<<< HEAD\n  port: 8080\n  host: 0.0.0.0\n=======\n  port: 443\n  host: localhost\n>>>>>>> e9efefd (Use HTTPS port)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "server:\n  port: 443\n  host: 0.0.0.0",
+              "reasoning_content": "We need to resolve conflict: we have two changes: base had port 8080 host localhost. Incoming changed port to 443, host localhost. Current branch kept port 8080, changed host to 0.0.0.0.\n\nWe need to decide final content. Probably combine both changes? The conflict is about both port and host changed. Need to decide which values. Likely we want HTTPS port 443 and host 0.0.0.0? Or keep both changes? Let's think: The conflict is due to both sides modifying both fields. We need a resolution that incorporates both changes: port from incoming (443) and host from current (0.0.0.0). Or we could keep port from current (8080) and host from incoming (localhost). The problem statement: \"Resolve the cherry-pick conflict\". It doesn't specify which to choose. Usually you need to decide based on semantics: The incoming commit changed port to 443 (HTTPS) keeping localhost. The current branch kept port 8080 but changed host to 0.0.0.0. The base had port 8080 host localhost. So we need to produce a resolved file. Likely the intention is to take both changes: port 443 (HTTPS) and host 0.0.0.0 (bind to all interfaces). That seems logical: use HTTPS and listen on all interfaces. So final:\n\nserver:\n  port: 443\n  host: 0.0.0.0\n\nThus output only the resolved file content. Should we include the --- config.yaml line? The conflicted file content shows that line as a marker. Usually resolved file just the content without conflict markers. Provide only resolved file content. Probably just:\n\nserver:\n  port: 443\n  host: 0.0.0.0\n\nNo extra lines.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a config block conflict with port and host changes. Evaluates infrastructure configuration merging.",
+          "difficulty": "medium",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "config",
+            "infrastructure"
+          ],
           "prompt": "Resolve the cherry-pick conflict in config.yaml. The base had port: 8080 and host: localhost. The incoming commit changed port to 443 (HTTPS) keeping localhost. The current branch kept port 8080 but changed host to 0.0.0.0. Provide ONLY the resolved file content.",
           "expected": "server:\n  port: 443\n  host: 0.0.0.0\n",
           "description": "Multi-line hunk: config block conflict",
-          "duration_ms": 1429.99,
-          "operational_failure": true,
+          "duration_ms": 7723.3,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11742,23 +12954,66 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:12.656436+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-03T19:55:01.732082+00:00",
+            "pre_review_content_sha256": "5a8ff7e8b407afac263154066d782422199e272ebecd071e64d0641e989bd789",
+            "current_content_sha256": "5a8ff7e8b407afac263154066d782422199e272ebecd071e64d0641e989bd789"
           }
         },
         {
           "fixture_id": "f007",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "PORT=8443\nPROTOCOL=https",
+          "error": null,
           "reasoning_level": "medium",
+          "input_tokens": 153,
+          "output_tokens": 124,
+          "total_tokens": 277,
+          "cost_usd": 8.855e-05,
+          "reasoning_tokens": 93,
+          "api_duration_ms": 24633.97,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in config.txt. The base PORT was 8080/PROTOCOL=http. The incoming commit changed both to PORT=8443/PROTOCOL=https. The current branch (main) has PORT=9090/PROTOCOL=http. Prefer the HTTPS configuration when there is a conflict. Provide ONLY the resolved config.txt content.\n\nConflicted file content:\n--- config.txt\n<<<<<<< HEAD\nPORT=9090\nPROTOCOL=http\n=======\nPORT=8443\nPROTOCOL=https\n>>>>>>> efc48b6 (Use HTTPS port)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "PORT=8443\nPROTOCOL=https",
+              "reasoning_content": "We need to resolve conflict: base had PORT=8080, PROTOCOL=http. Incoming changed both to PORT=8443/PROTOCOL=https. Current branch has PORT=9090/PROTOCOL=http. Prefer HTTPS configuration when there is a conflict. So when conflict, choose the HTTPS version (the incoming). So result: PORT=8443, PROTOCOL=https. Provide only resolved config.txt content.\n\nThus:\n\nPORT=8443\nPROTOCOL=https\n\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a three-way conflict with port and protocol settings. Evaluates preference-based conflict resolution with multiple configuration dimensions.",
+          "difficulty": "hard",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "three-way",
+            "port",
+            "protocol"
+          ],
           "prompt": "Resolve the cherry-pick conflict in config.txt. The base PORT was 8080/PROTOCOL=http. The incoming commit changed both to PORT=8443/PROTOCOL=https. The current branch (main) has PORT=9090/PROTOCOL=http. Prefer the HTTPS configuration when there is a conflict. Provide ONLY the resolved config.txt content.",
           "expected": "PORT=8443\nPROTOCOL=https\n",
           "description": "Three-way: conflicting port and protocol settings in same line range",
-          "duration_ms": 1201.19,
-          "operational_failure": true,
+          "duration_ms": 24857.38,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "medium",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -11766,9 +13021,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:00:12.656463+00:00",
-            "pre_review_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc",
-            "current_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc"
+            "reviewed_at": "2026-07-03T19:55:01.732103+00:00",
+            "pre_review_content_sha256": "38d5c2af6e6ff771d19fa0c6cb4bc2e952a05b6676f5e06260dcc8a21ccc81ef",
+            "current_content_sha256": "38d5c2af6e6ff771d19fa0c6cb4bc2e952a05b6676f5e06260dcc8a21ccc81ef"
           }
         },
         {
@@ -12097,8 +13352,8 @@
           }
         }
       ],
-      "errors": 8,
-      "total_duration_ms": 53262.34
+      "errors": 1,
+      "total_duration_ms": 179941.14
     }
   ],
   "safety_review": {
@@ -12108,7 +13363,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:01.359099+00:00",
+    "reviewed_at": "2026-07-03T19:55:01.732161+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 147,
-    "overall_pass_at_k": 0.7206
+    "total_passed": 148,
+    "overall_pass_at_k": 0.7255
   },
   "results": [
     {
@@ -3220,12 +3220,12 @@
           "passed": false,
           "similarity": 0.0,
           "model_output": "",
-          "error": "Model call timed out after 240s",
+          "error": "Model call timed out after 120s",
           "reasoning_level": "low",
           "prompt": "There is a path traversal vulnerability in src/files.py. Look at git log and git blame. Which commit removed the basename sanitization? Output ONLY the commit message of that commit, nothing else.",
           "expected": "Allow subdirectory access",
           "description": "Path traversal vulnerability introduced",
-          "duration_ms": 723364.8,
+          "duration_ms": 363314.1,
           "request_telemetry": {
             "attempts": 3,
             "local_retry_wait_ms": 3000.0,
@@ -3241,6 +3241,7 @@
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -3248,9 +3249,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:33:16.607976+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:24.454681+00:00",
+            "pre_review_content_sha256": "95ff246c7da93e2711e22050c8c5b97d48ba858a6a473ddab46b0f3dae57612e",
+            "current_content_sha256": "95ff246c7da93e2711e22050c8c5b97d48ba858a6a473ddab46b0f3dae57612e"
           }
         },
         {
@@ -3558,7 +3559,7 @@
         }
       ],
       "errors": 5,
-      "total_duration_ms": 1493085.04
+      "total_duration_ms": 1133034.34
     },
     {
       "benchmark": "reflog",
@@ -7761,8 +7762,8 @@
     {
       "benchmark": "git_clean",
       "total": 12,
-      "passed": 7,
-      "pass_at_k": 0.5833,
+      "passed": 8,
+      "pass_at_k": 0.6667,
       "scores": [
         {
           "fixture_id": "f001",
@@ -8202,30 +8203,57 @@
         },
         {
           "fixture_id": "f007",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "\n\ngit clean -f -eimportant.tmp",
+          "error": null,
           "reasoning_level": "low",
+          "input_tokens": 65,
+          "output_tokens": 364,
+          "total_tokens": 429,
+          "cost_usd": 5.7525e-05,
+          "reasoning_tokens": 400,
+          "api_duration_ms": 2570.0,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else.\n\nStatus:\n?? important.tmp\n?? junk1.tmp\n?? junk2.txt\n\nUntracked files:\nimportant.tmp\njunk1.tmp\njunk2.txt\n\nIgnored files:\n(none)"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\ngit clean -f -eimportant.tmp",
+              "reasoning_content": "Okay, let's see. The user wants to remove all untracked files except important.tmp. The status shows that important.tmp is untracked, along with junk1.tmp and junk2.txt. The goal is to remove the junk files but keep important.tmp.\n\nFirst, I need to figure out the correct Git command. The standard way to remove untracked files is using `git clean -f`. But that would remove all untracked files, including important.tmp, which we don't want. So I need a way to exclude important.tmp.\n\nWait, Git doesn't have a built-in option to exclude specific files when cleaning. Hmm. Maybe I can use a pattern. The `git clean` command allows patterns. So I can specify a pattern that excludes important.tmp. But how?\n\nAlternatively, maybe using `git clean -f` with a pattern that matches everything except important.tmp. But Git's clean command doesn't support excluding files directly. Wait, there's a way to use the `-e` option to exclude files. Let me check the Git documentation.\n\nYes, the `git clean` command has an `-e` option to exclude files. So the command would be `git clean -f -e important.tmp`. That should remove all untracked files except important.tmp. Let me verify. The `-f` forces the removal, and `-e` excludes the specified file. That should work.\n\nWait, but the user mentioned \"Output ONLY the git command, nothing else.\" So I need to make sure the command is exactly as required. Let me confirm the syntax again. The correct command is `git clean -f -e important.tmp`. That should do it. No other options or flags are needed. Alright, that's the command.\n"
+            }
+          ],
+          "purpose": "Tests ability to exclude specific files from cleaning with git clean -e. Evaluates exclusion-pattern usage.",
+          "difficulty": "medium",
+          "tags": [
+            "git-clean",
+            "exclusion",
+            "pattern"
+          ],
           "prompt": "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else.",
           "expected": "git clean -f -e important.tmp",
           "description": "Exclude specific files from cleaning",
-          "duration_ms": 723179.14,
+          "duration_ms": 2768.71,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "low",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8233,9 +8261,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:34:00.731905+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:24.994593+00:00",
+            "pre_review_content_sha256": "f6db2562f8a9262b27b2f495341e559966bbc01a2ebadce23ad3c341f2fb6a2a",
+            "current_content_sha256": "f6db2562f8a9262b27b2f495341e559966bbc01a2ebadce23ad3c341f2fb6a2a"
           }
         },
         {
@@ -8604,8 +8632,8 @@
           }
         }
       ],
-      "errors": 5,
-      "total_duration_ms": 1243996.81
+      "errors": 4,
+      "total_duration_ms": 523586.38
     },
     {
       "benchmark": "git_bisect",
@@ -15466,7 +15494,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:02.307348+00:00",
+    "reviewed_at": "2026-07-03T19:55:24.995645+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

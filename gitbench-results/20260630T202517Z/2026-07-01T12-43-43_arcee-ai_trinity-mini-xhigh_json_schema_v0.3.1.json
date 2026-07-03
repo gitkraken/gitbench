@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 144,
-    "overall_pass_at_k": 0.7059
+    "total_passed": 146,
+    "overall_pass_at_k": 0.7157
   },
   "results": [
     {
@@ -2693,8 +2693,8 @@
     {
       "benchmark": "blame_forensics",
       "total": 12,
-      "passed": 5,
-      "pass_at_k": 0.4167,
+      "passed": 6,
+      "pass_at_k": 0.5,
       "scores": [
         {
           "fixture_id": "f001",
@@ -3516,30 +3516,59 @@
         },
         {
           "fixture_id": "f012",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "\n\nSimplify user name access",
+          "error": null,
           "reasoning_level": "xhigh",
+          "input_tokens": 130,
+          "output_tokens": 369,
+          "total_tokens": 499,
+          "cost_usd": 6.12e-05,
+          "reasoning_tokens": 378,
+          "api_duration_ms": 2998.86,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "There is a null pointer error in src/user.py. Look at git log and git blame. Which commit removed the null check? Output ONLY the commit message of that commit, nothing else.\n\nGit log (oneline):\n41ead1f Simplify user name access\n65a23b2 Capitalize user names\n929a667 Safe user name access\n\nCurrent src/user.py:\nreturn user.name.upper()\n\nGit blame for src/user.py:\n41ead1f1 (Test User 2026-07-02 21:50:50 -0700 1) return user.name.upper()\n"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\nSimplify user name access",
+              "reasoning_content": "Okay, let's see. The user mentioned there's a null pointer error in src/user.py. They want me to look at the git log and git blame to find out which commit removed the null check. The output should only be the commit message.\n\nFirst, I need to check the provided git log. The oneline log shows three commits:\n\n1. 41ead1f - Simplify user name access\n2. 65a23b2 - Capitalize user names\n3. 929a667 - Safe user name access\n\nThen there's the current code in src/user.py: return user.name.upper(). The git blame shows that the current line is from commit 41ead1f1 (Test User on 2026-07-02), which is the same as the first commit in the log (41ead1f). \n\nWait, the commit hash in blame is 41ead1f1, but the log shows 41ead1f. Maybe the blame is showing a more detailed hash, but the message is the same. The first commit's message is \"Simplify user name access\". \n\nThe user is asking which commit removed the null check. The current code doesn't have a null check, so the null check was removed in a previous commit. Since the current code is from commit 41ead1f, that's the commit where the code was simplified, which likely removed the null check. \n\nBut wait, the blame shows the line as coming from commit 41ead1f1, which is the same as the first commit in the log. So the commit message for that commit is \"Simplify user name access\". Therefore, that's the commit that removed the null check. \n\nI should output only the commit message: \"Simplify user name access\".\n"
+            }
+          ],
+          "purpose": "Tests ability to identify which commit removed a null check, causing a null pointer / attribute error. Evaluates git forensics for null-safety regressions.",
+          "difficulty": "easy",
+          "tags": [
+            "null-pointer",
+            "null-check",
+            "regression",
+            "git-log",
+            "git-blame"
+          ],
           "prompt": "There is a null pointer error in src/user.py. Look at git log and git blame. Which commit removed the null check? Output ONLY the commit message of that commit, nothing else.",
           "expected": "Simplify user name access",
           "description": "Null pointer introduced by removing check",
-          "duration_ms": 723285.0,
+          "duration_ms": 3226.99,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "xhigh",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -3547,14 +3576,14 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:39:00.235597+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:26.206101+00:00",
+            "pre_review_content_sha256": "26c1177d8a880711bb352afa8d14ea6672ca3d3e05e844214b563dabe2ea2e11",
+            "current_content_sha256": "26c1177d8a880711bb352afa8d14ea6672ca3d3e05e844214b563dabe2ea2e11"
           }
         }
       ],
-      "errors": 7,
-      "total_duration_ms": 1254165.78
+      "errors": 6,
+      "total_duration_ms": 534107.77
     },
     {
       "benchmark": "reflog",
@@ -4504,28 +4533,57 @@
           "fixture_id": "f003",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "model_output": "\n\nStatus: Failed",
+          "error": "Content mismatch: ['status.txt']",
           "reasoning_level": "xhigh",
+          "input_tokens": 78,
+          "output_tokens": 1104,
+          "total_tokens": 1182,
+          "cost_usd": 0.00016911,
+          "reasoning_tokens": 1294,
+          "api_duration_ms": 9010.63,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- status.txt\n<<<<<<< HEAD\nStatus: Failed\n=======\nStatus: Resolved\n>>>>>>> fix\n"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\nStatus: Failed",
+              "reasoning_content": "Okay, so I need to resolve this merge conflict in the status.txt file. Let me look at the conflicted content provided. The base was 'Status: OK', but Branch A changed it to 'Status: Resolved' and Branch B changed it to 'Status: Failed'. The conflicted content shows:\n\n<<<<<<< HEAD\nStatus: Failed\n=======\nStatus: Resolved\n>>>>>>> fix\n\nHmm, the HEAD points to Branch B's change, which is 'Status: Failed', and the other change is from Branch A's 'Status: Resolved'. The base was 'Status: OK', but since both branches have different changes, I need to decide which one to keep or if there's a way to combine them.\n\nWait, the user wants the resolved file content only. The instructions say to provide ONLY the resolved file content. So I shouldn't include any explanations, just the final content. \n\nBut how to resolve it? The user might expect a merge where both changes are considered. Maybe the correct approach is to combine both statuses. For example, 'Status: Resolved/Failed' or something like that. Alternatively, maybe the base was 'OK', but since both branches changed it, perhaps the resolution should reflect both changes. \n\nWait, the base was 'Status: OK', but Branch A changed to 'Resolved' and Branch B to 'Failed'. The conflict is between these two. The user might want the resolved version to indicate that the issue was resolved but then failed again, or maybe it's a typo. Alternatively, maybe the correct resolution is to keep the base 'OK' but that's not possible because both branches changed it. \n\nAlternatively, perhaps the correct approach is to take the latest change, which is Branch B's 'Failed', but that might not be the best. Or maybe the user expects a combination. Since the problem says \"resolve the merge conflict\", the typical way is to choose one or merge both. \n\nWait, looking at the conflicted content, the HEAD is pointing to Branch B's change (Status: Failed), and the other change is from Branch A (Status: Resolved). The base was 'Status: OK', but since both branches have different changes, the resolution should be a combination. Maybe 'Status: Resolved/Failed' or 'Status: Failed (Resolved)'. \n\nAlternatively, maybe the correct answer is to keep the base 'OK' but that's not possible because the branches changed it. Wait, the base was 'Status: OK', but the branches changed it to different things. So the conflict is between the two branches. The user might want the resolved version to indicate that the status is now Failed after being Resolved, or vice versa. \n\nAlternatively, perhaps the correct resolution is to have 'Status: Failed' since that's the latest change. But I'm not sure. The user might expect a specific format. Since the problem says to provide ONLY the resolved file content, I need to output the content without any extra text. \n\nWait, maybe the correct approach is to take the base 'OK' and combine with the branches. But the base was changed by both branches. Alternatively, maybe the resolved status should be 'Status: Failed' because that's the latest change. Or perhaps 'Status: Resolved' if that's the intended resolution. \n\nAlternatively, maybe the correct answer is to have 'Status: Failed' since that's the change from Branch B, which might be the correct resolution. But I'm not sure. The user might expect a specific answer. \n\nWait, looking back at the problem, the base was 'Status: OK', Branch A changed to 'Resolved', Branch B to 'Failed'. The conflicted content shows that the HEAD (Branch B) has 'Failed', and the other change is from Branch A's 'Resolved'. The resolution should be a combination. Maybe 'Status: Resolved/Failed' or 'Status: Failed (Resolved)'. \n\nAlternatively, maybe the correct answer is to have 'Status: Failed' as the resolved status. But I need to make a decision here. Since the user wants the resolved file content, I'll go with 'Status: Failed' as the resolved status. But wait, the problem says the base was 'OK', but both branches changed it. Maybe the correct resolution is to have 'Status: Failed' since that's the latest change. \n\nAlternatively, perhaps the correct answer is to have 'Status: Resolved' because that's the change from Branch A. But I'm not sure. The user might expect a specific answer. \n\nWait, maybe the correct approach is to take the base 'OK' and combine with the branches. But since both branches changed it, the resolution should be a combination. Maybe 'Status: OK (Resolved/Failed)'. But that's not standard. \n\nAlternatively, maybe the correct answer is to have 'Status: Failed' as the resolved status. Let me check the conflicted content again. The HEAD is pointing to Branch B's change, which is 'Status: Failed', and the other change is from Branch A's 'Resolved'. The resolution should be the HEAD change, which is 'Status: Failed'. \n\nSo the resolved file content would be 'Status: Failed'. But I need to make sure. Alternatively, maybe the user expects a different approach. But according to the problem, the resolved file content should be provided. \n\nTherefore, the resolved file content is 'Status: Failed'.\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a status-message merge conflict. Evaluates choosing between contradictory status values.",
+          "difficulty": "easy",
+          "tags": [
+            "merge-conflict",
+            "status-message",
+            "resolution"
+          ],
           "prompt": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.",
           "expected": "Status: Resolved",
           "description": "Single-line status message conflict",
-          "duration_ms": 723287.81,
+          "duration_ms": 130265.74,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 2,
+            "local_retry_wait_ms": 1000.0,
             "capacity_cooldown_wait_ms": 0.0,
             "retry_reasons": {
-              "TimeoutError": 3
+              "TimeoutError": 1
             }
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "xhigh",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -4533,9 +4591,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:39:07.710347+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:27.785073+00:00",
+            "pre_review_content_sha256": "45bf3dab92840d5e8c59804f3c29d5c60d0a01f7502f76c944efbd2e691de4cf",
+            "current_content_sha256": "45bf3dab92840d5e8c59804f3c29d5c60d0a01f7502f76c944efbd2e691de4cf"
           }
         },
         {
@@ -5206,7 +5264,7 @@
         }
       ],
       "errors": 4,
-      "total_duration_ms": 1252087.48
+      "total_duration_ms": 659065.41
     },
     {
       "benchmark": "git_log_format",
@@ -7718,8 +7776,8 @@
     {
       "benchmark": "git_clean",
       "total": 12,
-      "passed": 8,
-      "pass_at_k": 0.6667,
+      "passed": 9,
+      "pass_at_k": 0.75,
       "scores": [
         {
           "fixture_id": "f001",
@@ -7943,29 +8001,56 @@
         {
           "fixture_id": "f004",
           "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "similarity": 0.6667,
+          "model_output": "git clean -fdx",
+          "error": "Failed assertions: [{'type': 'file_exists', 'path': 'untracked.txt'}]",
           "reasoning_level": "xhigh",
+          "input_tokens": 58,
+          "output_tokens": 858,
+          "total_tokens": 916,
+          "cost_usd": 0.00013131,
+          "reasoning_tokens": 966,
+          "api_duration_ms": 4926.38,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Remove only ignored files and directories while keeping untracked files. Output ONLY the git command, nothing else.\n\nStatus:\n?? untracked.txt\n\nUntracked files:\nuntracked.txt\n\nIgnored files:\napp.log\nnode_modules/pkg/index.js\n"
+            },
+            {
+              "role": "assistant",
+              "content": "git clean -fdx",
+              "reasoning_content": "Okay, let's see. The user wants to remove only ignored files and directories while keeping untracked files. They also specified that the output should be just the git command, nothing else.\n\nFirst, I need to understand the current status. The untracked file is untracked.txt, and the ignored files are app.log, node_modules/pkg/index.js. The user wants to remove the ignored ones but leave the untracked file.\n\nIn Git, ignored files are usually managed via .gitignore. But the user is asking to remove them from the working directory. Wait, but Git doesn't track ignored files by default. So maybe they want to remove the ignored files that are present in the working directory but shouldn't be there. However, since they're ignored, Git wouldn't list them in the status. Hmm, maybe the user has some ignored files that are not in .gitignore, or perhaps they want to clean up the ignored files that are present.\n\nWait, the status shows \"?? untracked.txt\" and the ignored files listed. So the user has some ignored files that are in the working directory. But Git doesn't track them, so they wouldn't appear in the status. Maybe the user manually added them, or there's a mistake. But regardless, the user wants to remove the ignored files.\n\nThe command to remove ignored files is typically git clean -fdx. The -f is force, -d removes directories, and -x ignores .gitignore. But wait, the user wants to keep untracked files. The -x flag ignores .gitignore, which would remove all ignored files regardless of .gitignore. But the user might have some ignored files that they want to keep. Wait, no, the user wants to remove only ignored files. So maybe using -x is correct because it removes all ignored files, including those not in .gitignore. But the user's ignored files are listed, so using -x would remove them. However, the user also has an untracked file, which should be kept. The git clean command doesn't affect untracked files, so that's okay.\n\nWait, but the user's status shows untracked.txt as \"??\", which is correct. So the command should be git clean -fdx. Let me check the options. The -f is necessary to force removal, -d to remove directories, and -x to ignore .gitignore. That way, all ignored files are removed, including those not in .gitignore. But the user's ignored files are listed, so this should work. However, the user might have some ignored files that they want to keep, but according to the problem, they want to remove only ignored files. So the command should be correct.\n\nBut wait, the user's ignored files include node_modules/pkg/index.js. If that's in .gitignore, then using -x would still remove it. But the user wants to remove it. So the command is correct. Therefore, the output should be git clean -fdx. But the user might not have the -d option if they don't want to remove directories. Wait, the ignored files include a directory (node_modules/pkg/index.js is a file, but maybe there are directories). The user's ignored files list includes a directory? Wait, the list shows \"node_modules/pkg/index.js\" which is a file. But maybe there are directories in the ignored list. Wait, the user's ignored files are app.log (file), node_modules/pkg/index.js (file), and maybe others. Wait, the user's ignored files list might have directories. Wait, the user's status shows \"Ignored files:\" with those entries. So if there are directories, the -d is needed. But the user's example includes a file. Hmm. But the command should handle both. So using -d is safe.\n\nTherefore, the correct command is git clean -fdx. But wait, the user might have some ignored files that they want to keep. Wait, no, the user wants to remove only ignored files. So the command should be correct. Also, the user wants to keep untracked files, which git clean doesn't affect. So the answer is git clean -fdx.\n"
+            }
+          ],
+          "purpose": "Tests ability to remove only ignored files with git clean -fX. Evaluates understanding of gitignore interaction.",
+          "difficulty": "medium",
+          "tags": [
+            "git-clean",
+            "ignored",
+            "gitignore"
+          ],
           "prompt": "Remove only ignored files and directories while keeping untracked files. Output ONLY the git command, nothing else.",
           "expected": "git clean -f -X -d",
           "description": "Remove ignored files only",
-          "duration_ms": 723185.69,
+          "duration_ms": 5100.01,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "xhigh",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -7973,9 +8058,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:39:26.098034+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:28.304184+00:00",
+            "pre_review_content_sha256": "4fcb502aebd6da566fbcf0b9a4f2b1568493be1874d50f74f965c8b9b67e9d88",
+            "current_content_sha256": "4fcb502aebd6da566fbcf0b9a4f2b1568493be1874d50f74f965c8b9b67e9d88"
           }
         },
         {
@@ -8129,30 +8214,59 @@
         },
         {
           "fixture_id": "f007",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "git clean -f -e important.tmp",
+          "error": null,
           "reasoning_level": "xhigh",
+          "input_tokens": 65,
+          "output_tokens": 391,
+          "total_tokens": 456,
+          "cost_usd": 6.1575e-05,
+          "reasoning_tokens": 428,
+          "api_duration_ms": 3155.17,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else.\n\nStatus:\n?? important.tmp\n?? junk1.tmp\n?? junk2.txt\n\nUntracked files:\nimportant.tmp\njunk1.tmp\njunk2.txt\n\nIgnored files:\n(none)"
+            },
+            {
+              "role": "assistant",
+              "content": "git clean -f -e important.tmp",
+              "reasoning_content": "Okay, let's see. The user wants to remove all untracked files except important.tmp. The status shows that important.tmp is marked as untracked, along with junk1.tmp and junk2.txt. The goal is to remove the junk files but keep important.tmp.\n\nFirst, I need to figure out the correct Git command to do this. The standard way to remove untracked files is using `git clean -f`, but that removes all untracked files. Since we need to keep important.tmp, we can't use that directly. \n\nWait, there's a way to exclude specific files. The `git clean` command has an option to ignore certain files. The `-e` flag allows specifying files to exclude. So, if I run `git clean -f -e important.tmp`, that should remove all untracked files except important.tmp. \n\nLet me double-check the syntax. The `-f` is for force, which is needed when files exist. The `-e` takes a pattern. Since important.tmp is a specific file, using `-e important.tmp` should work. \n\nAlso, the user mentioned that important.tmp is already in the untracked files list, so it's correctly identified. The other files are junk1.tmp and junk2.txt. The command should target those. \n\nI should make sure there are no typos in the file name. The user wrote \"important.tmp\" in the status, so the command should use that exact name. \n\nSo the final command would be `git clean -f -e important.tmp`. That should remove all untracked files except important.tmp. The user wants only the command output, so no extra text. \n\nI think that's the correct approach. Let me confirm the Git documentation. Yes, `git clean` with `-e` excludes files matching the pattern. Since important.tmp is a specific file, this should work.\n"
+            }
+          ],
+          "purpose": "Tests ability to exclude specific files from cleaning with git clean -e. Evaluates exclusion-pattern usage.",
+          "difficulty": "medium",
+          "tags": [
+            "git-clean",
+            "exclusion",
+            "pattern"
+          ],
           "prompt": "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else.",
           "expected": "git clean -f -e important.tmp",
           "description": "Exclude specific files from cleaning",
-          "duration_ms": 723206.73,
+          "duration_ms": 246363.19,
           "request_telemetry": {
             "attempts": 3,
             "local_retry_wait_ms": 3000.0,
             "capacity_cooldown_wait_ms": 0.0,
             "retry_reasons": {
-              "TimeoutError": 3
+              "TimeoutError": 2
             }
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "xhigh",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8160,9 +8274,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:39:27.896683+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:28.304263+00:00",
+            "pre_review_content_sha256": "032bbc51a996d27ce4c6391474b0a57c3f01f6d0849aa8786fd2ea38497111d0",
+            "current_content_sha256": "032bbc51a996d27ce4c6391474b0a57c3f01f6d0849aa8786fd2ea38497111d0"
           }
         },
         {
@@ -8529,8 +8643,8 @@
           }
         }
       ],
-      "errors": 4,
-      "total_duration_ms": 2443607.47
+      "errors": 3,
+      "total_duration_ms": 1248678.25
     },
     {
       "benchmark": "git_bisect",
@@ -15386,7 +15500,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:02.380658+00:00",
+    "reviewed_at": "2026-07-03T19:55:28.305272+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

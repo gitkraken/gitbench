@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 145,
-    "overall_pass_at_k": 0.7108
+    "total_passed": 146,
+    "overall_pass_at_k": 0.7157
   },
   "results": [
     {
@@ -3890,8 +3890,8 @@
     {
       "benchmark": "merge_conflicts",
       "total": 12,
-      "passed": 7,
-      "pass_at_k": 0.5833,
+      "passed": 8,
+      "pass_at_k": 0.6667,
       "scores": [
         {
           "fixture_id": "f001",
@@ -4027,30 +4027,59 @@
         },
         {
           "fixture_id": "f003",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "\n\nStatus: Resolved",
+          "error": null,
           "reasoning_level": "xhigh",
+          "input_tokens": 78,
+          "output_tokens": 842,
+          "total_tokens": 920,
+          "cost_usd": 0.00012981,
+          "reasoning_tokens": 989,
+          "api_duration_ms": 5029.38,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- status.txt\n<<<<<<< HEAD\nStatus: Failed\n=======\nStatus: Resolved\n>>>>>>> fix\n"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\nStatus: Resolved",
+              "reasoning_content": "Okay, so I need to resolve this merge conflict in the status.txt file. Let me look at the problem again. The base was originally 'Status: OK'. Then Branch A changed it to 'Status: Resolved', and Branch B changed it to 'Status: Failed'. The conflicted content shows that the current HEAD (which is probably Branch B's version) has 'Status: Failed', and the other branch (Branch A) has 'Status: Resolved' in the middle. \n\nHmm, the user wants only the resolved file content. So I need to figure out which version to keep. Since the base was 'Status: OK', but neither branch kept that, maybe the resolution should combine both changes. Wait, but the user didn't specify any other requirements. The conflict is between Resolved and Failed. \n\nWait, maybe the correct approach is to choose one of the branches. But which one? The problem doesn't give context on which change is correct. However, looking at the conflict markers, the HEAD is 'Status: Failed', and the other branch is 'Status: Resolved'. The user might expect that the resolved version is the correct one, but I'm not sure. \n\nAlternatively, maybe the resolved file should include both changes. But the user said to provide ONLY the resolved file content. Since the base was 'Status: OK', but neither branch kept that, perhaps the resolution should be a combination. Wait, but the conflict is between Resolved and Failed. Maybe the correct answer is to pick one. \n\nWait, looking at the conflict markers again: the HEAD is 'Status: Failed' (Branch B), and the other branch is 'Status: Resolved' (Branch A). The user might want the resolved version, which is 'Status: Resolved'. But why? Because the branch name is 'fix', which might indicate a fix. Alternatively, maybe the user expects the resolved file to be the one that's correct. \n\nAlternatively, maybe the correct resolution is to have both changes. But the user wants only the resolved content. Since the problem says \"resolve the merge conflict\", and the base was 'Status: OK', but neither branch kept that, perhaps the resolution should be a combination. Wait, but the conflict is between Resolved and Failed. Maybe the correct answer is to choose 'Status: Resolved' because the branch name is 'fix', implying that it's the resolved state. \n\nAlternatively, maybe the user expects the resolved file to be 'Status: OK' again. But neither branch changed it back. Hmm. The user's instruction is to resolve the conflict, so I need to pick one. Since the conflict is between Resolved and Failed, and the branch name is 'fix', perhaps 'Status: Resolved' is the correct choice. \n\nWait, but the user might have a different expectation. Let me check the problem again. The base was 'Status: OK', Branch A changed to 'Status: Resolved', Branch B changed to 'Status: Failed'. The conflicted content shows that the HEAD (Branch B) is 'Status: Failed', and the other branch is 'Status: Resolved'. The user wants the resolved file content. \n\nSince the user didn't specify which branch to keep, but the problem is to resolve the conflict, perhaps the correct approach is to choose the resolved version. Alternatively, maybe the resolved version is the one that's correct. But without more context, I can't be sure. However, the user might expect that the resolved file is 'Status: Resolved' because the branch name is 'fix', which implies a fix. \n\nAlternatively, maybe the resolved file should be 'Status: OK' again. But neither branch reverted to that. Hmm. Wait, the user's instruction says to provide ONLY the resolved file content. So I need to output the resolved version. Since the conflict is between Resolved and Failed, and the branch name is 'fix', perhaps the resolved version is 'Status: Resolved'. \n\nAlternatively, maybe the correct resolution is to have both changes. But the user wants only the resolved content. So I'll go with 'Status: Resolved' as the resolved file content.\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a status-message merge conflict. Evaluates choosing between contradictory status values.",
+          "difficulty": "easy",
+          "tags": [
+            "merge-conflict",
+            "status-message",
+            "resolution"
+          ],
           "prompt": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.",
           "expected": "Status: Resolved",
           "description": "Single-line status message conflict",
-          "duration_ms": 723273.78,
+          "duration_ms": 248302.52,
           "request_telemetry": {
             "attempts": 3,
             "local_retry_wait_ms": 3000.0,
             "capacity_cooldown_wait_ms": 0.0,
             "retry_reasons": {
-              "TimeoutError": 3
+              "TimeoutError": 2
             }
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "xhigh",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -4058,9 +4087,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:20:54.416352+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:53:52.553840+00:00",
+            "pre_review_content_sha256": "45000c22f284c873247ad791f7963a1f166c96755e7fe30cf7984a6330bf13a0",
+            "current_content_sha256": "45000c22f284c873247ad791f7963a1f166c96755e7fe30cf7984a6330bf13a0"
           }
         },
         {
@@ -4650,8 +4679,8 @@
           }
         }
       ],
-      "errors": 5,
-      "total_duration_ms": 1000981.94
+      "errors": 4,
+      "total_duration_ms": 526010.68
     },
     {
       "benchmark": "git_log_format",
@@ -12924,28 +12953,56 @@
           "fixture_id": "f001",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "model_output": "Hello, Planet!",
+          "error": "Content mismatch: ['greeting.txt']",
           "reasoning_level": "xhigh",
+          "input_tokens": 92,
+          "output_tokens": 827,
+          "total_tokens": 919,
+          "cost_usd": 0.00012819,
+          "reasoning_tokens": 957,
+          "api_duration_ms": 5052.72,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the cherry-pick conflict in greeting.txt. The base version was 'Hello, World!'. The incoming commit changed it to 'Hello, World!!!'. The current branch has 'Hello, Planet!'. Provide ONLY the resolved file content, nothing else.\n\nConflicted file content:\n--- greeting.txt\n<<<<<<< HEAD\nHello, Planet!\n=======\nHello, World!!!\n>>>>>>> 8251ece (Add excitement)\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Hello, Planet!",
+              "reasoning_content": "Okay, let's see. The user wants me to resolve a cherry-pick conflict in the greeting.txt file. The base version was 'Hello, World!', and the incoming commit changed it to 'Hello, World!!!'. The current branch has 'Hello, Planet!'. The conflicted content shows the base version, the incoming change, and the current branch's version.\n\nFirst, I need to understand what a cherry-pick conflict is. Cherry-picking a commit applies it to a different branch, which can cause conflicts if the changes overlap. Here, the base version is 'Hello, World!', the incoming commit added exclamation marks, making it 'Hello, World!!!', and the current branch has 'Hello, Planet!'.\n\nThe conflict markers are <<<<<<< HEAD, =======, and >>>>>>>. The HEAD part is the current branch's content, which is 'Hello, Planet!'. The incoming commit's change is 'Hello, World!!!' between the ======= and >>>>>>>. The base version is the original 'Hello, World!'.\n\nThe user wants the resolved file content only. So I need to combine the changes. The current branch's version is 'Hello, Planet!', which replaces the base version. The incoming commit's change is 'Hello, World!!!', but since the current branch has a different text, maybe the user wants to merge both changes. Wait, but the current branch's version is 'Hello, Planet!', which is different from both the base and the incoming commit. \n\nWait, the base was 'Hello, World!', the incoming commit changed it to 'Hello, World!!!', and the current branch has 'Hello, Planet!'. So the current branch's version is a different text. The user probably wants to resolve this by keeping the current branch's version, which is 'Hello, Planet!', as that's what's in the HEAD. Alternatively, maybe they want to merge the changes. But the instruction says to provide the resolved content. Since the current branch's version is 'Hello, Planet!', and that's what's in the HEAD, the resolved file should be that. But wait, the incoming commit's change is 'Hello, World!!!', which is more excited. But the user might have intended to keep the current branch's version. \n\nAlternatively, maybe the user wants to combine both changes. But the problem says to resolve the conflict, so the correct approach is to choose one of the versions. Since the current branch's version is 'Hello, Planet!', and that's what's in the HEAD, the resolved file should be that. However, the user might have intended to merge the changes. Wait, but the instruction says to provide the resolved content. The correct way is to pick the version that's in the current branch, which is 'Hello, Planet!'. \n\nWait, but the user might have made a mistake. Let me check the conflict markers again. The current branch's content is 'Hello, Planet!', which is between <<<<<<< HEAD and =======. The incoming commit's change is 'Hello, World!!!' between ======= and >>>>>>>. The base version is the original 'Hello, World!'. \n\nSo the resolved file should be the current branch's version, which is 'Hello, Planet!'. Therefore, the resolved content is 'Hello, Planet!'. But wait, the user might have intended to merge both changes. However, the instruction says to resolve the conflict, and the correct approach is to choose the version from the current branch. \n\nAlternatively, maybe the user wants to combine both changes. But the problem says to provide the resolved content. Since the current branch's version is 'Hello, Planet!', that's the one to keep. So the resolved file should be 'Hello, Planet!'. \n\nBut wait, the user might have intended to merge the changes. However, the instruction says to resolve the conflict, and the correct way is to pick the version from the current branch. Therefore, the resolved content is 'Hello, Planet!'. \n\nSo the answer should be 'Hello, Planet!'.\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a simple single-line cherry-pick conflict in a greeting file. Evaluates basic conflict marker understanding and merge strategy.",
+          "difficulty": "easy",
+          "tags": [
+            "cherry-pick",
+            "conflict-resolution",
+            "single-line",
+            "basic"
+          ],
           "prompt": "Resolve the cherry-pick conflict in greeting.txt. The base version was 'Hello, World!'. The incoming commit changed it to 'Hello, World!!!'. The current branch has 'Hello, Planet!'. Provide ONLY the resolved file content, nothing else.",
           "expected": "Hello, Planet!!!",
           "description": "Single-line greeting conflict",
-          "duration_ms": 723395.94,
+          "duration_ms": 5327.34,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "xhigh",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -12953,9 +13010,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:21:27.525257+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:53:53.112577+00:00",
+            "pre_review_content_sha256": "112d3c0cdba9674ad2b216054931b22713014d2084bd964efb1491330a004dc0",
+            "current_content_sha256": "112d3c0cdba9674ad2b216054931b22713014d2084bd964efb1491330a004dc0"
           }
         },
         {
@@ -13676,7 +13733,7 @@
         }
       ],
       "errors": 8,
-      "total_duration_ms": 763603.0
+      "total_duration_ms": 45534.4
     }
   ],
   "safety_review": {
@@ -13686,7 +13743,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:00.876492+00:00",
+    "reviewed_at": "2026-07-03T19:53:53.112727+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

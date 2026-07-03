@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 151,
-    "overall_pass_at_k": 0.7402
+    "total_passed": 153,
+    "overall_pass_at_k": 0.75
   },
   "results": [
     {
@@ -4381,8 +4381,8 @@
     {
       "benchmark": "merge_conflicts",
       "total": 12,
-      "passed": 7,
-      "pass_at_k": 0.5833,
+      "passed": 8,
+      "pass_at_k": 0.6667,
       "scores": [
         {
           "fixture_id": "f001",
@@ -4534,30 +4534,57 @@
         },
         {
           "fixture_id": "f003",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "\n\nStatus: Resolved",
+          "error": null,
           "reasoning_level": "high",
+          "input_tokens": 78,
+          "output_tokens": 1680,
+          "total_tokens": 1758,
+          "cost_usd": 0.00025551,
+          "reasoning_tokens": 1987,
+          "api_duration_ms": 9178.84,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- status.txt\n<<<<<<< HEAD\nStatus: Failed\n=======\nStatus: Resolved\n>>>>>>> fix\n"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\nStatus: Resolved",
+              "reasoning_content": "Okay, let's see. The user wants me to resolve a merge conflict in the status.txt file. The base was originally 'Status: OK'. Branch A changed it to 'Status: Resolved', and Branch B changed it to 'Status: Failed'. The conflicted content shows that the current HEAD (which is probably Branch B's change) has 'Status: Failed', and the other branch (Branch A) has 'Status: Resolved' in the middle.\n\nHmm, the user provided the conflicted file content with the standard merge conflict markers. The base is 'Status: OK', but since the branches have different changes, the conflict arises. The user wants only the resolved file content, not the conflict markers.\n\nWait, the user mentioned that the base was 'Status: OK', but in the conflicted content, the base isn't shown. The conflict markers are between '<<<<<<< HEAD' and '>>>>>>> fix'. The 'HEAD' here likely refers to Branch B's change, which is 'Status: Failed'. The 'fix' branch (Branch A) has 'Status: Resolved' in between.\n\nSo, the user wants the resolved version. Since the base was 'Status: OK', but both branches changed it, maybe the resolution should combine both changes or choose one. But the user didn't specify which branch to keep. However, looking at the conflict markers, the 'HEAD' (Branch B) is 'Status: Failed', and the other branch is 'Status: Resolved'. The user might want to merge both changes. But how?\n\nWait, the original base was 'Status: OK'. If both branches changed it, perhaps the resolution should be a combination. But the user didn't specify. Alternatively, maybe the user wants to keep the changes from both branches. But the problem says \"resolve the merge conflict\", so the resolved content should be a single line without conflict markers.\n\nBut the user's instruction is to provide ONLY the resolved file content. So I need to figure out what the correct resolved content should be. Since the base was 'Status: OK', and both branches changed it, maybe the resolution is to have both changes. But how to represent that? Maybe 'Status: Resolved and Failed'? But that's not standard. Alternatively, perhaps the user expects to choose one branch's change. But which one?\n\nWait, the user might have a specific reason. The problem states that the base was 'Status: OK', Branch A changed to 'Resolved', Branch B to 'Failed'. The conflict is between these two. The resolved content should be a single line. Since the user didn't specify which branch to keep, but the conflict markers show that the HEAD (Branch B) is 'Failed' and the other is 'Resolved', maybe the resolution is to combine them. But how?\n\nAlternatively, maybe the user expects the resolved content to be 'Status: OK' again, but that's not likely. Or perhaps the resolution is to have both changes. But the user wants only the resolved content. Since the problem is ambiguous, but the user provided the conflicted content, perhaps the correct approach is to merge the two changes. However, the user might expect a specific answer. \n\nWait, looking at the conflict markers again: the 'HEAD' is 'Status: Failed', and the other branch is 'Status: Resolved'. The base is 'Status: OK'. The resolved content should be a single line. Maybe the user wants to keep both changes, so the resolved content is 'Status: Resolved and Failed'? But that's not standard. Alternatively, maybe the user wants to choose one. But since the user didn't specify, perhaps the correct answer is to have 'Status: Resolved' as the resolved content, assuming that's the preferred change. Or maybe 'Status: Failed'. \n\nBut the user's instruction is to resolve the conflict. Since the base was 'Status: OK', and both branches changed it, perhaps the resolution is to have both changes. However, the user might expect a specific answer. Alternatively, maybe the user wants to keep the changes from both branches, so the resolved content is 'Status: Resolved and Failed'. But that's not a standard status. Alternatively, maybe the user wants to keep the original 'Status: OK', but that's not likely. \n\nWait, the user might have made a mistake in the conflict resolution. But given the information, the resolved content should be a single line without conflict markers. Since the user provided the conflicted content, and the base was 'Status: OK', but the branches changed it, perhaps the resolution is to have 'Status: Resolved' as the resolved content. Alternatively, maybe 'Status: Failed'. But the user's instruction is to resolve the conflict, so the answer should be either 'Status: Resolved' or 'Status: Failed'. \n\nBut the user's example shows that the HEAD is 'Status: Failed', and the other branch is 'Status: Resolved'. The resolved content should be one of these. Since the user didn't specify which branch to keep, but the problem says \"resolve the merge conflict\", perhaps the correct approach is to choose one. However, the user might expect the resolved content to be 'Status: Resolved' because that's the change from Branch A. Alternatively, maybe the user wants to keep the original 'Status: OK', but that's not possible since both branches changed it. \n\nAlternatively, maybe the resolved content is 'Status: OK' again, but that's not likely. The user might have intended to have both changes. But the problem says \"provide ONLY the resolved file content\", so the answer should be a single line. \n\nGiven the ambiguity, but considering that the user provided the conflicted content with the HEAD being 'Status: Failed' and the other branch 'Status: Resolved', perhaps the resolved content is 'Status: Resolved' as the resolution. Alternatively, maybe the user wants to keep the original 'Status: OK', but that's not possible. \n\nWait, the user's instruction says \"Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'.\" So the base is 'Status: OK', Branch A changed to 'Resolved', Branch B to 'Failed'. The conflict is between these two changes. The resolved content should be a single line. Since the user didn't specify which branch to keep, but the conflict markers show that the HEAD (Branch B) is 'Failed' and the other branch is 'Resolved', perhaps the resolved content is 'Status: Resolved' as the resolution. Alternatively, maybe the user wants to keep the original 'Status: OK', but that's not possible. \n\nAlternatively, maybe the resolved content is 'Status: OK' again, but that's not likely. The user might have intended to have both changes. But the problem requires a single line. \n\nGiven the information, the most logical resolved content is 'Status: Resolved' as the resolution, assuming that's the preferred change. Alternatively, 'Status: Failed'. But since the user didn't specify, but the conflict markers show that the HEAD is 'Failed' and the other is 'Resolved', perhaps the resolved content is 'Status: Resolved' as the resolution. \n\nWait, but the user's instruction says \"provide ONLY the resolved file content\". So the answer should be the resolved line without any markers. Therefore, the resolved content is either 'Status: Resolved' or 'Status: Failed'. But which one? \n\nAlternatively, maybe the user wants to keep the original 'Status: OK', but that's not possible. The user might have made a mistake. But given the information, the resolved content should be 'Status: Resolved' as the resolution. \n\nAlternatively, perhaps the resolved content is 'Status: OK' again, but that's not likely. The user might have intended to have both changes. But the problem requires a single line. \n\nGiven the ambiguity, but considering that the user provided the conflicted content with the HEAD being 'Status: Failed' and the other branch 'Status: Resolved', perhaps the resolved content is 'Status: Resolved' as the resolution. Therefore, the resolved file content is 'Status: Resolved'.\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a status-message merge conflict. Evaluates choosing between contradictory status values.",
+          "difficulty": "easy",
+          "tags": [
+            "merge-conflict",
+            "status-message",
+            "resolution"
+          ],
           "prompt": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.",
           "expected": "Status: Resolved",
           "description": "Single-line status message conflict",
-          "duration_ms": 723295.16,
+          "duration_ms": 9437.63,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "high",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -4565,9 +4592,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:37:36.946961+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:22.803397+00:00",
+            "pre_review_content_sha256": "45000c22f284c873247ad791f7963a1f166c96755e7fe30cf7984a6330bf13a0",
+            "current_content_sha256": "45000c22f284c873247ad791f7963a1f166c96755e7fe30cf7984a6330bf13a0"
           }
         },
         {
@@ -5239,8 +5266,8 @@
           }
         }
       ],
-      "errors": 5,
-      "total_duration_ms": 1724008.93
+      "errors": 4,
+      "total_duration_ms": 1010151.4
     },
     {
       "benchmark": "git_log_format",
@@ -8188,29 +8215,56 @@
         {
           "fixture_id": "f007",
           "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "similarity": 0.75,
+          "model_output": "\n\ngit clean -f&& git add important.tmp",
+          "error": "Failed assertions: [{'type': 'file_exists', 'path': 'important.tmp'}]",
           "reasoning_level": "high",
+          "input_tokens": 65,
+          "output_tokens": 727,
+          "total_tokens": 792,
+          "cost_usd": 0.000111975,
+          "reasoning_tokens": 783,
+          "api_duration_ms": 4443.7,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else.\n\nStatus:\n?? important.tmp\n?? junk1.tmp\n?? junk2.txt\n\nUntracked files:\nimportant.tmp\njunk1.tmp\njunk2.txt\n\nIgnored files:\n(none)"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\ngit clean -f&& git add important.tmp",
+              "reasoning_content": "Okay, let's see. The user wants to remove all untracked files except important.tmp. The status shows that important.tmp is untracked, along with junk1.tmp and junk2.txt. The command needs to output only the git command, nothing else.\n\nFirst, I need to figure out the correct git command to remove untracked files. The standard command is `git clean -f`, but that removes all untracked files. However, the user wants to keep important.tmp. So, how can I exclude that specific file?\n\nWait, maybe using `git clean -f` with a pattern. But git clean doesn't support excluding specific files directly. Hmm. Alternatively, maybe using `git clean -f` and then adding the file back? No, that doesn't make sense. \n\nWait, another approach: using `git clean -f` to remove all untracked files, but then add important.tmp back. But the user wants to remove all except important.tmp. So the steps would be: remove all untracked files, then add important.tmp. But how to do that in one command?\n\nAlternatively, maybe using `git clean -f` and then `git add important.tmp`. But the user wants a single command. Let me check the git documentation. Oh, right, there's a way to specify files to keep. Wait, no, git clean doesn't have an option to exclude specific files. \n\nWait, maybe using `git clean -f` and then `git add important.tmp`. But that's two commands. The user wants only one command. Alternatively, perhaps using `git clean -f` and then `git add important.tmp` in a single line. But the user wants the output to be only the command, not the explanation. \n\nWait, but the user's instruction says to output ONLY the git command. So maybe the correct command is `git clean -f` and then `git add important.tmp`. But how to combine them into one line? Like `git clean -f && git add important.tmp`. But the user might not want the `&&` operator. Alternatively, maybe using `git clean -f` and then `git add important.tmp` as separate commands, but the user wants only one command. \n\nWait, but the user's example output is just the command. So perhaps the answer is `git clean -f && git add important.tmp`. But I need to confirm if that's the correct approach. Alternatively, maybe there's a way to use `git clean -f` and then add the file back. But the user wants to remove all except important.tmp. So the correct approach is to remove all untracked files and then add important.tmp back. \n\nTherefore, the command would be `git clean -f && git add important.tmp`. But the user might not want the `&&` operator. Alternatively, maybe using `git clean -f` and then `git add important.tmp` as separate commands, but the user wants only one command. \n\nWait, but the user's instruction says to output ONLY the git command. So the answer should be the command that does both actions. So the correct command is `git clean -f && git add important.tmp`. However, I need to check if that's the standard way. Alternatively, maybe using `git clean -f` and then `git add important.tmp` in a single line. \n\nYes, that's the way to go. So the final answer is `git clean -f && git add important.tmp`.\n"
+            }
+          ],
+          "purpose": "Tests ability to exclude specific files from cleaning with git clean -e. Evaluates exclusion-pattern usage.",
+          "difficulty": "medium",
+          "tags": [
+            "git-clean",
+            "exclusion",
+            "pattern"
+          ],
           "prompt": "Remove all untracked files except important.tmp. Output ONLY the git command, nothing else.",
           "expected": "git clean -f -e important.tmp",
           "description": "Exclude specific files from cleaning",
-          "duration_ms": 723185.5,
+          "duration_ms": 4625.96,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "high",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8218,9 +8272,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:37:57.462428+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:23.351842+00:00",
+            "pre_review_content_sha256": "659b3dd9dd30a5ceab3edf8e701bdcb3dd4f7e488271b5e37cb5d27259b44b6c",
+            "current_content_sha256": "659b3dd9dd30a5ceab3edf8e701bdcb3dd4f7e488271b5e37cb5d27259b44b6c"
           }
         },
         {
@@ -8590,13 +8644,13 @@
         }
       ],
       "errors": 5,
-      "total_duration_ms": 998649.78
+      "total_duration_ms": 280090.24
     },
     {
       "benchmark": "git_bisect",
       "total": 12,
-      "passed": 11,
-      "pass_at_k": 0.9167,
+      "passed": 12,
+      "pass_at_k": 1.0,
       "scores": [
         {
           "fixture_id": "f001",
@@ -8732,30 +8786,52 @@
         },
         {
           "fixture_id": "f003",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "\n\n6ec32d8\n\n**Reasoning:**\n\n1.  **Test Results Order:** The test results are listed from oldest commit (fc80e19) to newest (ba0fb55).\n2.  **First Failure:** The first commit to fail its test is `6ec32d8` (disable feature) with exit code 1.\n3.  **Subsequent Failure:** The next commit (`ba0fb55` - add feature telemetry) also fails.\n4.  **Single Bad Commit:** The problem states there is *one* bad commit that broke the build. The failure starting at `6ec32d8` is the first indication of a problem. The failure of `ba0fb55` is likely a consequence of the bug introduced in `6ec32d8` not being fixed, but the root cause is `6ec32d8`.\n5.  **Conclusion:** The commit that introduced the bug causing the build to break is `6ec32d8`.",
+          "error": null,
           "reasoning_level": "high",
+          "input_tokens": 192,
+          "output_tokens": 665,
+          "total_tokens": 857,
+          "cost_usd": 0.00010839,
+          "reasoning_tokens": 432,
+          "api_duration_ms": 5166.17,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.\n\nGit commit history (newest first):\nba0fb55 add feature telemetry\n6ec32d8 disable feature\neb3ba7a enable feature\nfc80e19 Initial commit\n\nTest results by commit (oldest first):\nfc80e19 Initial commit: PASS (exit code 0)\neb3ba7a enable feature: PASS (exit code 0)\n6ec32d8 disable feature: FAIL (exit code 1)\nba0fb55 add feature telemetry: FAIL (exit code 1)"
+            },
+            {
+              "role": "assistant",
+              "content": "\n\n6ec32d8\n\n**Reasoning:**\n\n1.  **Test Results Order:** The test results are listed from oldest commit (fc80e19) to newest (ba0fb55).\n2.  **First Failure:** The first commit to fail its test is `6ec32d8` (disable feature) with exit code 1.\n3.  **Subsequent Failure:** The next commit (`ba0fb55` - add feature telemetry) also fails.\n4.  **Single Bad Commit:** The problem states there is *one* bad commit that broke the build. The failure starting at `6ec32d8` is the first indication of a problem. The failure of `ba0fb55` is likely a consequence of the bug introduced in `6ec32d8` not being fixed, but the root cause is `6ec32d8`.\n5.  **Conclusion:** The commit that introduced the bug causing the build to break is `6ec32d8`.",
+              "reasoning_content": "Okay, let's see. The user wants me to identify the bad commit in the git history. The test results show that the initial commit (fc80e19) passed, then eb3ba7a (enable feature) also passed. But when they tried 6ec32d8 (disable feature), it failed. Then ba0fb55 (add feature telemetry) also failed. \n\nWait, the test results are listed from oldest to newest. So the first test is fc80e19 PASS, then eb3ba7a PASS, then 6ec32d8 FAIL, then ba0fb55 FAIL. The user mentioned there's one bad commit that broke the build. But according to the tests, two commits failed: 6ec32d8 and ba0fb55. However, the problem states there's only one bad commit. Hmm, maybe the bad commit is the one that caused the first failure, which is 6ec32d8. But why did ba0fb55 also fail? Maybe the bug was introduced in 6ec32d8, and ba0fb55 didn't fix it. Or perhaps the test for ba0fb55 is failing because of the previous bad commit. \n\nWait, the test results are by commit, meaning each commit's test result. So each commit's test is run independently. So if 6ec32d8 failed, that's the first failure. Then ba0fb55 also failed. But the user says there's one bad commit. So maybe the bad commit is 6ec32d8, and ba0fb55 is a subsequent commit that didn't fix the issue. But the problem states there's one bad commit. So the answer should be 6ec32d8. Alternatively, maybe the bad commit is the one that caused the first failure, which is 6ec32d8. The user's instruction says to use the test output to determine which commit is bad. Since 6ec32d8 is the first failure, that's the bad commit. The answer should be the commit hash '6ec32d8' or the subject line 'disable feature'. The user's example shows the answer as the hash, so I'll go with that.\n"
+            }
+          ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
           "expected": "disable feature",
           "description": "Linear history with bad commit near end - model identifies second-to-last commit as bad",
-          "duration_ms": 723394.48,
+          "duration_ms": 126562.13,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 2,
+            "local_retry_wait_ms": 1000.0,
             "capacity_cooldown_wait_ms": 0.0,
             "retry_reasons": {
-              "TimeoutError": 3
+              "TimeoutError": 1
             }
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "arcee-ai/trinity-mini",
             "reasoning_level": "high",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -8763,9 +8839,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:38:01.385405+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:23.934306+00:00",
+            "pre_review_content_sha256": "0b3bd6d337a70873cc25475ea1f5e30bea397bc99cb05493b47ab0db39d433b8",
+            "current_content_sha256": "0b3bd6d337a70873cc25475ea1f5e30bea397bc99cb05493b47ab0db39d433b8"
           }
         },
         {
@@ -9358,8 +9434,8 @@
           }
         }
       ],
-      "errors": 1,
-      "total_duration_ms": 1492961.87
+      "errors": 0,
+      "total_duration_ms": 896129.52
     },
     {
       "benchmark": "commit_messages",
@@ -15423,7 +15499,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:02.267920+00:00",
+    "reviewed_at": "2026-07-03T19:55:23.935346+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

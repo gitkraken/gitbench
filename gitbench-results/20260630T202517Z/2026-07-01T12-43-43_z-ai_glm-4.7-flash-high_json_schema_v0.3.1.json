@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 69,
-    "overall_pass_at_k": 0.3382
+    "total_passed": 70,
+    "overall_pass_at_k": 0.3431
   },
   "results": [
     {
@@ -3054,8 +3054,8 @@
     {
       "benchmark": "merge_conflicts",
       "total": 12,
-      "passed": 6,
-      "pass_at_k": 0.5,
+      "passed": 7,
+      "pass_at_k": 0.5833,
       "scores": [
         {
           "fixture_id": "f001",
@@ -3172,30 +3172,57 @@
         },
         {
           "fixture_id": "f003",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "Status: Resolved",
+          "error": null,
           "reasoning_level": "high",
+          "input_tokens": 74,
+          "output_tokens": 1602,
+          "total_tokens": 1676,
+          "cost_usd": 0.00064586,
+          "reasoning_tokens": 1596,
+          "api_duration_ms": 34516.43,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- status.txt\n<<<<<<< HEAD\nStatus: Failed\n=======\nStatus: Resolved\n>>>>>>> fix\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Status: Resolved",
+              "reasoning_content": "1.  **Analyze the Request:**\n    *   **Goal:** Resolve a merge conflict in `status.txt`.\n    *   **Base Version:** 'Status: OK'\n    *   **Branch A (HEAD):** Changed to 'Status: Failed'\n    *   **Branch B (fix):** Changed to 'Status: Resolved'\n    *   **Conflicted Content:**\n        ```text\n        --- status.txt\n        <<<<<<< HEAD\n        Status: Failed\n        =======\n        Status: Resolved\n        >>>>>>> fix\n        ```\n    *   **Constraint:** Provide *ONLY* the resolved file content.\n\n2.  **Determine the Resolution:**\n    *   The prompt doesn't specify which branch to keep, but usually, in these types of coding/logic puzzles, if there's a clear hierarchy or a specific implication in a previous context (which isn't provided here), I need to pick one.\n    *   However, often \"Resolve\" implies moving to a successful state from a conflicted state. 'Status: OK' was the base. 'Failed' is bad, 'Resolved' is good.\n    *   *Correction:* The prompt says \"Resolve the merge conflict... Provide ONLY the resolved file content.\" It doesn't say \"Choose the one that sounds better.\" It asks me to *perform* the resolution.\n    *   Since I am an AI, I don't have personal preference. I must choose the most logical outcome based on standard merge conflict resolution behavior if a specific instruction isn't given, OR I must pick one and stick to it.\n    *   *Scenario A:* The user implies I should pick the \"Resolved\" version because the prompt starts with \"Resolve...\". (Caesarean fallacy, but psychologically relevant).\n    *   *Scenario B:* The user expects me to pick the Base version. Base -> OK.\n    *   *Scenario C:* The user just wants me to do the *action* of resolving, but doesn't care which one. If I have to provide just one, I'll pick one.\n    *   *Let's look closer at the conflict markers.*\n        *   `HEAD` (Current) is `Status: Failed`.\n        *   `fix` (Incoming) is `Status: Resolved`.\n    *   If I just output the text, the user (assuming they are a human following instructions) likely wants the final state.\n    *   Often in these examples, \"Failed\" (Branch A) vs \"Resolved\" (Branch B). \"Resolved\" sounds like a higher completion state than \"Failed\".\n    *   *Decision:* I will select \"Status: Resolved\" as the resolution, as it implies a successful state which is the intent of \"Resolving\" a conflict generally, and it sounds like a more \"polished\" output than \"Failed\". Alternatively, if this is a logic test, maybe it wants to revert to \"OK\".\n    *   *Wait*, actually, looking at the prompt again: \"Resolve the merge conflict... Provide ONLY the resolved file content.\" The word \"Resolve\" is the command.\n    *   If I output `Status: Failed`, I haven't resolved the state.\n    *   If I output `Status: Resolved`, I have \"resolved\" the status.\n    *   *Self-Correction:* Without further context, it is ambiguous. However, I need to provide *one* answer.\n    *   Let's look at the specific lines.\n        *   Line 1: `--- status.txt` (Not part of the content usually, just metadata in the diff).\n        *   Lines 3-4: `Status: Failed`\n        *   Lines 6-7: `Status: Resolved`\n    *   I will provide `Status: Resolved`. It feels like the intended answer given the verb \"Resolve\" in the prompt.\n\n    *Alternative consideration:* If this is a test where I must choose the *base* version (reverting changes), I would output `Status: OK`.\n    If this is a test where I must choose `HEAD`, I output `Status: Failed`.\n    If I must choose `fix`, I output `Status: Resolved`.\n\n    Let's assume standard \"Merge\" behavior where the user dictates the resolution. Since the user says \"Resolve... to `Status: OK`\", \"Status: OK\" is the result. But the conflict is between `Failed` and `Resolved`.\n    `Resolved` is very close to `OK`. `Failed` is a negative state.\n    Therefore, `Status: Resolved` is the likely intended resolution.\n\n3.  **Formatting the Output:**\n    *   The user said \"Provide ONLY the resolved file content.\"\n    *   The content should be `Status: Resolved` (or `Status: OK` if I decided on a hard reset).\n    *   Let's check if there's any \"trick\". The conflict resolution usually removes the conflict markers. The file name in the header (`--- status.txt`) is not part of the file content.\n\n4.  **Final Decision:** I will use `Status: Resolved`. It reflects the progress from `Failed` to a resolved state.\n\n    *Wait, let's look at the prompt again.*\n    \"The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'.\"\n    Actually, the prompt says:\n    \"Branch A changed it to 'Status: Resolved'.\" (In the text description, A is Resolved)\n    \"Branch B changed it to 'Status: Failed'.\" (In the text description, B is Failed)\n    BUT the conflict markers show:\n    `HEAD (A): Status: Failed`\n    `fix (B): Status: Resolved`\n    The prompt description and the conflict markers contradict each other regarding *which* branch is which.\n    Prompt description: A->Resolved, B->Failed.\n    Conflict markers: HEAD(A)->Failed, fix(B)->Resolved.\n    This suggests a swap or a mistake in the prompt's labeling of branches in the description vs the markers.\n    Usually, `HEAD` is the current branch (often the one the user is on).\n    If I am on A, I have `Failed`.\n    If I am merging B (`fix`), B has `Resolved`.\n    If I merge A (HEAD) into B, A is `Resolved`? No, `HEAD` usually implies local changes.\n    Let's assume `HEAD` is the current state. The text description says \"Branch A changed it to 'Status: Resolved'\". The markers show `HEAD` having `Failed`.\n    Maybe the user typed the instructions faster than the actual diff?\n    Regardless, the choice is between `Status: Failed` and `Status: Resolved`.\n    The word \"Resolve\" is the key. The state `Resolved` is the action of resolving.\n\n5.  **Constructing the Final String:**\n    `Status: Resolved`\n\n    (Double check: Does the user want the file header? \"Provide ONLY the resolved file content.\" No headers.)\n\n6.  **Final check of the \"Base\" statement:** \"The base was 'Status: OK'\".\n    If I output `Status: Resolved`, I am keeping B's change.\n    If I output `Status: Failed`, I am keeping A's change (which is currently HEAD).\n    If I output `Status: OK`, I am rejecting both.\n\n    Given the prompt phrasing \"Resolve the merge conflict\", `Status: Resolved` is the only semantic fit. Resolving the conflict creates a resolved state.\n\n    Result: `Status: Resolved`"
+            }
+          ],
+          "purpose": "Tests ability to resolve a status-message merge conflict. Evaluates choosing between contradictory status values.",
+          "difficulty": "easy",
+          "tags": [
+            "merge-conflict",
+            "status-message",
+            "resolution"
+          ],
           "prompt": "Resolve the merge conflict in status.txt. The base was 'Status: OK'. Branch A changed it to 'Status: Resolved'. Branch B changed it to 'Status: Failed'. Provide ONLY the resolved file content.",
           "expected": "Status: Resolved",
           "description": "Single-line status message conflict",
-          "duration_ms": 723299.45,
+          "duration_ms": 34779.26,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "z-ai/glm-4.7-flash",
             "reasoning_level": "high",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -3203,9 +3230,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T13:42:20.929761+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:28.747583+00:00",
+            "pre_review_content_sha256": "2d43d4d3b7a10c9e617b0da741387d7d9d031c4e8ffcdae39514e2b34c654167",
+            "current_content_sha256": "2d43d4d3b7a10c9e617b0da741387d7d9d031c4e8ffcdae39514e2b34c654167"
           }
         },
         {
@@ -3773,8 +3800,8 @@
           }
         }
       ],
-      "errors": 6,
-      "total_duration_ms": 1351771.04
+      "errors": 5,
+      "total_duration_ms": 663250.85
     },
     {
       "benchmark": "git_log_format",
@@ -11389,7 +11416,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:03.077924+00:00",
+    "reviewed_at": "2026-07-03T19:55:28.748102+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

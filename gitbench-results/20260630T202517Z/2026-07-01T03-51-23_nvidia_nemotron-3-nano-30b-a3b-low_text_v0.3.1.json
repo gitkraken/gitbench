@@ -9486,29 +9486,56 @@
           "fixture_id": "f010",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "",
-          "error": "Model call timed out after 240s",
+          "model_output": "Add core helpers, remove legacy helpers",
+          "error": "Scoring error: llm_judge requires a judge client",
           "reasoning_level": "low",
+          "input_tokens": 311,
+          "output_tokens": 281,
+          "total_tokens": 592,
+          "cost_usd": 7.175e-05,
+          "reasoning_tokens": 220,
+          "api_duration_ms": 2421.85,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Refactor').\n\nGit diff:\ndiff --git a/core/helpers.py b/core/helpers.py\nnew file mode 100644\nindex 0000000..297a34b\n--- /dev/null\n+++ b/core/helpers.py\n@@ -0,0 +1 @@\n+new code\ndiff --git a/core/utils.py b/core/utils.py\nnew file mode 100644\nindex 0000000..297a34b\n--- /dev/null\n+++ b/core/utils.py\n@@ -0,0 +1 @@\n+new code\ndiff --git a/helpers.py b/helpers.py\ndeleted file mode 100644\nindex 99252dc..0000000\n--- a/helpers.py\n+++ /dev/null\n@@ -1 +0,0 @@\n-old code\ndiff --git a/utils.py b/utils.py\ndeleted file mode 100644\nindex 99252dc..0000000\n--- a/utils.py\n+++ /dev/null\n@@ -1 +0,0 @@\n-old code\n"
+            },
+            {
+              "role": "assistant",
+              "content": "Add core helpers, remove legacy helpers",
+              "reasoning_content": "We need to generate a concise commit message max 50 chars, focusing on action taken. There are additions of new files core/helpers.py and core/utils.py, and deletions of helpers.py and utils.py (old versions). So action could be \"Add core helpers, remove legacy helpers\". Let's count characters. \"Add core helpers, remove legacy helpers\" length? Count: Add(3)+space=4, core(4)=8, space=9, helpers,(8 inc comma) =17, space=18, remove(6)=24, space=25, legacy(6)=31, space=32, helpers(7)=39. That's 39 characters, within 50. But we might want more concise: \"Add core helpers, drop legacy helpers\". Count: Add(3)+space=4, core(4)=8, space=9, helpers,(8)=17, space=18, drop(4)=22, space=23, legacy(6)=29, space=30, helpers(7)=37. That's 37. Or \"Add core helpers, remove legacy helpers\". That's 39. Provide as commit message. Ensure <=50 characters. Let's output just the message.\n"
+            }
+          ],
+          "purpose": "Tests ability to generate a commit message for a multi-file refactor. Evaluates describing structural reorganization across modules.",
+          "difficulty": "medium",
+          "tags": [
+            "commit-message",
+            "refactor",
+            "multi-file",
+            "structural-change"
+          ],
           "prompt": "Generate a concise commit message (max 50 characters) describing the changes in this diff. Focus on the action taken (e.g., 'Add', 'Fix', 'Update', 'Refactor').",
           "expected": "Refactor helpers into core module",
           "description": "Refactor multiple files",
-          "duration_ms": 503738.07,
+          "duration_ms": 2892.21,
           "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
             "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "ModelResponseError": 1,
-              "TimeoutError": 2
-            }
+            "retry_reasons": {}
           },
-          "operational_failure": true,
           "provider_route_metadata": {
             "model_id": "nvidia/nemotron-3-nano-30b-a3b",
             "reasoning_level": "low",
             "adapter": "OpenAIAdapter",
             "base_url": "https://openrouter.ai/api/v1"
           },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -9516,9 +9543,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T03:54:47.793578+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:53:14.813495+00:00",
+            "pre_review_content_sha256": "ea737122d5e152d69056ce6a817e50234f291f1e79e6da124540f79d9f8d7de4",
+            "current_content_sha256": "ea737122d5e152d69056ce6a817e50234f291f1e79e6da124540f79d9f8d7de4"
           }
         },
         {
@@ -9780,7 +9807,7 @@
         }
       ],
       "errors": 1,
-      "total_duration_ms": 794855.75
+      "total_duration_ms": 294009.89
     },
     {
       "benchmark": "submodule_usage",
@@ -13629,7 +13656,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:00.516779+00:00",
+    "reviewed_at": "2026-07-03T19:53:49.622163+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

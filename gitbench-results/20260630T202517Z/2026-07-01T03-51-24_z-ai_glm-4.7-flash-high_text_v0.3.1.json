@@ -4080,27 +4080,14 @@
           "passed": false,
           "similarity": 0.0,
           "model_output": "",
-          "error": "Model call timed out after 240s",
+          "error": "Expecting value: line 171 column 1 (char 935)",
           "reasoning_level": "high",
           "prompt": "Resolve the merge conflict in contact.txt. The base had john@example.com and 555-1234. Branch A kept john@example.com but updated the email to john@company.com. Branch B updated both to johndoe@personal.com and 555-9876. Provide ONLY the resolved file content with the most complete updates.",
           "expected": "Name: John Doe\nEmail: johndoe@personal.com\nPhone: 555-9876\n",
           "description": "Multi-line hunk: address block conflict",
-          "duration_ms": 723312.75,
-          "request_telemetry": {
-            "attempts": 3,
-            "local_retry_wait_ms": 3000.0,
-            "capacity_cooldown_wait_ms": 0.0,
-            "retry_reasons": {
-              "TimeoutError": 3
-            }
-          },
+          "duration_ms": 157384.8,
           "operational_failure": true,
-          "provider_route_metadata": {
-            "model_id": "z-ai/glm-4.7-flash",
-            "reasoning_level": "high",
-            "adapter": "OpenAIAdapter",
-            "base_url": "https://openrouter.ai/api/v1"
-          },
+          "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
             "policy_version": "inappropriate-nsfw-v2",
@@ -4108,9 +4095,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-01T04:23:30.209316+00:00",
-            "pre_review_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb",
-            "current_content_sha256": "d8dd9cd189f02b4e09ac8b32985312e43b78915db5bfdda6c3f51eee33f9fdeb"
+            "reviewed_at": "2026-07-03T19:55:22.423969+00:00",
+            "pre_review_content_sha256": "c164bacff84317835d83fc959f072030fb2997d6ec3fa73746aec24071108abb",
+            "current_content_sha256": "c164bacff84317835d83fc959f072030fb2997d6ec3fa73746aec24071108abb"
           }
         },
         {
@@ -4636,7 +4623,7 @@
         }
       ],
       "errors": 2,
-      "total_duration_ms": 1044133.6
+      "total_duration_ms": 478205.65
     },
     {
       "benchmark": "git_log_format",
@@ -13692,7 +13679,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-02T10:57:01.743366+00:00",
+    "reviewed_at": "2026-07-03T19:55:22.425119+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }
