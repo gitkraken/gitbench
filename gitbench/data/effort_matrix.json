@@ -70,7 +70,8 @@
         "low": "low",
         "medium": "medium",
         "high": "high",
-        "xhigh": "xhigh"
+        "xhigh": "xhigh",
+        "max": "max"
       }
     },
     "glm-5.2": {
@@ -226,6 +227,44 @@
         "medium": "medium",
         "high": "high",
         "xhigh": "xhigh"
+      }
+    },
+    "claude-haiku-4.5": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "claude-opus-4.6": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "claude-opus-4.7": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "claude-fable-5": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
       }
     }
   }

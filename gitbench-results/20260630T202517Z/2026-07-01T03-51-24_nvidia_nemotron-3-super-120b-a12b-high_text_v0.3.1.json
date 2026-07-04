@@ -10,8 +10,8 @@
   "summary": {
     "total_benchmarks": 17,
     "total_fixtures": 204,
-    "total_passed": 196,
-    "overall_pass_at_k": 0.9608
+    "total_passed": 199,
+    "overall_pass_at_k": 0.9755
   },
   "results": [
     {
@@ -3912,8 +3912,8 @@
     {
       "benchmark": "merge_conflicts",
       "total": 12,
-      "passed": 10,
-      "pass_at_k": 0.8333,
+      "passed": 11,
+      "pass_at_k": 0.9167,
       "scores": [
         {
           "fixture_id": "f001",
@@ -4180,16 +4180,57 @@
         },
         {
           "fixture_id": "f005",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "def greet(name):\n    print(f\"Hello, {name}\")\n    return True",
+          "error": null,
           "reasoning_level": "high",
+          "input_tokens": 150,
+          "output_tokens": 76,
+          "total_tokens": 226,
+          "cost_usd": 4.315e-05,
+          "reasoning_tokens": 69,
+          "api_duration_ms": 1067.64,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Resolve the merge conflict in greet.py. The base was a simple greet with print(\"Hello\"). Branch A added f-string formatting with the name parameter. Branch B changed the greeting text to \"Hi there\" and changed return to False. Resolve by taking Branch A's name-aware greeting and keeping the successful return value; do not take Branch B's greeting text or False return. Provide ONLY the resolved file content.\n\nConflicted file content:\n--- greet.py\ndef greet(name):\n<<<<<<< HEAD\n    print(\"Hi there\")\n    return False\n=======\n    print(f\"Hello, {name}\")\n    return True\n>>>>>>> feature\n"
+            },
+            {
+              "role": "assistant",
+              "content": "def greet(name):\n    print(f\"Hello, {name}\")\n    return True",
+              "reasoning_content": "We need to output resolved file content only, with Branch A's name-aware greeting (f-string) and keep successful return value (True). So we should output:\n\ndef greet(name):\n    print(f\"Hello, {name}\")\n    return True\n\nMake sure no extra commentary.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to resolve a function-body merge conflict combining formatting and logic changes. Evaluates semantic code merging.",
+          "difficulty": "medium",
+          "tags": [
+            "merge-conflict",
+            "function-body",
+            "code-merge",
+            "resolution"
+          ],
           "prompt": "Resolve the merge conflict in greet.py. The base was a simple greet with print(\"Hello\"). Branch A added f-string formatting with the name parameter. Branch B changed the greeting text to \"Hi there\" and changed return to False. Resolve by taking Branch A's name-aware greeting and keeping the successful return value; do not take Branch B's greeting text or False return. Provide ONLY the resolved file content.",
           "expected": "def greet(name):\n    print(f\"Hello, {name}\")\n    return True\n",
           "description": "Multi-line hunk: function body conflict",
-          "duration_ms": 2946.05,
-          "operational_failure": true,
+          "duration_ms": 1302.91,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "high",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
           "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
@@ -4198,9 +4239,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-03T19:54:16.999290+00:00",
-            "pre_review_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc",
-            "current_content_sha256": "bd8724d1f674f1d456be481f53342e83502ad91762774f582a44a7cbdbcb64dc"
+            "reviewed_at": "2026-07-04T20:08:19.560354+00:00",
+            "pre_review_content_sha256": "da6a8d96066e510de19c87b68eac8a10cb08a416187454967b963ab09b930c69",
+            "current_content_sha256": "da6a8d96066e510de19c87b68eac8a10cb08a416187454967b963ab09b930c69"
           }
         },
         {
@@ -4665,8 +4706,8 @@
           }
         }
       ],
-      "errors": 2,
-      "total_duration_ms": 75588.59
+      "errors": 1,
+      "total_duration_ms": 73945.45
     },
     {
       "benchmark": "git_log_format",
@@ -6875,8 +6916,8 @@
     {
       "benchmark": "git_clean",
       "total": 12,
-      "passed": 11,
-      "pass_at_k": 0.9167,
+      "passed": 12,
+      "pass_at_k": 1.0,
       "scores": [
         {
           "fixture_id": "f001",
@@ -7462,16 +7503,57 @@
         },
         {
           "fixture_id": "f010",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "git clean -n -d",
+          "error": null,
           "reasoning_level": "high",
+          "input_tokens": 73,
+          "output_tokens": 120,
+          "total_tokens": 193,
+          "cost_usd": 5.984e-05,
+          "reasoning_tokens": 108,
+          "api_duration_ms": 2407.63,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "Preview what untracked files and directories would be removed without actually removing them. Output ONLY the git command, nothing else.\n\nStatus:\n?? artifacts/\n?? scratch.txt\n\nUntracked files:\nartifacts/logs/run.log\nscratch.txt\n\nIgnored files:\n(none)"
+            },
+            {
+              "role": "assistant",
+              "content": "git clean -n -d",
+              "reasoning_content": "We need to output only the git command. The task: \"Preview what untracked files and directories would be removed without actually removing them.\" That's `git clean -n -d` (dry-run). Also can include `-x`? No need: untracked files/directories only. Usually `git clean -n` (dry-run) and `-d` to include directories. So output exactly: `git clean -n -d`. Nothing else. Ensure no extra whitespace or newline? Usually just command. Provide that.\n\n"
+            }
+          ],
+          "purpose": "Tests ability to preview directory removal with dry-run. Evaluates combined flag usage (-nd).",
+          "difficulty": "easy",
+          "tags": [
+            "git-clean",
+            "dry-run",
+            "directories",
+            "preview"
+          ],
           "prompt": "Preview what untracked files and directories would be removed without actually removing them. Output ONLY the git command, nothing else.",
           "expected": "git clean -f -d -n",
           "description": "Dry-run with directory removal preview",
-          "duration_ms": 1177.75,
-          "operational_failure": true,
+          "duration_ms": 2583.57,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "high",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
           "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
@@ -7480,9 +7562,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-03T19:54:39.019075+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-04T20:08:20.113686+00:00",
+            "pre_review_content_sha256": "6fcacdfe6b9f824339e5d65a83de3825c36265d5015738b04e2cff8c3e7279d7",
+            "current_content_sha256": "6fcacdfe6b9f824339e5d65a83de3825c36265d5015738b04e2cff8c3e7279d7"
           }
         },
         {
@@ -7618,14 +7700,14 @@
           }
         }
       ],
-      "errors": 1,
-      "total_duration_ms": 97497.47
+      "errors": 0,
+      "total_duration_ms": 98903.29
     },
     {
       "benchmark": "git_bisect",
       "total": 12,
-      "passed": 11,
-      "pass_at_k": 0.9167,
+      "passed": 12,
+      "pass_at_k": 1.0,
       "scores": [
         {
           "fixture_id": "f001",
@@ -7803,16 +7885,49 @@
         },
         {
           "fixture_id": "f004",
-          "passed": false,
-          "similarity": 0.0,
-          "model_output": "",
-          "error": "Error code: 422 - {'error': {'message': 'Provider returned error', 'code': 422, 'metadata': {'raw': '{\"detail\":\"Error while parsing extra body parameters: [{\\'type\\': \\'extra_forbidden\\', \\'loc\\': (\\'seed\\',), \\'msg\\': \\'Extra inputs are not permitted\\', \\'input\\': None, \\'url\\': \\'https://errors.pydantic.dev/2.13/v/extra_forbidden\\'}]\"}', 'provider_name': 'Nebius', 'is_byok': False, 'previous_errors': [{'code': 429, 'message': 'Provider returned error', 'provider_name': 'DekaLLM', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DeepInfra', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}, {'code': 429, 'message': 'Provider returned error', 'provider_name': 'DigitalOcean', 'raw': 'nvidia/nemotron-3-super-120b-a12b is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations'}]}}, 'user_id': 'user_3FrVBkmFqVIuZ58dEh7AU8vhXUV'}",
+          "passed": true,
+          "similarity": 1.0,
+          "model_output": "a92d324",
+          "error": null,
           "reasoning_level": "high",
+          "input_tokens": 230,
+          "output_tokens": 188,
+          "total_tokens": 418,
+          "cost_usd": 0.000103,
+          "reasoning_tokens": 157,
+          "api_duration_ms": 4560.55,
+          "transcript": [
+            {
+              "role": "user",
+              "content": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.\n\nGit commit history (newest first):\n0d1d394 add installation section\n1d55d6f add features section\na92d324 remove setup todo\n9a17c49 Initial commit\n\nTest results by commit (oldest first):\n9a17c49 Initial commit: PASS (exit code 0)\na92d324 remove setup todo: FAIL (exit code 1)\n1d55d6f add features section: FAIL (exit code 1)\n0d1d394 add installation section: FAIL (exit code 1)"
+            },
+            {
+              "role": "assistant",
+              "content": "a92d324",
+              "reasoning_content": "We need to find which commit introduced the bug. Oldest first test results:\n\n- 9a17c49 Initial commit: PASS\n- a92d324 remove setup todo: FAIL\n- 1d55d6f add features section: FAIL\n- 0d1d394 add installation section: FAIL\n\nSo the bug was introduced at commit a92d324 (remove setup todo) because that's the first failing commit after a pass. All later commits also fail (since they include that bad commit). So answer is a92d324 (first 7 characters) or commit subject line \"remove setup todo\". The question says answer should be commit hash (first 7 characters) or commit subject line. We'll provide the hash a92d324.\n\n"
+            }
+          ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
           "expected": "remove setup todo",
           "description": "Linear history with bad commit near beginning - model identifies early commit",
-          "duration_ms": 1999.01,
-          "operational_failure": true,
+          "duration_ms": 5293.66,
+          "request_telemetry": {
+            "attempts": 1,
+            "local_retry_wait_ms": 0.0,
+            "capacity_cooldown_wait_ms": 0.0,
+            "retry_reasons": {}
+          },
+          "provider_route_metadata": {
+            "model_id": "nvidia/nemotron-3-super-120b-a12b",
+            "reasoning_level": "high",
+            "adapter": "OpenAIAdapter",
+            "base_url": "https://openrouter.ai/api/v1"
+          },
+          "request_config": {
+            "output_mode": "both",
+            "model_generate_kwargs": {}
+          },
+          "output_mode": "both",
           "_doctor_retried": true,
           "safety_review": {
             "status": "allow",
@@ -7821,9 +7936,9 @@
               "profile": "openrouter-result-safety",
               "model": "openai/gpt-5.4-mini:none"
             },
-            "reviewed_at": "2026-07-03T19:54:41.846342+00:00",
-            "pre_review_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2",
-            "current_content_sha256": "4da89f0cdfc8cb5d6b7fc3061db7d5895837c2e5364beddace6372ac0f656ee2"
+            "reviewed_at": "2026-07-04T20:08:20.629571+00:00",
+            "pre_review_content_sha256": "efb8aa3b3a32baa62b86d19afc93b7c31450aec286adb3e546bac0ce6c08ef1b",
+            "current_content_sha256": "efb8aa3b3a32baa62b86d19afc93b7c31450aec286adb3e546bac0ce6c08ef1b"
           }
         },
         {
@@ -8286,8 +8401,8 @@
           }
         }
       ],
-      "errors": 1,
-      "total_duration_ms": 71434.13
+      "errors": 0,
+      "total_duration_ms": 74728.78
     },
     {
       "benchmark": "commit_messages",
@@ -13621,7 +13736,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-07-03T19:54:43.986129+00:00",
+    "reviewed_at": "2026-07-04T20:08:20.630312+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }
