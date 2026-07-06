@@ -258,7 +258,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Name: John Doe\\nEmail: john@company.com\\nPhone: 555-9876\\n\"}",
-              "reasoning_content": "I'm working through a rebase conflict where the base version has john@example.com and 555-1234, the branch being rebased changed the email to john@company.com, and main updated both fields to johndoe@personal.com and 555-9876. I'm trying to clarify which version represents the incoming change versus the current HEAD during the rebase operation.\n\nFor the phone number, only main changed it, so that should resolve to 555-9876. The email is trickier since both sides modified it\u2014I need to determine what \"most complete updates\" means when there's a true conflict between john@company.com and johndoe@personal.com. Sticking with the rebased branch's email change since that's the intentional update being applied on top of main, combined with main's phone update that the branch didn't modify. The resolved file should have john@company.com for email and 555-9876 for phone."
+              "reasoning_content": "I'm working through a rebase conflict where the base version has john@example.com and 555-1234, the branch being rebased changed the email to john@company.com, and main updated both fields to johndoe@personal.com and 555-9876. I'm trying to clarify which version represents the incoming change versus the current HEAD during the rebase operation.\n\nFor the phone number, only main changed it, so that should resolve to 555-9876. The email is trickier since both sides modified it—I need to determine what \"most complete updates\" means when there's a true conflict between john@company.com and johndoe@personal.com. Sticking with the rebased branch's email change since that's the intentional update being applied on top of main, combined with main's phone update that the branch didn't modify. The resolved file should have john@company.com for email and 555-9876 for phone."
             }
           ],
           "purpose": "Tests ability to resolve a multi-line address block conflict during rebase. Evaluates combining partial updates with correct polarity.",
@@ -331,7 +331,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"def greet(name):\\n    print(\\\"Hi there\\\")\\n    return False\\n\"}",
-              "reasoning_content": "I'm working through how git rebase conflict markers work\u2014specifically which side represents what during a rebase operation. When rebasing a feature branch onto main, I need to clarify that HEAD points to the base branch (main) with commits applied so far, while the incoming changes are from the commits being replayed from the feature branch.\n\nLooking at this conflict, the user wants me to take main's version: the \"Hi there\" greeting text and the `False` return value, discarding the feature branch's f-string formatting with the name parameter. The resolved function should keep the `def greet(name):` signature but use main's simpler implementation, even though that leaves the name parameter unused."
+              "reasoning_content": "I'm working through how git rebase conflict markers work—specifically which side represents what during a rebase operation. When rebasing a feature branch onto main, I need to clarify that HEAD points to the base branch (main) with commits applied so far, while the incoming changes are from the commits being replayed from the feature branch.\n\nLooking at this conflict, the user wants me to take main's version: the \"Hi there\" greeting text and the `False` return value, discarding the feature branch's f-string formatting with the name parameter. The resolved function should keep the `def greet(name):` signature but use main's simpler implementation, even though that leaves the name parameter unused."
             }
           ],
           "purpose": "Tests ability to resolve a function-body conflict during rebase. Evaluates semantic merging of code with rebase direction awareness.",
@@ -518,7 +518,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Title: My Project v3\\n\"}",
-              "reasoning_content": "I'm looking at a rebase conflict in project.txt where the branch being rebased has \"Title: My Project v2\" and the main branch has \"Title: My Project v3\" \u2014 I need to clarify which version is actually in the HEAD and incoming sections of the conflict markers."
+              "reasoning_content": "I'm looking at a rebase conflict in project.txt where the branch being rebased has \"Title: My Project v2\" and the main branch has \"Title: My Project v3\" — I need to clarify which version is actually in the HEAD and incoming sections of the conflict markers."
             }
           ],
           "purpose": "Tests ability to handle rebase with partial conflicts across files. Evaluates understanding of clean vs conflicted files in rebase.",
@@ -591,7 +591,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Author: J. Doe\\n\"}",
-              "reasoning_content": "I'm looking at a rebase conflict where the upstream branch has \"Author: John Smith\" and the incoming change from the main branch has \"Author: J. Doe\" \u2014 the user wants to keep the J. Doe version, so the resolved content should just be that author line."
+              "reasoning_content": "I'm looking at a rebase conflict where the upstream branch has \"Author: John Smith\" and the incoming change from the main branch has \"Author: J. Doe\" — the user wants to keep the J. Doe version, so the resolved content should just be that author line."
             }
           ],
           "purpose": "Tests ability to resolve a three-way author-name conflict in rebase. Evaluates complex merge decisions with rebase polarity.",
@@ -777,7 +777,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "I'm working through the rebase conflict in app.py and need to clarify which side represents what\u2014during a rebase, HEAD points to the base branch while the incoming changes are from the branch being rebased, so the conflict markers show the base on top and the rebased commits below.\n\nLooking at the actual changes: the HEAD side has port 5000 with debug disabled, while the other side (the main branch commit) has port 8080. The resolution should combine both preferences\u2014taking the port 8080 from main while keeping debug disabled as the branch intended, since the instruction explicitly says to prefer disabling debug.\n\nFor requirements.txt, I need to apply the instruction to prefer the older Flask version for compatibility but take the updated requests version, so that gives me Flask 2.0.0 with requests 2.28.0.\n\nOn the app.py conflict, the instruction only explicitly addresses the debug preference, but the port change from main to 8080 is a separate intentional modification. Since both changes target the same line, the right approach is to combine them: take the port change from main and the debug preference from the branch, resulting in `app.run(port=8080, debug=False)`.\n\nFor the output format, the schema description says files should be keyed by filename with their contents as strings, even though the additionalProperties constraint seems contradictory. I'll follow the logical intent and structure the JSON with filenames as keys, including the resolved content for both app.py and requirements.txt as single-line JSON output."
+              "reasoning_content": "I'm working through the rebase conflict in app.py and need to clarify which side represents what—during a rebase, HEAD points to the base branch while the incoming changes are from the branch being rebased, so the conflict markers show the base on top and the rebased commits below.\n\nLooking at the actual changes: the HEAD side has port 5000 with debug disabled, while the other side (the main branch commit) has port 8080. The resolution should combine both preferences—taking the port 8080 from main while keeping debug disabled as the branch intended, since the instruction explicitly says to prefer disabling debug.\n\nFor requirements.txt, I need to apply the instruction to prefer the older Flask version for compatibility but take the updated requests version, so that gives me Flask 2.0.0 with requests 2.28.0.\n\nOn the app.py conflict, the instruction only explicitly addresses the debug preference, but the port change from main to 8080 is a separate intentional modification. Since both changes target the same line, the right approach is to combine them: take the port change from main and the debug preference from the branch, resulting in `app.run(port=8080, debug=False)`.\n\nFor the output format, the schema description says files should be keyed by filename with their contents as strings, even though the additionalProperties constraint seems contradictory. I'll follow the logical intent and structure the JSON with filenames as keys, including the resolved content for both app.py and requirements.txt as single-line JSON output."
             }
           ],
           "purpose": "Tests ability to resolve interdependent file conflicts during rebase with trade-offs. Evaluates dependency-aware rebase merging.",
@@ -1295,7 +1295,7 @@
             {
               "role": "assistant",
               "content": "{\"command\": \"git show v1.0.0-rc1\"}",
-              "reasoning_content": "To show the details of an annotated tag like 'v1.0.0-rc1', I'd use `git show v1.0.0-rc1` since that's the standard approach\u2014it displays the tag message, tagger information, date, and the associated commit. Alternatively, `git tag -n` shows just the message, or `git cat-file tag v1.0.0-rc1` for the raw tag object details. Now I need to format this as JSON output."
+              "reasoning_content": "To show the details of an annotated tag like 'v1.0.0-rc1', I'd use `git show v1.0.0-rc1` since that's the standard approach—it displays the tag message, tagger information, date, and the associated commit. Alternatively, `git tag -n` shows just the message, or `git cat-file tag v1.0.0-rc1` for the raw tag object details. Now I need to format this as JSON output."
             }
           ],
           "purpose": "Tests ability to show detailed tag information. Evaluates tag-inspection with git show.",
@@ -2183,7 +2183,7 @@
             {
               "role": "assistant",
               "content": "{\"commands\": [\"git worktree add ../wt-a feature-a\", \"git worktree add ../wt-b feature-b\"]}",
-              "reasoning_content": "I need to generate JSON output with two git worktree commands\u2014one creating a worktree for 'feature-a' at '../wt-a' and another for 'feature-b' at '../wt-b'."
+              "reasoning_content": "I need to generate JSON output with two git worktree commands—one creating a worktree for 'feature-a' at '../wt-a' and another for 'feature-b' at '../wt-b'."
             }
           ],
           "purpose": "Tests ability to create and manage multiple worktrees simultaneously. Evaluates multi-worktree management.",
@@ -2751,7 +2751,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Set default API key for dev\"}",
-              "reasoning_content": "I can see from the git blame that the hardcoded API key on line 2 was introduced in commit c6c49b4, which has the message \"Set default API key for dev\" \u2014 this is clearly the culprit. Looking at the git log, I notice there's actually a later commit d20156f that says \"Load API key from environment,\" suggesting someone tried to fix this issue but the hardcoded version is still in the current code.\n\nNow I need to format the commit message as JSON output."
+              "reasoning_content": "I can see from the git blame that the hardcoded API key on line 2 was introduced in commit c6c49b4, which has the message \"Set default API key for dev\" — this is clearly the culprit. Looking at the git log, I notice there's actually a later commit d20156f that says \"Load API key from environment,\" suggesting someone tried to fix this issue but the hardcoded version is still in the current code.\n\nNow I need to format the commit message as JSON output."
             }
           ],
           "purpose": "Tests ability to detect when a hardcoded secret was introduced into code, replacing environment-variable-based configuration. Evaluates security-sensitive code review via git history.",
@@ -2979,7 +2979,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Optimize for byte values\"}",
-              "reasoning_content": "I'm examining the git blame output to trace which commit introduced the modulo 256 truncation. The line with `% 256` was last modified in commit 7fbcf3c, which has the message \"Optimize for byte values\" \u2014 that's the commit that added the bug."
+              "reasoning_content": "I'm examining the git blame output to trace which commit introduced the modulo 256 truncation. The line with `% 256` was last modified in commit 7fbcf3c, which has the message \"Optimize for byte values\" — that's the commit that added the bug."
             }
           ],
           "purpose": "Tests ability to detect when an integer overflow bug was introduced via modulo truncation. Evaluates understanding of numeric precision issues combined with git forensics.",
@@ -3167,7 +3167,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Update import path\"}",
-              "reasoning_content": "The broken import in src/main.py is trying to load from a 'helpers' module that doesn't exist \u2014 the correct module is 'utils' where the helper function is actually defined. Git blame reveals that commit 978443c with the message \"Update import path\" introduced this error, changing what was presumably a working import from utils to the broken helpers reference."
+              "reasoning_content": "The broken import in src/main.py is trying to load from a 'helpers' module that doesn't exist — the correct module is 'utils' where the helper function is actually defined. Git blame reveals that commit 978443c with the message \"Update import path\" introduced this error, changing what was presumably a working import from utils to the broken helpers reference."
             }
           ],
           "purpose": "Tests ability to trace a broken import path across multiple module-rename commits. Requires navigating intertwined import changes to find the original error.",
@@ -3400,7 +3400,7 @@
             {
               "role": "assistant",
               "content": "{\"ref\": \"e1c0663692c27cefc86bc3132cdabe8214ed62ef\"}",
-              "reasoning_content": "Looking at the reflog, the user performed a soft reset that moved HEAD back one commit. The commit that was reset away\u2014\"Add third version - important changes\"\u2014is still in the repository and can be recovered from the reflog entry."
+              "reasoning_content": "Looking at the reflog, the user performed a soft reset that moved HEAD back one commit. The commit that was reset away—\"Add third version - important changes\"—is still in the repository and can be recovered from the reflog entry."
             }
           ],
           "prompt": "You ran 'git reset --soft HEAD~1' which moved HEAD back one commit but kept the changes staged. Using git reflog, identify the full commit hash of the commit you just reset away. Provide ONLY the 40-character commit hash.",
@@ -3530,7 +3530,7 @@
             {
               "role": "assistant",
               "content": "{\"ref\": \"HEAD@{1}\"}",
-              "reasoning_content": "Looking at the reflog, I can see the original commit before the amendment was `1a6b9565290894c15eff49c3c0f03a489caa67e7` \u2014 that's the one labeled \"Update hello function v2\" at HEAD@{1}, while the current amended commit is the newer one at HEAD@{0}."
+              "reasoning_content": "Looking at the reflog, I can see the original commit before the amendment was `1a6b9565290894c15eff49c3c0f03a489caa67e7` — that's the one labeled \"Update hello function v2\" at HEAD@{1}, while the current amended commit is the newer one at HEAD@{0}."
             }
           ],
           "prompt": "You amended a commit with 'git commit --amend' and need to find the original commit hash before the amendment. The commit message was changed from 'Update hello function v2' to 'Update hello function - revised'. Use git reflog to find the old commit hash.",
@@ -3595,7 +3595,7 @@
             {
               "role": "assistant",
               "content": "{\"ref\": \"HEAD@{2}\"}",
-              "reasoning_content": "I found the commit with \"critical feature\" in the message from the reflog\u2014it's at HEAD@{2} with the hash c9a283a6beb6873d20aed9f410e641cac5649ec6. Since the schema is asking for a reflog reference, HEAD@{2} is the answer."
+              "reasoning_content": "I found the commit with \"critical feature\" in the message from the reflog—it's at HEAD@{2} with the hash c9a283a6beb6873d20aed9f410e641cac5649ec6. Since the schema is asking for a reflog reference, HEAD@{2} is the answer."
             }
           ],
           "prompt": "You merged and deleted a feature branch 'feature-login' but need to recover the last commit that was added on that branch. The last feature commit message contained 'critical feature'. Use git reflog to identify what you need to run to recover that commit.",
@@ -3660,7 +3660,7 @@
             {
               "role": "assistant",
               "content": "{\"ref\": \"38b76e3dee01ffc5d3dce9157fdee33344be656f\"}",
-              "reasoning_content": "I'm scanning the reflog to find the commit with \"user dashboard\" in its message, which appears at HEAD@{3} with the hash 38b76e3dee01ffc5d3dce9157fdee33344be656f. Now I'm considering what the schema is asking for\u2014whether it wants the reflog reference itself or the commit hash. The question explicitly asks for the commit hash, so despite the schema describing a reflog reference, I'll go with the hash: 38b76e3dee01ffc5d3dce9157fdee33344be656f."
+              "reasoning_content": "I'm scanning the reflog to find the commit with \"user dashboard\" in its message, which appears at HEAD@{3} with the hash 38b76e3dee01ffc5d3dce9157fdee33344be656f. Now I'm considering what the schema is asking for—whether it wants the reflog reference itself or the commit hash. The question explicitly asks for the commit hash, so despite the schema describing a reflog reference, I'll go with the hash: 38b76e3dee01ffc5d3dce9157fdee33344be656f."
             }
           ],
           "prompt": "After rebasing 'develop' onto 'main', you lost the intermediate commits 'Add feature A' and 'Add feature B - user dashboard'. They were squashed. Use git reflog to find the original commit hash of the commit with 'user dashboard' in the message.",
@@ -4050,7 +4050,7 @@
             {
               "role": "assistant",
               "content": "{\"ref\": \"HEAD@{2}\"}",
-              "reasoning_content": "I can see the commit I need to recover from the reflog\u2014it's at HEAD@{2}. The response needs to be formatted as a JSON object with the reflog reference as the \"ref\" property."
+              "reasoning_content": "I can see the commit I need to recover from the reflog—it's at HEAD@{2}. The response needs to be formatted as a JSON object with the reflog reference as the \"ref\" property."
             }
           ],
           "prompt": "After merging and deleting 'feature-x', you need to recover the commit 'Add env export B - enables feature X' which was the last commit on that branch. Use git reflog to identify what git command to run.",
@@ -4115,7 +4115,7 @@
             {
               "role": "assistant",
               "content": "{\"ref\": \"main@{1}\"}",
-              "reasoning_content": "Looking at the reflog to trace the recent git history\u2014there's a reset back to a commit with local database config, a checkout between backup and main branches, a commit staging database config on the backup branch, and another branch switch that got cut off.\n\nNow I'm seeing the full picture: the critical commit with production database config is at d3e9b331620081c5823303c685d9570b5f245af4, and the reflog shows the sequence of commits and branch movements. The question asks specifically for main's reflog, so I need to focus on entries that track movements of the main branch itself rather than HEAD movements across different branches. After the reset, main points back to the local database config commit, but I should check what main's reflog actually shows to answer the question properly."
+              "reasoning_content": "Looking at the reflog to trace the recent git history—there's a reset back to a commit with local database config, a checkout between backup and main branches, a commit staging database config on the backup branch, and another branch switch that got cut off.\n\nNow I'm seeing the full picture: the critical commit with production database config is at d3e9b331620081c5823303c685d9570b5f245af4, and the reflog shows the sequence of commits and branch movements. The question asks specifically for main's reflog, so I need to focus on entries that track movements of the main branch itself rather than HEAD movements across different branches. After the reset, main points back to the local database config commit, but I should check what main's reflog actually shows to answer the question properly."
             }
           ],
           "prompt": "You reset main back to 'Local database config' and lost the 'Production database config - critical' commit. You then switched to 'backup' branch. Use git reflog on the main branch to find and recover the critical production config commit.",
@@ -4190,7 +4190,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Hello, Planet!!!\"}",
-              "reasoning_content": "I'm looking at a merge conflict where one branch added extra exclamation marks and another changed \"World\" to \"Planet\" \u2014 these are independent changes that should combine into \"Hello, Planet!!!\""
+              "reasoning_content": "I'm looking at a merge conflict where one branch added extra exclamation marks and another changed \"World\" to \"Planet\" — these are independent changes that should combine into \"Hello, Planet!!!\""
             }
           ],
           "purpose": "Tests ability to resolve a simple single-line merge conflict in a greeting file. Evaluates basic conflict marker comprehension.",
@@ -4263,7 +4263,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"VERSION=2.0.0\\n\"}",
-              "reasoning_content": "We have a merge conflict in version.txt where the release branch bumped to 2.0.0 while main went to 1.1.0. Since the release branch represents a major version bump, the higher version should win \u2014 2.0.0 is the correct resolution here."
+              "reasoning_content": "We have a merge conflict in version.txt where the release branch bumped to 2.0.0 while main went to 1.1.0. Since the release branch represents a major version bump, the higher version should win — 2.0.0 is the correct resolution here."
             }
           ],
           "purpose": "Tests ability to resolve a version number merge conflict. Evaluates semantic versioning awareness in conflict resolution.",
@@ -4781,7 +4781,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "I'm looking at merge conflicts in two files. For main.py, I need to choose between \"Running enterprise\" from HEAD and \"Running v2\" from the feature branch \u2014 \"Running enterprise\" is more descriptive so I'll keep that. For utils.py, HEAD has `DEBUG = True` and `PORT = 9000` while the feature branch has different values, but the comparison got cut off. Formatting the resolved files as JSON with the filenames as keys."
+              "reasoning_content": "I'm looking at merge conflicts in two files. For main.py, I need to choose between \"Running enterprise\" from HEAD and \"Running v2\" from the feature branch — \"Running enterprise\" is more descriptive so I'll keep that. For utils.py, HEAD has `DEBUG = True` and `PORT = 9000` while the feature branch has different values, but the comparison got cut off. Formatting the resolved files as JSON with the filenames as keys."
             }
           ],
           "purpose": "Tests ability to resolve simultaneous conflicts in two files with different strategies per file. Evaluates multi-file conflict juggling.",
@@ -4977,7 +4977,7 @@
             {
               "role": "assistant",
               "content": "{\"count\": 2}",
-              "reasoning_content": "I'm scanning through the commits to identify which ones have \"Fix\" in their message. Out of the five commits, two of them\u2014\"Fix: resolve issue with greeting\" and \"Fix: update greeting message\"\u2014contain that prefix, giving me a count of 2."
+              "reasoning_content": "I'm scanning through the commits to identify which ones have \"Fix\" in their message. Out of the five commits, two of them—\"Fix: resolve issue with greeting\" and \"Fix: update greeting message\"—contain that prefix, giving me a count of 2."
             }
           ],
           "purpose": "Tests ability to count commits matching a grep pattern in git log. Evaluates log filtering and counting.",
@@ -5423,7 +5423,7 @@
             {
               "role": "assistant",
               "content": "{\"hash\": \"6535555\"}",
-              "reasoning_content": "I found the commit that fixes the null pointer bug\u2014it's identified by the short hash 6535555."
+              "reasoning_content": "I found the commit that fixes the null pointer bug—it's identified by the short hash 6535555."
             }
           ],
           "purpose": "Tests ability to identify a specific commit from oneline output. Evaluates parsing compact log formats.",
@@ -6003,7 +6003,7 @@
             {
               "role": "assistant",
               "content": "{\"branches_to_delete\": []}",
-              "reasoning_content": "Looking at the git output, neither feature-a nor feature-b are actually merged into main\u2014only main itself appears in the merged branches list. So there are no branches to delete, but I need to figure out how to respond with valid JSON while also following the instruction to say \"none\" if there are no branches."
+              "reasoning_content": "Looking at the git output, neither feature-a nor feature-b are actually merged into main—only main itself appears in the merged branches list. So there are no branches to delete, but I need to figure out how to respond with valid JSON while also following the instruction to say \"none\" if there are no branches."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -6068,7 +6068,7 @@
             {
               "role": "assistant",
               "content": "{\"branches_to_delete\": [\"feature-auth\", \"feature-db\"]}",
-              "reasoning_content": "I'm identifying which branches have been merged into main\u2014feature-auth and feature-db are the ones to delete, while feature-api and feature-ui remain unmerged and should be kept. Main itself shouldn't be deleted since it's the current branch. I'm formatting the response as JSON with the list of branches to remove."
+              "reasoning_content": "I'm identifying which branches have been merged into main—feature-auth and feature-db are the ones to delete, while feature-api and feature-ui remain unmerged and should be kept. Main itself shouldn't be deleted since it's the current branch. I'm formatting the response as JSON with the list of branches to remove."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -6203,7 +6203,7 @@
             {
               "role": "assistant",
               "content": "{\"branches_to_delete\": [\"bugfix-123\", \"feature/search\"]}",
-              "reasoning_content": "I need to identify which branches can be safely deleted\u2014bugfix-123 and feature/search\u2014while preserving main. The response should be formatted as JSON with a branches_to_delete array containing those two branches."
+              "reasoning_content": "I need to identify which branches can be safely deleted—bugfix-123 and feature/search—while preserving main. The response should be formatted as JSON with a branches_to_delete array containing those two branches."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -6408,7 +6408,7 @@
             {
               "role": "assistant",
               "content": "{\"branches_to_delete\": []}",
-              "reasoning_content": "Looking at the git branch output, `feature-experimental` hasn't been merged into main yet\u2014only main itself appears in the merged branches list. Since there are no branches that are fully merged into main, the result should be an empty array with nothing to delete."
+              "reasoning_content": "Looking at the git branch output, `feature-experimental` hasn't been merged into main yet—only main itself appears in the merged branches list. Since there are no branches that are fully merged into main, the result should be an empty array with nothing to delete."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -6749,7 +6749,7 @@
             {
               "role": "assistant",
               "content": "{\"stash\": \"stash@{2}\"}",
-              "reasoning_content": "The stash works as a stack with the most recent entry at stash@{0}, so Work A, being the first thing stashed, sits at the bottom as stash@{2}\u2014which the diff output confirms by showing \"Work A\" there."
+              "reasoning_content": "The stash works as a stack with the most recent entry at stash@{0}, so Work A, being the first thing stashed, sits at the bottom as stash@{2}—which the diff output confirms by showing \"Work A\" there."
             }
           ],
           "prompt": "You stashed 'Work A' first, then 'Work B', then 'Work C'. Which stash entry contains 'Work A'? Provide the stash reference.",
@@ -6814,7 +6814,7 @@
             {
               "role": "assistant",
               "content": "{\"stash\": \"stash@{0}\"}",
-              "reasoning_content": "I'm scanning the stash list to find the entry matching the criteria\u2014it's stash@{0} on feature-branch with the message 'feature-work'. Now I'll format this as JSON according to the schema."
+              "reasoning_content": "I'm scanning the stash list to find the entry matching the criteria—it's stash@{0} on feature-branch with the message 'feature-work'. Now I'll format this as JSON according to the schema."
             }
           ],
           "prompt": "You stashed work on 'feature-branch' with message 'feature-work'. Which stash entry contains this stashed work? Provide the stash reference.",
@@ -6944,7 +6944,7 @@
             {
               "role": "assistant",
               "content": "{\"stash\": \"stash@{0}\"}",
-              "reasoning_content": "Looking at the stash list, there's only one entry\u2014stash@{0}\u2014and its diff confirms it contains the \"Stashed content\" change, so that's the answer I need to return in the JSON response."
+              "reasoning_content": "Looking at the stash list, there's only one entry—stash@{0}—and its diff confirms it contains the \"Stashed content\" change, so that's the answer I need to return in the JSON response."
             }
           ],
           "prompt": "You stashed 'Stashed content' but git stash pop failed due to conflicting changes. Which stash entry contains 'Stashed content'? Provide the stash reference.",
@@ -7009,7 +7009,7 @@
             {
               "role": "assistant",
               "content": "{\"stash\": \"stash@{0}\"}",
-              "reasoning_content": "Looking at the stash list, there's only one entry\u2014stash@{0} with changes to file1.txt and file2.txt on the main branch, so that's the one I need."
+              "reasoning_content": "Looking at the stash list, there's only one entry—stash@{0} with changes to file1.txt and file2.txt on the main branch, so that's the one I need."
             }
           ],
           "prompt": "You stashed 'important-work' containing changes to file1.txt and file2.txt. Which stash entry contains this work? Provide the stash reference.",
@@ -7546,7 +7546,7 @@
             {
               "role": "assistant",
               "content": "{\"command\": \"git clean -n\"}",
-              "reasoning_content": "The user needs a git command to preview what would be deleted by git clean without actually removing anything\u2014that's the dry-run flag with `git clean -n`. I'll format this as JSON with the command."
+              "reasoning_content": "The user needs a git command to preview what would be deleted by git clean without actually removing anything—that's the dry-run flag with `git clean -n`. I'll format this as JSON with the command."
             }
           ],
           "purpose": "Tests ability to preview untracked file removal with git clean -n (dry-run). Evaluates safe-cleanup workflow.",
@@ -7763,7 +7763,7 @@
             {
               "role": "assistant",
               "content": "{\"command\": \"git clean -fx\"}",
-              "reasoning_content": "I need to figure out the right `git clean` command to remove untracked and ignored files without deleting directories. The `-fx` flags do exactly that\u2014`-f` forces the operation, `-x` includes ignored files, and by omitting `-d`, directories stay intact."
+              "reasoning_content": "I need to figure out the right `git clean` command to remove untracked and ignored files without deleting directories. The `-fx` flags do exactly that—`-f` forces the operation, `-x` includes ignored files, and by omitting `-d`, directories stay intact."
             }
           ],
           "purpose": "Tests ability to remove both untracked and ignored files with git clean -fx. Evaluates comprehensive cleanup flags.",
@@ -8197,7 +8197,7 @@
             {
               "role": "assistant",
               "content": "{\"command\": \"git clean -fdX\"}",
-              "reasoning_content": "The user needs to remove ignored files while keeping untracked ones, which means using `git clean` with the `-f` flag to force the operation, `-X` (capital X) to target only ignored files, and `-d` to include directories\u2014giving us `git clean -fdX`. The key distinction is that lowercase `-x` would remove both ignored and untracked files, but the capital version preserves anything Git doesn't know about."
+              "reasoning_content": "The user needs to remove ignored files while keeping untracked ones, which means using `git clean` with the `-f` flag to force the operation, `-X` (capital X) to target only ignored files, and `-d` to include directories—giving us `git clean -fdX`. The key distinction is that lowercase `-x` would remove both ignored and untracked files, but the capital version preserves anything Git doesn't know about."
             }
           ],
           "purpose": "Tests ability to remove ignored build artifacts in nested directories. Evaluates complex cleanup with directory hierarchies.",
@@ -8418,7 +8418,7 @@
             {
               "role": "assistant",
               "content": "{\"commit\": \"b2f84d8\"}",
-              "reasoning_content": "Looking at the test results, the first two commits passed but the third one\u2014\"reset config to zero\"\u2014is where things broke, so that's the culprit I need to investigate."
+              "reasoning_content": "Looking at the test results, the first two commits passed but the third one—\"reset config to zero\"—is where things broke, so that's the culprit I need to investigate."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -8548,7 +8548,7 @@
             {
               "role": "assistant",
               "content": "{\"commit\": \"567620c\"}",
-              "reasoning_content": "Looking at the test results, the initial commit passed but the next one\u2014removing the setup todo\u2014introduced the failure. That's where the issue started."
+              "reasoning_content": "Looking at the test results, the initial commit passed but the next one—removing the setup todo—introduced the failure. That's where the issue started."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -8613,7 +8613,7 @@
             {
               "role": "assistant",
               "content": "{\"commit\": \"9f90566\"}",
-              "reasoning_content": "Looking at the test results, the initial commit passed but pytest setup in commit 9f90566 introduced the failure, which then cascaded through the subsequent test additions. So that's the culprit\u2014the pytest configuration commit broke things."
+              "reasoning_content": "Looking at the test results, the initial commit passed but pytest setup in commit 9f90566 introduced the failure, which then cascaded through the subsequent test additions. So that's the culprit—the pytest configuration commit broke things."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -8743,7 +8743,7 @@
             {
               "role": "assistant",
               "content": "{\"commit\": \"98b3ee9\"}",
-              "reasoning_content": "Looking at the test results, the initial commits passed but the build started failing at \"switch to dev\" \u2014 that's where the problem was introduced."
+              "reasoning_content": "Looking at the test results, the initial commits passed but the build started failing at \"switch to dev\" — that's where the problem was introduced."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -8873,7 +8873,7 @@
             {
               "role": "assistant",
               "content": "{\"commit\": \"10d0b17\"}",
-              "reasoning_content": "Looking at the test results across these commits, the first two passed but the third one\u2014\"replace helper import\"\u2014is where things broke. That's the commit introducing the issue."
+              "reasoning_content": "Looking at the test results across these commits, the first two passed but the third one—\"replace helper import\"—is where things broke. That's the commit introducing the issue."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -9068,7 +9068,7 @@
             {
               "role": "assistant",
               "content": "{\"commit\": \"467e08d\"}",
-              "reasoning_content": "Looking at the test results across these commits, the initial setup passes fine, but things break starting with the \"switch to prod\" commit\u2014that's where the regression was introduced, and the subsequent changes didn't fix it."
+              "reasoning_content": "Looking at the test results across these commits, the initial setup passes fine, but things break starting with the \"switch to prod\" commit—that's where the regression was introduced, and the subsequent changes didn't fix it."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -9280,7 +9280,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Add config, main, and utils files\"}",
-              "reasoning_content": "Looking at the diff, I see three new placeholder files being created for the project structure. I'm considering a concise commit message that captures this setup\u2014something like \"Add initial project files\" works well at 25 characters, though \"Add config, main, and utils modules\" at 35 characters is more descriptive of what's actually being scaffolded."
+              "reasoning_content": "Looking at the diff, I see three new placeholder files being created for the project structure. I'm considering a concise commit message that captures this setup—something like \"Add initial project files\" works well at 25 characters, though \"Add config, main, and utils modules\" at 35 characters is more descriptive of what's actually being scaffolded."
             }
           ],
           "purpose": "Tests ability to generate a commit message summarizing multiple new files (config.py, main.py, utils.py). Evaluates grouping related file additions.",
@@ -9553,7 +9553,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Remove redundant.txt\"}",
-              "reasoning_content": "Looking at the diff, I see that \"redundant.txt\" is being removed. The best commit message would be something short and direct like \"Remove redundant.txt\" \u2014 it's clear and concise at just 20 characters."
+              "reasoning_content": "Looking at the diff, I see that \"redundant.txt\" is being removed. The best commit message would be something short and direct like \"Remove redundant.txt\" — it's clear and concise at just 20 characters."
             }
           ],
           "purpose": "Tests ability to generate a commit message for a file deletion. Evaluates handling of removal operations.",
@@ -9689,7 +9689,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Update content in app.py\"}",
-              "reasoning_content": "I'm looking at the diff showing a simple content replacement in app.py and thinking through a concise commit message\u2014something like \"Update content in app.py\" would work well at 24 characters."
+              "reasoning_content": "I'm looking at the diff showing a simple content replacement in app.py and thinking through a concise commit message—something like \"Update content in app.py\" would work well at 24 characters."
             }
           ],
           "purpose": "Tests ability to generate a commit message for a single-file content modification. Evaluates describing incremental changes.",
@@ -10510,7 +10510,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Update config: bump version, enable debug/cache\"}",
-              "reasoning_content": "Looking at the config changes\u2014version bump to 1.1, debug enabled, and cache added\u2014I'm considering a few commit message options that stay within the 50-character limit, weighing brevity against clarity about what actually changed."
+              "reasoning_content": "Looking at the config changes—version bump to 1.1, debug enabled, and cache added—I'm considering a few commit message options that stay within the 50-character limit, weighing brevity against clarity about what actually changed."
             }
           ],
           "purpose": "Tests ability to generate a commit message for a configuration change. Evaluates describing infrastructure/config modifications.",
@@ -10646,7 +10646,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Add installation instructions to README\"}",
-              "reasoning_content": "I'm looking at the diff that adds installation instructions to the README, and I need to craft a concise commit message under 50 characters\u2014something like \"Add installation instructions to README\" works well at 39 characters. Now I need to format this as JSON matching the required schema."
+              "reasoning_content": "I'm looking at the diff that adds installation instructions to the README, and I need to craft a concise commit message under 50 characters—something like \"Add installation instructions to README\" works well at 39 characters. Now I need to format this as JSON matching the required schema."
             }
           ],
           "purpose": "Tests ability to generate a commit message for a documentation update (README). Evaluates recognizing documentation-only changes.",
@@ -10865,7 +10865,7 @@
             {
               "role": "assistant",
               "content": "{\"commands\": [\"git submodule init lib\", \"git submodule update lib\"]}",
-              "reasoning_content": "The user needs to reinitialize and update a submodule that's been removed from their working directory. I can provide either the two separate commands\u2014initializing the submodule first, then updating it\u2014or combine them into a single command that does both operations at once."
+              "reasoning_content": "The user needs to reinitialize and update a submodule that's been removed from their working directory. I can provide either the two separate commands—initializing the submodule first, then updating it—or combine them into a single command that does both operations at once."
             }
           ],
           "purpose": "Tests ability to initialize submodules after cloning a repository. Evaluates understanding of submodule clone workflow.",
@@ -11316,7 +11316,7 @@
             {
               "role": "assistant",
               "content": "{\"command\": \"git submodule deinit lib\"}",
-              "reasoning_content": "The user wants to deinit the 'lib' submodule while preserving its configuration, but I'm realizing that `git submodule deinit` actually removes the submodule entry from .git/config entirely\u2014it doesn't just clear the working tree while keeping the config intact. So there's a mismatch between what they're asking for and what that command does."
+              "reasoning_content": "The user wants to deinit the 'lib' submodule while preserving its configuration, but I'm realizing that `git submodule deinit` actually removes the submodule entry from .git/config entirely—it doesn't just clear the working tree while keeping the config intact. So there's a mismatch between what they're asking for and what that command does."
             }
           ],
           "purpose": "Tests ability to deinitialize a submodule without removing it. Evaluates submodule-deinit command understanding.",
@@ -11730,7 +11730,7 @@
             {
               "role": "assistant",
               "content": "{\"count\": 2}",
-              "reasoning_content": "I'm scanning the git log output and counting commits with 'Fix' in the message\u2014there are two of them."
+              "reasoning_content": "I'm scanning the git log output and counting commits with 'Fix' in the message—there are two of them."
             }
           ],
           "purpose": "Tests ability to search commit messages using git log --grep. Evaluates understanding of log-search vs file-search.",
@@ -12090,7 +12090,7 @@
             {
               "role": "assistant",
               "content": "{\"count\": 13}",
-              "reasoning_content": "I'm looking at the grep output showing the server configuration file, which imports system modules and defines a CONFIG dictionary with host, port, debug, and worker settings, then starts setting up the server initialization function.\n\nNow I'm finishing the count\u2014the output includes 13 total lines, and I need to verify whether the separator line counts toward that total. Since the question asks for all lines appearing in the output, the \"--\" separator is included, so the answer is 13 lines."
+              "reasoning_content": "I'm looking at the grep output showing the server configuration file, which imports system modules and defines a CONFIG dictionary with host, port, debug, and worker settings, then starts setting up the server initialization function.\n\nNow I'm finishing the count—the output includes 13 total lines, and I need to verify whether the separator line counts toward that total. Since the question asks for all lines appearing in the output, the \"--\" separator is included, so the answer is 13 lines."
             }
           ],
           "purpose": "Tests ability to show context lines with git grep -C. Evaluates understanding of surrounding-line output.",
@@ -12307,7 +12307,7 @@
             {
               "role": "assistant",
               "content": "{\"count\": 2}",
-              "reasoning_content": "I'm scanning through the file and finding two matching lines in the pipeline module\u2014one where data gets loaded from a CSV file and another where that data is processed\u2014so the count comes to two."
+              "reasoning_content": "I'm scanning through the file and finding two matching lines in the pipeline module—one where data gets loaded from a CSV file and another where that data is processed—so the count comes to two."
             }
           ],
           "purpose": "Tests ability to perform word-boundary search with git grep -w. Evaluates precise vs substring matching awareness.",
@@ -13191,12 +13191,12 @@
           "transcript": [
             {
               "role": "user",
-              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit d1f816e17d91da11b26a9cd29d1eeeec44836dc3\nAuthor: Test User <test@test.com>\nDate:   Sat Jul 4 01:58:12 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n \u0089PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
+              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit d1f816e17d91da11b26a9cd29d1eeeec44836dc3\nAuthor: Test User <test@test.com>\nDate:   Sat Jul 4 01:58:12 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
             },
             {
               "role": "assistant",
               "content": "{\"filename\": \"image.png\"}",
-              "reasoning_content": "Looking at the git diff output, I can see that image.png is the file that was modified in this commit\u2014it shows one insertion and one deletion. I'll format the response as JSON with the filename property."
+              "reasoning_content": "Looking at the git diff output, I can see that image.png is the file that was modified in this commit—it shows one insertion and one deletion. I'll format the response as JSON with the filename property."
             }
           ],
           "purpose": "Tests ability to inspect a binary file change in a commit. Evaluates binary-change handling in commit display.",
@@ -13350,7 +13350,7 @@
             {
               "role": "assistant",
               "content": "{\"commits\": [\"WIP: continue work\", \"WIP: add main.py\"]}",
-              "reasoning_content": "Looking at the git history, I can see there are four commits spanning from an initial setup through some work-in-progress stages to a completed feature. The two WIP commits in the middle represent incomplete work that would be good candidates for squashing together before merging.\n\nIn an interactive rebase, I'd need to decide which commits to mark for squashing. The tricky part is that the instruction specifies not to include the base or final commits, so I'm trying to figure out whether \"Complete feature\" is meant to be the anchor that the WIP commits get squashed into, or if one of the WIP commits serves as the base. Since git rebase lists commits oldest-first and squashes later commits into earlier ones, the first WIP commit would naturally be the anchor, with the subsequent WIP and completed commits squashing into it. So the two WIP commits are what should be marked for squashing \u2014 \"WIP: continue work\" and \"WIP: add main.py\" \u2014 with \"Complete feature\" serving as the anchor commit that keeps its message. I'll output just the subject lines in the order they appear in the history."
+              "reasoning_content": "Looking at the git history, I can see there are four commits spanning from an initial setup through some work-in-progress stages to a completed feature. The two WIP commits in the middle represent incomplete work that would be good candidates for squashing together before merging.\n\nIn an interactive rebase, I'd need to decide which commits to mark for squashing. The tricky part is that the instruction specifies not to include the base or final commits, so I'm trying to figure out whether \"Complete feature\" is meant to be the anchor that the WIP commits get squashed into, or if one of the WIP commits serves as the base. Since git rebase lists commits oldest-first and squashes later commits into earlier ones, the first WIP commit would naturally be the anchor, with the subsequent WIP and completed commits squashing into it. So the two WIP commits are what should be marked for squashing — \"WIP: continue work\" and \"WIP: add main.py\" — with \"Complete feature\" serving as the anchor commit that keeps its message. I'll output just the subject lines in the order they appear in the history."
             }
           ],
           "prompt": "Analyze this git history and identify which consecutive commits should be marked as squash/fixup in an interactive rebase to create a cleaner history. Focus on WIP (Work In Progress) commits that represent incomplete work. Do not include the base/anchor commit they would be squashed into. Output ONLY the selected commit subject lines, one per line, with no explanation and no base/anchor/final commits.",
@@ -13485,7 +13485,7 @@
             {
               "role": "assistant",
               "content": "{\"commits\": [\"WIP: more updates\", \"WIP: update app.js\"]}",
-              "reasoning_content": "Looking at the git history, I need to identify which commits are WIP entries that should be squashed together, excluding the anchor commits at both ends. The two middle commits\u2014\"WIP: update app.js\" and \"WIP: more updates\"\u2014are the ones that need to be combined into a single commit."
+              "reasoning_content": "Looking at the git history, I need to identify which commits are WIP entries that should be squashed together, excluding the anchor commits at both ends. The two middle commits—\"WIP: update app.js\" and \"WIP: more updates\"—are the ones that need to be combined into a single commit."
             }
           ],
           "prompt": "Analyze this git history. Multiple consecutive WIP commits updating the same file suggest the changes should be combined. Identify the WIP commits that should be marked as squash/fixup in an interactive rebase. Do not include the initial or final anchor commit. Output ONLY the selected commit subject lines, one per line, with no explanation.",
@@ -13553,7 +13553,7 @@
             {
               "role": "assistant",
               "content": "{\"commits\": [\"WIP: continue data\", \"WIP: adding data\"]}",
-              "reasoning_content": "Looking at the commit history, I need to identify which ones are WIP commits that should be squashed together. The final commit `f4667a1` is the completed feature so that stays separate, but `405ecbb` and `2a3c19a` are both marked as WIP and should be combined into a single clean commit. The initial file commit `96c5645` is a bit ambiguous\u2014I'm considering whether it should be included with the WIP squash or kept separate since it's the starting point."
+              "reasoning_content": "Looking at the commit history, I need to identify which ones are WIP commits that should be squashed together. The final commit `f4667a1` is the completed feature so that stays separate, but `405ecbb` and `2a3c19a` are both marked as WIP and should be combined into a single clean commit. The initial file commit `96c5645` is a bit ambiguous—I'm considering whether it should be included with the WIP squash or kept separate since it's the starting point."
             }
           ],
           "prompt": "This repository has a series of commits that incrementally build up a feature. Identify the WIP commits that should be marked as squash/fixup into a single clean commit. Do not include the final completed-feature commit. Output ONLY the selected commit subject lines, one per line, with no explanation.",
@@ -13689,7 +13689,7 @@
             {
               "role": "assistant",
               "content": "{\"commits\": [\"WIP: finalize docs\", \"WIP: update docs\"]}",
-              "reasoning_content": "I need to find the WIP commits that should be squashed into the \"Add documentation\" anchor commit. Looking at the list, the two commits with \"WIP:\" prefixes\u2014the finalize docs and update docs changes\u2014are the incremental updates that need squashing, while the anchor commit itself stays separate."
+              "reasoning_content": "I need to find the WIP commits that should be squashed into the \"Add documentation\" anchor commit. Looking at the list, the two commits with \"WIP:\" prefixes—the finalize docs and update docs changes—are the incremental updates that need squashing, while the anchor commit itself stays separate."
             }
           ],
           "prompt": "Identify the commits that represent incremental work-in-progress updates to documentation and should be marked as squash/fixup. Do not include the documentation anchor commit they would be squashed into. Output ONLY the selected commit subject lines, one per line, with no explanation.",
@@ -13757,7 +13757,7 @@
             {
               "role": "assistant",
               "content": "{\"commits\": [\"WIP: expand test\", \"WIP: add test stub\"]}",
-              "reasoning_content": "Looking at the commit history, I need to identify which ones are work-in-progress that should be squashed together. The two WIP commits\u2014\"expand test\" and \"add test stub\"\u2014are the ones to select, while excluding the final \"Complete tests\" commit and the initial setup."
+              "reasoning_content": "Looking at the commit history, I need to identify which ones are work-in-progress that should be squashed together. The two WIP commits—\"expand test\" and \"add test stub\"—are the ones to select, while excluding the final \"Complete tests\" commit and the initial setup."
             }
           ],
           "prompt": "Identify the WIP commits that should be marked as squash/fixup for a cleaner test file addition. Do not include the final complete-tests commit. Output ONLY the selected commit subject lines, one per line, with no explanation.",
@@ -14541,7 +14541,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"server:\\n  port: 443\\n  host: 0.0.0.0\\n\"}",
-              "reasoning_content": "I'm looking at a merge conflict between three versions of a configuration file. The base has port 8080 and localhost, the incoming commit changes the port to 443 for HTTPS, and the current branch keeps port 8080 but changes the host to 0.0.0.0. I need to figure out the semantic intent here\u2014whether these changes are independent or if there's a logical relationship between them.\n\nSince the port change and host change affect different fields, I can safely combine both modifications. The resolved configuration should use port 443 from the cherry-picked commit and host 0.0.0.0 from the current branch, giving me the final merged result."
+              "reasoning_content": "I'm looking at a merge conflict between three versions of a configuration file. The base has port 8080 and localhost, the incoming commit changes the port to 443 for HTTPS, and the current branch keeps port 8080 but changes the host to 0.0.0.0. I need to figure out the semantic intent here—whether these changes are independent or if there's a logical relationship between them.\n\nSince the port change and host change affect different fields, I can safely combine both modifications. The resolved configuration should use port 443 from the cherry-picked commit and host 0.0.0.0 from the current branch, giving me the final merged result."
             }
           ],
           "purpose": "Tests ability to resolve a config block conflict with port and host changes. Evaluates infrastructure configuration merging.",
@@ -14834,7 +14834,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "I'm looking at cherry-pick conflicts in two files. For main.py, I need to choose between \"Running enterprise\" from the current branch and \"Running v2\" from incoming changes \u2014 \"Running enterprise\" is more descriptive since it specifies the edition rather than just a version number, so that's the right choice. The second file's conflict details got cut off, but I'll need to see the full context to resolve it. I'm realizing the schema has a quirk where `additionalProperties: false` with no defined properties technically means an empty object, but the description clearly indicates files should be keyed by filename. I'll follow the intent rather than strict schema compliance and output JSON with the resolved file contents as string values with escaped newlines."
+              "reasoning_content": "I'm looking at cherry-pick conflicts in two files. For main.py, I need to choose between \"Running enterprise\" from the current branch and \"Running v2\" from incoming changes — \"Running enterprise\" is more descriptive since it specifies the edition rather than just a version number, so that's the right choice. The second file's conflict details got cut off, but I'll need to see the full context to resolve it. I'm realizing the schema has a quirk where `additionalProperties: false` with no defined properties technically means an empty object, but the description clearly indicates files should be keyed by filename. I'll follow the intent rather than strict schema compliance and output JSON with the resolved file contents as string values with escaped newlines."
             }
           ],
           "purpose": "Tests ability to resolve simultaneous conflicts in two files with different resolution strategies per file. Evaluates multi-file conflict juggling.",
@@ -15009,9 +15009,9 @@
     "policy_version": "inappropriate-nsfw-v2",
     "reviewer": {
       "profile": "openrouter-result-safety",
-      "model": "openai/gpt-5.4-mini:none"
+      "model": "minimax/minimax-m3:low"
     },
-    "reviewed_at": "2026-07-04T11:45:02.635033+00:00",
+    "reviewed_at": "2026-07-06T00:19:31.390245+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

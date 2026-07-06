@@ -258,7 +258,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Name: John Doe\\nEmail: john@company.com\\nPhone: 555-9876\\n\"}",
-              "reasoning_content": "I'm working through a merge conflict where the main branch updated both email and phone fields, while the feature branch only changed the email. The question is which version to prioritize\u2014should I take the email from the branch since it's the most recent change to that field, or go with the main branch's version since it has more complete updates overall?"
+              "reasoning_content": "I'm working through a merge conflict where the main branch updated both email and phone fields, while the feature branch only changed the email. The question is which version to prioritize—should I take the email from the branch since it's the most recent change to that field, or go with the main branch's version since it has more complete updates overall?"
             }
           ],
           "purpose": "Tests ability to resolve a multi-line address block conflict during rebase. Evaluates combining partial updates with correct polarity.",
@@ -697,7 +697,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "The user prefers \"Running enterprise\" as the descriptor for main.py and wants DEBUG=True for utils.py, which pairs with PORT=9000 in the main version. I'm also clarifying the rebase mechanics\u2014during a rebase, HEAD points to the upstream branch being rebased onto (main), while the >>>>>>> marker indicates the commit currently being replayed, though the user's branch shows 'Running v2'."
+              "reasoning_content": "The user prefers \"Running enterprise\" as the descriptor for main.py and wants DEBUG=True for utils.py, which pairs with PORT=9000 in the main version. I'm also clarifying the rebase mechanics—during a rebase, HEAD points to the upstream branch being rebased onto (main), while the >>>>>>> marker indicates the commit currently being replayed, though the user's branch shows 'Running v2'."
             }
           ],
           "purpose": "Tests ability to resolve simultaneous rebase conflicts in two files with different strategies. Evaluates multi-file rebase juggling.",
@@ -843,7 +843,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "I'm working through a merge conflict in app.py where the branch disabled debug mode while keeping port 5000, but main changed the port to 8080 while keeping debug enabled. The right resolution is to take both changes\u2014running the app on port 8080 with debug disabled."
+              "reasoning_content": "I'm working through a merge conflict in app.py where the branch disabled debug mode while keeping port 5000, but main changed the port to 8080 while keeping debug enabled. The right resolution is to take both changes—running the app on port 8080 with debug disabled."
             }
           ],
           "purpose": "Tests ability to resolve interdependent file conflicts during rebase with trade-offs. Evaluates dependency-aware rebase merging.",
@@ -1427,7 +1427,7 @@
             {
               "role": "assistant",
               "content": "{\"command\": \"git tag v1.0 v1.0-rc\\ngit tag -d v1.0-rc\"}",
-              "reasoning_content": "I need to handle multiple git operations in a single command string\u2014creating a new tag at the old tag's commit location and removing the old tag, which I can chain together with newlines."
+              "reasoning_content": "I need to handle multiple git operations in a single command string—creating a new tag at the old tag's commit location and removing the old tag, which I can chain together with newlines."
             }
           ],
           "purpose": "Tests ability to rename a tag via delete-and-create workflow. Evaluates tag-rename as a composite operation.",
@@ -2946,7 +2946,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Rename total to subtotal\"}",
-              "reasoning_content": "Looking at the blame history, line 2 was last modified by commit 2124631 (\"Apply coding standards\"), which means that commit reintroduced the bug by changing the discount calculation back to use \"total\" instead of \"subtotal\" \u2014 undoing the fix from the earlier rename in 096cd77."
+              "reasoning_content": "Looking at the blame history, line 2 was last modified by commit 2124631 (\"Apply coding standards\"), which means that commit reintroduced the bug by changing the discount calculation back to use \"total\" instead of \"subtotal\" — undoing the fix from the earlier rename in 096cd77."
             }
           ],
           "purpose": "Tests ability to trace a variable-name bug (total vs subtotal mismatch) across multiple refactoring commits. Requires understanding that a later commit partially reverted the rename.",
@@ -3020,7 +3020,7 @@
             {
               "role": "assistant",
               "content": "{\"commit_message\": \"Fix boundary conditions\"}",
-              "reasoning_content": "The blame output points to commit d66efb4 with the message \"Fix boundary conditions\" as the culprit\u2014it introduced a range that skips both the first and last items, which is what's causing the bug."
+              "reasoning_content": "The blame output points to commit d66efb4 with the message \"Fix boundary conditions\" as the culprit—it introduced a range that skips both the first and last items, which is what's causing the bug."
             }
           ],
           "purpose": "Tests ability to identify which commit introduced an off-by-one error in a loop boundary. Requires distinguishing between intentional boundary changes and accidental ones in git history.",
@@ -3903,7 +3903,7 @@
             {
               "role": "assistant",
               "content": "{\"ref\": \"e80d5cdf4585f740f9e05a6afe6fa0decbab729d\"}",
-              "reasoning_content": "I'm working through which commit to recover\u2014the most recent lost one is Commit D, but the user specifically wants the one with 'hotfix for login' in the message, which is HEAD@{2} with hash e80d5cdf. The schema is asking for the ref, so that's the answer."
+              "reasoning_content": "I'm working through which commit to recover—the most recent lost one is Commit D, but the user specifically wants the one with 'hotfix for login' in the message, which is HEAD@{2} with hash e80d5cdf. The schema is asking for the ref, so that's the answer."
             }
           ],
           "prompt": "You ran 'git reset --hard HEAD~2' which moved HEAD back two commits. You now want to recover the most recent commit that was lost, which had 'hotfix for login' in its message. Use git reflog to find the full commit hash you need.",
@@ -4225,7 +4225,7 @@
             {
               "role": "assistant",
               "content": "{\"ref\": \"HEAD@{1}\"}",
-              "reasoning_content": "I'm tracking down the production config commit in the reflog \u2014 the critical one is at HEAD@{4}, though HEAD@{1} also points to it as the most recent reference. The schema needs the reflog reference itself, so HEAD@{1} is what I should use to recover that commit."
+              "reasoning_content": "I'm tracking down the production config commit in the reflog — the critical one is at HEAD@{4}, though HEAD@{1} also points to it as the most recent reference. The schema needs the reflog reference itself, so HEAD@{1} is what I should use to recover that commit."
             }
           ],
           "prompt": "You reset main back to 'Local database config' and lost the 'Production database config - critical' commit. You then switched to 'backup' branch. Use git reflog on the main branch to find and recover the critical production config commit.",
@@ -4300,7 +4300,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Hello, Planet!!!\"}",
-              "reasoning_content": "I'm working through how to merge two different modifications to the same base string\u2014one changed the punctuation to triple exclamation marks while the other replaced \"World\" with \"Planet\"\u2014and combining them into a single result."
+              "reasoning_content": "I'm working through how to merge two different modifications to the same base string—one changed the punctuation to triple exclamation marks while the other replaced \"World\" with \"Planet\"—and combining them into a single result."
             }
           ],
           "purpose": "Tests ability to resolve a simple single-line merge conflict in a greeting file. Evaluates basic conflict marker comprehension.",
@@ -4446,7 +4446,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Status: Resolved\\n\"}",
-              "reasoning_content": "I'm looking at a merge conflict where the \"fix\" branch changed something to \"Resolved\" \u2014 that seems like the intended resolution, so I'll go with \"Status: Resolved\"."
+              "reasoning_content": "I'm looking at a merge conflict where the \"fix\" branch changed something to \"Resolved\" — that seems like the intended resolution, so I'll go with \"Status: Resolved\"."
             }
           ],
           "purpose": "Tests ability to resolve a status-message merge conflict. Evaluates choosing between contradictory status values.",
@@ -4518,7 +4518,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Name: John Doe\\nEmail: johndoe@personal.com\\nPhone: 555-9876\\n\"}",
-              "reasoning_content": "I'm weighing how to resolve the merge conflict with \"most complete updates\" as the strategy. Branch B changed both email and phone, while Branch A only updated the email. The most complete approach would be to take the phone number from Branch B since that's a new update, but for the email I need to decide between Branch A's company address and Branch B's personal one\u2014though it seems like Branch B's phone change is the clearer addition here."
+              "reasoning_content": "I'm weighing how to resolve the merge conflict with \"most complete updates\" as the strategy. Branch B changed both email and phone, while Branch A only updated the email. The most complete approach would be to take the phone number from Branch B since that's a new update, but for the email I need to decide between Branch A's company address and Branch B's personal one—though it seems like Branch B's phone change is the clearer addition here."
             }
           ],
           "purpose": "Tests ability to resolve a multi-line hunk merge conflict with address/contact blocks. Evaluates combining partial updates from both sides.",
@@ -4956,7 +4956,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "I'm weighing the configuration options between the branches\u2014branch B's setup with DEBUG=True and PORT=9000 is the safer choice compared to branch A's DEBUG=False with PORT=8000, so I'll go with DEBUG=True and PORT=9000 for utils.py."
+              "reasoning_content": "I'm weighing the configuration options between the branches—branch B's setup with DEBUG=True and PORT=9000 is the safer choice compared to branch A's DEBUG=False with PORT=8000, so I'll go with DEBUG=True and PORT=9000 for utils.py."
             }
           ],
           "purpose": "Tests ability to resolve simultaneous conflicts in two files with different strategies per file. Evaluates multi-file conflict juggling.",
@@ -5102,7 +5102,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "I need to merge two branches for app.py: one disabled debug mode while keeping port 5000, the other changed the port to 8080 while keeping debug enabled. The right approach is to combine both changes\u2014setting the port to 8080 and disabling debug mode. For the dependencies, I'm pinning Flask to 2.0.0 and requests to 2.28.0."
+              "reasoning_content": "I need to merge two branches for app.py: one disabled debug mode while keeping port 5000, the other changed the port to 8080 while keeping debug enabled. The right approach is to combine both changes—setting the port to 8080 and disabling debug mode. For the dependencies, I'm pinning Flask to 2.0.0 and requests to 2.28.0."
             }
           ],
           "purpose": "Tests ability to resolve conflicts in two interdependent files with trade-off decisions. Evaluates dependency-aware merging.",
@@ -6803,7 +6803,7 @@
             {
               "role": "assistant",
               "content": "{\"branches_to_delete\": [\"docs-update\", \"fix-bug\", \"fix-typo\"]}",
-              "reasoning_content": "I've merged several feature branches into the codebase\u2014docs-update, fix-bug, and fix-typo\u2014keeping main untouched for now."
+              "reasoning_content": "I've merged several feature branches into the codebase—docs-update, fix-bug, and fix-typo—keeping main untouched for now."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -11323,7 +11323,7 @@
             {
               "role": "assistant",
               "content": "{\"command\": \"git submodule status\"}",
-              "reasoning_content": "I'm considering different ways to list configured submodules\u2014`git submodule status` shows their status, while `git config --file .gitmodules --list` or just `git submodule` can list them directly, though the most commonly used approach is `git submodule status`."
+              "reasoning_content": "I'm considering different ways to list configured submodules—`git submodule status` shows their status, while `git config --file .gitmodules --list` or just `git submodule` can list them directly, though the most commonly used approach is `git submodule status`."
             }
           ],
           "purpose": "Tests ability to list all submodules in a repository. Evaluates submodule-listing command knowledge.",
@@ -11470,7 +11470,7 @@
             {
               "role": "assistant",
               "content": "{\"command\": \"git submodule deinit lib\"}",
-              "reasoning_content": "I'm working through the git submodule deinit command \u2014 it removes both the working tree and the submodule config section from .git/config, though it preserves the .gitmodules file. So `git submodule deinit lib` is the right approach here."
+              "reasoning_content": "I'm working through the git submodule deinit command — it removes both the working tree and the submodule config section from .git/config, though it preserves the .gitmodules file. So `git submodule deinit lib` is the right approach here."
             }
           ],
           "purpose": "Tests ability to deinitialize a submodule without removing it. Evaluates submodule-deinit command understanding.",
@@ -13396,7 +13396,7 @@
           "transcript": [
             {
               "role": "user",
-              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 61dd29a030df7aa51ee524f5f9813ebd4cee8e74\nAuthor: Test User <test@test.com>\nDate:   Sat Jul 4 01:00:46 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n \u0089PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
+              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 61dd29a030df7aa51ee524f5f9813ebd4cee8e74\nAuthor: Test User <test@test.com>\nDate:   Sat Jul 4 01:00:46 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
             },
             {
               "role": "assistant",
@@ -13553,7 +13553,7 @@
             {
               "role": "assistant",
               "content": "{\"commits\": [\"WIP: continue work\", \"WIP: add main.py\"]}",
-              "reasoning_content": "I'm thinking through how WIP commits would be handled in an interactive rebase\u2014the earliest one like \"WIP: add main.py\" would serve as the anchor, and subsequent WIP commits would squash into it rather than forward, though the instruction seems to want me to focus specifically on the WIP commits themselves."
+              "reasoning_content": "I'm thinking through how WIP commits would be handled in an interactive rebase—the earliest one like \"WIP: add main.py\" would serve as the anchor, and subsequent WIP commits would squash into it rather than forward, though the instruction seems to want me to focus specifically on the WIP commits themselves."
             }
           ],
           "prompt": "Analyze this git history and identify which consecutive commits should be marked as squash/fixup in an interactive rebase to create a cleaner history. Focus on WIP (Work In Progress) commits that represent incomplete work. Do not include the base/anchor commit they would be squashed into. Output ONLY the selected commit subject lines, one per line, with no explanation and no base/anchor/final commits.",
@@ -13755,7 +13755,7 @@
             {
               "role": "assistant",
               "content": "{\"commits\": [\"WIP: continue data\", \"WIP: adding data\"]}",
-              "reasoning_content": "I'm looking at a set of work-in-progress commits that need to be consolidated\u2014specifically the \"WIP: continue data\" and \"WIP: adding data\" commits should be squashed together into one clean commit, while keeping the final commit separate from the incremental work."
+              "reasoning_content": "I'm looking at a set of work-in-progress commits that need to be consolidated—specifically the \"WIP: continue data\" and \"WIP: adding data\" commits should be squashed together into one clean commit, while keeping the final commit separate from the incremental work."
             }
           ],
           "prompt": "This repository has a series of commits that incrementally build up a feature. Identify the WIP commits that should be marked as squash/fixup into a single clean commit. Do not include the final completed-feature commit. Output ONLY the selected commit subject lines, one per line, with no explanation.",
@@ -14094,7 +14094,7 @@
             {
               "role": "assistant",
               "content": "{\"commits\": [\"WIP: style fix\", \"WIP: add logic\"]}",
-              "reasoning_content": "I've got a couple of work-in-progress commits to clean up\u2014one for styling adjustments and another for adding some logic."
+              "reasoning_content": "I've got a couple of work-in-progress commits to clean up—one for styling adjustments and another for adding some logic."
             }
           ],
           "prompt": "Identify the WIP commits that should be marked as squash/fixup; these represent incremental implementation work that should be combined. Do not include the non-WIP anchor commits. Output ONLY the selected commit subject lines, one per line, with no explanation.",
@@ -14376,7 +14376,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\": \"Hello, Planet!!!\\n\"}",
-              "reasoning_content": "I'm working through a three-way merge where the base text is \"Hello, World!\" with two conflicting changes\u2014one adding exclamation marks and another replacing \"World\" with \"Planet\"\u2014and I need to combine both modifications into \"Hello, Planet!!!\""
+              "reasoning_content": "I'm working through a three-way merge where the base text is \"Hello, World!\" with two conflicting changes—one adding exclamation marks and another replacing \"World\" with \"Planet\"—and I need to combine both modifications into \"Hello, Planet!!!\""
             }
           ],
           "purpose": "Tests ability to resolve a simple single-line cherry-pick conflict in a greeting file. Evaluates basic conflict marker understanding and merge strategy.",
@@ -14968,7 +14968,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "I'm settling on \"Running enterprise\" for the main.py message since it's more descriptive, keeping DEBUG=True and PORT=9000 in utils.py from the HEAD version, and structuring the JSON output with a files object keyed by filename\u2014even though the schema marks additionalProperties as false, I'll include the files anyway since that's what's needed."
+              "reasoning_content": "I'm settling on \"Running enterprise\" for the main.py message since it's more descriptive, keeping DEBUG=True and PORT=9000 in utils.py from the HEAD version, and structuring the JSON output with a files object keyed by filename—even though the schema marks additionalProperties as false, I'll include the files anyway since that's what's needed."
             }
           ],
           "purpose": "Tests ability to resolve simultaneous conflicts in two files with different resolution strategies per file. Evaluates multi-file conflict juggling.",
@@ -15114,7 +15114,7 @@
             {
               "role": "assistant",
               "content": "{\"files\": {}}",
-              "reasoning_content": "I need to reconcile the Flask configuration settings\u2014disabling debug mode while keeping the port at 8080, which combines the preferences from both the original instruction and the recent change. For the dependencies, I'm pinning Flask to version 2.0.0 and requests to 2.28.0."
+              "reasoning_content": "I need to reconcile the Flask configuration settings—disabling debug mode while keeping the port at 8080, which combines the preferences from both the original instruction and the recent change. For the dependencies, I'm pinning Flask to version 2.0.0 and requests to 2.28.0."
             }
           ],
           "purpose": "Tests ability to resolve conflicts in two interdependent files (app.py + requirements.txt) with trade-off decisions. Evaluates complex dependency-aware merging.",
@@ -15176,9 +15176,9 @@
     "policy_version": "inappropriate-nsfw-v2",
     "reviewer": {
       "profile": "openrouter-result-safety",
-      "model": "openai/gpt-5.4-mini:none"
+      "model": "minimax/minimax-m3:low"
     },
-    "reviewed_at": "2026-07-04T11:44:30.026097+00:00",
+    "reviewed_at": "2026-07-06T00:19:31.288084+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

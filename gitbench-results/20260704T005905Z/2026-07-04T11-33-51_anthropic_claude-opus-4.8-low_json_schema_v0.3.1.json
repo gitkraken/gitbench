@@ -41,7 +41,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\":\"Hello, Planet!!!\"}",
-              "reasoning_content": "During a rebase, HEAD points to the target branch while the incoming changes come from the branch being rebased. When both sides modify the same content, I need to merge them together\u2014in this case combining the strings to get \"Hello, Planet!!!\""
+              "reasoning_content": "During a rebase, HEAD points to the target branch while the incoming changes come from the branch being rebased. When both sides modify the same content, I need to merge them together—in this case combining the strings to get \"Hello, Planet!!!\""
             }
           ],
           "purpose": "Tests ability to resolve a simple single-line rebase conflict. Evaluates basic rebase conflict resolution with correct polarity understanding.",
@@ -401,7 +401,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\":\"server:\\n  port: 443\\n  host: 0.0.0.0\\n\"}",
-              "reasoning_content": "I'm working through how rebase conflict markers work\u2014in a rebase, HEAD represents the base branch we're rebasing onto (main), while the incoming commit is our change. So the port 443 localhost entry under HEAD is actually from the HTTPS branch, which is what we're trying to apply. I need to figure out how to combine these changes properly."
+              "reasoning_content": "I'm working through how rebase conflict markers work—in a rebase, HEAD represents the base branch we're rebasing onto (main), while the incoming commit is our change. So the port 443 localhost entry under HEAD is actually from the HTTPS branch, which is what we're trying to apply. I need to figure out how to combine these changes properly."
             }
           ],
           "purpose": "Tests ability to resolve a config block conflict during rebase. Evaluates infrastructure-merge judgment with rebase polarity.",
@@ -13424,7 +13424,7 @@
           "transcript": [
             {
               "role": "user",
-              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 1256883fbac799e3f61402fff9cf2e410297a884\nAuthor: Test User <test@test.com>\nDate:   Sat Jul 4 03:18:50 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n \u0089PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
+              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 1256883fbac799e3f61402fff9cf2e410297a884\nAuthor: Test User <test@test.com>\nDate:   Sat Jul 4 03:18:50 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
             },
             {
               "role": "assistant",
@@ -14612,7 +14612,7 @@
             {
               "role": "assistant",
               "content": "{\"resolved_content\":\"Name: John Doe\\nEmail: john@company.com\\nPhone: 555-9876\\n\"}",
-              "reasoning_content": "I'm working through a merge conflict where both branches modified the email field but in different ways\u2014the incoming commit switched to a work email while the current branch uses a personal one. Since the incoming commit's purpose is specifically to use the work email, I should take that value. For the phone number, only the current branch updated it, so I'll use that change."
+              "reasoning_content": "I'm working through a merge conflict where both branches modified the email field but in different ways—the incoming commit switched to a work email while the current branch uses a personal one. Since the incoming commit's purpose is specifically to use the work email, I should take that value. For the phone number, only the current branch updated it, so I'll use that change."
             }
           ],
           "purpose": "Tests ability to resolve a multi-line hunk conflict with address/contact information. Evaluates combining partial changes from both sides.",
@@ -15251,9 +15251,9 @@
     "policy_version": "inappropriate-nsfw-v2",
     "reviewer": {
       "profile": "openrouter-result-safety",
-      "model": "openai/gpt-5.4-mini:none"
+      "model": "minimax/minimax-m3:low"
     },
-    "reviewed_at": "2026-07-04T11:40:01.679651+00:00",
+    "reviewed_at": "2026-07-06T00:19:31.034049+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

@@ -3759,7 +3759,7 @@
           "fixture_id": "f012",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "```\ngit cherry-pick 703a9f5208446db83fd026530f8246d8aea8e9af\n```\n\nWait \u2014 you're currently on `backup`, and the task says to recover it on `main`. So first switch back:\n\n```\ngit checkout main\ngit reset --hard 703a9f5208446db83fd026530f8246d8aea8e9af\n```\n\nThis restores `main` to the \"Production database config - critical\" commit.",
+          "model_output": "```\ngit cherry-pick 703a9f5208446db83fd026530f8246d8aea8e9af\n```\n\nWait — you're currently on `backup`, and the task says to recover it on `main`. So first switch back:\n\n```\ngit checkout main\ngit reset --hard 703a9f5208446db83fd026530f8246d8aea8e9af\n```\n\nThis restores `main` to the \"Production database config - critical\" commit.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 351,
@@ -3775,7 +3775,7 @@
             },
             {
               "role": "assistant",
-              "content": "```\ngit cherry-pick 703a9f5208446db83fd026530f8246d8aea8e9af\n```\n\nWait \u2014 you're currently on `backup`, and the task says to recover it on `main`. So first switch back:\n\n```\ngit checkout main\ngit reset --hard 703a9f5208446db83fd026530f8246d8aea8e9af\n```\n\nThis restores `main` to the \"Production database config - critical\" commit.",
+              "content": "```\ngit cherry-pick 703a9f5208446db83fd026530f8246d8aea8e9af\n```\n\nWait — you're currently on `backup`, and the task says to recover it on `main`. So first switch back:\n\n```\ngit checkout main\ngit reset --hard 703a9f5208446db83fd026530f8246d8aea8e9af\n```\n\nThis restores `main` to the \"Production database config - critical\" commit.",
               "reasoning_content": "The production commit is 703a9f5."
             }
           ],
@@ -11342,8 +11342,8 @@
           "fixture_id": "f002",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "Wait \u2014 the question asks about 'Modify only a.txt'.\n\na.txt",
-          "error": "Expected 'a.txt', got 'Wait \u2014 the question asks about 'Modify only a.txt'.\n\na.txt'",
+          "model_output": "Wait — the question asks about 'Modify only a.txt'.\n\na.txt",
+          "error": "Expected 'a.txt', got 'Wait — the question asks about 'Modify only a.txt'.\n\na.txt'",
           "reasoning_level": "low",
           "input_tokens": 247,
           "output_tokens": 30,
@@ -11358,7 +11358,7 @@
             },
             {
               "role": "assistant",
-              "content": "Wait \u2014 the question asks about 'Modify only a.txt'.\n\na.txt"
+              "content": "Wait — the question asks about 'Modify only a.txt'.\n\na.txt"
             }
           ],
           "purpose": "Tests ability to identify which files changed in a specific commit. Evaluates file-list extraction from git show.",
@@ -11925,7 +11925,7 @@
           "transcript": [
             {
               "role": "user",
-              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 1d5c480906c35b0491b477c8bd2c2661523b820d\nAuthor: Test User <test@test.com>\nDate:   Fri Jul 3 20:06:18 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n \u0089PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
+              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 1d5c480906c35b0491b477c8bd2c2661523b820d\nAuthor: Test User <test@test.com>\nDate:   Fri Jul 3 20:06:18 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
             },
             {
               "role": "assistant",
@@ -13506,9 +13506,9 @@
     "policy_version": "inappropriate-nsfw-v2",
     "reviewer": {
       "profile": "openrouter-result-safety",
-      "model": "openai/gpt-5.4-mini:none"
+      "model": "minimax/minimax-m3:low"
     },
-    "reviewed_at": "2026-07-04T06:30:20.748921+00:00",
+    "reviewed_at": "2026-07-06T00:19:29.970427+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

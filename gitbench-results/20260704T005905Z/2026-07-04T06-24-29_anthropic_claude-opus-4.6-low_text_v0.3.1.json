@@ -3759,7 +3759,7 @@
           "fixture_id": "f012",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "# Recovering the Lost Commit with Git Reflog\n\n## What Happened\n\nYou reset `main` back one commit, losing the critical production config. The reflog shows the full history:\n\n```\nHEAD@{4}: commit: Production database config - critical  \u2192 a148b881\nHEAD@{5}: commit (initial): Local database config         \u2192 1a1f6117\nHEAD@{0}: reset: moving to HEAD~1                        \u2192 back to 1a1f6117\n```\n\n## Recovery Steps\n\nSince you're currently on the `backup` branch, switch to `main` and cherry-pick the lost commit:\n\n```bash\ngit checkout main\ngit cherry-pick a148b881\n```\n\nThis restores the \"Production database config - critical\" commit onto `main`.",
+          "model_output": "# Recovering the Lost Commit with Git Reflog\n\n## What Happened\n\nYou reset `main` back one commit, losing the critical production config. The reflog shows the full history:\n\n```\nHEAD@{4}: commit: Production database config - critical  → a148b881\nHEAD@{5}: commit (initial): Local database config         → 1a1f6117\nHEAD@{0}: reset: moving to HEAD~1                        → back to 1a1f6117\n```\n\n## Recovery Steps\n\nSince you're currently on the `backup` branch, switch to `main` and cherry-pick the lost commit:\n\n```bash\ngit checkout main\ngit cherry-pick a148b881\n```\n\nThis restores the \"Production database config - critical\" commit onto `main`.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 296,
@@ -3775,7 +3775,7 @@
             },
             {
               "role": "assistant",
-              "content": "# Recovering the Lost Commit with Git Reflog\n\n## What Happened\n\nYou reset `main` back one commit, losing the critical production config. The reflog shows the full history:\n\n```\nHEAD@{4}: commit: Production database config - critical  \u2192 a148b881\nHEAD@{5}: commit (initial): Local database config         \u2192 1a1f6117\nHEAD@{0}: reset: moving to HEAD~1                        \u2192 back to 1a1f6117\n```\n\n## Recovery Steps\n\nSince you're currently on the `backup` branch, switch to `main` and cherry-pick the lost commit:\n\n```bash\ngit checkout main\ngit cherry-pick a148b881\n```\n\nThis restores the \"Production database config - critical\" commit onto `main`."
+              "content": "# Recovering the Lost Commit with Git Reflog\n\n## What Happened\n\nYou reset `main` back one commit, losing the critical production config. The reflog shows the full history:\n\n```\nHEAD@{4}: commit: Production database config - critical  → a148b881\nHEAD@{5}: commit (initial): Local database config         → 1a1f6117\nHEAD@{0}: reset: moving to HEAD~1                        → back to 1a1f6117\n```\n\n## Recovery Steps\n\nSince you're currently on the `backup` branch, switch to `main` and cherry-pick the lost commit:\n\n```bash\ngit checkout main\ngit cherry-pick a148b881\n```\n\nThis restores the \"Production database config - critical\" commit onto `main`."
             }
           ],
           "prompt": "You reset main back to 'Local database config' and lost the 'Production database config - critical' commit. You then switched to 'backup' branch. Use git reflog on the main branch to find and recover the critical production config commit.",
@@ -10888,8 +10888,8 @@
           "fixture_id": "f007",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "longest section 1: 7 lines, section 2: 4 lines \u2192 **11**",
-          "error": "Expected numeric answer '13', got 'longest section 1: 7 lines, section 2: 4 lines \u2192 **11**'",
+          "model_output": "longest section 1: 7 lines, section 2: 4 lines → **11**",
+          "error": "Expected numeric answer '13', got 'longest section 1: 7 lines, section 2: 4 lines → **11**'",
           "reasoning_level": "low",
           "input_tokens": 186,
           "output_tokens": 25,
@@ -10904,7 +10904,7 @@
             },
             {
               "role": "assistant",
-              "content": "longest section 1: 7 lines, section 2: 4 lines \u2192 **11**"
+              "content": "longest section 1: 7 lines, section 2: 4 lines → **11**"
             }
           ],
           "purpose": "Tests ability to show context lines with git grep -C. Evaluates understanding of surrounding-line output.",
@@ -11924,7 +11924,7 @@
           "transcript": [
             {
               "role": "user",
-              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 5cae2e0d1d353c631830675098b49a000aa335d9\nAuthor: Test User <test@test.com>\nDate:   Fri Jul 3 18:24:44 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n \u0089PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
+              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 5cae2e0d1d353c631830675098b49a000aa335d9\nAuthor: Test User <test@test.com>\nDate:   Fri Jul 3 18:24:44 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
             },
             {
               "role": "assistant",
@@ -13505,9 +13505,9 @@
     "policy_version": "inappropriate-nsfw-v2",
     "reviewer": {
       "profile": "openrouter-result-safety",
-      "model": "openai/gpt-5.4-mini:none"
+      "model": "minimax/minimax-m3:low"
     },
-    "reviewed_at": "2026-07-04T06:26:52.797606+00:00",
+    "reviewed_at": "2026-07-06T00:19:29.787262+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

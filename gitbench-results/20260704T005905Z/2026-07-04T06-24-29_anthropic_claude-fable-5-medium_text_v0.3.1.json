@@ -41,7 +41,7 @@
             {
               "role": "assistant",
               "content": "Hello, Planet!!!",
-              "reasoning_content": "I'm combining the two changes\u2014swapping \"World\" for \"Planet\" and replacing the period with three exclamation marks\u2014to get \"Hello, Planet!!!\"."
+              "reasoning_content": "I'm combining the two changes—swapping \"World\" for \"Planet\" and replacing the period with three exclamation marks—to get \"Hello, Planet!!!\"."
             }
           ],
           "purpose": "Tests ability to resolve a simple single-line rebase conflict. Evaluates basic rebase conflict resolution with correct polarity understanding.",
@@ -494,7 +494,7 @@
             {
               "role": "assistant",
               "content": "```\nTitle: My Project v3\n```",
-              "reasoning_content": "I'm getting confused about which branch is which during the rebase\u2014let me think through this. In a rebase operation, HEAD represents the upstream branch (like main) that we're rebasing onto, while the incoming changes come from the branch being rebased. But the conflict marker shows HEAD as v2, which suggests that's what we're keeping. Regardless of the exact semantics, the resolution here is to take the higher version number, which is v3."
+              "reasoning_content": "I'm getting confused about which branch is which during the rebase—let me think through this. In a rebase operation, HEAD represents the upstream branch (like main) that we're rebasing onto, while the incoming changes come from the branch being rebased. But the conflict marker shows HEAD as v2, which suggests that's what we're keeping. Regardless of the exact semantics, the resolution here is to take the higher version number, which is v3."
             }
           ],
           "purpose": "Tests ability to handle rebase with partial conflicts across files. Evaluates understanding of clean vs conflicted files in rebase.",
@@ -626,7 +626,7 @@
             {
               "role": "assistant",
               "content": "main.py\n```python\ndef main():\n    print(\"Running enterprise\")\n```\n\nutils.py\n```python\nDEBUG = True\nPORT = 9000\n```",
-              "reasoning_content": "I'm weighing the configuration options between branches\u2014the main branch has DEBUG=True with PORT=9000, while the other branch prefers PORT=8000. Since the safer choice is to keep DEBUG=True enabled, I'll go with main's configuration block that pairs it with PORT=9000."
+              "reasoning_content": "I'm weighing the configuration options between branches—the main branch has DEBUG=True with PORT=9000, while the other branch prefers PORT=8000. Since the safer choice is to keep DEBUG=True enabled, I'll go with main's configuration block that pairs it with PORT=9000."
             }
           ],
           "purpose": "Tests ability to resolve simultaneous rebase conflicts in two files with different strategies. Evaluates multi-file rebase juggling.",
@@ -756,7 +756,7 @@
             {
               "role": "assistant",
               "content": "app.py\n```python\napp = Flask(__name__)\napp.run(port=8080, debug=False)\n```\n\nrequirements.txt\n```\nflask==2.0.0\nrequests==2.28.0\n```",
-              "reasoning_content": "I'm weighing the merge conflict between two changes: the branch disabled debug mode while keeping port 5000, and main changed the port to 8080 while keeping debug enabled. Since disabling debug is the preferred approach, I should resolve this by taking both intents\u2014setting debug to False and updating the port to 8080."
+              "reasoning_content": "I'm weighing the merge conflict between two changes: the branch disabled debug mode while keeping port 5000, and main changed the port to 8080 while keeping debug enabled. Since disabling debug is the preferred approach, I should resolve this by taking both intents—setting debug to False and updating the port to 8080."
             }
           ],
           "purpose": "Tests ability to resolve interdependent file conflicts during rebase with trade-offs. Evaluates dependency-aware rebase merging.",
@@ -1278,7 +1278,7 @@
             {
               "role": "assistant",
               "content": "git tag v1.0 v1.0-rc\ngit tag -d v1.0-rc",
-              "reasoning_content": "I'm thinking through how to rename a git tag by creating a new one at the same commit, removing the old tag, and optionally pushing those changes\u2014focusing on just the git commands needed."
+              "reasoning_content": "I'm thinking through how to rename a git tag by creating a new one at the same commit, removing the old tag, and optionally pushing those changes—focusing on just the git commands needed."
             }
           ],
           "purpose": "Tests ability to rename a tag via delete-and-create workflow. Evaluates tag-rename as a composite operation.",
@@ -2655,7 +2655,7 @@
             {
               "role": "assistant",
               "content": "Rename total to subtotal",
-              "reasoning_content": "I'm tracing through the git blame to understand why line 2 still has \"total\" when it should be \"subtotal\". The blame shows commit 8aa12f2 last touched that line, but that was just a formatting change\u2014the actual rename happened in commit 59318d8, which apparently didn't update line 2 even though it should have."
+              "reasoning_content": "I'm tracing through the git blame to understand why line 2 still has \"total\" when it should be \"subtotal\". The blame shows commit 8aa12f2 last touched that line, but that was just a formatting change—the actual rename happened in commit 59318d8, which apparently didn't update line 2 even though it should have."
             }
           ],
           "purpose": "Tests ability to trace a variable-name bug (total vs subtotal mismatch) across multiple refactoring commits. Requires understanding that a later commit partially reverted the rename.",
@@ -3228,7 +3228,7 @@
           "fixture_id": "f002",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The commit hash you need is **`1f12fe73b3eff2e019c66948566f18c63ef59abf`**\n\n**How to read the reflog:**\n- `HEAD@{0}` shows the `reset` operation that moved you back to `a7bc6b1` (the \"Second note\" commit)\n- `HEAD@{1}` shows the commit you lost: \"Third note - contains bug fix\" at `1f12fe7`\n\n**To recover it:**\n\n```bash\ngit reset --hard 1f12fe73b3eff2e019c66948566f18c63ef59abf\n```\n\nOr using the reflog reference directly:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis works because `git reset --hard` doesn't actually delete commits immediately \u2014 they remain in the object database and are reachable via the reflog (typically for at least 30 days) until garbage collection removes them.",
+          "model_output": "The commit hash you need is **`1f12fe73b3eff2e019c66948566f18c63ef59abf`**\n\n**How to read the reflog:**\n- `HEAD@{0}` shows the `reset` operation that moved you back to `a7bc6b1` (the \"Second note\" commit)\n- `HEAD@{1}` shows the commit you lost: \"Third note - contains bug fix\" at `1f12fe7`\n\n**To recover it:**\n\n```bash\ngit reset --hard 1f12fe73b3eff2e019c66948566f18c63ef59abf\n```\n\nOr using the reflog reference directly:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis works because `git reset --hard` doesn't actually delete commits immediately — they remain in the object database and are reachable via the reflog (typically for at least 30 days) until garbage collection removes them.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 269,
@@ -3244,7 +3244,7 @@
             },
             {
               "role": "assistant",
-              "content": "The commit hash you need is **`1f12fe73b3eff2e019c66948566f18c63ef59abf`**\n\n**How to read the reflog:**\n- `HEAD@{0}` shows the `reset` operation that moved you back to `a7bc6b1` (the \"Second note\" commit)\n- `HEAD@{1}` shows the commit you lost: \"Third note - contains bug fix\" at `1f12fe7`\n\n**To recover it:**\n\n```bash\ngit reset --hard 1f12fe73b3eff2e019c66948566f18c63ef59abf\n```\n\nOr using the reflog reference directly:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis works because `git reset --hard` doesn't actually delete commits immediately \u2014 they remain in the object database and are reachable via the reflog (typically for at least 30 days) until garbage collection removes them.",
+              "content": "The commit hash you need is **`1f12fe73b3eff2e019c66948566f18c63ef59abf`**\n\n**How to read the reflog:**\n- `HEAD@{0}` shows the `reset` operation that moved you back to `a7bc6b1` (the \"Second note\" commit)\n- `HEAD@{1}` shows the commit you lost: \"Third note - contains bug fix\" at `1f12fe7`\n\n**To recover it:**\n\n```bash\ngit reset --hard 1f12fe73b3eff2e019c66948566f18c63ef59abf\n```\n\nOr using the reflog reference directly:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis works because `git reset --hard` doesn't actually delete commits immediately — they remain in the object database and are reachable via the reflog (typically for at least 30 days) until garbage collection removes them.",
               "reasoning_content": "I've calculated the hash value."
             }
           ],
@@ -3285,7 +3285,7 @@
           "fixture_id": "f003",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The original commit hash before the amendment is:\n\n**`861a652e597bd21100c5e2d3b78685f7cf47fb03`**\n\n## How to read the reflog\n\n- `HEAD@{0}`: `commit (amend): Update hello function - revised` \u2014 this is the **new** commit created by `git commit --amend` (`d751570...`)\n- `HEAD@{1}`: `commit: Update hello function v2` \u2014 this is the **original** commit before the amend (`861a652...`)\n- `HEAD@{2}`: the initial commit\n\n## Useful commands\n\nInspect the original commit:\n```bash\ngit show 861a652e597bd21100c5e2d3b78685f7cf47fb03\n```\n\nIf you wanted to undo the amend and restore the original commit:\n```bash\ngit reset --soft 861a652e597bd21100c5e2d3b78685f7cf47fb03\n# or equivalently\ngit reset --soft HEAD@{1}\n```\n\nNote: amending doesn't delete the old commit\u2014it becomes unreferenced (\"dangling\") but stays recoverable via the reflog until garbage collection runs.",
+          "model_output": "The original commit hash before the amendment is:\n\n**`861a652e597bd21100c5e2d3b78685f7cf47fb03`**\n\n## How to read the reflog\n\n- `HEAD@{0}`: `commit (amend): Update hello function - revised` — this is the **new** commit created by `git commit --amend` (`d751570...`)\n- `HEAD@{1}`: `commit: Update hello function v2` — this is the **original** commit before the amend (`861a652...`)\n- `HEAD@{2}`: the initial commit\n\n## Useful commands\n\nInspect the original commit:\n```bash\ngit show 861a652e597bd21100c5e2d3b78685f7cf47fb03\n```\n\nIf you wanted to undo the amend and restore the original commit:\n```bash\ngit reset --soft 861a652e597bd21100c5e2d3b78685f7cf47fb03\n# or equivalently\ngit reset --soft HEAD@{1}\n```\n\nNote: amending doesn't delete the old commit—it becomes unreferenced (\"dangling\") but stays recoverable via the reflog until garbage collection runs.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 238,
@@ -3301,7 +3301,7 @@
             },
             {
               "role": "assistant",
-              "content": "The original commit hash before the amendment is:\n\n**`861a652e597bd21100c5e2d3b78685f7cf47fb03`**\n\n## How to read the reflog\n\n- `HEAD@{0}`: `commit (amend): Update hello function - revised` \u2014 this is the **new** commit created by `git commit --amend` (`d751570...`)\n- `HEAD@{1}`: `commit: Update hello function v2` \u2014 this is the **original** commit before the amend (`861a652...`)\n- `HEAD@{2}`: the initial commit\n\n## Useful commands\n\nInspect the original commit:\n```bash\ngit show 861a652e597bd21100c5e2d3b78685f7cf47fb03\n```\n\nIf you wanted to undo the amend and restore the original commit:\n```bash\ngit reset --soft 861a652e597bd21100c5e2d3b78685f7cf47fb03\n# or equivalently\ngit reset --soft HEAD@{1}\n```\n\nNote: amending doesn't delete the old commit\u2014it becomes unreferenced (\"dangling\") but stays recoverable via the reflog until garbage collection runs.",
+              "content": "The original commit hash before the amendment is:\n\n**`861a652e597bd21100c5e2d3b78685f7cf47fb03`**\n\n## How to read the reflog\n\n- `HEAD@{0}`: `commit (amend): Update hello function - revised` — this is the **new** commit created by `git commit --amend` (`d751570...`)\n- `HEAD@{1}`: `commit: Update hello function v2` — this is the **original** commit before the amend (`861a652...`)\n- `HEAD@{2}`: the initial commit\n\n## Useful commands\n\nInspect the original commit:\n```bash\ngit show 861a652e597bd21100c5e2d3b78685f7cf47fb03\n```\n\nIf you wanted to undo the amend and restore the original commit:\n```bash\ngit reset --soft 861a652e597bd21100c5e2d3b78685f7cf47fb03\n# or equivalently\ngit reset --soft HEAD@{1}\n```\n\nNote: amending doesn't delete the old commit—it becomes unreferenced (\"dangling\") but stays recoverable via the reflog until garbage collection runs.",
               "reasoning_content": "I'm getting a hash value, which looks like it might be a commit SHA or some kind of identifier."
             }
           ],
@@ -3342,7 +3342,7 @@
           "fixture_id": "f004",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "## Identifying the Commit\n\nLooking at the reflog, the commit with \"critical feature\" in the message is:\n\n```\n9663f74383034822887f56b30310c9af4ab0671c HEAD@{2}: commit: Add login function - critical feature\n```\n\n## Recovery Command\n\nTo recover that commit onto a new branch:\n\n```bash\ngit branch feature-login-recovered 9663f74383034822887f56b30310c9af4ab0671c\n```\n\nOr equivalently, using the reflog reference:\n\n```bash\ngit checkout -b feature-login-recovered HEAD@{2}\n```\n\n## Important Note\n\nIn this specific case, look at `HEAD@{0}`:\n\n```\n9663f74... HEAD@{0}: merge feature-login: Fast-forward\n```\n\nThe merge was a **fast-forward**, meaning `main` was moved directly to `9663f743...` \u2014 the exact same commit as the \"critical feature\" commit. So the commit is **not actually lost**; it's already the tip of `main`, and deleting the branch was safe.\n\nYou can verify with:\n\n```bash\ngit log --oneline main\ngit show 9663f74\n```\n\nBut if the commit *had* been orphaned (e.g., branch deleted before merging), the recovery command would be the `git branch <new-branch> <sha>` approach above, using the SHA found via `git reflog`.",
+          "model_output": "## Identifying the Commit\n\nLooking at the reflog, the commit with \"critical feature\" in the message is:\n\n```\n9663f74383034822887f56b30310c9af4ab0671c HEAD@{2}: commit: Add login function - critical feature\n```\n\n## Recovery Command\n\nTo recover that commit onto a new branch:\n\n```bash\ngit branch feature-login-recovered 9663f74383034822887f56b30310c9af4ab0671c\n```\n\nOr equivalently, using the reflog reference:\n\n```bash\ngit checkout -b feature-login-recovered HEAD@{2}\n```\n\n## Important Note\n\nIn this specific case, look at `HEAD@{0}`:\n\n```\n9663f74... HEAD@{0}: merge feature-login: Fast-forward\n```\n\nThe merge was a **fast-forward**, meaning `main` was moved directly to `9663f743...` — the exact same commit as the \"critical feature\" commit. So the commit is **not actually lost**; it's already the tip of `main`, and deleting the branch was safe.\n\nYou can verify with:\n\n```bash\ngit log --oneline main\ngit show 9663f74\n```\n\nBut if the commit *had* been orphaned (e.g., branch deleted before merging), the recovery command would be the `git branch <new-branch> <sha>` approach above, using the SHA found via `git reflog`.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 363,
@@ -3358,8 +3358,8 @@
             },
             {
               "role": "assistant",
-              "content": "## Identifying the Commit\n\nLooking at the reflog, the commit with \"critical feature\" in the message is:\n\n```\n9663f74383034822887f56b30310c9af4ab0671c HEAD@{2}: commit: Add login function - critical feature\n```\n\n## Recovery Command\n\nTo recover that commit onto a new branch:\n\n```bash\ngit branch feature-login-recovered 9663f74383034822887f56b30310c9af4ab0671c\n```\n\nOr equivalently, using the reflog reference:\n\n```bash\ngit checkout -b feature-login-recovered HEAD@{2}\n```\n\n## Important Note\n\nIn this specific case, look at `HEAD@{0}`:\n\n```\n9663f74... HEAD@{0}: merge feature-login: Fast-forward\n```\n\nThe merge was a **fast-forward**, meaning `main` was moved directly to `9663f743...` \u2014 the exact same commit as the \"critical feature\" commit. So the commit is **not actually lost**; it's already the tip of `main`, and deleting the branch was safe.\n\nYou can verify with:\n\n```bash\ngit log --oneline main\ngit show 9663f74\n```\n\nBut if the commit *had* been orphaned (e.g., branch deleted before merging), the recovery command would be the `git branch <new-branch> <sha>` approach above, using the SHA found via `git reflog`.",
-              "reasoning_content": "The commit with the critical feature is at 9663f74, which was fast-forward merged onto main, so it's technically still there \u2014 but to recover it explicitly, I could check it out directly or create a branch from that commit."
+              "content": "## Identifying the Commit\n\nLooking at the reflog, the commit with \"critical feature\" in the message is:\n\n```\n9663f74383034822887f56b30310c9af4ab0671c HEAD@{2}: commit: Add login function - critical feature\n```\n\n## Recovery Command\n\nTo recover that commit onto a new branch:\n\n```bash\ngit branch feature-login-recovered 9663f74383034822887f56b30310c9af4ab0671c\n```\n\nOr equivalently, using the reflog reference:\n\n```bash\ngit checkout -b feature-login-recovered HEAD@{2}\n```\n\n## Important Note\n\nIn this specific case, look at `HEAD@{0}`:\n\n```\n9663f74... HEAD@{0}: merge feature-login: Fast-forward\n```\n\nThe merge was a **fast-forward**, meaning `main` was moved directly to `9663f743...` — the exact same commit as the \"critical feature\" commit. So the commit is **not actually lost**; it's already the tip of `main`, and deleting the branch was safe.\n\nYou can verify with:\n\n```bash\ngit log --oneline main\ngit show 9663f74\n```\n\nBut if the commit *had* been orphaned (e.g., branch deleted before merging), the recovery command would be the `git branch <new-branch> <sha>` approach above, using the SHA found via `git reflog`.",
+              "reasoning_content": "The commit with the critical feature is at 9663f74, which was fast-forward merged onto main, so it's technically still there — but to recover it explicitly, I could check it out directly or create a branch from that commit."
             }
           ],
           "prompt": "You merged and deleted a feature branch 'feature-login' but need to recover the last commit that was added on that branch. The last feature commit message contained 'critical feature'. Use git reflog to identify what you need to run to recover that commit.",
@@ -3399,7 +3399,7 @@
           "fixture_id": "f005",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The original commit hash for **'Add feature B - user dashboard'** is:\n\n```\n95e9cfeac118e73a35a5d8c095874534952e2dae\n```\n\nThis is found at `HEAD@{3}` in the reflog:\n```\n95e9cfeac118e73a35a5d8c095874534952e2dae HEAD@{3}: commit: Add feature B - user dashboard\n```\n\n**To recover the lost commits**, you can:\n\n```bash\n# Inspect the commit to verify\ngit show 95e9cfeac118e73a35a5d8c095874534952e2dae\n\n# Restore the develop branch to that state\ngit branch develop-recovered 95e9cfeac118e73a35a5d8c095874534952e2dae\n\n# Or reset develop back to it\ngit checkout develop\ngit reset --hard 95e9cfeac118e73a35a5d8c095874534952e2dae\n```\n\n**Note:** Interestingly, the reflog shows the rebase finished at this same hash (`HEAD@{0}`), which suggests the rebase was a fast-forward and the commits may not actually be lost \u2014 `main` now points to the same commit containing both features. The intermediate commit 'Add feature A' (`abdc85b2be6d0e18347a20934e3eb17ac700aa87`) is still reachable via the reflog if you need it separately.",
+          "model_output": "The original commit hash for **'Add feature B - user dashboard'** is:\n\n```\n95e9cfeac118e73a35a5d8c095874534952e2dae\n```\n\nThis is found at `HEAD@{3}` in the reflog:\n```\n95e9cfeac118e73a35a5d8c095874534952e2dae HEAD@{3}: commit: Add feature B - user dashboard\n```\n\n**To recover the lost commits**, you can:\n\n```bash\n# Inspect the commit to verify\ngit show 95e9cfeac118e73a35a5d8c095874534952e2dae\n\n# Restore the develop branch to that state\ngit branch develop-recovered 95e9cfeac118e73a35a5d8c095874534952e2dae\n\n# Or reset develop back to it\ngit checkout develop\ngit reset --hard 95e9cfeac118e73a35a5d8c095874534952e2dae\n```\n\n**Note:** Interestingly, the reflog shows the rebase finished at this same hash (`HEAD@{0}`), which suggests the rebase was a fast-forward and the commits may not actually be lost — `main` now points to the same commit containing both features. The intermediate commit 'Add feature A' (`abdc85b2be6d0e18347a20934e3eb17ac700aa87`) is still reachable via the reflog if you need it separately.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 443,
@@ -3415,7 +3415,7 @@
             },
             {
               "role": "assistant",
-              "content": "The original commit hash for **'Add feature B - user dashboard'** is:\n\n```\n95e9cfeac118e73a35a5d8c095874534952e2dae\n```\n\nThis is found at `HEAD@{3}` in the reflog:\n```\n95e9cfeac118e73a35a5d8c095874534952e2dae HEAD@{3}: commit: Add feature B - user dashboard\n```\n\n**To recover the lost commits**, you can:\n\n```bash\n# Inspect the commit to verify\ngit show 95e9cfeac118e73a35a5d8c095874534952e2dae\n\n# Restore the develop branch to that state\ngit branch develop-recovered 95e9cfeac118e73a35a5d8c095874534952e2dae\n\n# Or reset develop back to it\ngit checkout develop\ngit reset --hard 95e9cfeac118e73a35a5d8c095874534952e2dae\n```\n\n**Note:** Interestingly, the reflog shows the rebase finished at this same hash (`HEAD@{0}`), which suggests the rebase was a fast-forward and the commits may not actually be lost \u2014 `main` now points to the same commit containing both features. The intermediate commit 'Add feature A' (`abdc85b2be6d0e18347a20934e3eb17ac700aa87`) is still reachable via the reflog if you need it separately.",
+              "content": "The original commit hash for **'Add feature B - user dashboard'** is:\n\n```\n95e9cfeac118e73a35a5d8c095874534952e2dae\n```\n\nThis is found at `HEAD@{3}` in the reflog:\n```\n95e9cfeac118e73a35a5d8c095874534952e2dae HEAD@{3}: commit: Add feature B - user dashboard\n```\n\n**To recover the lost commits**, you can:\n\n```bash\n# Inspect the commit to verify\ngit show 95e9cfeac118e73a35a5d8c095874534952e2dae\n\n# Restore the develop branch to that state\ngit branch develop-recovered 95e9cfeac118e73a35a5d8c095874534952e2dae\n\n# Or reset develop back to it\ngit checkout develop\ngit reset --hard 95e9cfeac118e73a35a5d8c095874534952e2dae\n```\n\n**Note:** Interestingly, the reflog shows the rebase finished at this same hash (`HEAD@{0}`), which suggests the rebase was a fast-forward and the commits may not actually be lost — `main` now points to the same commit containing both features. The intermediate commit 'Add feature A' (`abdc85b2be6d0e18347a20934e3eb17ac700aa87`) is still reachable via the reflog if you need it separately.",
               "reasoning_content": "Looking at a git commit hash from the reflog."
             }
           ],
@@ -3456,7 +3456,7 @@
           "fixture_id": "f006",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The experimental commit hash is:\n\n```\nf233279311af037a2338ab95e3c76f29431ab29a\n```\n\nYou can see it in the reflog at `HEAD@{1}`:\n\n```\nf233279311af037a2338ab95e3c76f29431ab29a HEAD@{1}: commit: Third commit - WIP experimental\n```\n\nTo return to it, run:\n\n```bash\ngit checkout f2332793\n```\n\nAnd if you want to keep this work permanently (so it isn't garbage-collected), create a branch pointing to it:\n\n```bash\ngit checkout -b experimental f2332793\n```\n\nThis is exactly what `git reflog` is for \u2014 recovering commits that aren't reachable from any branch, such as those made in a detached HEAD state.",
+          "model_output": "The experimental commit hash is:\n\n```\nf233279311af037a2338ab95e3c76f29431ab29a\n```\n\nYou can see it in the reflog at `HEAD@{1}`:\n\n```\nf233279311af037a2338ab95e3c76f29431ab29a HEAD@{1}: commit: Third commit - WIP experimental\n```\n\nTo return to it, run:\n\n```bash\ngit checkout f2332793\n```\n\nAnd if you want to keep this work permanently (so it isn't garbage-collected), create a branch pointing to it:\n\n```bash\ngit checkout -b experimental f2332793\n```\n\nThis is exactly what `git reflog` is for — recovering commits that aren't reachable from any branch, such as those made in a detached HEAD state.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 293,
@@ -3472,8 +3472,8 @@
             },
             {
               "role": "assistant",
-              "content": "The experimental commit hash is:\n\n```\nf233279311af037a2338ab95e3c76f29431ab29a\n```\n\nYou can see it in the reflog at `HEAD@{1}`:\n\n```\nf233279311af037a2338ab95e3c76f29431ab29a HEAD@{1}: commit: Third commit - WIP experimental\n```\n\nTo return to it, run:\n\n```bash\ngit checkout f2332793\n```\n\nAnd if you want to keep this work permanently (so it isn't garbage-collected), create a branch pointing to it:\n\n```bash\ngit checkout -b experimental f2332793\n```\n\nThis is exactly what `git reflog` is for \u2014 recovering commits that aren't reachable from any branch, such as those made in a detached HEAD state.",
-              "reasoning_content": "Looking at the reflog, it seems the experimental commit ended up on main after all \u2014 the checkout moved from main to HEAD~1 after that commit was made. The commit hash is f233279311af037a2338ab95e3c76f29431ab29a."
+              "content": "The experimental commit hash is:\n\n```\nf233279311af037a2338ab95e3c76f29431ab29a\n```\n\nYou can see it in the reflog at `HEAD@{1}`:\n\n```\nf233279311af037a2338ab95e3c76f29431ab29a HEAD@{1}: commit: Third commit - WIP experimental\n```\n\nTo return to it, run:\n\n```bash\ngit checkout f2332793\n```\n\nAnd if you want to keep this work permanently (so it isn't garbage-collected), create a branch pointing to it:\n\n```bash\ngit checkout -b experimental f2332793\n```\n\nThis is exactly what `git reflog` is for — recovering commits that aren't reachable from any branch, such as those made in a detached HEAD state.",
+              "reasoning_content": "Looking at the reflog, it seems the experimental commit ended up on main after all — the checkout moved from main to HEAD~1 after that commit was made. The commit hash is f233279311af037a2338ab95e3c76f29431ab29a."
             }
           ],
           "prompt": "You are in detached HEAD state at HEAD~1. You made some experimental changes and committed them in a detached HEAD state. The commit 'Third commit - WIP experimental' was made on a detached HEAD. Use git reflog to find the commit hash of that experimental commit so you can return to it.",
@@ -3513,7 +3513,7 @@
           "fixture_id": "f007",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The commit you're looking for is:\n\n**`ea28d490dacb1fee739bfa9b082d0e37890f6bc1`**\n\n**How to find it:** In the reflog, look for the entry containing \"hotfix for login\":\n\n```\nea28d490dacb1fee739bfa9b082d0e37890f6bc1 HEAD@{2}: commit: Commit C - hotfix for login\n```\n\n**To recover it**, you have a few options:\n\n```bash\n# Option 1: Cherry-pick just that commit onto your current branch\ngit cherry-pick ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n\n# Option 2: Reset back to that commit (restores C, but not D)\ngit reset --hard ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n\n# Option 3: Create a branch pointing at it to inspect first\ngit branch recover-hotfix ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n```\n\n**Note:** Your `reset --hard HEAD~2` actually discarded *two* commits \u2014 Commit C (the hotfix) and Commit D (`de6da059...`). If you want to fully restore everything, reset to `de6da059ed0557e13df0a6798ae7909918b503b9` (HEAD@{1}) instead, which includes both commits.",
+          "model_output": "The commit you're looking for is:\n\n**`ea28d490dacb1fee739bfa9b082d0e37890f6bc1`**\n\n**How to find it:** In the reflog, look for the entry containing \"hotfix for login\":\n\n```\nea28d490dacb1fee739bfa9b082d0e37890f6bc1 HEAD@{2}: commit: Commit C - hotfix for login\n```\n\n**To recover it**, you have a few options:\n\n```bash\n# Option 1: Cherry-pick just that commit onto your current branch\ngit cherry-pick ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n\n# Option 2: Reset back to that commit (restores C, but not D)\ngit reset --hard ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n\n# Option 3: Create a branch pointing at it to inspect first\ngit branch recover-hotfix ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n```\n\n**Note:** Your `reset --hard HEAD~2` actually discarded *two* commits — Commit C (the hotfix) and Commit D (`de6da059...`). If you want to fully restore everything, reset to `de6da059ed0557e13df0a6798ae7909918b503b9` (HEAD@{1}) instead, which includes both commits.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 321,
@@ -3529,8 +3529,8 @@
             },
             {
               "role": "assistant",
-              "content": "The commit you're looking for is:\n\n**`ea28d490dacb1fee739bfa9b082d0e37890f6bc1`**\n\n**How to find it:** In the reflog, look for the entry containing \"hotfix for login\":\n\n```\nea28d490dacb1fee739bfa9b082d0e37890f6bc1 HEAD@{2}: commit: Commit C - hotfix for login\n```\n\n**To recover it**, you have a few options:\n\n```bash\n# Option 1: Cherry-pick just that commit onto your current branch\ngit cherry-pick ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n\n# Option 2: Reset back to that commit (restores C, but not D)\ngit reset --hard ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n\n# Option 3: Create a branch pointing at it to inspect first\ngit branch recover-hotfix ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n```\n\n**Note:** Your `reset --hard HEAD~2` actually discarded *two* commits \u2014 Commit C (the hotfix) and Commit D (`de6da059...`). If you want to fully restore everything, reset to `de6da059ed0557e13df0a6798ae7909918b503b9` (HEAD@{1}) instead, which includes both commits.",
-              "reasoning_content": "I need to find the specific commit with the 'hotfix for login' message rather than just grabbing the most recent one from the reflog \u2014 that's the commit ea28d490dacb1fee739bfa9b082d0e37890f6bc1."
+              "content": "The commit you're looking for is:\n\n**`ea28d490dacb1fee739bfa9b082d0e37890f6bc1`**\n\n**How to find it:** In the reflog, look for the entry containing \"hotfix for login\":\n\n```\nea28d490dacb1fee739bfa9b082d0e37890f6bc1 HEAD@{2}: commit: Commit C - hotfix for login\n```\n\n**To recover it**, you have a few options:\n\n```bash\n# Option 1: Cherry-pick just that commit onto your current branch\ngit cherry-pick ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n\n# Option 2: Reset back to that commit (restores C, but not D)\ngit reset --hard ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n\n# Option 3: Create a branch pointing at it to inspect first\ngit branch recover-hotfix ea28d490dacb1fee739bfa9b082d0e37890f6bc1\n```\n\n**Note:** Your `reset --hard HEAD~2` actually discarded *two* commits — Commit C (the hotfix) and Commit D (`de6da059...`). If you want to fully restore everything, reset to `de6da059ed0557e13df0a6798ae7909918b503b9` (HEAD@{1}) instead, which includes both commits.",
+              "reasoning_content": "I need to find the specific commit with the 'hotfix for login' message rather than just grabbing the most recent one from the reflog — that's the commit ea28d490dacb1fee739bfa9b082d0e37890f6bc1."
             }
           ],
           "prompt": "You ran 'git reset --hard HEAD~2' which moved HEAD back two commits. You now want to recover the most recent commit that was lost, which had 'hotfix for login' in its message. Use git reflog to find the full commit hash you need.",
@@ -3570,7 +3570,7 @@
           "fixture_id": "f008",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The original main branch HEAD (the \"Custom config\" commit) is:\n\n**`2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40`**\n\nThis is found at `HEAD@{1}` in the reflog \u2014 the last commit made on main before the rebase started (`HEAD@{0}` marks the rebase beginning).\n\nTo restore main to that commit:\n\n```bash\ngit checkout main\ngit reset --hard 2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40\n```\n\nOr equivalently:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis will move main back to the \"Custom config\" commit, undoing the incorrect rebase.",
+          "model_output": "The original main branch HEAD (the \"Custom config\" commit) is:\n\n**`2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40`**\n\nThis is found at `HEAD@{1}` in the reflog — the last commit made on main before the rebase started (`HEAD@{0}` marks the rebase beginning).\n\nTo restore main to that commit:\n\n```bash\ngit checkout main\ngit reset --hard 2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40\n```\n\nOr equivalently:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis will move main back to the \"Custom config\" commit, undoing the incorrect rebase.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 429,
@@ -3586,7 +3586,7 @@
             },
             {
               "role": "assistant",
-              "content": "The original main branch HEAD (the \"Custom config\" commit) is:\n\n**`2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40`**\n\nThis is found at `HEAD@{1}` in the reflog \u2014 the last commit made on main before the rebase started (`HEAD@{0}` marks the rebase beginning).\n\nTo restore main to that commit:\n\n```bash\ngit checkout main\ngit reset --hard 2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40\n```\n\nOr equivalently:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis will move main back to the \"Custom config\" commit, undoing the incorrect rebase.",
+              "content": "The original main branch HEAD (the \"Custom config\" commit) is:\n\n**`2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40`**\n\nThis is found at `HEAD@{1}` in the reflog — the last commit made on main before the rebase started (`HEAD@{0}` marks the rebase beginning).\n\nTo restore main to that commit:\n\n```bash\ngit checkout main\ngit reset --hard 2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40\n```\n\nOr equivalently:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis will move main back to the \"Custom config\" commit, undoing the incorrect rebase.",
               "reasoning_content": "I'm checking the git history and see that the previous HEAD was pointing to a commit with the message \"Custom config\" and its hash is 2e3666b0fa7bfeb76d5b9c24491f6df1fcb48d40."
             }
           ],
@@ -3627,7 +3627,7 @@
           "fixture_id": "f009",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "## Recovery Analysis\n\nLooking at the reflog:\n- **HEAD@{1}** shows the cherry-pick: `d939f7b8b971747c89c0f567012a14c067c95387 - cherry-pick: Implement login feature - urgent`\n- **HEAD@{0}** shows the reset that destroyed it: `reset: moving to HEAD~1`\n\nThe lost commit hash is **`d939f7b8b971747c89c0f567012a14c067c95387`**\n\n## Recovery Command\n\n```bash\ngit reset --hard d939f7b8b971747c89c0f567012a14c067c95387\n```\n\nOr equivalently, using the reflog reference:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\n## Alternative Approaches\n\nIf you have new work on top and don't want to move the branch pointer with `reset`, you can instead re-apply the commit:\n\n```bash\ngit cherry-pick d939f7b8b971747c89c0f567012a14c067c95387\n```\n\n**Tip:** Verify the commit contents before resetting with:\n\n```bash\ngit show d939f7b8b971747c89c0f567012a14c067c95387\n```\n\nThe commit is recoverable because `git reset` doesn't delete commits \u2014 it only moves the branch pointer. The commit remains in the object database until garbage collection runs (typically ~90 days for reflog entries).",
+          "model_output": "## Recovery Analysis\n\nLooking at the reflog:\n- **HEAD@{1}** shows the cherry-pick: `d939f7b8b971747c89c0f567012a14c067c95387 - cherry-pick: Implement login feature - urgent`\n- **HEAD@{0}** shows the reset that destroyed it: `reset: moving to HEAD~1`\n\nThe lost commit hash is **`d939f7b8b971747c89c0f567012a14c067c95387`**\n\n## Recovery Command\n\n```bash\ngit reset --hard d939f7b8b971747c89c0f567012a14c067c95387\n```\n\nOr equivalently, using the reflog reference:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\n## Alternative Approaches\n\nIf you have new work on top and don't want to move the branch pointer with `reset`, you can instead re-apply the commit:\n\n```bash\ngit cherry-pick d939f7b8b971747c89c0f567012a14c067c95387\n```\n\n**Tip:** Verify the commit contents before resetting with:\n\n```bash\ngit show d939f7b8b971747c89c0f567012a14c067c95387\n```\n\nThe commit is recoverable because `git reset` doesn't delete commits — it only moves the branch pointer. The commit remains in the object database until garbage collection runs (typically ~90 days for reflog entries).",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 363,
@@ -3643,7 +3643,7 @@
             },
             {
               "role": "assistant",
-              "content": "## Recovery Analysis\n\nLooking at the reflog:\n- **HEAD@{1}** shows the cherry-pick: `d939f7b8b971747c89c0f567012a14c067c95387 - cherry-pick: Implement login feature - urgent`\n- **HEAD@{0}** shows the reset that destroyed it: `reset: moving to HEAD~1`\n\nThe lost commit hash is **`d939f7b8b971747c89c0f567012a14c067c95387`**\n\n## Recovery Command\n\n```bash\ngit reset --hard d939f7b8b971747c89c0f567012a14c067c95387\n```\n\nOr equivalently, using the reflog reference:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\n## Alternative Approaches\n\nIf you have new work on top and don't want to move the branch pointer with `reset`, you can instead re-apply the commit:\n\n```bash\ngit cherry-pick d939f7b8b971747c89c0f567012a14c067c95387\n```\n\n**Tip:** Verify the commit contents before resetting with:\n\n```bash\ngit show d939f7b8b971747c89c0f567012a14c067c95387\n```\n\nThe commit is recoverable because `git reset` doesn't delete commits \u2014 it only moves the branch pointer. The commit remains in the object database until garbage collection runs (typically ~90 days for reflog entries).",
+              "content": "## Recovery Analysis\n\nLooking at the reflog:\n- **HEAD@{1}** shows the cherry-pick: `d939f7b8b971747c89c0f567012a14c067c95387 - cherry-pick: Implement login feature - urgent`\n- **HEAD@{0}** shows the reset that destroyed it: `reset: moving to HEAD~1`\n\nThe lost commit hash is **`d939f7b8b971747c89c0f567012a14c067c95387`**\n\n## Recovery Command\n\n```bash\ngit reset --hard d939f7b8b971747c89c0f567012a14c067c95387\n```\n\nOr equivalently, using the reflog reference:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\n## Alternative Approaches\n\nIf you have new work on top and don't want to move the branch pointer with `reset`, you can instead re-apply the commit:\n\n```bash\ngit cherry-pick d939f7b8b971747c89c0f567012a14c067c95387\n```\n\n**Tip:** Verify the commit contents before resetting with:\n\n```bash\ngit show d939f7b8b971747c89c0f567012a14c067c95387\n```\n\nThe commit is recoverable because `git reset` doesn't delete commits — it only moves the branch pointer. The commit remains in the object database until garbage collection runs (typically ~90 days for reflog entries).",
               "reasoning_content": "The cherry-pick at HEAD@{1} ended up with the same hash as the original commit d939f7b, which is unusual but workable. If needed, I can recover by resetting to that commit or re-applying the cherry-pick."
             }
           ],
@@ -3684,7 +3684,7 @@
           "fixture_id": "f010",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**Orphaned commit found:** `3572786` at `HEAD@{2}`\n\n**Commit message:** `Add Controller class - completes MVC`\n\n**How to read the reflog:**\n1. `HEAD@{4}` \u2192 `HEAD@{2}`: normal commits (Model, View, Controller)\n2. `HEAD@{1}`: `git reset --mixed HEAD~1` moved HEAD back to `4bf47f1` (Add View class), leaving `3572786` with no branch pointing to it \u2014 orphaned\n3. `HEAD@{0}`: your new commit `3ee5a35` (\"Re-add Controller\") created a new history line, so `3572786` is unreachable except via the reflog\n\n**To recover it, you could run:**\n\n```bash\n# Inspect the orphaned commit\ngit show 3572786\n\n# Recover its changes (e.g., cherry-pick onto current branch)\ngit cherry-pick 3572786\n\n# Or restore the full state via a branch\ngit branch recovered-controller 3572786\n```\n\nNote: since you already made a \"Re-add Controller\" commit, cherry-picking may cause conflicts if the content overlaps \u2014 `git show 3572786` first to compare.",
+          "model_output": "**Orphaned commit found:** `3572786` at `HEAD@{2}`\n\n**Commit message:** `Add Controller class - completes MVC`\n\n**How to read the reflog:**\n1. `HEAD@{4}` → `HEAD@{2}`: normal commits (Model, View, Controller)\n2. `HEAD@{1}`: `git reset --mixed HEAD~1` moved HEAD back to `4bf47f1` (Add View class), leaving `3572786` with no branch pointing to it — orphaned\n3. `HEAD@{0}`: your new commit `3ee5a35` (\"Re-add Controller\") created a new history line, so `3572786` is unreachable except via the reflog\n\n**To recover it, you could run:**\n\n```bash\n# Inspect the orphaned commit\ngit show 3572786\n\n# Recover its changes (e.g., cherry-pick onto current branch)\ngit cherry-pick 3572786\n\n# Or restore the full state via a branch\ngit branch recovered-controller 3572786\n```\n\nNote: since you already made a \"Re-add Controller\" commit, cherry-picking may cause conflicts if the content overlaps — `git show 3572786` first to compare.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 321,
@@ -3700,7 +3700,7 @@
             },
             {
               "role": "assistant",
-              "content": "**Orphaned commit found:** `3572786` at `HEAD@{2}`\n\n**Commit message:** `Add Controller class - completes MVC`\n\n**How to read the reflog:**\n1. `HEAD@{4}` \u2192 `HEAD@{2}`: normal commits (Model, View, Controller)\n2. `HEAD@{1}`: `git reset --mixed HEAD~1` moved HEAD back to `4bf47f1` (Add View class), leaving `3572786` with no branch pointing to it \u2014 orphaned\n3. `HEAD@{0}`: your new commit `3ee5a35` (\"Re-add Controller\") created a new history line, so `3572786` is unreachable except via the reflog\n\n**To recover it, you could run:**\n\n```bash\n# Inspect the orphaned commit\ngit show 3572786\n\n# Recover its changes (e.g., cherry-pick onto current branch)\ngit cherry-pick 3572786\n\n# Or restore the full state via a branch\ngit branch recovered-controller 3572786\n```\n\nNote: since you already made a \"Re-add Controller\" commit, cherry-picking may cause conflicts if the content overlaps \u2014 `git show 3572786` first to compare.",
+              "content": "**Orphaned commit found:** `3572786` at `HEAD@{2}`\n\n**Commit message:** `Add Controller class - completes MVC`\n\n**How to read the reflog:**\n1. `HEAD@{4}` → `HEAD@{2}`: normal commits (Model, View, Controller)\n2. `HEAD@{1}`: `git reset --mixed HEAD~1` moved HEAD back to `4bf47f1` (Add View class), leaving `3572786` with no branch pointing to it — orphaned\n3. `HEAD@{0}`: your new commit `3ee5a35` (\"Re-add Controller\") created a new history line, so `3572786` is unreachable except via the reflog\n\n**To recover it, you could run:**\n\n```bash\n# Inspect the orphaned commit\ngit show 3572786\n\n# Recover its changes (e.g., cherry-pick onto current branch)\ngit cherry-pick 3572786\n\n# Or restore the full state via a branch\ngit branch recovered-controller 3572786\n```\n\nNote: since you already made a \"Re-add Controller\" commit, cherry-picking may cause conflicts if the content overlaps — `git show 3572786` first to compare.",
               "reasoning_content": "The orphaned commit 357278694a0ec79fb608aabdc997f363f33d66c5 added a Controller class that completes the MVC pattern."
             }
           ],
@@ -3741,7 +3741,7 @@
           "fixture_id": "f011",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "## Reading the reflog\n\nThe commit you want is at `HEAD@{2}`:\n\n```\nb5dfdea6df8fb793b1979c07f8e5dad608151dea HEAD@{2}: commit: Add env export B - enables feature X\n```\n\n## Command to recover it\n\nTo restore the deleted branch pointing at that commit:\n\n```bash\ngit branch feature-x b5dfdea6df8fb793b1979c07f8e5dad608151dea\n```\n\nor equivalently, using the reflog reference:\n\n```bash\ngit checkout -b feature-x HEAD@{2}\n```\n\n## Worth noting\n\nLook at `HEAD@{0}`:\n\n```\nb5dfdea... HEAD@{0}: merge feature-x: Fast-forward\n```\n\nThe merge was a **fast-forward**, which means `main` was moved directly to `b5dfdea`. So the commit isn't actually lost \u2014 it's already reachable on `main`. You can verify with:\n\n```bash\ngit log --oneline main\n```\n\nThe recovery commands above are only needed if you want the `feature-x` branch name back. If the branch had been deleted **before** merging, then `git branch feature-x b5dfdea` (using the SHA found via `git reflog`) would be the true recovery step.",
+          "model_output": "## Reading the reflog\n\nThe commit you want is at `HEAD@{2}`:\n\n```\nb5dfdea6df8fb793b1979c07f8e5dad608151dea HEAD@{2}: commit: Add env export B - enables feature X\n```\n\n## Command to recover it\n\nTo restore the deleted branch pointing at that commit:\n\n```bash\ngit branch feature-x b5dfdea6df8fb793b1979c07f8e5dad608151dea\n```\n\nor equivalently, using the reflog reference:\n\n```bash\ngit checkout -b feature-x HEAD@{2}\n```\n\n## Worth noting\n\nLook at `HEAD@{0}`:\n\n```\nb5dfdea... HEAD@{0}: merge feature-x: Fast-forward\n```\n\nThe merge was a **fast-forward**, which means `main` was moved directly to `b5dfdea`. So the commit isn't actually lost — it's already reachable on `main`. You can verify with:\n\n```bash\ngit log --oneline main\n```\n\nThe recovery commands above are only needed if you want the `feature-x` branch name back. If the branch had been deleted **before** merging, then `git branch feature-x b5dfdea` (using the SHA found via `git reflog`) would be the true recovery step.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 355,
@@ -3757,7 +3757,7 @@
             },
             {
               "role": "assistant",
-              "content": "## Reading the reflog\n\nThe commit you want is at `HEAD@{2}`:\n\n```\nb5dfdea6df8fb793b1979c07f8e5dad608151dea HEAD@{2}: commit: Add env export B - enables feature X\n```\n\n## Command to recover it\n\nTo restore the deleted branch pointing at that commit:\n\n```bash\ngit branch feature-x b5dfdea6df8fb793b1979c07f8e5dad608151dea\n```\n\nor equivalently, using the reflog reference:\n\n```bash\ngit checkout -b feature-x HEAD@{2}\n```\n\n## Worth noting\n\nLook at `HEAD@{0}`:\n\n```\nb5dfdea... HEAD@{0}: merge feature-x: Fast-forward\n```\n\nThe merge was a **fast-forward**, which means `main` was moved directly to `b5dfdea`. So the commit isn't actually lost \u2014 it's already reachable on `main`. You can verify with:\n\n```bash\ngit log --oneline main\n```\n\nThe recovery commands above are only needed if you want the `feature-x` branch name back. If the branch had been deleted **before** merging, then `git branch feature-x b5dfdea` (using the SHA found via `git reflog`) would be the true recovery step.",
+              "content": "## Reading the reflog\n\nThe commit you want is at `HEAD@{2}`:\n\n```\nb5dfdea6df8fb793b1979c07f8e5dad608151dea HEAD@{2}: commit: Add env export B - enables feature X\n```\n\n## Command to recover it\n\nTo restore the deleted branch pointing at that commit:\n\n```bash\ngit branch feature-x b5dfdea6df8fb793b1979c07f8e5dad608151dea\n```\n\nor equivalently, using the reflog reference:\n\n```bash\ngit checkout -b feature-x HEAD@{2}\n```\n\n## Worth noting\n\nLook at `HEAD@{0}`:\n\n```\nb5dfdea... HEAD@{0}: merge feature-x: Fast-forward\n```\n\nThe merge was a **fast-forward**, which means `main` was moved directly to `b5dfdea`. So the commit isn't actually lost — it's already reachable on `main`. You can verify with:\n\n```bash\ngit log --oneline main\n```\n\nThe recovery commands above are only needed if you want the `feature-x` branch name back. If the branch had been deleted **before** merging, then `git branch feature-x b5dfdea` (using the SHA found via `git reflog`) would be the true recovery step.",
               "reasoning_content": "The commit b5dfdea is already on main since it was fast-forwarded in, but I can recreate the feature branch by checking it out from that commit or using the reflog reference."
             }
           ],
@@ -3798,7 +3798,7 @@
           "fixture_id": "f012",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "## Recovering the Lost Commit\n\n### Step 1: Read the reflog\n\nFrom the reflog, identify the critical commit:\n\n```\nc6b6cb09b70d4348837d65a744382277a4bc8ff8 HEAD@{4}: commit: Production database config - critical\n```\n\nThe commit hash you need is **`c6b6cb0`**.\n\nYou can also see what happened:\n- `HEAD@{0}`: `reset: moving to HEAD~1` \u2014 this is where main was reset back to `bf42439` (Local database config), orphaning the production commit.\n\n### Step 2: Switch back to main\n\n```bash\ngit checkout main\n```\n\n### Step 3: Restore main to the critical commit\n\n```bash\ngit reset --hard c6b6cb0\n```\n\n### Step 4: Verify\n\n```bash\ngit log --oneline\n```\n\nExpected output:\n\n```\nc6b6cb0 Production database config - critical\nbf42439 Local database config\n```\n\n## Alternative approach\n\nInstead of the raw hash, you can use the reflog reference directly:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\n(Since `HEAD@{1}` shows main pointed at `c6b6cb0` before the reset \u2014 but be careful, reflog positions shift as you make new moves, so using the explicit hash `c6b6cb0` is safer.)\n\n**Note:** Interestingly, the `backup` branch also points at `c6b6cb0` (visible from `HEAD@{3}`), so `git reset --hard backup` from main would work too. But the reflog method is the general-purpose recovery technique when no branch reference exists.",
+          "model_output": "## Recovering the Lost Commit\n\n### Step 1: Read the reflog\n\nFrom the reflog, identify the critical commit:\n\n```\nc6b6cb09b70d4348837d65a744382277a4bc8ff8 HEAD@{4}: commit: Production database config - critical\n```\n\nThe commit hash you need is **`c6b6cb0`**.\n\nYou can also see what happened:\n- `HEAD@{0}`: `reset: moving to HEAD~1` — this is where main was reset back to `bf42439` (Local database config), orphaning the production commit.\n\n### Step 2: Switch back to main\n\n```bash\ngit checkout main\n```\n\n### Step 3: Restore main to the critical commit\n\n```bash\ngit reset --hard c6b6cb0\n```\n\n### Step 4: Verify\n\n```bash\ngit log --oneline\n```\n\nExpected output:\n\n```\nc6b6cb0 Production database config - critical\nbf42439 Local database config\n```\n\n## Alternative approach\n\nInstead of the raw hash, you can use the reflog reference directly:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\n(Since `HEAD@{1}` shows main pointed at `c6b6cb0` before the reset — but be careful, reflog positions shift as you make new moves, so using the explicit hash `c6b6cb0` is safer.)\n\n**Note:** Interestingly, the `backup` branch also points at `c6b6cb0` (visible from `HEAD@{3}`), so `git reset --hard backup` from main would work too. But the reflog method is the general-purpose recovery technique when no branch reference exists.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 353,
@@ -3814,7 +3814,7 @@
             },
             {
               "role": "assistant",
-              "content": "## Recovering the Lost Commit\n\n### Step 1: Read the reflog\n\nFrom the reflog, identify the critical commit:\n\n```\nc6b6cb09b70d4348837d65a744382277a4bc8ff8 HEAD@{4}: commit: Production database config - critical\n```\n\nThe commit hash you need is **`c6b6cb0`**.\n\nYou can also see what happened:\n- `HEAD@{0}`: `reset: moving to HEAD~1` \u2014 this is where main was reset back to `bf42439` (Local database config), orphaning the production commit.\n\n### Step 2: Switch back to main\n\n```bash\ngit checkout main\n```\n\n### Step 3: Restore main to the critical commit\n\n```bash\ngit reset --hard c6b6cb0\n```\n\n### Step 4: Verify\n\n```bash\ngit log --oneline\n```\n\nExpected output:\n\n```\nc6b6cb0 Production database config - critical\nbf42439 Local database config\n```\n\n## Alternative approach\n\nInstead of the raw hash, you can use the reflog reference directly:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\n(Since `HEAD@{1}` shows main pointed at `c6b6cb0` before the reset \u2014 but be careful, reflog positions shift as you make new moves, so using the explicit hash `c6b6cb0` is safer.)\n\n**Note:** Interestingly, the `backup` branch also points at `c6b6cb0` (visible from `HEAD@{3}`), so `git reset --hard backup` from main would work too. But the reflog method is the general-purpose recovery technique when no branch reference exists.",
+              "content": "## Recovering the Lost Commit\n\n### Step 1: Read the reflog\n\nFrom the reflog, identify the critical commit:\n\n```\nc6b6cb09b70d4348837d65a744382277a4bc8ff8 HEAD@{4}: commit: Production database config - critical\n```\n\nThe commit hash you need is **`c6b6cb0`**.\n\nYou can also see what happened:\n- `HEAD@{0}`: `reset: moving to HEAD~1` — this is where main was reset back to `bf42439` (Local database config), orphaning the production commit.\n\n### Step 2: Switch back to main\n\n```bash\ngit checkout main\n```\n\n### Step 3: Restore main to the critical commit\n\n```bash\ngit reset --hard c6b6cb0\n```\n\n### Step 4: Verify\n\n```bash\ngit log --oneline\n```\n\nExpected output:\n\n```\nc6b6cb0 Production database config - critical\nbf42439 Local database config\n```\n\n## Alternative approach\n\nInstead of the raw hash, you can use the reflog reference directly:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\n(Since `HEAD@{1}` shows main pointed at `c6b6cb0` before the reset — but be careful, reflog positions shift as you make new moves, so using the explicit hash `c6b6cb0` is safer.)\n\n**Note:** Interestingly, the `backup` branch also points at `c6b6cb0` (visible from `HEAD@{3}`), so `git reset --hard backup` from main would work too. But the reflog method is the general-purpose recovery technique when no branch reference exists.",
               "reasoning_content": "To recover, I need to check out main and reset hard to commit c6b6cb0, which is the production configuration."
             }
           ],
@@ -3882,7 +3882,7 @@
             {
               "role": "assistant",
               "content": "Hello, Planet!!!",
-              "reasoning_content": "I'm merging the two edits together\u2014one changed the punctuation to triple exclamation marks while the other replaced \"World\" with \"Planet\"\u2014resulting in \"Hello, Planet!!!\"."
+              "reasoning_content": "I'm merging the two edits together—one changed the punctuation to triple exclamation marks while the other replaced \"World\" with \"Planet\"—resulting in \"Hello, Planet!!!\"."
             }
           ],
           "purpose": "Tests ability to resolve a simple single-line merge conflict in a greeting file. Evaluates basic conflict marker comprehension.",
@@ -4012,7 +4012,7 @@
             {
               "role": "assistant",
               "content": "Status: Resolved",
-              "reasoning_content": "I'm looking at a three-way merge conflict where the base version says \"OK\", one branch changed it to \"Resolved\", and another to \"Failed\". The semantic intent seems clear\u2014the fix branch is resolving the failure, so \"Status: Resolved\" is the right resolution."
+              "reasoning_content": "I'm looking at a three-way merge conflict where the base version says \"OK\", one branch changed it to \"Resolved\", and another to \"Failed\". The semantic intent seems clear—the fix branch is resolving the failure, so \"Status: Resolved\" is the right resolution."
             }
           ],
           "purpose": "Tests ability to resolve a status-message merge conflict. Evaluates choosing between contradictory status values.",
@@ -4076,7 +4076,7 @@
             {
               "role": "assistant",
               "content": "```\nName: John Doe\nEmail: john@company.com\nPhone: 555-9876\n```\n\n**Rationale:** Branch A's only change was updating the email (to john@company.com), while Branch B updated both fields. Merging both branches' intentional changes: Branch A's email update takes the email field (it was A's deliberate change), and Branch B's phone update (555-9876) is preserved since Branch A left the phone at the base value. This captures every update made across both branches.",
-              "reasoning_content": "I'm working through a merge conflict where both branches updated the contact information. Branch B made the most comprehensive changes, updating both email and phone, while Branch A only updated the email. The phone number from Branch B (555-9876) seems like the clear choice, but the email is trickier since both branches modified it\u2014I need to decide whether to keep Branch A's email (john@company.com) or go with Branch B's version, though the most complete resolution would favor keeping both of Branch B's intentional updates."
+              "reasoning_content": "I'm working through a merge conflict where both branches updated the contact information. Branch B made the most comprehensive changes, updating both email and phone, while Branch A only updated the email. The phone number from Branch B (555-9876) seems like the clear choice, but the email is trickier since both branches modified it—I need to decide whether to keep Branch A's email (john@company.com) or go with Branch B's version, though the most complete resolution would favor keeping both of Branch B's intentional updates."
             }
           ],
           "purpose": "Tests ability to resolve a multi-line hunk merge conflict with address/contact blocks. Evaluates combining partial updates from both sides.",
@@ -4462,7 +4462,7 @@
             {
               "role": "assistant",
               "content": "main.py\n```python\ndef main():\n    print(\"Running enterprise\")\n```\n\nutils.py\n```python\nDEBUG = True\nPORT = 9000\n```",
-              "reasoning_content": "The user is asking for more descriptive naming in main.py \u2014 something like \"Running enterprise\" would be clearer than the current label. Branch B maintains DEBUG=True with PORT=9000, which seems to be the preferred configuration."
+              "reasoning_content": "The user is asking for more descriptive naming in main.py — something like \"Running enterprise\" would be clearer than the current label. Branch B maintains DEBUG=True with PORT=9000, which seems to be the preferred configuration."
             }
           ],
           "purpose": "Tests ability to resolve simultaneous conflicts in two files with different strategies per file. Evaluates multi-file conflict juggling.",
@@ -4591,7 +4591,7 @@
             {
               "role": "assistant",
               "content": "app.py\n```python\napp = Flask(__name__)\napp.run(port=8080, debug=False)\n```\n\nrequirements.txt\n```\nflask==2.0.0\nrequests==2.28.0\n```",
-              "reasoning_content": "I'm working through a merge conflict where I need to combine changes from two branches\u2014one disabled debug mode while keeping port 5000, and the other changed the port to 8080 while keeping debug enabled. The right approach is to take both changes: disable debug and switch to port 8080."
+              "reasoning_content": "I'm working through a merge conflict where I need to combine changes from two branches—one disabled debug mode while keeping port 5000, and the other changed the port to 8080 while keeping debug enabled. The right approach is to take both changes: disable debug and switch to port 8080."
             }
           ],
           "purpose": "Tests ability to resolve conflicts in two interdependent files with trade-off decisions. Evaluates dependency-aware merging.",
@@ -5727,7 +5727,7 @@
             {
               "role": "assistant",
               "content": "bugfix-123\nfeature/search",
-              "reasoning_content": "The feature/search branch is fully merged into main and should be cleaned up, along with bugfix-123 which is also merged\u2014main itself should stay."
+              "reasoning_content": "The feature/search branch is fully merged into main and should be cleaned up, along with bugfix-123 which is also merged—main itself should stay."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -5841,7 +5841,7 @@
             {
               "role": "assistant",
               "content": "cleanup\nfix-1\nfix-2",
-              "reasoning_content": "I've merged three branches\u2014cleanup, fix-1, and fix-2\u2014where cleanup happens to share the same commit as main, so all three are safe to delete."
+              "reasoning_content": "I've merged three branches—cleanup, fix-1, and fix-2—where cleanup happens to share the same commit as main, so all three are safe to delete."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -5898,7 +5898,7 @@
             {
               "role": "assistant",
               "content": "none\n\nThe \"merged into main\" list shows only `main` itself. The `feature-experimental` branch (at commit 93db705) is not in the merged list, meaning it contains work not yet in main, so it should not be deleted.",
-              "reasoning_content": "So only the main branch has been merged into itself, while the feature-experimental branch hasn't been merged at all\u2014meaning there are no merges to report."
+              "reasoning_content": "So only the main branch has been merged into itself, while the feature-experimental branch hasn't been merged at all—meaning there are no merges to report."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -5955,7 +5955,7 @@
             {
               "role": "assistant",
               "content": "release-1.0\n\n**Reasoning:** The `git branch --merged` output shows only `release-1.0` is fully merged into main (it points to the same commit, 9853a88). `release-2.0` contains commit de6c6e1 which is not in main, so it should not be deleted.",
-              "reasoning_content": "So release-1.0 is already merged and points to the same commit, while release-2.0 hasn't been merged yet\u2014that makes release-1.0 the answer."
+              "reasoning_content": "So release-1.0 is already merged and points to the same commit, while release-2.0 hasn't been merged yet—that makes release-1.0 the answer."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -6175,7 +6175,7 @@
           "fixture_id": "f002",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "'Work A' is in **`stash@{2}`**.\n\nGit stashes work like a stack (LIFO \u2014 last in, first out), so the most recently created stash gets index `{0}`, and older stashes get higher numbers:\n\n- `stash@{0}` \u2192 Work C (stashed last)\n- `stash@{1}` \u2192 Work B\n- `stash@{2}` \u2192 Work A (stashed first)\n\nThe stash details confirm this: `stash@{2}` shows the diff changing \"Initial content\" to \"Work A\".\n\nTo retrieve it:\n```bash\ngit stash apply stash@{2}   # apply and keep the stash\n# or\ngit stash pop stash@{2}     # apply and remove the stash\n```",
+          "model_output": "'Work A' is in **`stash@{2}`**.\n\nGit stashes work like a stack (LIFO — last in, first out), so the most recently created stash gets index `{0}`, and older stashes get higher numbers:\n\n- `stash@{0}` → Work C (stashed last)\n- `stash@{1}` → Work B\n- `stash@{2}` → Work A (stashed first)\n\nThe stash details confirm this: `stash@{2}` shows the diff changing \"Initial content\" to \"Work A\".\n\nTo retrieve it:\n```bash\ngit stash apply stash@{2}   # apply and keep the stash\n# or\ngit stash pop stash@{2}     # apply and remove the stash\n```",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 398,
@@ -6191,7 +6191,7 @@
             },
             {
               "role": "assistant",
-              "content": "'Work A' is in **`stash@{2}`**.\n\nGit stashes work like a stack (LIFO \u2014 last in, first out), so the most recently created stash gets index `{0}`, and older stashes get higher numbers:\n\n- `stash@{0}` \u2192 Work C (stashed last)\n- `stash@{1}` \u2192 Work B\n- `stash@{2}` \u2192 Work A (stashed first)\n\nThe stash details confirm this: `stash@{2}` shows the diff changing \"Initial content\" to \"Work A\".\n\nTo retrieve it:\n```bash\ngit stash apply stash@{2}   # apply and keep the stash\n# or\ngit stash pop stash@{2}     # apply and remove the stash\n```"
+              "content": "'Work A' is in **`stash@{2}`**.\n\nGit stashes work like a stack (LIFO — last in, first out), so the most recently created stash gets index `{0}`, and older stashes get higher numbers:\n\n- `stash@{0}` → Work C (stashed last)\n- `stash@{1}` → Work B\n- `stash@{2}` → Work A (stashed first)\n\nThe stash details confirm this: `stash@{2}` shows the diff changing \"Initial content\" to \"Work A\".\n\nTo retrieve it:\n```bash\ngit stash apply stash@{2}   # apply and keep the stash\n# or\ngit stash pop stash@{2}     # apply and remove the stash\n```"
             }
           ],
           "prompt": "You stashed 'Work A' first, then 'Work B', then 'Work C'. Which stash entry contains 'Work A'? Provide the stash reference.",
@@ -6231,7 +6231,7 @@
           "fixture_id": "f003",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash entry is **`stash@{0}`**.\n\nThis matches because the stash list shows:\n\n```\nstash@{0}: On feature-branch: feature-work\n```\n\n- **Branch:** `feature-branch` \u2713\n- **Message:** `feature-work` \u2713\n\nThe diff confirms it contains your work-in-progress change to `file.txt` (changing \"Initial content\" to \"Feature work\"). You can restore it with:\n\n```bash\ngit stash apply stash@{0}   # keeps the stash\n# or\ngit stash pop stash@{0}     # applies and removes the stash\n```",
+          "model_output": "The stash entry is **`stash@{0}`**.\n\nThis matches because the stash list shows:\n\n```\nstash@{0}: On feature-branch: feature-work\n```\n\n- **Branch:** `feature-branch` ✓\n- **Message:** `feature-work` ✓\n\nThe diff confirms it contains your work-in-progress change to `file.txt` (changing \"Initial content\" to \"Feature work\"). You can restore it with:\n\n```bash\ngit stash apply stash@{0}   # keeps the stash\n# or\ngit stash pop stash@{0}     # applies and removes the stash\n```",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 167,
@@ -6247,7 +6247,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash entry is **`stash@{0}`**.\n\nThis matches because the stash list shows:\n\n```\nstash@{0}: On feature-branch: feature-work\n```\n\n- **Branch:** `feature-branch` \u2713\n- **Message:** `feature-work` \u2713\n\nThe diff confirms it contains your work-in-progress change to `file.txt` (changing \"Initial content\" to \"Feature work\"). You can restore it with:\n\n```bash\ngit stash apply stash@{0}   # keeps the stash\n# or\ngit stash pop stash@{0}     # applies and removes the stash\n```"
+              "content": "The stash entry is **`stash@{0}`**.\n\nThis matches because the stash list shows:\n\n```\nstash@{0}: On feature-branch: feature-work\n```\n\n- **Branch:** `feature-branch` ✓\n- **Message:** `feature-work` ✓\n\nThe diff confirms it contains your work-in-progress change to `file.txt` (changing \"Initial content\" to \"Feature work\"). You can restore it with:\n\n```bash\ngit stash apply stash@{0}   # keeps the stash\n# or\ngit stash pop stash@{0}     # applies and removes the stash\n```"
             }
           ],
           "prompt": "You stashed work on 'feature-branch' with message 'feature-work'. Which stash entry contains this stashed work? Provide the stash reference.",
@@ -6287,7 +6287,7 @@
           "fixture_id": "f004",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**`stash@{0}`**\n\nThis is the stash entry containing your 'main-changes'. You can verify this from:\n\n- The stash list shows: `stash@{0}: On main: main-changes` \u2014 the message \"main-changes\" matches, and it was created on the `main` branch.\n- The diff confirms it contains your change: the line `Base` was replaced with `Main change` in `file.txt`.\n\nTo restore it after your merge, you can run:\n\n```bash\ngit stash apply stash@{0}\n# or, to apply and remove it from the stash list:\ngit stash pop stash@{0}\n```\n\nSince it's the most recent (and only) stash, a plain `git stash pop` would also work.",
+          "model_output": "**`stash@{0}`**\n\nThis is the stash entry containing your 'main-changes'. You can verify this from:\n\n- The stash list shows: `stash@{0}: On main: main-changes` — the message \"main-changes\" matches, and it was created on the `main` branch.\n- The diff confirms it contains your change: the line `Base` was replaced with `Main change` in `file.txt`.\n\nTo restore it after your merge, you can run:\n\n```bash\ngit stash apply stash@{0}\n# or, to apply and remove it from the stash list:\ngit stash pop stash@{0}\n```\n\nSince it's the most recent (and only) stash, a plain `git stash pop` would also work.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 160,
@@ -6303,7 +6303,7 @@
             },
             {
               "role": "assistant",
-              "content": "**`stash@{0}`**\n\nThis is the stash entry containing your 'main-changes'. You can verify this from:\n\n- The stash list shows: `stash@{0}: On main: main-changes` \u2014 the message \"main-changes\" matches, and it was created on the `main` branch.\n- The diff confirms it contains your change: the line `Base` was replaced with `Main change` in `file.txt`.\n\nTo restore it after your merge, you can run:\n\n```bash\ngit stash apply stash@{0}\n# or, to apply and remove it from the stash list:\ngit stash pop stash@{0}\n```\n\nSince it's the most recent (and only) stash, a plain `git stash pop` would also work.",
+              "content": "**`stash@{0}`**\n\nThis is the stash entry containing your 'main-changes'. You can verify this from:\n\n- The stash list shows: `stash@{0}: On main: main-changes` — the message \"main-changes\" matches, and it was created on the `main` branch.\n- The diff confirms it contains your change: the line `Base` was replaced with `Main change` in `file.txt`.\n\nTo restore it after your merge, you can run:\n\n```bash\ngit stash apply stash@{0}\n# or, to apply and remove it from the stash list:\ngit stash pop stash@{0}\n```\n\nSince it's the most recent (and only) stash, a plain `git stash pop` would also work.",
               "reasoning_content": "The git stash reference I need is the most recent one."
             }
           ],
@@ -6344,7 +6344,7 @@
           "fixture_id": "f005",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**`stash@{0}`**\n\nThe diff for `stash@{0}` shows the line `+Stashed content` being added to `file.txt`, confirming this is the entry containing your stashed work.\n\nA few useful notes:\n\n- When `git stash pop` fails due to conflicts, **the stash entry is not dropped** \u2014 it stays in the list, which is why you still see `stash@{0}`.\n- To retry after resolving the conflict, you can:\n  ```bash\n  # Resolve the conflicts in file.txt, then:\n  git stash drop stash@{0}\n  ```\n  or apply it without popping:\n  ```bash\n  git stash apply stash@{0}\n  ```\n- You can inspect any stash's contents with `git stash show -p stash@{0}` (which is what produced the diff above).",
+          "model_output": "**`stash@{0}`**\n\nThe diff for `stash@{0}` shows the line `+Stashed content` being added to `file.txt`, confirming this is the entry containing your stashed work.\n\nA few useful notes:\n\n- When `git stash pop` fails due to conflicts, **the stash entry is not dropped** — it stays in the list, which is why you still see `stash@{0}`.\n- To retry after resolving the conflict, you can:\n  ```bash\n  # Resolve the conflicts in file.txt, then:\n  git stash drop stash@{0}\n  ```\n  or apply it without popping:\n  ```bash\n  git stash apply stash@{0}\n  ```\n- You can inspect any stash's contents with `git stash show -p stash@{0}` (which is what produced the diff above).",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 183,
@@ -6360,7 +6360,7 @@
             },
             {
               "role": "assistant",
-              "content": "**`stash@{0}`**\n\nThe diff for `stash@{0}` shows the line `+Stashed content` being added to `file.txt`, confirming this is the entry containing your stashed work.\n\nA few useful notes:\n\n- When `git stash pop` fails due to conflicts, **the stash entry is not dropped** \u2014 it stays in the list, which is why you still see `stash@{0}`.\n- To retry after resolving the conflict, you can:\n  ```bash\n  # Resolve the conflicts in file.txt, then:\n  git stash drop stash@{0}\n  ```\n  or apply it without popping:\n  ```bash\n  git stash apply stash@{0}\n  ```\n- You can inspect any stash's contents with `git stash show -p stash@{0}` (which is what produced the diff above).",
+              "content": "**`stash@{0}`**\n\nThe diff for `stash@{0}` shows the line `+Stashed content` being added to `file.txt`, confirming this is the entry containing your stashed work.\n\nA few useful notes:\n\n- When `git stash pop` fails due to conflicts, **the stash entry is not dropped** — it stays in the list, which is why you still see `stash@{0}`.\n- To retry after resolving the conflict, you can:\n  ```bash\n  # Resolve the conflicts in file.txt, then:\n  git stash drop stash@{0}\n  ```\n  or apply it without popping:\n  ```bash\n  git stash apply stash@{0}\n  ```\n- You can inspect any stash's contents with `git stash show -p stash@{0}` (which is what produced the diff above).",
               "reasoning_content": "When a pop operation fails, the stash remains intact rather than being removed."
             }
           ],
@@ -6457,7 +6457,7 @@
           "fixture_id": "f007",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash containing 'Stashed' is **stash@{1}**.\n\nThis makes sense because:\n- Git stashes work like a stack \u2014 newer stashes get lower indices\n- `stash@{0}` is the newest stash (containing 'Other work')\n- `stash@{1}` is the older stash, and its diff shows the change to `Stashed`\n\nYou can restore it with:\n```bash\ngit stash apply stash@{1}\n# or, to apply and remove it from the stash list:\ngit stash pop stash@{1}\n```",
+          "model_output": "The stash containing 'Stashed' is **stash@{1}**.\n\nThis makes sense because:\n- Git stashes work like a stack — newer stashes get lower indices\n- `stash@{0}` is the newest stash (containing 'Other work')\n- `stash@{1}` is the older stash, and its diff shows the change to `Stashed`\n\nYou can restore it with:\n```bash\ngit stash apply stash@{1}\n# or, to apply and remove it from the stash list:\ngit stash pop stash@{1}\n```",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 282,
@@ -6473,7 +6473,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash containing 'Stashed' is **stash@{1}**.\n\nThis makes sense because:\n- Git stashes work like a stack \u2014 newer stashes get lower indices\n- `stash@{0}` is the newest stash (containing 'Other work')\n- `stash@{1}` is the older stash, and its diff shows the change to `Stashed`\n\nYou can restore it with:\n```bash\ngit stash apply stash@{1}\n# or, to apply and remove it from the stash list:\ngit stash pop stash@{1}\n```"
+              "content": "The stash containing 'Stashed' is **stash@{1}**.\n\nThis makes sense because:\n- Git stashes work like a stack — newer stashes get lower indices\n- `stash@{0}` is the newest stash (containing 'Other work')\n- `stash@{1}` is the older stash, and its diff shows the change to `Stashed`\n\nYou can restore it with:\n```bash\ngit stash apply stash@{1}\n# or, to apply and remove it from the stash list:\ngit stash pop stash@{1}\n```"
             }
           ],
           "prompt": "You have two stashes: one with 'Other work' (newer) and one with 'Stashed' (older). Which stash contains 'Stashed'? Provide the stash reference.",
@@ -6513,7 +6513,7 @@
           "fixture_id": "f008",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash entry is **`stash@{0}`** \u2014 as shown in the stash list: `stash@{0}: On main: all-my-changes`.\n\nA few points worth noting:\n\n- Because you used `git stash -u` (or `--include-untracked`), both the tracked change (`file.txt`) and the untracked file (`new.txt`) are stored in this **single** stash entry \u2014 Git does not create separate stash entries for untracked files.\n- Internally, the untracked files are kept in a special third parent commit of the stash, accessible as `stash@{0}^3` if you ever need to inspect just the untracked portion.\n\nTo restore everything:\n\n```bash\ngit stash pop stash@{0}    # apply and remove the stash\n# or\ngit stash apply stash@{0}  # apply but keep the stash\n```",
+          "model_output": "The stash entry is **`stash@{0}`** — as shown in the stash list: `stash@{0}: On main: all-my-changes`.\n\nA few points worth noting:\n\n- Because you used `git stash -u` (or `--include-untracked`), both the tracked change (`file.txt`) and the untracked file (`new.txt`) are stored in this **single** stash entry — Git does not create separate stash entries for untracked files.\n- Internally, the untracked files are kept in a special third parent commit of the stash, accessible as `stash@{0}^3` if you ever need to inspect just the untracked portion.\n\nTo restore everything:\n\n```bash\ngit stash pop stash@{0}    # apply and remove the stash\n# or\ngit stash apply stash@{0}  # apply but keep the stash\n```",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 238,
@@ -6529,7 +6529,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash entry is **`stash@{0}`** \u2014 as shown in the stash list: `stash@{0}: On main: all-my-changes`.\n\nA few points worth noting:\n\n- Because you used `git stash -u` (or `--include-untracked`), both the tracked change (`file.txt`) and the untracked file (`new.txt`) are stored in this **single** stash entry \u2014 Git does not create separate stash entries for untracked files.\n- Internally, the untracked files are kept in a special third parent commit of the stash, accessible as `stash@{0}^3` if you ever need to inspect just the untracked portion.\n\nTo restore everything:\n\n```bash\ngit stash pop stash@{0}    # apply and remove the stash\n# or\ngit stash apply stash@{0}  # apply but keep the stash\n```",
+              "content": "The stash entry is **`stash@{0}`** — as shown in the stash list: `stash@{0}: On main: all-my-changes`.\n\nA few points worth noting:\n\n- Because you used `git stash -u` (or `--include-untracked`), both the tracked change (`file.txt`) and the untracked file (`new.txt`) are stored in this **single** stash entry — Git does not create separate stash entries for untracked files.\n- Internally, the untracked files are kept in a special third parent commit of the stash, accessible as `stash@{0}^3` if you ever need to inspect just the untracked portion.\n\nTo restore everything:\n\n```bash\ngit stash pop stash@{0}    # apply and remove the stash\n# or\ngit stash apply stash@{0}  # apply but keep the stash\n```",
               "reasoning_content": "The answer is that untracked files are stored in the third parent of the stash entry, accessible via stash@{0}^3."
             }
           ],
@@ -6570,7 +6570,7 @@
           "fixture_id": "f009",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash entry containing 'keep-this' is:\n\n**`stash@{1}`**\n\nThe most recent stash gets `stash@{0}`, so since you stashed 'keep-this' first and 'another' second, 'keep-this' was pushed down to `stash@{1}`.\n\nTo apply it **without removing it** from the stash list, use `apply` (not `pop`):\n\n```bash\ngit stash apply stash@{1}\n```\n\n- `git stash apply` \u2014 applies the changes but keeps the entry in the stash list \u2705\n- `git stash pop` \u2014 applies the changes but **deletes** the entry (not what you want here)\n\nYou can verify it stays in the list afterward with `git stash list`.",
+          "model_output": "The stash entry containing 'keep-this' is:\n\n**`stash@{1}`**\n\nThe most recent stash gets `stash@{0}`, so since you stashed 'keep-this' first and 'another' second, 'keep-this' was pushed down to `stash@{1}`.\n\nTo apply it **without removing it** from the stash list, use `apply` (not `pop`):\n\n```bash\ngit stash apply stash@{1}\n```\n\n- `git stash apply` — applies the changes but keeps the entry in the stash list ✅\n- `git stash pop` — applies the changes but **deletes** the entry (not what you want here)\n\nYou can verify it stays in the list afterward with `git stash list`.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 286,
@@ -6586,7 +6586,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash entry containing 'keep-this' is:\n\n**`stash@{1}`**\n\nThe most recent stash gets `stash@{0}`, so since you stashed 'keep-this' first and 'another' second, 'keep-this' was pushed down to `stash@{1}`.\n\nTo apply it **without removing it** from the stash list, use `apply` (not `pop`):\n\n```bash\ngit stash apply stash@{1}\n```\n\n- `git stash apply` \u2014 applies the changes but keeps the entry in the stash list \u2705\n- `git stash pop` \u2014 applies the changes but **deletes** the entry (not what you want here)\n\nYou can verify it stays in the list afterward with `git stash list`."
+              "content": "The stash entry containing 'keep-this' is:\n\n**`stash@{1}`**\n\nThe most recent stash gets `stash@{0}`, so since you stashed 'keep-this' first and 'another' second, 'keep-this' was pushed down to `stash@{1}`.\n\nTo apply it **without removing it** from the stash list, use `apply` (not `pop`):\n\n```bash\ngit stash apply stash@{1}\n```\n\n- `git stash apply` — applies the changes but keeps the entry in the stash list ✅\n- `git stash pop` — applies the changes but **deletes** the entry (not what you want here)\n\nYou can verify it stays in the list afterward with `git stash list`."
             }
           ],
           "prompt": "You stashed 'Work to keep' with message 'keep-this', then stashed another work. You want to apply 'keep-this' but not remove it from the stash list. Which stash entry contains 'keep-this'? Provide the stash reference.",
@@ -6626,7 +6626,7 @@
           "fixture_id": "f010",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash entry containing your subdirectory work is:\n\n**`stash@{0}`**\n\nThis is confirmed by:\n1. **The stash message** \u2014 `stash@{0}: On main: subdir-work` matches your message 'subdir-work'\n2. **The diff contents** \u2014 it shows a new file `subdir/file.txt` being added with the content \"Subdir work\"\n\nTo restore this work, you can run:\n\n```bash\ngit stash apply stash@{0}   # applies but keeps the stash\n# or\ngit stash pop stash@{0}     # applies and removes the stash\n```\n\nSince it's the most recent (and only) stash, you could also simply use `git stash pop` without specifying the reference.",
+          "model_output": "The stash entry containing your subdirectory work is:\n\n**`stash@{0}`**\n\nThis is confirmed by:\n1. **The stash message** — `stash@{0}: On main: subdir-work` matches your message 'subdir-work'\n2. **The diff contents** — it shows a new file `subdir/file.txt` being added with the content \"Subdir work\"\n\nTo restore this work, you can run:\n\n```bash\ngit stash apply stash@{0}   # applies but keeps the stash\n# or\ngit stash pop stash@{0}     # applies and removes the stash\n```\n\nSince it's the most recent (and only) stash, you could also simply use `git stash pop` without specifying the reference.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 175,
@@ -6642,7 +6642,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash entry containing your subdirectory work is:\n\n**`stash@{0}`**\n\nThis is confirmed by:\n1. **The stash message** \u2014 `stash@{0}: On main: subdir-work` matches your message 'subdir-work'\n2. **The diff contents** \u2014 it shows a new file `subdir/file.txt` being added with the content \"Subdir work\"\n\nTo restore this work, you can run:\n\n```bash\ngit stash apply stash@{0}   # applies but keeps the stash\n# or\ngit stash pop stash@{0}     # applies and removes the stash\n```\n\nSince it's the most recent (and only) stash, you could also simply use `git stash pop` without specifying the reference."
+              "content": "The stash entry containing your subdirectory work is:\n\n**`stash@{0}`**\n\nThis is confirmed by:\n1. **The stash message** — `stash@{0}: On main: subdir-work` matches your message 'subdir-work'\n2. **The diff contents** — it shows a new file `subdir/file.txt` being added with the content \"Subdir work\"\n\nTo restore this work, you can run:\n\n```bash\ngit stash apply stash@{0}   # applies but keeps the stash\n# or\ngit stash pop stash@{0}     # applies and removes the stash\n```\n\nSince it's the most recent (and only) stash, you could also simply use `git stash pop` without specifying the reference."
             }
           ],
           "prompt": "You stashed work in a subdirectory with message 'subdir-work'. Which stash entry contains this work? Provide the stash reference.",
@@ -6682,7 +6682,7 @@
           "fixture_id": "f011",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**stash@{0}**\n\nThe stash list shows only one entry, and its diff confirms it contains your work \u2014 it changes `file.txt` from `Base` to `Stashed`, matching the change you stashed.\n\nNote that rebasing doesn't affect stash entries. Stashes are stored independently of branch history, so even though the description says \"WIP on main: 0eab1f8 Base\" (referencing the pre-rebase commit), the stashed changes are intact and can be restored with:\n\n```bash\ngit stash pop stash@{0}\n# or\ngit stash apply stash@{0}\n```\n\nIf the rebase changed the content around your stashed changes, you may need to resolve conflicts when applying.",
+          "model_output": "**stash@{0}**\n\nThe stash list shows only one entry, and its diff confirms it contains your work — it changes `file.txt` from `Base` to `Stashed`, matching the change you stashed.\n\nNote that rebasing doesn't affect stash entries. Stashes are stored independently of branch history, so even though the description says \"WIP on main: 0eab1f8 Base\" (referencing the pre-rebase commit), the stashed changes are intact and can be restored with:\n\n```bash\ngit stash pop stash@{0}\n# or\ngit stash apply stash@{0}\n```\n\nIf the rebase changed the content around your stashed changes, you may need to resolve conflicts when applying.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 162,
@@ -6698,7 +6698,7 @@
             },
             {
               "role": "assistant",
-              "content": "**stash@{0}**\n\nThe stash list shows only one entry, and its diff confirms it contains your work \u2014 it changes `file.txt` from `Base` to `Stashed`, matching the change you stashed.\n\nNote that rebasing doesn't affect stash entries. Stashes are stored independently of branch history, so even though the description says \"WIP on main: 0eab1f8 Base\" (referencing the pre-rebase commit), the stashed changes are intact and can be restored with:\n\n```bash\ngit stash pop stash@{0}\n# or\ngit stash apply stash@{0}\n```\n\nIf the rebase changed the content around your stashed changes, you may need to resolve conflicts when applying.",
+              "content": "**stash@{0}**\n\nThe stash list shows only one entry, and its diff confirms it contains your work — it changes `file.txt` from `Base` to `Stashed`, matching the change you stashed.\n\nNote that rebasing doesn't affect stash entries. Stashes are stored independently of branch history, so even though the description says \"WIP on main: 0eab1f8 Base\" (referencing the pre-rebase commit), the stashed changes are intact and can be restored with:\n\n```bash\ngit stash pop stash@{0}\n# or\ngit stash apply stash@{0}\n```\n\nIf the rebase changed the content around your stashed changes, you may need to resolve conflicts when applying.",
               "reasoning_content": "There's only one stash entry available, so I'll reference stash@{0}."
             }
           ],
@@ -6739,7 +6739,7 @@
           "fixture_id": "f012",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash entry containing your work is:\n\n**`stash@{0}`**\n\nThis is confirmed by:\n1. **The stash list entry**: `stash@{0}: On my-feature-branch: feature-on-my-feature-branch` \u2014 it matches both the branch (`my-feature-branch`) and your custom message (`feature-on-my-feature-branch`).\n2. **The diff contents**: The stash shows the change from `Initial` to `Feature work`, which is exactly the work you stashed.\n\nTo restore it, you can run:\n```bash\ngit stash apply stash@{0}   # apply and keep the stash\n# or\ngit stash pop stash@{0}     # apply and remove the stash\n```",
+          "model_output": "The stash entry containing your work is:\n\n**`stash@{0}`**\n\nThis is confirmed by:\n1. **The stash list entry**: `stash@{0}: On my-feature-branch: feature-on-my-feature-branch` — it matches both the branch (`my-feature-branch`) and your custom message (`feature-on-my-feature-branch`).\n2. **The diff contents**: The stash shows the change from `Initial` to `Feature work`, which is exactly the work you stashed.\n\nTo restore it, you can run:\n```bash\ngit stash apply stash@{0}   # apply and keep the stash\n# or\ngit stash pop stash@{0}     # apply and remove the stash\n```",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 192,
@@ -6755,7 +6755,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash entry containing your work is:\n\n**`stash@{0}`**\n\nThis is confirmed by:\n1. **The stash list entry**: `stash@{0}: On my-feature-branch: feature-on-my-feature-branch` \u2014 it matches both the branch (`my-feature-branch`) and your custom message (`feature-on-my-feature-branch`).\n2. **The diff contents**: The stash shows the change from `Initial` to `Feature work`, which is exactly the work you stashed.\n\nTo restore it, you can run:\n```bash\ngit stash apply stash@{0}   # apply and keep the stash\n# or\ngit stash pop stash@{0}     # apply and remove the stash\n```"
+              "content": "The stash entry containing your work is:\n\n**`stash@{0}`**\n\nThis is confirmed by:\n1. **The stash list entry**: `stash@{0}: On my-feature-branch: feature-on-my-feature-branch` — it matches both the branch (`my-feature-branch`) and your custom message (`feature-on-my-feature-branch`).\n2. **The diff contents**: The stash shows the change from `Initial` to `Feature work`, which is exactly the work you stashed.\n\nTo restore it, you can run:\n```bash\ngit stash apply stash@{0}   # apply and keep the stash\n# or\ngit stash pop stash@{0}     # apply and remove the stash\n```"
             }
           ],
           "prompt": "You were on 'my-feature-branch' and stashed 'Feature work' with message 'feature-on-my-feature-branch'. Which stash entry contains this work? Provide the stash reference.",
@@ -7641,7 +7641,7 @@
           "fixture_id": "f002",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**efafc80** \u2014 \"reset config to zero\"\n\nThe tests pass through `58b8cca` and first fail at `efafc80`, meaning that commit introduced the bug (likely resetting a config value to zero broke something that depended on the previously set value).",
+          "model_output": "**efafc80** — \"reset config to zero\"\n\nThe tests pass through `58b8cca` and first fail at `efafc80`, meaning that commit introduced the bug (likely resetting a config value to zero broke something that depended on the previously set value).",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 271,
@@ -7657,7 +7657,7 @@
             },
             {
               "role": "assistant",
-              "content": "**efafc80** \u2014 \"reset config to zero\"\n\nThe tests pass through `58b8cca` and first fail at `efafc80`, meaning that commit introduced the bug (likely resetting a config value to zero broke something that depended on the previously set value).",
+              "content": "**efafc80** — \"reset config to zero\"\n\nThe tests pass through `58b8cca` and first fail at `efafc80`, meaning that commit introduced the bug (likely resetting a config value to zero broke something that depended on the previously set value).",
               "reasoning_content": "I found a problematic commit that reset the configuration to zero."
             }
           ],
@@ -7700,7 +7700,7 @@
           "fixture_id": "f003",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **c9c269a** \u2014 \"disable feature\".\n\nReasoning: Tests pass through `139ad44` (enable feature) but first fail at `c9c269a` (disable feature), and every commit after it continues to fail. The first failing commit in the history is the one that introduced the bug.",
+          "model_output": "The bad commit is **c9c269a** — \"disable feature\".\n\nReasoning: Tests pass through `139ad44` (enable feature) but first fail at `c9c269a` (disable feature), and every commit after it continues to fail. The first failing commit in the history is the one that introduced the bug.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 273,
@@ -7716,7 +7716,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **c9c269a** \u2014 \"disable feature\".\n\nReasoning: Tests pass through `139ad44` (enable feature) but first fail at `c9c269a` (disable feature), and every commit after it continues to fail. The first failing commit in the history is the one that introduced the bug.",
+              "content": "The bad commit is **c9c269a** — \"disable feature\".\n\nReasoning: Tests pass through `139ad44` (enable feature) but first fail at `c9c269a` (disable feature), and every commit after it continues to fail. The first failing commit in the history is the one that introduced the bug.",
               "reasoning_content": "The commit c9c269a with the \"disable feature\" change is where the failure started."
             }
           ],
@@ -7757,7 +7757,7 @@
           "fixture_id": "f004",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **851c786** \u2014 \"remove setup todo\".\n\nThe tests pass at the initial commit (e4a6f27) but fail starting at 851c786 and every commit after it, indicating that 851c786 is the first bad commit that introduced the breakage.",
+          "model_output": "The bad commit is **851c786** — \"remove setup todo\".\n\nThe tests pass at the initial commit (e4a6f27) but fail starting at 851c786 and every commit after it, indicating that 851c786 is the first bad commit that introduced the breakage.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 276,
@@ -7773,7 +7773,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **851c786** \u2014 \"remove setup todo\".\n\nThe tests pass at the initial commit (e4a6f27) but fail starting at 851c786 and every commit after it, indicating that 851c786 is the first bad commit that introduced the breakage.",
+              "content": "The bad commit is **851c786** — \"remove setup todo\".\n\nThe tests pass at the initial commit (e4a6f27) but fail starting at 851c786 and every commit after it, indicating that 851c786 is the first bad commit that introduced the breakage.",
               "reasoning_content": "I've identified commit 851c786 as the one that introduced the failure."
             }
           ],
@@ -7814,7 +7814,7 @@
           "fixture_id": "f005",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**ad5fb2e** \u2014 \"setup pytest\"\n\nThis is the first commit where tests transitioned from PASS (4b212c4) to FAIL, and all subsequent commits remained failing, indicating ad5fb2e introduced the bug.",
+          "model_output": "**ad5fb2e** — \"setup pytest\"\n\nThis is the first commit where tests transitioned from PASS (4b212c4) to FAIL, and all subsequent commits remained failing, indicating ad5fb2e introduced the bug.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 274,
@@ -7830,7 +7830,7 @@
             },
             {
               "role": "assistant",
-              "content": "**ad5fb2e** \u2014 \"setup pytest\"\n\nThis is the first commit where tests transitioned from PASS (4b212c4) to FAIL, and all subsequent commits remained failing, indicating ad5fb2e introduced the bug.",
+              "content": "**ad5fb2e** — \"setup pytest\"\n\nThis is the first commit where tests transitioned from PASS (4b212c4) to FAIL, and all subsequent commits remained failing, indicating ad5fb2e introduced the bug.",
               "reasoning_content": "The first failing commit is ad5fb2e."
             }
           ],
@@ -7927,7 +7927,7 @@
           "fixture_id": "f007",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **6603f51** \u2014 \"switch to dev\"\n\nReasoning: Tests pass through `a92d5fa` (setup production env), then first fail at `6603f51` (switch to dev), and continue failing afterward. The first failing commit is the one that introduced the bug.",
+          "model_output": "The bad commit is **6603f51** — \"switch to dev\"\n\nReasoning: Tests pass through `a92d5fa` (setup production env), then first fail at `6603f51` (switch to dev), and continue failing afterward. The first failing commit is the one that introduced the bug.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 279,
@@ -7943,7 +7943,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **6603f51** \u2014 \"switch to dev\"\n\nReasoning: Tests pass through `a92d5fa` (setup production env), then first fail at `6603f51` (switch to dev), and continue failing afterward. The first failing commit is the one that introduced the bug."
+              "content": "The bad commit is **6603f51** — \"switch to dev\"\n\nReasoning: Tests pass through `a92d5fa` (setup production env), then first fail at `6603f51` (switch to dev), and continue failing afterward. The first failing commit is the one that introduced the bug."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -7983,7 +7983,7 @@
           "fixture_id": "f008",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**3952ba1** \u2014 \"remove validation logic\"\n\nThe tests pass through `1b0d59c` and first fail at `3952ba1`, so that commit introduced the break (likely removing validation logic that other code still depended on).",
+          "model_output": "**3952ba1** — \"remove validation logic\"\n\nThe tests pass through `1b0d59c` and first fail at `3952ba1`, so that commit introduced the break (likely removing validation logic that other code still depended on).",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 283,
@@ -7999,7 +7999,7 @@
             },
             {
               "role": "assistant",
-              "content": "**3952ba1** \u2014 \"remove validation logic\"\n\nThe tests pass through `1b0d59c` and first fail at `3952ba1`, so that commit introduced the break (likely removing validation logic that other code still depended on).",
+              "content": "**3952ba1** — \"remove validation logic\"\n\nThe tests pass through `1b0d59c` and first fail at `3952ba1`, so that commit introduced the break (likely removing validation logic that other code still depended on).",
               "reasoning_content": "I'm looking at a hash identifier here, which appears to be a commit or reference ID."
             }
           ],
@@ -8040,7 +8040,7 @@
           "fixture_id": "f009",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **bfe8bfe** \u2014 \"replace helper import\"\n\nReasoning: Tests pass at `772741e` and `7462bde`, then first fail at `bfe8bfe`, and remain failing afterward. So `bfe8bfe` (\"replace helper import\") is the commit that introduced the bug.",
+          "model_output": "The bad commit is **bfe8bfe** — \"replace helper import\"\n\nReasoning: Tests pass at `772741e` and `7462bde`, then first fail at `bfe8bfe`, and remain failing afterward. So `bfe8bfe` (\"replace helper import\") is the commit that introduced the bug.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 265,
@@ -8056,7 +8056,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **bfe8bfe** \u2014 \"replace helper import\"\n\nReasoning: Tests pass at `772741e` and `7462bde`, then first fail at `bfe8bfe`, and remain failing afterward. So `bfe8bfe` (\"replace helper import\") is the commit that introduced the bug.",
+              "content": "The bad commit is **bfe8bfe** — \"replace helper import\"\n\nReasoning: Tests pass at `772741e` and `7462bde`, then first fail at `bfe8bfe`, and remain failing afterward. So `bfe8bfe` (\"replace helper import\") is the commit that introduced the bug.",
               "reasoning_content": "I've identified bfe8bfe as the commit that introduced the failure."
             }
           ],
@@ -8097,7 +8097,7 @@
           "fixture_id": "f010",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **acccb1b** \u2014 \"enable debug mode\".\n\nReasoning: Tests pass through `3cef1e6` (set debug off), but the very next commit `acccb1b` (enable debug mode) is the first to fail, and all subsequent commits (`0b1268e`) continue failing. This makes `acccb1b` the commit that introduced the bug.",
+          "model_output": "The bad commit is **acccb1b** — \"enable debug mode\".\n\nReasoning: Tests pass through `3cef1e6` (set debug off), but the very next commit `acccb1b` (enable debug mode) is the first to fail, and all subsequent commits (`0b1268e`) continue failing. This makes `acccb1b` the commit that introduced the bug.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 275,
@@ -8113,7 +8113,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **acccb1b** \u2014 \"enable debug mode\".\n\nReasoning: Tests pass through `3cef1e6` (set debug off), but the very next commit `acccb1b` (enable debug mode) is the first to fail, and all subsequent commits (`0b1268e`) continue failing. This makes `acccb1b` the commit that introduced the bug."
+              "content": "The bad commit is **acccb1b** — \"enable debug mode\".\n\nReasoning: Tests pass through `3cef1e6` (set debug off), but the very next commit `acccb1b` (enable debug mode) is the first to fail, and all subsequent commits (`0b1268e`) continue failing. This makes `acccb1b` the commit that introduced the bug."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -8153,7 +8153,7 @@
           "fixture_id": "f011",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **c7a5a7f** (\"change to red\").\n\nTests pass through `91933b7 add blue styling` but first fail at `c7a5a7f change to red`, and continue failing afterward \u2014 so c7a5a7f introduced the bug.",
+          "model_output": "The bad commit is **c7a5a7f** (\"change to red\").\n\nTests pass through `91933b7 add blue styling` but first fail at `c7a5a7f change to red`, and continue failing afterward — so c7a5a7f introduced the bug.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 271,
@@ -8169,7 +8169,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **c7a5a7f** (\"change to red\").\n\nTests pass through `91933b7 add blue styling` but first fail at `c7a5a7f change to red`, and continue failing afterward \u2014 so c7a5a7f introduced the bug.",
+              "content": "The bad commit is **c7a5a7f** (\"change to red\").\n\nTests pass through `91933b7 add blue styling` but first fail at `c7a5a7f change to red`, and continue failing afterward — so c7a5a7f introduced the bug.",
               "reasoning_content": "Looking at a commit hash reference."
             }
           ],
@@ -8210,7 +8210,7 @@
           "fixture_id": "f012",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "First failing commit: **bfb9d9e** \u2014 \"switch to prod\"\n\nThe tests pass through `3b16eb5 configure localhost` and start failing at `bfb9d9e switch to prod`, with all subsequent commits also failing. That makes `bfb9d9e` the bad commit.",
+          "model_output": "First failing commit: **bfb9d9e** — \"switch to prod\"\n\nThe tests pass through `3b16eb5 configure localhost` and start failing at `bfb9d9e switch to prod`, with all subsequent commits also failing. That makes `bfb9d9e` the bad commit.",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 311,
@@ -8226,7 +8226,7 @@
             },
             {
               "role": "assistant",
-              "content": "First failing commit: **bfb9d9e** \u2014 \"switch to prod\"\n\nThe tests pass through `3b16eb5 configure localhost` and start failing at `bfb9d9e switch to prod`, with all subsequent commits also failing. That makes `bfb9d9e` the bad commit."
+              "content": "First failing commit: **bfb9d9e** — \"switch to prod\"\n\nThe tests pass through `3b16eb5 configure localhost` and start failing at `bfb9d9e switch to prod`, with all subsequent commits also failing. That makes `bfb9d9e` the bad commit."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -9041,7 +9041,7 @@
           "fixture_id": "f007",
           "passed": true,
           "similarity": 0.9133,
-          "model_output": "```\nAdd Component1 and Component2 placeholders\n```\n\nThis commit message (42 characters) captures:\n- **Action**: \"Add\" \u2014 both files are new\n- **What**: The two component files created\n- **Context**: \"placeholders\" \u2014 since the files only contain stub text, not actual component code",
+          "model_output": "```\nAdd Component1 and Component2 placeholders\n```\n\nThis commit message (42 characters) captures:\n- **Action**: \"Add\" — both files are new\n- **What**: The two component files created\n- **Context**: \"placeholders\" — since the files only contain stub text, not actual component code",
           "error": null,
           "reasoning_level": "medium",
           "input_tokens": 256,
@@ -9057,7 +9057,7 @@
             },
             {
               "role": "assistant",
-              "content": "```\nAdd Component1 and Component2 placeholders\n```\n\nThis commit message (42 characters) captures:\n- **Action**: \"Add\" \u2014 both files are new\n- **What**: The two component files created\n- **Context**: \"placeholders\" \u2014 since the files only contain stub text, not actual component code"
+              "content": "```\nAdd Component1 and Component2 placeholders\n```\n\nThis commit message (42 characters) captures:\n- **Action**: \"Add\" — both files are new\n- **What**: The two component files created\n- **Context**: \"placeholders\" — since the files only contain stub text, not actual component code"
             }
           ],
           "purpose": "Tests ability to generate a commit message for changes in a subdirectory (src/). Evaluates path-aware commit descriptions.",
@@ -9965,7 +9965,7 @@
             {
               "role": "assistant",
               "content": "```\ngit submodule deinit -f lib\ngit rm -f lib\nrm -rf .git/modules/lib\ngit commit -m \"Remove submodule lib\"\n```",
-              "reasoning_content": "To remove a submodule in modern git, I need to force-deinit it, remove the directory with git rm, clean up the modules folder, and commit the changes\u2014git rm will automatically update the .gitmodules file."
+              "reasoning_content": "To remove a submodule in modern git, I need to force-deinit it, remove the directory with git rm, clean up the modules folder, and commit the changes—git rm will automatically update the .gitmodules file."
             }
           ],
           "purpose": "Tests ability to properly remove a submodule (deinit + rm). Evaluates complete submodule-removal procedure knowledge.",
@@ -10158,7 +10158,7 @@
             {
               "role": "assistant",
               "content": "git submodule status",
-              "reasoning_content": "I'm considering how to list all configured submodules\u2014`git submodule status` is the most straightforward approach, though `git config --file .gitmodules --list` would also work."
+              "reasoning_content": "I'm considering how to list all configured submodules—`git submodule status` is the most straightforward approach, though `git config --file .gitmodules --list` would also work."
             }
           ],
           "purpose": "Tests ability to list all submodules in a repository. Evaluates submodule-listing command knowledge.",
@@ -12033,7 +12033,7 @@
           "transcript": [
             {
               "role": "user",
-              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit da0c7bb91878fd46567a79918da55dbef96ecfd1\nAuthor: Test User <test@test.com>\nDate:   Fri Jul 3 18:49:27 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n \u0089PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
+              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit da0c7bb91878fd46567a79918da55dbef96ecfd1\nAuthor: Test User <test@test.com>\nDate:   Fri Jul 3 18:49:27 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
             },
             {
               "role": "assistant",
@@ -12870,7 +12870,7 @@
             {
               "role": "assistant",
               "content": "Hello, Planet!!!",
-              "reasoning_content": "I'm working through a three-way merge scenario where the base text gets modified in two different ways\u2014one addition adds exclamation marks while another changes a word\u2014and I need to combine both changes into the final result."
+              "reasoning_content": "I'm working through a three-way merge scenario where the base text gets modified in two different ways—one addition adds exclamation marks while another changes a word—and I need to combine both changes into the final result."
             }
           ],
           "purpose": "Tests ability to resolve a simple single-line cherry-pick conflict in a greeting file. Evaluates basic conflict marker understanding and merge strategy.",
@@ -13065,7 +13065,7 @@
             {
               "role": "assistant",
               "content": "```\nName: John Doe\nEmail: john@company.com\nPhone: 555-9876\n```\n\n**Reasoning:** The incoming commit's intent was to change the email to the work address (john@company.com), while the current branch's phone update (555-9876) is the only change to the phone number. Merging both intents preserves the most complete set of updates.",
-              "reasoning_content": "When merging the incoming email update with the HEAD version, I'm taking the most recent changes from each source\u2014the updated work email from incoming and the phone number from HEAD\u2014since they represent the latest modifications to different fields."
+              "reasoning_content": "When merging the incoming email update with the HEAD version, I'm taking the most recent changes from each source—the updated work email from incoming and the phone number from HEAD—since they represent the latest modifications to different fields."
             }
           ],
           "purpose": "Tests ability to resolve a multi-line hunk conflict with address/contact information. Evaluates combining partial changes from both sides.",
@@ -13638,9 +13638,9 @@
     "policy_version": "inappropriate-nsfw-v2",
     "reviewer": {
       "profile": "openrouter-result-safety",
-      "model": "openai/gpt-5.4-mini:none"
+      "model": "minimax/minimax-m3:low"
     },
-    "reviewed_at": "2026-07-04T06:41:35.725360+00:00",
+    "reviewed_at": "2026-07-06T00:19:29.687362+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }
