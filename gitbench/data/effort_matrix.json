@@ -301,6 +301,32 @@
         "high": "high",
         "xhigh": "xhigh"
       }
+    },
+    "gemini-3.1-flash-lite-preview": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "gemma-4-26b-a4b-it": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "gemma-4-31b-it": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
     }
   }
 }
