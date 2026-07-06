@@ -66,7 +66,7 @@ function passRange(group: ModelGroup): { label: string; colorValue: number } {
 function initialSelectionForGroups(
   data: GitBenchData,
   groups: ModelGroup[],
-  initialSelected: string[] | undefined
+  initialSelected: string[] | undefined,
 ): string[] {
   if (initialSelected && initialSelected.length > 0) {
     const selected = sanitizeGroupSelection(initialSelected, groups);
@@ -101,7 +101,9 @@ export default function ModelSelector({
       groupsRef.current = groups;
       if (isControlled) return;
 
-      setSelected(initialSelectionForGroups(providedData, groups, initialSelected));
+      setSelected(
+        initialSelectionForGroups(providedData, groups, initialSelected),
+      );
       return;
     }
 
@@ -197,26 +199,26 @@ export default function ModelSelector({
           </span>
         );
       }}
-      renderItemEnd={(option) => {
-        const group = groupById.get(option.value);
-        if (!group) return null;
-        const range = passRange(group);
-        return (
-          <span className="ml-2 inline-flex shrink-0 items-center gap-1.5">
-            <Badge
-              className={`rounded-full border px-1.5 py-px font-mono text-[0.6rem] ${getPassColor(
-                range.colorValue
-              )}`}
-            >
-              {range.label}
-            </Badge>
-            <span className="font-mono text-[0.6rem] text-muted-foreground">
-              {group.efforts.length}{" "}
-              {group.efforts.length === 1 ? "effort" : "efforts"}
-            </span>
-          </span>
-        );
-      }}
+      // renderItemEnd={(option) => {
+      //   const group = groupById.get(option.value);
+      //   if (!group) return null;
+      //   const range = passRange(group);
+      //   return (
+      //     <span className="ml-2 inline-flex shrink-0 items-center gap-1.5">
+      //       <Badge
+      //         className={`rounded-full border px-1.5 py-px font-mono text-[0.6rem] ${getPassColor(
+      //           range.colorValue
+      //         )}`}
+      //       >
+      //         {range.label}
+      //       </Badge>
+      //       <span className="font-mono text-[0.6rem] text-muted-foreground">
+      //         {group.efforts.length}{" "}
+      //         {group.efforts.length === 1 ? "effort" : "efforts"}
+      //       </span>
+      //     </span>
+      //   );
+      // }}
     />
   );
 }
