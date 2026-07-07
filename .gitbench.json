@@ -2,13 +2,11 @@
   "models": {
     "openrouter-google-expensive": {
       "model": [
-        "google/gemini-3.1-pro-preview:none",
         "google/gemini-3.1-pro-preview:low",
         "google/gemini-3.1-pro-preview:medium",
         "google/gemini-3.1-pro-preview:high",
         "google/gemini-3.1-pro-preview:xhigh",
 
-        "google/gemini-3.5-flash:none",
         "google/gemini-3.5-flash:low",
         "google/gemini-3.5-flash:medium",
         "google/gemini-3.5-flash:high",
@@ -19,7 +17,6 @@
     },
     "openrouter-google-cheap": {
       "model": [
-        "google/gemini-3.1-flash-lite-preview:none",
         "google/gemini-3.1-flash-lite-preview:low",
         "google/gemini-3.1-flash-lite-preview:medium",
         "google/gemini-3.1-flash-lite-preview:high",
@@ -83,7 +80,6 @@
         "openai/gpt-oss-120b:high",
         "openai/gpt-oss-120b:xhigh",
 
-        "openai/gpt-oss-20b:none",
         "openai/gpt-oss-20b:low",
         "openai/gpt-oss-20b:medium",
         "openai/gpt-oss-20b:high",
@@ -121,7 +117,13 @@
         "anthropic/claude-sonnet-4.6:medium",
         "anthropic/claude-sonnet-4.6:high",
         "anthropic/claude-sonnet-4.6:xhigh",
-        "anthropic/claude-sonnet-4.6:max"
+        "anthropic/claude-sonnet-4.6:max",
+
+        "anthropic/claude-fable-5:low",
+        "anthropic/claude-fable-5:medium",
+        "anthropic/claude-fable-5:high",
+        "anthropic/claude-fable-5:xhigh",
+        "anthropic/claude-fable-5:max"
       ],
       "base_url": "https://openrouter.ai/api/v1",
       "api_key_env": "OPENROUTER_API_KEY"
@@ -140,7 +142,11 @@
     },
     "openrouter-other-expensive": {
       "model": [
-        "minimax/minimax-m3:none",
+        "arcee-ai/trinity-large-thinking:low",
+        "arcee-ai/trinity-large-thinking:medium",
+        "arcee-ai/trinity-large-thinking:high",
+        "arcee-ai/trinity-large-thinking:xhigh",
+
         "minimax/minimax-m3:low",
         "minimax/minimax-m3:medium",
         "minimax/minimax-m3:high",
@@ -152,7 +158,6 @@
         "qwen/qwen3.6-35b-a3b:high",
         "qwen/qwen3.6-35b-a3b:xhigh",
 
-        "moonshotai/kimi-k2.7-code:none",
         "moonshotai/kimi-k2.7-code:low",
         "moonshotai/kimi-k2.7-code:medium",
         "moonshotai/kimi-k2.7-code:high",
@@ -182,7 +187,6 @@
         "z-ai/glm-5.2:high",
         "z-ai/glm-5.2:xhigh",
 
-        "minimax/minimax-m2.7:none",
         "minimax/minimax-m2.7:low",
         "minimax/minimax-m2.7:medium",
         "minimax/minimax-m2.7:high",
@@ -200,13 +204,6 @@
         "qwen/qwen3.7-plus:high",
         "qwen/qwen3.7-plus:xhigh",
 
-        "arcee-ai/trinity-large-thinking:none",
-        "arcee-ai/trinity-large-thinking:low",
-        "arcee-ai/trinity-large-thinking:medium",
-        "arcee-ai/trinity-large-thinking:high",
-        "arcee-ai/trinity-large-thinking:xhigh",
-
-        "moonshotai/kimi-k2.6:none",
         "moonshotai/kimi-k2.6:low",
         "moonshotai/kimi-k2.6:medium",
         "moonshotai/kimi-k2.6:high",
@@ -308,7 +305,7 @@
       "api_key_env": "OPENROUTER_API_KEY"
     },
     "openrouter-result-safety": {
-      "model": "openai/gpt-5.4-mini:none",
+      "model": "minimax/minimax-m3:low",
       "base_url": "https://openrouter.ai/api/v1",
       "api_key_env": "OPENROUTER_API_KEY"
     }
