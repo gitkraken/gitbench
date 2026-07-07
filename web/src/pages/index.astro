@@ -5,7 +5,6 @@ import CostValueChart from "@/components/charts/CostValueChart";
 import RuntimeBarChart from "@/components/charts/RuntimeBarChart";
 import TokenUsageChart from "@/components/charts/TokenUsageChart";
 import QuadrantComparisonChart from "@/components/charts/QuadrantComparisonChart";
-import ModelSelector from "@/components/charts/ModelSelector";
 import BenchmarkHeatmap from "@/components/charts/BenchmarkHeatmap";
 import EmailCta from "@/components/EmailCta";
 import { getReportStore } from "@/lib/node-sqlite-report-store";
@@ -47,37 +46,17 @@ const passRateData = {
             between coding assistants for the right tasks. Learn more about the
             motivations for GitBench on the blog.
 
-            <a class={cn("text-accent underline")} href="/blog/overview">
+            <a class={cn("text-accent underline")} href="https://gitkraken.com/blog/introducing-gitbench" target="_blank">
               Read the Blog {"->"}
             </a>
           </p>
-
-          <!-- <p>
-            GitBench is comprised of 204 fixtures across 12 benchmark suites.
-            Every test runs in an isolated git worktree. Fixture inputs are
-            deterministic within an evaluation run.
-          </p> -->
         </div>
-        <!-- <div>
-          <strong class="text-(--color-text)">
-            Why is GitBench valuable?
-          </strong>
-          <p>
-            Picking an AI coding assistant? Fine-tuning your own model? Just
-            curious how the latest LLMs handle Git? This dashboard gives you
-            transparent, reproducible data.
-          </p>
-        </div> -->
       </div>
     </div>
     <div class="lg:w-1/2">
       <EmailCta client:load />
     </div>
   </section>
-
-  <!-- <section class="my-8">
-      <EmailCta client:load />
-    </section> -->
 
   <section>
     <div class="info-tip">
