@@ -327,6 +327,22 @@
         "high": "high",
         "xhigh": "xhigh"
       }
+    },
+    "gemini-3.1-pro-preview": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "gemini-3.5-flash": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
     }
   }
 }
