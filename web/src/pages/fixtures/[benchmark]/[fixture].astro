@@ -4,6 +4,7 @@ import PromptBlock from "@/components/fixtures/PromptBlock.astro";
 import ExpectedBlock from "@/components/fixtures/ExpectedBlock.astro";
 import ModelOutputCard from "@/components/fixtures/ModelOutputCard.astro";
 import { FixtureCampaignDetail } from "@/components/FixtureCampaignDetail";
+import FixtureMetricSwitcher from "@/components/charts/FixtureMetricSwitcher";
 import { loadDataSync } from "@/lib/data";
 import type { GitBenchData } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -166,6 +167,24 @@ const fixtureMetaDescription = `${fixtureDescription} See the prompt, expected a
 
   <PromptBlock text={fi.prompt} />
   <ExpectedBlock text={fi.expected} />
+
+  <section class="mt-8">
+    <div class="info-tip">
+      <div class="section-label">
+        <span>Fixture Metrics</span>
+      </div>
+      <p class="info-blurb">
+        Scoped model quality, cost, API time, and token usage for
+        <strong class="text-(--color-text)"> {fi.benchmark}/{fixtureId}</strong
+        >.
+      </p>
+    </div>
+    <FixtureMetricSwitcher
+      client:visible
+      benchmarkName={benchmark}
+      fixtureId={fixtureId}
+    />
+  </section>
 
   <section class="mt-8">
     <div class="section-label">

@@ -1,6 +1,10 @@
 ---
 import Layout from "@/components/Layout.astro";
 import PassRateBarChart from "@/components/charts/PassRateBarChart";
+import QuadrantComparisonChart from "@/components/charts/QuadrantComparisonChart";
+import CostValueChart from "@/components/charts/CostValueChart";
+import RuntimeBarChart from "@/components/charts/RuntimeBarChart";
+import TokenUsageChart from "@/components/charts/TokenUsageChart";
 import FixtureComparisonTable from "@/components/charts/FixtureComparisonTable";
 import { loadDataSync } from "@/lib/data";
 import type { GitBenchData } from "@/lib/types";
@@ -62,6 +66,48 @@ const benchmarkDescription = `${benchName} benchmark results across ${fixtureKey
       </p>
     </div>
     <PassRateBarChart client:load benchmarkName={benchName} />
+  </section>
+
+  <section class="mb-10">
+    <div class="info-tip">
+      <div class="section-label"><span>Benchmark Quadrant</span></div>
+      <p class="info-blurb">
+        Quality and efficiency for <strong class="text-(--color-text)"
+          >{benchName}</strong
+        > only.
+      </p>
+    </div>
+    <QuadrantComparisonChart client:visible benchmarkName={benchName} />
+  </section>
+
+  <section class="mb-10">
+    <div class="info-tip">
+      <div class="section-label"><span>Benchmark Cost</span></div>
+      <p class="info-blurb">
+        API cost summed from fixture results in this benchmark.
+      </p>
+    </div>
+    <CostValueChart client:visible benchmarkName={benchName} />
+  </section>
+
+  <section class="mb-10">
+    <div class="info-tip">
+      <div class="section-label"><span>Benchmark API Time</span></div>
+      <p class="info-blurb">
+        API latency from calls made for fixtures in this benchmark.
+      </p>
+    </div>
+    <RuntimeBarChart client:visible benchmarkName={benchName} />
+  </section>
+
+  <section class="mb-10">
+    <div class="info-tip">
+      <div class="section-label"><span>Benchmark Token Usage</span></div>
+      <p class="info-blurb">
+        Token totals from fixture results in this benchmark.
+      </p>
+    </div>
+    <TokenUsageChart client:visible benchmarkName={benchName} />
   </section>
 
   {

@@ -73,15 +73,16 @@ function formatRuntime(seconds: number): string {
   return `${formatCompactDecimal(seconds, 2)}s`;
 }
 
-const METRICS: MetricDefinition[] = [
-  {
+const DEFAULT_QUALITY_METRIC: MetricDefinition = {
     key: "passRate",
     label: "Intelligence (Pass Rate)",
     shortLabel: "Pass Rate",
     better: "higher",
     extractor: passRateMetric,
     format: (value) => `${formatCompactDecimal(value, 1)}%`,
-  },
+};
+
+const RESOURCE_METRICS: MetricDefinition[] = [
   {
     key: "cost",
     label: "Cost",
@@ -108,9 +109,39 @@ const METRICS: MetricDefinition[] = [
   },
 ];
 
-const metricByKey = Object.fromEntries(
-  METRICS.map((metric) => [metric.key, metric])
-) as Record<MetricKey, MetricDefinition>;
+function qualityMetricForScope(
+  data: GitBenchData | null,
+  benchmarkName?: string,
+  fixtureId?: string
+): MetricDefinition {
+  if (fixtureId && data?.fixture_quality_metric) {
+    const label = data.fixture_quality_metric.label;
+    return {
+      ...DEFAULT_QUALITY_METRIC,
+      label,
+      shortLabel: label === "Similarity (%)" ? "Similarity" : "Success",
+    };
+  }
+  if (benchmarkName) {
+    return {
+      ...DEFAULT_QUALITY_METRIC,
+      label: "Benchmark Pass Rate",
+      shortLabel: "Pass Rate",
+    };
+  }
+  return DEFAULT_QUALITY_METRIC;
+}
+
+function metricDefinitionsForScope(
+  data: GitBenchData | null,
+  benchmarkName?: string,
+  fixtureId?: string
+): MetricDefinition[] {
+  return [
+    qualityMetricForScope(data, benchmarkName, fixtureId),
+    ...RESOURCE_METRICS,
+  ];
+}
 
 function domainFor(values: number[]): [number, number] {
   if (values.length === 0) return [0, 1];
@@ -237,11 +268,13 @@ function MetricSelect({
   value,
   onChange,
   exclude,
+  metrics,
 }: {
   label: string;
   value: MetricKey;
   onChange: (value: MetricKey) => void;
   exclude: MetricKey;
+  metrics: MetricDefinition[];
 }) {
   return (
     <label className="flex flex-col gap-1 text-[0.65rem] font-mono uppercase tracking-[0.08em] text-(--text-dim)">
@@ -251,7 +284,7 @@ function MetricSelect({
         value={value}
         onChange={(event) => onChange(event.target.value as MetricKey)}
       >
-        {METRICS.map((metric) => (
+        {metrics.map((metric) => (
           <option
             key={metric.key}
             value={metric.key}
@@ -311,7 +344,15 @@ function PointShape({ cx, cy, payload, onFocusPair, onBlurPair }: any) {
 
 import { useCampaignId } from "@/lib/use-campaign";
 
-export default function QuadrantComparisonChart() {
+interface ScopedChartProps {
+  benchmarkName?: string;
+  fixtureId?: string;
+}
+
+export default function QuadrantComparisonChart({
+  benchmarkName,
+  fixtureId,
+}: ScopedChartProps = {}) {
   const [data, setData] = useState<GitBenchData | null>(null);
   const campaignId = useCampaignId();
   const [xMetricKey, setXMetricKey] = useState<MetricKey>("cost");
@@ -326,11 +367,30 @@ export default function QuadrantComparisonChart() {
   } = useSyncedModelSelection(data);
 
   useEffect(() => {
-    loadQuadrantChart().then(setData);
-  }, [campaignId]);
+    loadQuadrantChart({ benchmark: benchmarkName, fixture: fixtureId }).then(
+      setData
+    );
+  }, [benchmarkName, fixtureId, campaignId]);
 
-  const xMetric = metricByKey[xMetricKey];
-  const yMetric = metricByKey[yMetricKey];
+  const metrics = useMemo(
+    () => metricDefinitionsForScope(data, benchmarkName, fixtureId),
+    [
+      data?.fixture_quality_metric?.kind,
+      data?.fixture_quality_metric?.label,
+      benchmarkName,
+      fixtureId,
+    ]
+  );
+  const metricByKey = useMemo(
+    () =>
+      Object.fromEntries(metrics.map((metric) => [metric.key, metric])) as Record<
+        MetricKey,
+        MetricDefinition
+      >,
+    [metrics]
+  );
+  const xMetric = metricByKey[xMetricKey] ?? RESOURCE_METRICS[0];
+  const yMetric = metricByKey[yMetricKey] ?? metrics[0];
 
   const chartData = useMemo(() => {
     if (!data) return [];
@@ -423,6 +483,7 @@ export default function QuadrantComparisonChart() {
             if (value !== yMetricKey) setXMetricKey(value);
           }}
           exclude={yMetricKey}
+          metrics={metrics}
         />
         <MetricSelect
           label="Y axis"
@@ -431,6 +492,7 @@ export default function QuadrantComparisonChart() {
             if (value !== xMetricKey) setYMetricKey(value);
           }}
           exclude={xMetricKey}
+          metrics={metrics}
         />
         <div className="min-w-0 flex items-center gap-3">
           <div className="flex-1">

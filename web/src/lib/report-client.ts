@@ -144,20 +144,33 @@ export function loadPassRateChart(
   return loadChartData("pass-rate", { benchmark });
 }
 
-export function loadCostChart(): Promise<CampaignAwareGitBenchData> {
-  return loadChartData("cost");
+export interface ChartScopeParams {
+  benchmark?: string;
+  fixture?: string;
 }
 
-export function loadRuntimeChart(): Promise<CampaignAwareGitBenchData> {
-  return loadChartData("runtime");
+export function loadCostChart(
+  scope: ChartScopeParams = {}
+): Promise<CampaignAwareGitBenchData> {
+  return loadChartData("cost", scope);
 }
 
-export function loadTokenChart(): Promise<CampaignAwareGitBenchData> {
-  return loadChartData("tokens");
+export function loadRuntimeChart(
+  scope: ChartScopeParams = {}
+): Promise<CampaignAwareGitBenchData> {
+  return loadChartData("runtime", scope);
 }
 
-export function loadQuadrantChart(): Promise<CampaignAwareGitBenchData> {
-  return loadChartData("quadrant");
+export function loadTokenChart(
+  scope: ChartScopeParams = {}
+): Promise<CampaignAwareGitBenchData> {
+  return loadChartData("tokens", scope);
+}
+
+export function loadQuadrantChart(
+  scope: ChartScopeParams = {}
+): Promise<CampaignAwareGitBenchData> {
+  return loadChartData("quadrant", scope);
 }
 
 export function loadHeatmapChart(): Promise<CampaignAwareHeatmapChartData> {

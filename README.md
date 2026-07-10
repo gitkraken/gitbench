@@ -136,34 +136,34 @@ gitbench run [OPTIONS]
 
 Key options:
 
-| Option | Description |
-| ------ | ----------- |
-| `--all`, `-a` | Run all benchmarks against all models (shortcut) |
-| `--all-benchmarks` | Run all available benchmarks |
-| `--benchmark`, `-b` | Run a specific benchmark by name |
-| `--model`, `-m` | Model to use. `mock` for testing, Ollama model names, or OpenAI-compatible model IDs |
-| `--profile`, `-p` | Model profile from gitbench.json |
-| `--all-profiles` | Run against all profiles defined in config |
-| `--all-models` | Run against all models across all profiles (flattened) |
-| `--provider` | Explicit provider type: `ollama` or `openai` (auto-detected from base_url if omitted) |
-| `--base-url` | API base URL. Defaults to `http://localhost:11434` for Ollama |
-| `--verbose`, `-v` | Print detailed per-fixture results |
-| `--timeout`, `-t` | Timeout in seconds per model attempt |
-| `--retry-count`, `-r` | Retry attempts on failure (default: 3) |
-| `--model-workers` | Number of models to run concurrently (default: 1) |
-| `--fixture-workers` | Number of fixtures to run concurrently within a benchmark (default: 1) |
-| `--judge` | Enable LLM judge scoring (overrides config benchmarks list) |
-| `--judge-profile` | Override the judge model profile from config |
+| Option                | Description                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| `--all`, `-a`         | Run all benchmarks against all models (shortcut)                                      |
+| `--all-benchmarks`    | Run all available benchmarks                                                          |
+| `--benchmark`, `-b`   | Run a specific benchmark by name                                                      |
+| `--model`, `-m`       | Model to use. `mock` for testing, Ollama model names, or OpenAI-compatible model IDs  |
+| `--profile`, `-p`     | Model profile from gitbench.json                                                      |
+| `--all-profiles`      | Run against all profiles defined in config                                            |
+| `--all-models`        | Run against all models across all profiles (flattened)                                |
+| `--provider`          | Explicit provider type: `ollama` or `openai` (auto-detected from base_url if omitted) |
+| `--base-url`          | API base URL. Defaults to `http://localhost:11434` for Ollama                         |
+| `--verbose`, `-v`     | Print detailed per-fixture results                                                    |
+| `--timeout`, `-t`     | Timeout in seconds per model attempt                                                  |
+| `--retry-count`, `-r` | Retry attempts on failure (default: 3)                                                |
+| `--model-workers`     | Number of models to run concurrently (default: 1)                                     |
+| `--fixture-workers`   | Number of fixtures to run concurrently within a benchmark (default: 1)                |
+| `--judge`             | Enable LLM judge scoring (overrides config benchmarks list)                           |
+| `--judge-profile`     | Override the judge model profile from config                                          |
 
 ### Output options
 
-| Option | Description |
-| ------ | ----------- |
-| `--json-output` | Single JSON file for results (default: `gitbench-results/{timestamp}/results-v{version}.json`) |
-| `--output-dir`, `-d` | Write per-run auto-named JSON files to a directory |
-| `--jsonl`, `-j` | Append run results as a JSON line to a file (useful for accumulating runs) |
-| `--export`, `-e` | Export format(s): `csv`, `json`, `artificialanalysis` (repeatable) |
-| `--export-path` | Path for export file (auto-named from model + timestamp if omitted) |
+| Option               | Description                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| `--json-output`      | Single JSON file for results (default: `gitbench-results/{timestamp}/results-v{version}.json`) |
+| `--output-dir`, `-d` | Write per-run auto-named JSON files to a directory                                             |
+| `--jsonl`, `-j`      | Append run results as a JSON line to a file (useful for accumulating runs)                     |
+| `--export`, `-e`     | Export format(s): `csv`, `json`, `artificialanalysis` (repeatable)                             |
+| `--export-path`      | Path for export file (auto-named from model + timestamp if omitted)                            |
 
 ### Examples
 
@@ -264,6 +264,7 @@ gitbench run --benchmark commit_messages --model mock
    (except with `--model mock` for testing).
 
 **Judge prompt criteria**:
+
 - Accuracy: Does the message describe the diff changes?
 - Conciseness: Is the message well-structured?
 - Convention: Does it follow conventional commit format?
@@ -389,10 +390,10 @@ print the replacement `web/` commands.
 
 Results can be exported to structured formats for external analysis:
 
-| Format | Description |
-| ------ | ----------- |
-| `csv` | One row per fixture result (benchmark, fixture_id, model, passed, similarity, error, etc.) |
-| `json` | Complete formatted run envelope |
+| Format               | Description                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| `csv`                | One row per fixture result (benchmark, fixture_id, model, passed, similarity, error, etc.)              |
+| `json`               | Complete formatted run envelope                                                                         |
 | `artificialanalysis` | One row per benchmark (model, benchmark, score, total, passed) — compatible with artificialanalysis.com |
 
 ```bash
@@ -403,10 +404,10 @@ gitbench run --all --model gpt-4o --export csv --export artificialanalysis
 
 Saved run envelopes include two version fields:
 
-| Field | Meaning |
-| ----- | ------- |
-| `schema_version` / `version` | Integer output schema version for result readers |
-| `benchmark_suite_version` | `0.x` suite version tied to benchmark and fixture coverage |
+| Field                        | Meaning                                                    |
+| ---------------------------- | ---------------------------------------------------------- |
+| `schema_version` / `version` | Integer output schema version for result readers           |
+| `benchmark_suite_version`    | `0.x` suite version tied to benchmark and fixture coverage |
 
 During the pre-1.0 period, bump `benchmark_suite_version` whenever fixtures, benchmark definitions, prompts, expected answers, or scoring rules change in a way that affects comparability. Use `0.x` minor bumps for added or behavior-changing benchmark coverage, and patch bumps for corrections that keep the same intended coverage.
 
@@ -416,43 +417,43 @@ Generated default artifact filenames include the benchmark suite version, and re
 
 GitBench includes 17 benchmark categories:
 
-| Benchmark         | Description                                                            | Fixtures | Scoring       |
-| ----------------- | ---------------------------------------------------------------------- | -------- | ------------- |
-| `blame_forensics` | Trace which commit introduced a bug using git blame/log                | 12       | exact_match   |
-| `branch_cleanup`  | Identify branches to delete (fully merged into main)                   | 12       | exact_match   |
-| `cherry_pick`     | Apply specific commits from one branch to another, resolving conflicts | 12       | similarity    |
-| `commit_messages` | Given a diff, generate a meaningful commit message                     | 12       | similarity    |
-| `commit_squash`   | Squash multiple commits into a single coherent commit                  | 12       | commit_selection |
-| `git_bisect`      | Identify the commit that introduced a bug via automated bisect         | 12       | dynamic hash   |
-| `git_clean`       | Safely remove untracked files and directories                          | 12       | state_assertions |
-| `git_grep`        | Search repository content with git grep                                | 12       | exact_match/similarity/numeric_exact |
+| Benchmark         | Description                                                            | Fixtures | Scoring                                     |
+| ----------------- | ---------------------------------------------------------------------- | -------- | ------------------------------------------- |
+| `blame_forensics` | Trace which commit introduced a bug using git blame/log                | 12       | exact_match                                 |
+| `branch_cleanup`  | Identify branches to delete (fully merged into main)                   | 12       | exact_match                                 |
+| `cherry_pick`     | Apply specific commits from one branch to another, resolving conflicts | 12       | similarity                                  |
+| `commit_messages` | Given a diff, generate a meaningful commit message                     | 12       | similarity                                  |
+| `commit_squash`   | Squash multiple commits into a single coherent commit                  | 12       | commit_selection                            |
+| `git_bisect`      | Identify the commit that introduced a bug via automated bisect         | 12       | dynamic hash                                |
+| `git_clean`       | Safely remove untracked files and directories                          | 12       | state_assertions                            |
+| `git_grep`        | Search repository content with git grep                                | 12       | exact_match/similarity/numeric_exact        |
 | `git_log_format`  | Format git log output for targeted history inspection                  | 12       | exact_match/unordered_line_set/dynamic hash |
-| `git_show`        | Inspect commits, tags, and file state with git show                    | 12       | exact_match/dynamic hash |
-| `merge_conflicts` | Resolve merge conflicts producing the correct final tree               | 12       | similarity    |
-| `rebase`          | Clean up commit history before PR (squash, reorder, amend)             | 12       | similarity    |
-| `reflog`          | Restore lost commits or fix detached HEAD state                        | 12       | similarity    |
-| `stash_recovery`  | Recover stashed changes or resolve stash pop conflicts                 | 12       | similarity    |
-| `submodule_usage` | Manage git submodules for external dependencies                        | 12       | state_assertions |
-| `tag_management`  | Create, inspect, move, and delete tags                                 | 12       | state_assertions |
-| `worktree_usage`  | Use git worktrees for parallel development                             | 12       | state_assertions |
+| `git_show`        | Inspect commits, tags, and file state with git show                    | 12       | exact_match/dynamic hash                    |
+| `merge_conflicts` | Resolve merge conflicts producing the correct final tree               | 12       | similarity                                  |
+| `rebase`          | Clean up commit history before PR (squash, reorder, amend)             | 12       | similarity                                  |
+| `reflog`          | Restore lost commits or fix detached HEAD state                        | 12       | similarity                                  |
+| `stash_recovery`  | Recover stashed changes or resolve stash pop conflicts                 | 12       | similarity                                  |
+| `submodule_usage` | Manage git submodules for external dependencies                        | 12       | state_assertions                            |
+| `tag_management`  | Create, inspect, move, and delete tags                                 | 12       | state_assertions                            |
+| `worktree_usage`  | Use git worktrees for parallel development                             | 12       | state_assertions                            |
 
 Each benchmark has 12 fixtures — 204 total — for meaningful pass@1 scoring.
 
 ### Scoring Types
 
-| Type | Description |
-| ---- | ----------- |
-| `similarity` | Text similarity via `difflib.SequenceMatcher`. Default threshold: 0.5 |
-| `exact_match` | Exact string comparison after stripping whitespace |
-| `unordered_line_set` | Compare newline-delimited answers as a set when order is not part of the task |
-| `numeric_exact` | Compare count/integer answers while tolerating whitespace and optional one-number prose |
-| `json_semantic_equal` | Compare parsed JSON values so whitespace and property order do not matter |
-| `command_equivalence` | Tokenized command comparison against fixture-declared accepted alternatives |
-| `state_assertions` | Execute model output as git commands, then verify repo state via assertions (file_exists, dir_exists, file_content, branch_exists, git_config, git_output) |
-| `structured` | Parse model output as key-value fields, score each independently (exact_match or similarity per field) |
-| `commit_selection` | Verify that the model selects specific expected commits (used by commit_squash) |
-| `commit_hash_by_subject` | Derive the full or short commit hash from a stable commit subject in the fixture repo |
-| `dynamic_hash` | Match against a git hash that varies per run (used by git_bisect and legacy fixtures) |
+| Type                     | Description                                                                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `similarity`             | Text similarity via `difflib.SequenceMatcher`. Default threshold: 0.5                                                                                      |
+| `exact_match`            | Exact string comparison after stripping whitespace                                                                                                         |
+| `unordered_line_set`     | Compare newline-delimited answers as a set when order is not part of the task                                                                              |
+| `numeric_exact`          | Compare count/integer answers while tolerating whitespace and optional one-number prose                                                                    |
+| `json_semantic_equal`    | Compare parsed JSON values so whitespace and property order do not matter                                                                                  |
+| `command_equivalence`    | Tokenized command comparison against fixture-declared accepted alternatives                                                                                |
+| `state_assertions`       | Execute model output as git commands, then verify repo state via assertions (file_exists, dir_exists, file_content, branch_exists, git_config, git_output) |
+| `structured`             | Parse model output as key-value fields, score each independently (exact_match or similarity per field)                                                     |
+| `commit_selection`       | Verify that the model selects specific expected commits (used by commit_squash)                                                                            |
+| `commit_hash_by_subject` | Derive the full or short commit hash from a stable commit subject in the fixture repo                                                                      |
+| `dynamic_hash`           | Match against a git hash that varies per run (used by git_bisect and legacy fixtures)                                                                      |
 
 Use `command_equivalence` for read-only fixtures that ask for a Git command and
 where multiple command spellings are semantically equivalent:
@@ -581,15 +582,15 @@ When running `--all`, output is a combined JSON with a summary and per-benchmark
 
 Each score object contains:
 
-| Field          | Type             | Description                                   |
-| -------------- | ---------------- | --------------------------------------------- |
-| `fixture_id`   | `string`         | Fixture identifier                            |
-| `passed`       | `boolean`        | Whether the model output passed the threshold |
-| `similarity`   | `float`          | Text similarity score (0.0 – 1.0)             |
-| `model_output` | `string`         | The model's generated output                  |
-| `error`        | `string \| null` | Error message if processing failed            |
-| `reasoning_level` | `string \| null` | Reasoning level used (e.g. `"high"`)        |
-| `model`        | `string`         | Model name (present in multi-model output)    |
+| Field             | Type             | Description                                   |
+| ----------------- | ---------------- | --------------------------------------------- |
+| `fixture_id`      | `string`         | Fixture identifier                            |
+| `passed`          | `boolean`        | Whether the model output passed the threshold |
+| `similarity`      | `float`          | Text similarity score (0.0 – 1.0)             |
+| `model_output`    | `string`         | The model's generated output                  |
+| `error`           | `string \| null` | Error message if processing failed            |
+| `reasoning_level` | `string \| null` | Reasoning level used (e.g. `"high"`)          |
+| `model`           | `string`         | Model name (present in multi-model output)    |
 
 ## Running Tests
 
