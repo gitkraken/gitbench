@@ -183,7 +183,12 @@ Overview grouped metric bar charts SHALL use a shared vertical chart language fo
 
 #### Scenario: Diagonal group labels are reused for pairs
 - **WHEN** a grouped metric chart renders paired text and JSON bars
-- **THEN** both bars share one existing diagonal provider-icon label with `-40` degree rotation and a truncated base model name
+- **THEN** both bars share one diagonal provider-icon label with `-40` degree rotation and the full base model name
+
+#### Scenario: Dense group labels remain full length
+- **WHEN** a grouped metric chart renders many selected provider/base-model groups with names longer than 20 characters
+- **THEN** the X-axis labels remain full length without ellipsis or text truncation
+- **AND** the chart provides enough label space or horizontal overflow so the labels are not clipped by their tick containers
 
 #### Scenario: Single-effort mode remains visible
 - **WHEN** one mode summary has equal minimum, maximum, and representative values
@@ -198,7 +203,7 @@ Overview grouped metric bar charts SHALL use a shared vertical chart language fo
 - **THEN** a mode legend identifies the solid treatment as `Text` and the translucent outlined treatment as `JSON`
 
 ### Requirement: PassRateBarChart renders vertical range-whisker bar chart
-The `PassRateBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = pass rate percentage). For a single output-mode selection, each category SHALL show that mode's median deduped effort pass rate from zero with a neutral range whisker from its lowest to highest effort pass rate. When `Both` is selected, each category SHALL show adjacent text and JSON bars with independently calculated medians and range whiskers. The Y-axis domain SHALL start at 0 and SHALL use 100 as the pass-rate ceiling. Bars SHALL be color-coded by provider using the `getProviderColor()` palette and SHALL use the shared output-mode visual treatments. X-axis tick labels SHALL be rotated diagonally (`-40` degrees) with a custom tick renderer that displays a provider brand icon (via `ProviderIcon`) and the truncated base model name (max ~10 characters + ellipsis). The component SHALL accept optional `benchmarkName` and `selectedBenchmark` props. When `benchmarkName` is provided, pass rates SHALL be computed from `matrix[model][benchmarkName].pass_at_k` (per-benchmark), otherwise from `model_summaries[model].pass_at_k` (global). The tooltip footnote SHALL reflect the data source by showing the fixture count for the benchmark when filtered, or "204 fixtures" for global. Chart height SHALL be fixed at 350 pixels. A provider legend SHALL be rendered below the chart card showing colored dots for each unique provider present.
+The `PassRateBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = pass rate percentage). For a single output-mode selection, each category SHALL show that mode's median deduped effort pass rate from zero with a neutral range whisker from its lowest to highest effort pass rate. When `Both` is selected, each category SHALL show adjacent text and JSON bars with independently calculated medians and range whiskers. The Y-axis domain SHALL start at 0 and SHALL use 100 as the pass-rate ceiling. Bars SHALL be color-coded by provider using the `getProviderColor()` palette and SHALL use the shared output-mode visual treatments. X-axis tick labels SHALL be rotated diagonally (`-40` degrees) with a custom tick renderer that displays a provider brand icon (via `ProviderIcon`) and the full base model name without ellipsis or text truncation. The component SHALL accept optional `benchmarkName` and `selectedBenchmark` props. When `benchmarkName` is provided, pass rates SHALL be computed from `matrix[model][benchmarkName].pass_at_k` (per-benchmark), otherwise from `model_summaries[model].pass_at_k` (global). The tooltip footnote SHALL reflect the data source by showing the fixture count for the benchmark when filtered, or "204 fixtures" for global. Chart height SHALL be fixed at 350 pixels. A provider legend SHALL be rendered below the chart card showing colored dots for each unique provider present.
 
 #### Scenario: Both mode renders paired pass-rate bars
 - **WHEN** `Both` is selected for model groups `['anthropic/claude-opus-4.7', 'openai/gpt-oss-120b']`
@@ -228,9 +233,13 @@ The `PassRateBarChart` React component SHALL render a Recharts vertical bar char
 - **WHEN** a model group has provider `unknown-provider`
 - **THEN** its mode bars use a deterministic `hsl(hue, 55%, 48%)` provider color
 
-#### Scenario: Diagonal labels show provider icon and truncated base model
+#### Scenario: Diagonal labels show provider icon and full base model
 - **WHEN** a model group is `openai/gpt-oss-120b`
-- **THEN** its shared X-axis tick shows the OpenAI icon and "gpt-oss-1..." (truncated), rotated `-40` degrees
+- **THEN** its shared X-axis tick shows the OpenAI icon and `gpt-oss-120b` in full, rotated `-40` degrees
+
+#### Scenario: Long model names remain full length
+- **WHEN** a model group is `google/gemini-3.1-flash-lite-preview`
+- **THEN** its shared X-axis tick shows `gemini-3.1-flash-lite-preview` in full without ellipsis
 
 #### Scenario: Chart height is fixed at 350 pixels
 - **WHEN** 5, 12, or 30 model groups are selected in single or both mode
@@ -276,7 +285,7 @@ The `PassRateBarChart` React component SHALL accept an optional `initialData` pr
 - **THEN** the component fetches from `/api/charts/pass-rate?benchmark=<name>` as before
 
 ### Requirement: RuntimeBarChart renders vertical range-whisker bar chart ranking models by speed
-The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = total API time in seconds). Each solid bar SHALL represent one selected provider/base-model group's median deduped effort API time from zero. A neutral range whisker SHALL visualize the range from the fastest effort API time to the slowest effort API time in that group. The median deduped effort API time SHALL be the representative value used for sorting and bar prominence. The Y-axis domain SHALL start at 0 and include the slowest displayed effort API time. Bars SHALL be color-coded by provider using the `getProviderColor()` palette. X-axis tick labels SHALL display the provider brand icon (via `ProviderIcon`) and the truncated base model name (max ~10 characters + ellipsis), rotated `-40` degrees. The component SHALL accept a `data` prop containing the full dataset and an optional selected group list for filtering. Chart height SHALL be fixed at 350 pixels. A provider legend SHALL be rendered below the chart card showing colored dots for each unique provider present. Model groups SHALL be sorted fastest-first by their median deduped effort API time.
+The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = total API time in seconds). Each solid bar SHALL represent one selected provider/base-model group's median deduped effort API time from zero. A neutral range whisker SHALL visualize the range from the fastest effort API time to the slowest effort API time in that group. The median deduped effort API time SHALL be the representative value used for sorting and bar prominence. The Y-axis domain SHALL start at 0 and include the slowest displayed effort API time. Bars SHALL be color-coded by provider using the `getProviderColor()` palette. X-axis tick labels SHALL display the provider brand icon (via `ProviderIcon`) and the full base model name without ellipsis or text truncation, rotated `-40` degrees. The component SHALL accept a `data` prop containing the full dataset and an optional selected group list for filtering. Chart height SHALL be fixed at 350 pixels. A provider legend SHALL be rendered below the chart card showing colored dots for each unique provider present. Model groups SHALL be sorted fastest-first by their median deduped effort API time.
 
 #### Scenario: Bars render for selected model groups
 - **WHEN** `RuntimeBarChart` receives selected groups `['anthropic/claude-opus-4.7', 'openai/gpt-oss-120b']`
@@ -298,13 +307,13 @@ The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart
 - **WHEN** a model group has provider `unknown-provider`
 - **THEN** its bar is rendered in a deterministic `hsl(hue, 55%, 48%)` color
 
-#### Scenario: Diagonal labels show provider icon and truncated base model
+#### Scenario: Diagonal labels show provider icon and full base model
 - **WHEN** a model group is `openai/gpt-oss-120b`
-- **THEN** its X-axis tick shows the OpenAI icon and "gpt-oss-1..." (truncated), rotated `-40` degrees
+- **THEN** its X-axis tick shows the OpenAI icon and `gpt-oss-120b` in full, rotated `-40` degrees
 
-#### Scenario: Long model names are truncated
-- **WHEN** a base model name exceeds ~10 characters
-- **THEN** the displayed label is truncated with an ellipsis
+#### Scenario: Long model names remain full length
+- **WHEN** a base model name exceeds 20 characters
+- **THEN** the displayed label remains full length without ellipsis
 
 #### Scenario: Chart height is fixed at 350 pixels
 - **WHEN** 5, 12, or 30 model groups are present
@@ -503,3 +512,61 @@ Report chart components with output-mode controls SHALL default to `both` output
 - **WHEN** report URL state encodes output mode `text`
 - **THEN** report chart components render text-mode data only
 
+### Requirement: Metric chart components support report scopes
+Quadrant, cost, API-time, and token chart components SHALL support global, benchmark, and fixture scopes. Global scope SHALL preserve existing overview behavior. Benchmark scope SHALL load and render only data for the selected benchmark. Fixture scope SHALL load and render only data for the selected benchmark fixture. Scoped charts SHALL retain existing model selection, output-mode selection, provider coloring, text/JSON pairing, tooltips, empty states, and campaign-aware reload behavior.
+
+#### Scenario: Global metric charts preserve overview behavior
+- **WHEN** a metric chart renders without a benchmark or fixture scope
+- **THEN** it uses the same global data and interaction behavior as the overview page
+
+#### Scenario: Benchmark scoped metric chart fetches benchmark payload
+- **WHEN** `TokenUsageChart` renders with benchmark scope `commit_messages`
+- **THEN** it requests token chart data scoped to `commit_messages`
+- **AND** its bars are computed from benchmark-scoped token totals
+
+#### Scenario: Fixture scoped metric chart fetches fixture payload
+- **WHEN** `RuntimeBarChart` renders with fixture scope `commit_messages/f001`
+- **THEN** it requests runtime chart data scoped to `commit_messages/f001`
+- **AND** its bars are computed from fixture-scoped API-time values
+
+#### Scenario: Scoped empty states remain specific
+- **WHEN** a scoped cost chart has no cost data for the selected benchmark or fixture
+- **THEN** it displays the existing pricing-data empty state without falling back to global cost data
+
+### Requirement: Scoped metric bar charts use scoped totals
+Cost, API-time, and token usage bar charts SHALL compute representative effort values, mode ranges, sort values, and tooltip effort lists from the currently loaded scope only. They SHALL NOT combine scoped pass rates with global cost, runtime, or token aggregates.
+
+#### Scenario: Benchmark cost tooltip uses benchmark cost
+- **WHEN** a cost chart renders for benchmark `branch_cleanup`
+- **THEN** each tooltip effort cost is the sum of `branch_cleanup` costs for that effort and output mode
+- **AND** the tooltip does not show the full evaluation run cost
+
+#### Scenario: Fixture token chart uses one fixture result
+- **WHEN** a token chart renders for fixture `git_grep/f003`
+- **THEN** each displayed effort's token value comes from that effort's `git_grep/f003` result or attempts
+
+#### Scenario: Scoped ranges stay mode-specific
+- **WHEN** `Both` output mode is selected for a benchmark-scoped API-time chart
+- **THEN** text and JSON representative values and range whiskers are calculated independently from benchmark-scoped text and JSON effort values
+
+### Requirement: Fixture quadrant uses adaptive quality metric
+The fixture-scoped quadrant chart SHALL choose the fixture quality metric from available data. It SHALL use repeated-attempt success rate when valid campaign attempts are available. Otherwise it SHALL use similarity percentage when the fixture has meaningful intermediate similarity values. Otherwise it SHALL use binary success percentage, with passed results at 100% and failed valid results at 0%. The visible axis label and tooltip labels SHALL identify the selected quality metric.
+
+#### Scenario: Repeated attempts use success rate
+- **WHEN** a fixture has campaign attempts with valid pass and fail outcomes
+- **THEN** the fixture quadrant quality axis is labeled `Success (%)`
+- **AND** each point's quality value is calculated from passing valid attempts divided by valid attempts
+
+#### Scenario: Graded fixture uses similarity
+- **WHEN** a fixture has valid one-shot results with intermediate similarity values such as 63.5% and 88.0%
+- **THEN** the fixture quadrant quality axis is labeled `Similarity (%)`
+- **AND** point quality values use those similarity percentages
+
+#### Scenario: Binary fixture uses pass/fail success
+- **WHEN** a fixture has only binary pass/fail quality values
+- **THEN** the fixture quadrant quality axis is labeled `Success (%)`
+- **AND** passed results plot at 100% while failed valid results plot at 0%
+
+#### Scenario: Benchmark quadrant keeps pass-rate quality
+- **WHEN** the quadrant chart renders in benchmark scope
+- **THEN** its quality metric is benchmark pass rate rather than fixture similarity
