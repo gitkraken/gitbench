@@ -329,9 +329,13 @@ The `doctor` command identifies failures caused by known transient error pattern
 
 ## Result safety doctoring
 
-When `result_safety.profile` is configured, new runs are reviewed before JSON,
-JSONL, CSV, stdout, or aggregate output is written. Historical files can be
-reviewed separately:
+When `result_safety.profile` is configured, new runs are reviewed before normal
+JSON, JSONL, CSV, stdout, or aggregate output is published. If the reviewer
+cannot complete, GitBench still records doctorable JSON result artifacts with
+`safety_review.status` set to `pending`, exits non-zero, and suppresses
+non-doctorable outputs such as JSONL, exports, and stdout JSON for that payload.
+Run `safety-doctor` on the saved JSON before report generation or publication.
+Historical files can be reviewed separately:
 
 ```bash
 # Classify one artifact without changing it
@@ -355,7 +359,8 @@ written to the mirrored, collision-safe `gitbench-results-nsfw/` tree.
 `gitbench-results-nsfw/` is gitignored but is not encrypted. It can contain
 explicit content, so local access control, retention, and deletion are the
 operator's responsibility. Clean artifacts do not create backups. A failed
-classification or required backup leaves the source artifact unchanged.
+historical classification or required backup leaves the source artifact
+unchanged.
 
 ## Report generation
 
