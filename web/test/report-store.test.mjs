@@ -758,6 +758,30 @@ test("chart endpoint uses explicit compatible campaign data", () => {
   }, { seedFn: seedCampaign });
 });
 
+test("chart endpoint uses campaign attempts for fixture scoped quadrant quality", () => {
+  withStore(() => {
+    const response = callHandler(chartRouteHandler, {
+      chart: "quadrant",
+      benchmark: "commit_messages",
+      fixture: "commit_messages/f001",
+      campaign: "cmp-test",
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.campaign_id, "cmp-test");
+    assert.equal(response.body.fixture_quality_metric.kind, "repeated_success");
+    assert.equal(
+      response.body.model_summaries["openai/gpt-test:high"].pass_at_k,
+      0.5,
+    );
+    assert.equal(
+      response.body.model_runtimes["openai/gpt-test:high"].total_ms,
+      200,
+    );
+    assert.equal(JSON.stringify(response.body).includes("secret output"), false);
+  }, { seedFn: seedCampaign });
+});
+
 test("incompatible explicit campaign query falls back without scoped metadata", () => {
   withStore(() => {
     const response = callHandler(summaryHandler, {

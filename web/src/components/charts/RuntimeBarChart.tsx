@@ -33,7 +33,15 @@ function formatAxis(seconds: number): string {
 
 import { useCampaignId } from "@/lib/use-campaign";
 
-export default function RuntimeBarChart() {
+interface ScopedChartProps {
+  benchmarkName?: string;
+  fixtureId?: string;
+}
+
+export default function RuntimeBarChart({
+  benchmarkName,
+  fixtureId,
+}: ScopedChartProps = {}) {
   const [data, setData] = useState<GitBenchData | null>(null);
   const campaignId = useCampaignId();
   const {
@@ -45,8 +53,10 @@ export default function RuntimeBarChart() {
   } = useSyncedModelSelection(data);
 
   useEffect(() => {
-    loadRuntimeChart().then(setData);
-  }, [campaignId]);
+    loadRuntimeChart({ benchmark: benchmarkName, fixture: fixtureId }).then(
+      setData
+    );
+  }, [benchmarkName, fixtureId, campaignId]);
 
   const chartData = useMemo(() => {
     if (!data) return [];

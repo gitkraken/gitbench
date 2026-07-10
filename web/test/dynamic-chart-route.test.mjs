@@ -172,6 +172,59 @@ test("dynamic chart route preserves benchmark filter for pass-rate chart", () =>
   });
 });
 
+test("dynamic chart route returns benchmark scoped metric payload", () => {
+  withStore(() => {
+    const response = callHandler(chartRouteHandler, {
+      chart: "runtime",
+      benchmark: "commit_messages",
+    });
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.benchmarks[0], "commit_messages");
+    assert.equal(response.body.model_runtimes["openai/gpt-test:high"].total_ms, 12.5);
+  });
+});
+
+test("dynamic chart route returns compact fixture scoped payload", () => {
+  withStore(() => {
+    const response = callHandler(chartRouteHandler, {
+      chart: "tokens",
+      benchmark: "commit_messages",
+      fixture: "f001",
+    });
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.chart_scope.type, "fixture");
+    assert.equal(
+      response.body.model_token_summaries["openai/gpt-test:high"].total_tokens,
+      15,
+    );
+    assert.deepEqual(response.body.fixtures, {});
+    assert.equal(JSON.stringify(response.body).includes("full output"), false);
+  });
+});
+
+test("dynamic chart route rejects fixture scope without benchmark", () => {
+  withStore(() => {
+    const response = callHandler(chartRouteHandler, {
+      chart: "runtime",
+      fixture: "f001",
+    });
+    assert.equal(response.statusCode, 400);
+    assert.match(response.body.error, /requires a benchmark/);
+  });
+});
+
+test("dynamic chart route rejects unsupported fixture chart scope", () => {
+  withStore(() => {
+    const response = callHandler(chartRouteHandler, {
+      chart: "pass-rate",
+      benchmark: "commit_messages",
+      fixture: "f001",
+    });
+    assert.equal(response.statusCode, 400);
+    assert.match(response.body.error, /does not support fixture scope/);
+  });
+});
+
 test("dynamic chart route rejects unsupported chart name with 404", () => {
   withStore(() => {
     const response = callHandler(chartRouteHandler, { chart: "not-a-chart" });

@@ -120,6 +120,16 @@ export interface CampaignAwareGitBenchData extends GitBenchData {
   campaign_metadata: CampaignSummary | null;
 }
 
+export type ChartScope =
+  | { type: "global" }
+  | { type: "benchmark"; benchmark: string }
+  | { type: "fixture"; benchmark: string; fixture: string };
+
+export interface FixtureQualityMetric {
+  kind: "repeated_success" | "similarity" | "binary_success";
+  label: "Success (%)" | "Similarity (%)";
+}
+
 export interface FixtureReliability {
   fixture_id: string;
   benchmark: string;
@@ -161,4 +171,6 @@ export interface GitBenchData {
   fixture_index: Record<string, FixtureInfo>;
   runs_meta: RunMeta[];
   base_model_groups: BaseModelGroup[];
+  chart_scope?: ChartScope;
+  fixture_quality_metric?: FixtureQualityMetric;
 }

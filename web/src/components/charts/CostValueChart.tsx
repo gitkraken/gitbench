@@ -29,7 +29,15 @@ export function formatCost(value: number): string {
 
 import { useCampaignId } from "@/lib/use-campaign";
 
-export default function CostValueChart() {
+interface ScopedChartProps {
+  benchmarkName?: string;
+  fixtureId?: string;
+}
+
+export default function CostValueChart({
+  benchmarkName,
+  fixtureId,
+}: ScopedChartProps = {}) {
   const [data, setData] = useState<GitBenchData | null>(null);
   const campaignId = useCampaignId();
   const {
@@ -41,8 +49,16 @@ export default function CostValueChart() {
   } = useSyncedModelSelection(data);
 
   useEffect(() => {
-    loadCostChart().then(setData);
-  }, [campaignId]);
+    loadCostChart({ benchmark: benchmarkName, fixture: fixtureId }).then(
+      setData
+    );
+  }, [benchmarkName, fixtureId, campaignId]);
+
+  const scopeLabel = fixtureId
+    ? `${benchmarkName}/${fixtureId}`
+    : benchmarkName
+      ? benchmarkName
+      : "selected run";
 
   const chartData = useMemo(() => {
     if (!data) return [];
@@ -130,7 +146,7 @@ export default function CostValueChart() {
                   lineHeight: 1.4,
                 }}
               >
-                API cost for 204-fixture run. - = local/Ollama
+                API cost for {scopeLabel}. - = local/Ollama
               </div>
             </div>
           )}

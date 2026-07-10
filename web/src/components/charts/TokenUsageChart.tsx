@@ -22,7 +22,15 @@ function formatTokens(value: number): string {
 
 import { useCampaignId } from "@/lib/use-campaign";
 
-export default function TokenUsageChart() {
+interface ScopedChartProps {
+  benchmarkName?: string;
+  fixtureId?: string;
+}
+
+export default function TokenUsageChart({
+  benchmarkName,
+  fixtureId,
+}: ScopedChartProps = {}) {
   const [data, setData] = useState<GitBenchData | null>(null);
   const campaignId = useCampaignId();
   const {
@@ -34,8 +42,10 @@ export default function TokenUsageChart() {
   } = useSyncedModelSelection(data);
 
   useEffect(() => {
-    loadTokenChart().then(setData);
-  }, [campaignId]);
+    loadTokenChart({ benchmark: benchmarkName, fixture: fixtureId }).then(
+      setData
+    );
+  }, [benchmarkName, fixtureId, campaignId]);
 
   const chartData = useMemo(() => {
     if (!data) return [];
