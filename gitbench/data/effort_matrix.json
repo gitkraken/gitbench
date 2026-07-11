@@ -343,6 +343,82 @@
         "high": "high",
         "xhigh": "xhigh"
       }
+    },
+    "grok-4.3": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "grok-4.5": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "claude-sonnet-5": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.6-sol": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "gpt-5.6-luna": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "gpt-5.6-terra": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "hy3": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "laguna-xs-2.1": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
     }
   }
 }
