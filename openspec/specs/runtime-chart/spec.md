@@ -70,7 +70,7 @@ The `RuntimeBarChart` component SHALL be rendered on `/` (the Overview/Home page
 - **THEN** an "API Time" section with the grouped vertical range-whisker bar chart is visible
 
 ### Requirement: RuntimeBarChart renders vertical range-whisker bar chart ranking models by speed
-The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = total API time in seconds). For a single output-mode selection, each category SHALL show that mode's median sorted, deduped effort API time from zero with a neutral range whisker from the fastest to slowest effort in that mode. When `Both` is selected, each category SHALL show adjacent text and JSON bars with independently calculated medians and range whiskers. The Y-axis domain SHALL start at 0 and include the slowest displayed effort API time. Bars SHALL be color-coded by provider using the `getProviderColor()` palette and SHALL use the shared output-mode visual treatments. X-axis tick labels SHALL display one provider brand icon and the full base model name per category without ellipsis or text truncation, rotated `-40` degrees. Chart height SHALL be fixed at 350 pixels. Provider and output-mode legends SHALL be rendered below the chart as applicable. Categories SHALL be sorted fastest-first by the selected mode representative, or by the mean of available text and JSON representatives in `Both` mode.
+The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart (bars go up, X-axis = provider/base-model group, Y-axis = total API time in seconds). For a single output-mode selection, each category SHALL show that mode's median sorted, deduped effort API time from zero with a neutral range whisker from the fastest to slowest effort in that mode. When `Both` is selected, each category SHALL show adjacent text and JSON bars with independently calculated medians and range whiskers. The Y-axis domain SHALL start at 0 and include the slowest displayed effort API time. Bars SHALL be color-coded by provider using the `getProviderColor()` palette and SHALL use the shared output-mode visual treatments. X-axis tick labels SHALL display one provider brand icon and the full base model name per category without ellipsis or text truncation, rotated `-40` degrees. Chart height SHALL be fixed at 350 pixels. Provider and output-mode legends SHALL be rendered below the chart as applicable. Categories SHALL be sorted highest-API-time-first by the selected mode representative, or by the mean of available text and JSON representatives in `Both` mode.
 
 #### Scenario: Both mode renders paired API-time bars
 - **WHEN** `Both` is selected for `openai/gpt-5`
@@ -86,11 +86,11 @@ The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart
 
 #### Scenario: Single mode sorts by its representative
 - **WHEN** text mode is selected and model categories have representative API times [5000, 12000, 3000, 8000]
-- **THEN** categories appear from left to right in order 3000, 5000, 8000, 12000
+- **THEN** categories appear from left to right in order 12000, 8000, 5000, 3000
 
 #### Scenario: Both mode sorts by mean representative time
 - **WHEN** two categories have text/JSON representative API times `[40s, 60s]` and `[45s, 50s]`
-- **THEN** the second category appears first because its mean is 47.5s rather than 50s
+- **THEN** the first category appears first because its mean is 50s rather than 47.5s
 
 #### Scenario: Missing JSON time preserves text category
 - **WHEN** `Both` is selected and a category has text API-time data but no JSON API-time data
@@ -123,4 +123,3 @@ The `RuntimeBarChart` React component SHALL render a Recharts vertical bar chart
 - **WHEN** a bar aggregates multiple reasoning efforts
 - **THEN** its existing range-whisker encoding SHALL continue to represent reasoning-effort range
 - **AND** repeated-trial variability SHALL use separately labeled detail
-
