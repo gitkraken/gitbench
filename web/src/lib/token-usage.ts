@@ -4,6 +4,9 @@ export interface OutputTokenDecomposition {
   totalOutputTokens: number | null;
   visibleOutputTokens: number | null;
   reasoningTokens: number | null;
+  reasoningWithinOutputTokens: number | null;
+  reasoningOverflowTokens: number | null;
+  hasInconsistentReasoningTelemetry: boolean;
   hasReasoningData: boolean;
 }
 
@@ -20,15 +23,25 @@ function formatTokenCount(value: number): string {
 
 export function decomposeOutputTokens(
   outputTokens: TokenCount,
-  reasoningTokens: TokenCount
+  reasoningTokens: TokenCount,
 ): OutputTokenDecomposition {
   const totalOutput = normalizedTokenCount(outputTokens);
   const reasoning = normalizedTokenCount(reasoningTokens);
+  const hasCompleteDecomposition = totalOutput != null && reasoning != null;
+  const reasoningWithinOutput = hasCompleteDecomposition
+    ? Math.min(reasoning, totalOutput)
+    : null;
+  const reasoningOverflow = hasCompleteDecomposition
+    ? Math.max(reasoning - totalOutput, 0)
+    : null;
   return {
     totalOutputTokens: totalOutput,
     visibleOutputTokens:
       totalOutput == null ? null : Math.max(totalOutput - (reasoning ?? 0), 0),
     reasoningTokens: reasoning,
+    reasoningWithinOutputTokens: reasoningWithinOutput,
+    reasoningOverflowTokens: reasoningOverflow,
+    hasInconsistentReasoningTelemetry: (reasoningOverflow ?? 0) > 0,
     hasReasoningData: reasoning != null,
   };
 }
@@ -37,11 +50,11 @@ export function formatCompactTokenUsage(
   inputTokens: TokenCount,
   outputTokens: TokenCount,
   reasoningLevel: string | null | undefined,
-  reasoningTokens: TokenCount
+  reasoningTokens: TokenCount,
 ): string | null {
   if (inputTokens == null || outputTokens == null) return null;
   const base = `${formatTokenCount(inputTokens)} in → ${formatTokenCount(
-    outputTokens
+    outputTokens,
   )} out`;
   if (!reasoningLevel) return base;
   return reasoningTokens == null
@@ -53,7 +66,7 @@ export function formatAggregateTokenUsage(
   inputTokens: TokenCount,
   outputTokens: TokenCount,
   reasoningLevel: string | null | undefined,
-  reasoningTokens: TokenCount
+  reasoningTokens: TokenCount,
 ): string | null {
   if (inputTokens == null || outputTokens == null) return null;
   const input = formatTokenCount(inputTokens);

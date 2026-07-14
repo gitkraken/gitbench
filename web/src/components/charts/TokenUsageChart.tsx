@@ -20,6 +20,18 @@ function formatTokens(value: number): string {
   return formatCompactDecimal(value, 2);
 }
 
+function formatTooltipTokens(value: number): string {
+  if (value >= 1_000_000)
+    return `${formatCompactDecimal(value / 1_000_000, 0)}M`;
+  if (value >= 1_000) return `${formatCompactDecimal(value / 1_000, 0)}K`;
+  return formatCompactDecimal(value, 0);
+}
+
+const INPUT_COLOR = "#aeb6c2";
+const OUTPUT_COLOR = "#5ec4b6";
+const REASONING_COLOR = "#e9b44c";
+const OVERFLOW_COLOR = "#f07878";
+
 import { useCampaignId } from "@/lib/use-campaign";
 
 interface ScopedChartProps {
@@ -43,20 +55,20 @@ export default function TokenUsageChart({
 
   useEffect(() => {
     loadTokenChart({ benchmark: benchmarkName, fixture: fixtureId }).then(
-      setData
+      setData,
     );
   }, [benchmarkName, fixtureId, campaignId]);
 
   const chartData = useMemo(() => {
     if (!data) return [];
     return buildTokenUsageRows(data, selectedGroups, outputMode).sort(
-      (a, b) => a.sortValue - b.sortValue
+      (a, b) => a.sortValue - b.sortValue,
     );
   }, [data, selectedGroups, outputMode]);
 
   const yDomain = useMemo(
     () => zeroAnchoredDomain(chartData, [0, 1]),
-    [chartData]
+    [chartData],
   );
   const allZero =
     chartData.length === 0 || chartData.every((row) => row.maxValue === 0);
@@ -89,60 +101,105 @@ export default function TokenUsageChart({
           yDomain={yDomain}
           yTickFormatter={formatTokens}
           yAxisLabel="Tokens"
-          renderTooltip={(entry) => (
-            <div style={tooltipStyle}>
-              <div
-                style={{
-                  color: "var(--text)",
-                  marginBottom: 4,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <ProviderIcon provider={entry.provider} size={14} />
-                {entry.provider}/{entry.baseModel}
+          renderTooltip={(entry) => {
+            const hasOverflow = Object.values(entry.modes).some((summary) =>
+              summary?.efforts.some(
+                (effort) => (effort.reasoningOverflowTokens ?? 0) > 0,
+              ),
+            );
+            return (
+              <div style={{ ...tooltipStyle, maxWidth: 300 }}>
+                <div
+                  style={{
+                    color: "var(--text)",
+                    marginBottom: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <ProviderIcon provider={entry.provider} size={14} />
+                  {entry.provider}/{entry.baseModel}
+                </div>
+                <div
+                  style={{
+                    color: "var(--text-dim)",
+                    fontSize: 10,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Total · (<span style={{ color: INPUT_COLOR }}>in</span> /{" "}
+                  <span style={{ color: OUTPUT_COLOR }}>out</span> /{" "}
+                  <span style={{ color: REASONING_COLOR }}>reasoning</span>)
+                </div>
+                <GroupedMetricTooltipSections
+                  entry={entry}
+                  outputMode={outputMode}
+                  formatRepresentative={formatTokens}
+                  renderEffort={(effort) => {
+                    const hasUsage =
+                      effort.inputTokens != null || effort.outputTokens != null;
+                    return (
+                      <span
+                        style={{
+                          color: "var(--text-dim)",
+                          display: "block",
+                          fontSize: 12,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {effort.reasoningLevel ?? "default"}:{" "}
+                        {formatTooltipTokens(effort.value)}
+                        {hasUsage ? (
+                          <>
+                            {" · ("}
+                            <span style={{ color: INPUT_COLOR }}>
+                              {formatTooltipTokens(effort.inputTokens ?? 0)}
+                            </span>
+                            {" / "}
+                            <span style={{ color: OUTPUT_COLOR }}>
+                              {effort.outputTokens == null
+                                ? "—"
+                                : formatTooltipTokens(effort.outputTokens)}
+                            </span>
+                            {" / "}
+                            <span style={{ color: REASONING_COLOR }}>
+                              {effort.reasoningTokens == null
+                                ? "—"
+                                : formatTooltipTokens(
+                                    effort.reasoningWithinOutputTokens ?? 0,
+                                  )}
+                            </span>
+                            {(effort.reasoningOverflowTokens ?? 0) > 0 ? (
+                              <span style={{ color: OVERFLOW_COLOR }}>
+                                +
+                                {formatTooltipTokens(
+                                  effort.reasoningOverflowTokens ?? 0,
+                                )}
+                                *
+                              </span>
+                            ) : null}
+                            {`)`}
+                          </>
+                        ) : null}
+                      </span>
+                    );
+                  }}
+                />
+                {hasOverflow ? (
+                  <div
+                    style={{
+                      color: OVERFLOW_COLOR,
+                      fontSize: 10,
+                      marginTop: 5,
+                    }}
+                  >
+                    * provider-reported reasoning overflow
+                  </div>
+                ) : null}
               </div>
-              <GroupedMetricTooltipSections
-                entry={entry}
-                outputMode={outputMode}
-                formatRepresentative={formatTokens}
-                renderEffort={(effort) => (
-                  <span style={{ color: "var(--text-dim)" }}>
-                    {effort.reasoningLevel ?? "default"}:{" "}
-                    {formatTokens(effort.value)}
-                    {effort.inputTokens || effort.outputTokens
-                      ? ` (in ${formatTokens(
-                          effort.inputTokens ?? 0
-                        )} / out ${formatTokens(effort.outputTokens ?? 0)}${
-                          effort.reasoningTokens != null
-                            ? ` (${formatTokens(
-                                effort.reasoningTokens
-                              )} reasoning within output)`
-                            : ""
-                        })`
-                      : ""}
-                  </span>
-                )}
-              />
-              <div
-                style={{
-                  borderTop: "1px solid rgba(255,255,255,0.06)",
-                  margin: "6px 0",
-                }}
-              />
-              <div
-                style={{
-                  color: "var(--text-dim)",
-                  fontSize: 10,
-                  lineHeight: 1.4,
-                }}
-              >
-                Input + visible output + reasoning = total tokens. Fewer is more
-                efficient.
-              </div>
-            </div>
-          )}
+            );
+          }}
         />
       )}
     </div>

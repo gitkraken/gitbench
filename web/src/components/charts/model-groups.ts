@@ -36,6 +36,9 @@ export interface MetricEffort extends ModelGroupEffort {
   outputTokens?: number;
   visibleOutputTokens?: number | null;
   reasoningTokens?: number | null;
+  reasoningWithinOutputTokens?: number | null;
+  reasoningOverflowTokens?: number | null;
+  hasInconsistentReasoningTelemetry?: boolean;
   avgMs?: number;
   fixtureCount?: number;
 }
@@ -66,11 +69,17 @@ export interface GroupedMetricRow {
   sortValue: number;
   textInputTokens?: number;
   textVisibleOutputTokens?: number;
-  textReasoningTokens?: number;
+  textReasoningWithinOutputTokens?: number;
+  textReasoningOverflowTokens?: number;
+  textRawReasoningTokens?: number;
+  textHasInconsistentReasoningTelemetry?: boolean;
   textHasReasoningData?: boolean;
   jsonInputTokens?: number;
   jsonVisibleOutputTokens?: number;
-  jsonReasoningTokens?: number;
+  jsonReasoningWithinOutputTokens?: number;
+  jsonReasoningOverflowTokens?: number;
+  jsonRawReasoningTokens?: number;
+  jsonHasInconsistentReasoningTelemetry?: boolean;
   jsonHasReasoningData?: boolean;
   hasReasoningData?: boolean;
 }
@@ -84,7 +93,7 @@ export interface ModelVariantPair {
 
 export type MetricExtractor = (
   effort: ModelGroupEffort,
-  data: GitBenchData
+  data: GitBenchData,
 ) => MetricEffort | null;
 
 type RepresentativeMetric = "min" | "max" | "median";
@@ -146,21 +155,21 @@ function compareReasoningEfforts(a: MetricEffort, b: MetricEffort): number {
   return (
     compareReasoningLevels(
       String(a.reasoningLevel ?? ""),
-      String(b.reasoningLevel ?? "")
+      String(b.reasoningLevel ?? ""),
     ) || a.modelName.localeCompare(b.modelName)
   );
 }
 
 export function modelGroupId(
   provider: string,
-  baseModel: string
+  baseModel: string,
 ): ModelGroupId {
   return `${provider}/${baseModel}`;
 }
 
 function effortFromModelInfo(
   model: ModelInfo,
-  data: GitBenchData
+  data: GitBenchData,
 ): ModelGroupEffort {
   const outputMode = model.output_mode ?? "text";
   const modelName = modelVariantKey(model.name, outputMode);
@@ -181,14 +190,14 @@ function effortFromModelInfo(
 function effortFromGroupLevel(
   group: BaseModelGroup,
   level: BaseModelGroup["levels"][number],
-  data: GitBenchData
+  data: GitBenchData,
 ): ModelGroupEffort {
   const outputMode = outputModeFromVariantKey(level.modelName);
   const baseModelName = cleanModelName(level.modelName);
   const modelInfo = data.models.find(
     (model) =>
       model.name === baseModelName &&
-      (model.output_mode ?? "text") === outputMode
+      (model.output_mode ?? "text") === outputMode,
   );
   const summary = data.model_summaries[level.modelName];
   const provider = modelInfo?.provider ?? group.provider;
@@ -209,13 +218,13 @@ export function deriveModelGroups(data: GitBenchData): ModelGroup[] {
   if (data.base_model_groups?.length) {
     return data.base_model_groups.map((group) => {
       const efforts = group.levels.map((level) =>
-        effortFromGroupLevel(group, level, data)
+        effortFromGroupLevel(group, level, data),
       );
       const first = efforts[0];
       return {
         id: modelGroupId(
           first?.provider ?? group.provider,
-          first?.baseModel ?? group.baseModel
+          first?.baseModel ?? group.baseModel,
         ),
         provider: first?.provider ?? group.provider,
         baseModel: first?.baseModel ?? group.baseModel,
@@ -248,7 +257,7 @@ export function groupIdsForData(data: GitBenchData): ModelGroupId[] {
 
 export function sanitizeGroupSelection(
   selection: string[],
-  groups: ModelGroup[]
+  groups: ModelGroup[],
 ): ModelGroupId[] {
   const groupIds = new Set(groups.map((group) => group.id));
   const modelToGroup = new Map<string, ModelGroupId>();
@@ -271,10 +280,10 @@ export function sanitizeGroupSelection(
 
 export function expandGroupSelection(
   selection: string[],
-  data: GitBenchData
+  data: GitBenchData,
 ): string[] {
   const selectedGroups = new Set(
-    sanitizeGroupSelection(selection, deriveModelGroups(data))
+    sanitizeGroupSelection(selection, deriveModelGroups(data)),
   );
   return deriveModelGroups(data)
     .filter((group) => selectedGroups.has(group.id))
@@ -289,7 +298,7 @@ export function passRateMetric(effort: ModelGroupEffort): MetricEffort | null {
 export function benchPassRateMetric(benchName: string): MetricExtractor {
   return (
     effort: ModelGroupEffort,
-    data: GitBenchData
+    data: GitBenchData,
   ): MetricEffort | null => {
     const cell = data.matrix[effort.modelName]?.[benchName];
     if (!cell) return null;
@@ -304,7 +313,7 @@ export function costMetric(effort: ModelGroupEffort): MetricEffort | null {
 
 export function runtimeMetric(
   effort: ModelGroupEffort,
-  data: GitBenchData
+  data: GitBenchData,
 ): MetricEffort | null {
   const runtime = data.model_runtimes[effort.modelName];
   if (!runtime) return null;
@@ -318,7 +327,7 @@ export function runtimeMetric(
 
 export function tokenMetric(
   effort: ModelGroupEffort,
-  data: GitBenchData
+  data: GitBenchData,
 ): MetricEffort {
   const tokens = data.model_token_summaries[effort.modelName] ?? {
     input_tokens: 0,
@@ -328,7 +337,7 @@ export function tokenMetric(
   };
   const decomposition = decomposeOutputTokens(
     tokens.output_tokens,
-    tokens.reasoning_tokens
+    tokens.reasoning_tokens,
   );
   return {
     ...effort,
@@ -337,16 +346,20 @@ export function tokenMetric(
     outputTokens: decomposition.totalOutputTokens ?? undefined,
     visibleOutputTokens: decomposition.visibleOutputTokens,
     reasoningTokens: decomposition.reasoningTokens,
+    reasoningWithinOutputTokens: decomposition.reasoningWithinOutputTokens,
+    reasoningOverflowTokens: decomposition.reasoningOverflowTokens,
+    hasInconsistentReasoningTelemetry:
+      decomposition.hasInconsistentReasoningTelemetry,
   };
 }
 
 function closestRepresentativeEffort(
-  summary: GroupedMetricModeSummary
+  summary: GroupedMetricModeSummary,
 ): MetricEffort {
   return summary.efforts.reduce((closest, effort) => {
     const distance = Math.abs(effort.value - summary.representativeValue);
     const closestDistance = Math.abs(
-      closest.value - summary.representativeValue
+      closest.value - summary.representativeValue,
     );
     if (distance < closestDistance) return effort;
     if (distance === closestDistance && effort.value < closest.value) {
@@ -358,7 +371,7 @@ function closestRepresentativeEffort(
 
 function applyTokenSegments(
   row: GroupedMetricRow,
-  mode: ConcreteOutputMode
+  mode: ConcreteOutputMode,
 ): void {
   const summary = row.modes[mode];
   if (!summary) return;
@@ -372,24 +385,33 @@ function applyTokenSegments(
 
   const inputTokens = representative.inputTokens ?? 0;
   const visibleOutputTokens = representative.visibleOutputTokens ?? 0;
-  const reasoningTokens = representative.reasoningTokens ?? 0;
-  const hasReasoningData =
-    representative.reasoningLevel != null &&
-    representative.reasoningTokens != null;
+  const reasoningWithinOutputTokens =
+    representative.reasoningWithinOutputTokens ?? 0;
+  const reasoningOverflowTokens = representative.reasoningOverflowTokens ?? 0;
+  const rawReasoningTokens = representative.reasoningTokens ?? 0;
+  const hasReasoningData = representative.reasoningTokens != null;
 
   if (mode === "text") {
     row.textRepresentativeValue = representative.value;
     row.textRangeWhisker = summary.rangeWhisker;
     row.textInputTokens = inputTokens;
     row.textVisibleOutputTokens = visibleOutputTokens;
-    row.textReasoningTokens = reasoningTokens;
+    row.textReasoningWithinOutputTokens = reasoningWithinOutputTokens;
+    row.textReasoningOverflowTokens = reasoningOverflowTokens;
+    row.textRawReasoningTokens = rawReasoningTokens;
+    row.textHasInconsistentReasoningTelemetry =
+      representative.hasInconsistentReasoningTelemetry ?? false;
     row.textHasReasoningData = hasReasoningData;
   } else {
     row.jsonRepresentativeValue = representative.value;
     row.jsonRangeWhisker = summary.rangeWhisker;
     row.jsonInputTokens = inputTokens;
     row.jsonVisibleOutputTokens = visibleOutputTokens;
-    row.jsonReasoningTokens = reasoningTokens;
+    row.jsonReasoningWithinOutputTokens = reasoningWithinOutputTokens;
+    row.jsonReasoningOverflowTokens = reasoningOverflowTokens;
+    row.jsonRawReasoningTokens = rawReasoningTokens;
+    row.jsonHasInconsistentReasoningTelemetry =
+      representative.hasInconsistentReasoningTelemetry ?? false;
     row.jsonHasReasoningData = hasReasoningData;
   }
   row.hasReasoningData = row.hasReasoningData || hasReasoningData;
@@ -398,14 +420,14 @@ function applyTokenSegments(
 export function buildTokenUsageRows(
   data: GitBenchData,
   selectedGroupIds: string[],
-  outputMode: OutputMode
+  outputMode: OutputMode,
 ): GroupedMetricRow[] {
   const rows = buildGroupedMetricRows(
     data,
     selectedGroupIds,
     tokenMetric,
     "median",
-    outputMode
+    outputMode,
   );
   for (const row of rows) {
     applyTokenSegments(row, "text");
@@ -421,10 +443,10 @@ export function buildGroupedMetricRows(
   selectedGroupIds: string[],
   extractor: MetricExtractor,
   representative: RepresentativeMetric,
-  outputMode?: OutputMode
+  outputMode?: OutputMode,
 ): GroupedMetricRow[] {
   const selected = new Set(
-    sanitizeGroupSelection(selectedGroupIds, deriveModelGroups(data))
+    sanitizeGroupSelection(selectedGroupIds, deriveModelGroups(data)),
   );
   return deriveModelGroups(data)
     .filter((group) => selected.has(group.id))
@@ -453,8 +475,8 @@ export function buildGroupedMetricRows(
           representative === "min"
             ? minValue
             : representative === "max"
-            ? maxValue
-            : medianValue;
+              ? maxValue
+              : medianValue;
         modes[mode] = {
           outputMode: mode,
           efforts,
@@ -472,7 +494,7 @@ export function buildGroupedMetricRows(
         .map((mode) => modes[mode])
         .filter(
           (summary): summary is GroupedMetricModeSummary =>
-            summary !== undefined
+            summary !== undefined,
         );
       if (summaries.length === 0) return null;
 
@@ -494,7 +516,7 @@ export function buildGroupedMetricRows(
       };
       row.sortValue = getGroupedMetricSortValue(
         row as GroupedMetricRow,
-        outputMode ?? "both"
+        outputMode ?? "both",
       );
       row.representativeValue = row.sortValue;
       return row;
@@ -503,7 +525,7 @@ export function buildGroupedMetricRows(
 }
 
 export function visibleOutputModes(
-  outputMode: OutputMode
+  outputMode: OutputMode,
 ): ConcreteOutputMode[] {
   return outputMode === "both" ? ["text", "json_schema"] : [outputMode];
 }
@@ -514,7 +536,7 @@ export function outputModeLabel(outputMode: ConcreteOutputMode): string {
 
 export function getGroupedMetricSortValue(
   row: GroupedMetricRow,
-  outputMode: OutputMode
+  outputMode: OutputMode,
 ): number {
   const values = visibleOutputModes(outputMode)
     .map((mode) => row.modes[mode]?.representativeValue)
@@ -529,7 +551,7 @@ export function getAvailableOutputModes(data: GitBenchData): Set<string> {
 
 export function filterEffortsByOutputMode(
   efforts: ModelGroupEffort[],
-  mode: OutputMode
+  mode: OutputMode,
 ): ModelGroupEffort[] {
   if (mode === "both") return efforts;
   return efforts.filter((e) => e.outputMode === mode);
@@ -542,7 +564,7 @@ export function filterEffortsByOutputMode(
 export function expandGroupSelectionWithMode(
   selection: string[],
   data: GitBenchData,
-  outputMode: OutputMode = "text"
+  outputMode: OutputMode = "text",
 ): string[] {
   const groups = deriveModelGroups(data);
   const selectedGroups = new Set(sanitizeGroupSelection(selection, groups));

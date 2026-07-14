@@ -401,8 +401,8 @@ export function VerticalGroupedMetricChart({
                       : "jsonVisibleOutputTokens";
                   const reasonKey =
                     mode === "text"
-                      ? "textReasoningTokens"
-                      : "jsonReasoningTokens";
+                      ? "textReasoningWithinOutputTokens"
+                      : "jsonReasoningWithinOutputTokens";
                   const stackId = `tokens-${mode}`;
                   const whiskerKey =
                     mode === "text" ? "textRangeWhisker" : "jsonRangeWhisker";

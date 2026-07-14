@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { buildTokenUsageRows } from "../src/components/charts/model-groups.ts";
 import { chartData } from "../src/lib/chart-data.ts";
 
 function cell(passAtK, passed, total) {
@@ -213,6 +214,31 @@ test("benchmark scoped chart payloads use fixture rows instead of global totals"
   assert.equal(scoped.matrix[modelKey].commit_messages.pass_at_k, 0.5);
 });
 
+test("benchmark scoped token rows bound aggregated reasoning to provider output", () => {
+  const source = benchmarkSource();
+  source.benchmark.results[modelKey].commit_messages[0].reasoning_tokens = 7;
+  source.benchmark.results[modelKey].commit_messages[1].reasoning_tokens = 12;
+  const scoped = chartData(
+    "tokens",
+    summaryForScopedTests(),
+    { type: "benchmark", benchmark: "commit_messages" },
+    source,
+  );
+
+  const [row] = buildTokenUsageRows(scoped, ["openai/gpt-test"], "text");
+  assert.equal(row.textRepresentativeValue, 45);
+  assert.equal(row.textVisibleOutputTokens, 0);
+  assert.equal(row.textReasoningWithinOutputTokens, 15);
+  assert.equal(row.textRawReasoningTokens, 19);
+  assert.equal(row.textReasoningOverflowTokens, 4);
+  assert.equal(
+    row.textInputTokens +
+      row.textVisibleOutputTokens +
+      row.textReasoningWithinOutputTokens,
+    row.textRepresentativeValue,
+  );
+});
+
 test("scoped base model groups do not fall back to global cost totals", () => {
   const scoped = chartData(
     "cost",
@@ -243,6 +269,32 @@ function fixtureSource(result) {
     },
   };
 }
+
+test("fixture scoped token rows use the shared bounded decomposition", () => {
+  const scoped = chartData(
+    "tokens",
+    summaryForScopedTests(),
+    {
+      type: "fixture",
+      benchmark: "commit_messages",
+      fixture: "f001",
+    },
+    fixtureSource(fixtureResult({ reasoning_tokens: 7 })),
+  );
+
+  const [row] = buildTokenUsageRows(scoped, ["openai/gpt-test"], "text");
+  assert.equal(row.textRepresentativeValue, 15);
+  assert.equal(row.textVisibleOutputTokens, 0);
+  assert.equal(row.textReasoningWithinOutputTokens, 5);
+  assert.equal(row.textRawReasoningTokens, 7);
+  assert.equal(row.textReasoningOverflowTokens, 2);
+  assert.equal(
+    row.textInputTokens +
+      row.textVisibleOutputTokens +
+      row.textReasoningWithinOutputTokens,
+    row.textRepresentativeValue,
+  );
+});
 
 test("fixture scoped quality uses repeated campaign success when attempts exist", () => {
   const scoped = chartData(

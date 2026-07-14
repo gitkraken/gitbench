@@ -72,7 +72,7 @@ test("buildGroupedMetricRows aggregates each output mode independently", () => {
     ["openai/gpt-test"],
     passRateMetric,
     "median",
-    "both"
+    "both",
   );
 
   assert.equal(row.modes.text.representativeValue, 20);
@@ -92,7 +92,7 @@ test("buildGroupedMetricRows preserves a group with one available mode", () => {
     ["openai/gpt-test"],
     passRateMetric,
     "median",
-    "both"
+    "both",
   );
 
   assert.equal(row.modes.text.representativeValue, 81);
@@ -113,7 +113,7 @@ test("Both-mode sort values use the mean of available representatives", () => {
     ["openai/gpt-test", "anthropic/claude-test"],
     passRateMetric,
     "median",
-    "both"
+    "both",
   ).sort((a, b) => b.sortValue - a.sortValue);
 
   assert.deepEqual(
@@ -121,7 +121,7 @@ test("Both-mode sort values use the mean of available representatives", () => {
     [
       ["openai/gpt-test", 80],
       ["anthropic/claude-test", 77],
-    ]
+    ],
   );
 });
 
@@ -144,7 +144,7 @@ test("pairModelVariants groups concrete storage keys by canonical effort", () =>
         label: "anthropic/claude-test:medium",
         jsonModelName: "anthropic/claude-test:medium__json_schema",
       },
-    ]
+    ],
   );
 });
 
@@ -200,20 +200,18 @@ test("token rows use one representative effort instead of summing efforts", () =
     },
   ]);
 
-  const [row] = buildTokenUsageRows(
-    data,
-    ["openai/gpt-test"],
-    "text",
-  );
+  const [row] = buildTokenUsageRows(data, ["openai/gpt-test"], "text");
 
   assert.equal(row.textRepresentativeValue, 200);
   assert.equal(row.textInputTokens, 80);
   assert.equal(row.textVisibleOutputTokens, 100);
-  assert.equal(row.textReasoningTokens, 20);
+  assert.equal(row.textReasoningWithinOutputTokens, 20);
+  assert.equal(row.textRawReasoningTokens, 20);
+  assert.equal(row.textReasoningOverflowTokens, 0);
   assert.equal(
     row.textInputTokens +
       row.textVisibleOutputTokens +
-      row.textReasoningTokens,
+      row.textReasoningWithinOutputTokens,
     200,
   );
 });
@@ -244,7 +242,7 @@ test("token rows preserve no-reasoning, zero, and inconsistent counts", () => {
     "text",
   )[0];
   assert.equal(noReasoning.textVisibleOutputTokens, 120);
-  assert.equal(noReasoning.textReasoningTokens, 0);
+  assert.equal(noReasoning.textReasoningWithinOutputTokens, 0);
   assert.equal(noReasoning.textHasReasoningData, false);
   assert.equal(noReasoning.hasReasoningData, false);
 
@@ -273,7 +271,7 @@ test("token rows preserve no-reasoning, zero, and inconsistent counts", () => {
     "text",
   )[0];
   assert.equal(zeroReasoning.textVisibleOutputTokens, 120);
-  assert.equal(zeroReasoning.textReasoningTokens, 0);
+  assert.equal(zeroReasoning.textReasoningWithinOutputTokens, 0);
   assert.equal(zeroReasoning.textHasReasoningData, true);
   assert.equal(zeroReasoning.hasReasoningData, true);
 
@@ -302,5 +300,14 @@ test("token rows preserve no-reasoning, zero, and inconsistent counts", () => {
     "text",
   )[0];
   assert.equal(inconsistent.textVisibleOutputTokens, 0);
-  assert.equal(inconsistent.textReasoningTokens, 120);
+  assert.equal(inconsistent.textReasoningWithinOutputTokens, 100);
+  assert.equal(inconsistent.textRawReasoningTokens, 120);
+  assert.equal(inconsistent.textReasoningOverflowTokens, 20);
+  assert.equal(inconsistent.textHasInconsistentReasoningTelemetry, true);
+  assert.equal(
+    inconsistent.textInputTokens +
+      inconsistent.textVisibleOutputTokens +
+      inconsistent.textReasoningWithinOutputTokens,
+    inconsistent.textRepresentativeValue,
+  );
 });
