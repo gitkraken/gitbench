@@ -545,6 +545,12 @@ export function getGroupedMetricSortValue(
   return values.reduce((total, value) => total + value, 0) / values.length;
 }
 
+export function sortGroupedMetricRowsDescending(
+  rows: GroupedMetricRow[],
+): GroupedMetricRow[] {
+  return rows.sort((a, b) => b.sortValue - a.sortValue);
+}
+
 export function getAvailableOutputModes(data: GitBenchData): Set<string> {
   return new Set(data.models.map((m) => m.output_mode ?? "text"));
 }

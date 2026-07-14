@@ -4,9 +4,12 @@ import test from "node:test";
 import {
   buildGroupedMetricRows,
   buildTokenUsageRows,
+  costMetric,
   getGroupedMetricSortValue,
   pairModelVariants,
   passRateMetric,
+  runtimeMetric,
+  sortGroupedMetricRowsDescending,
 } from "../src/components/charts/model-groups.ts";
 
 function summary(passAtK) {
@@ -121,6 +124,219 @@ test("Both-mode sort values use the mean of available representatives", () => {
     [
       ["openai/gpt-test", 80],
       ["anthropic/claude-test", 77],
+    ],
+  );
+});
+
+function resourceChartData(groups) {
+  const levels = ["low", "medium", "high", "xhigh", "max"];
+  const models = [];
+  const model_summaries = {};
+  const model_runtimes = {};
+  const model_token_summaries = {};
+
+  function addMode(provider, baseModel, outputMode, values) {
+    values.forEach((metrics, index) => {
+      const level = levels[index] ?? `level-${index}`;
+      const name = `${provider}/${baseModel}:${level}`;
+      const key = outputMode === "json_schema" ? `${name}__json_schema` : name;
+      models.push({
+        name,
+        provider,
+        baseModel,
+        reasoningLevel: level,
+        output_mode: outputMode,
+      });
+      model_summaries[key] = {
+        ...summary(1),
+        total_cost_usd: metrics.cost,
+        avg_cost_usd: metrics.cost,
+      };
+      model_runtimes[key] = {
+        total_ms: metrics.runtimeSeconds * 1000,
+        avg_ms: metrics.runtimeSeconds * 1000,
+        min_ms: metrics.runtimeSeconds * 1000,
+        max_ms: metrics.runtimeSeconds * 1000,
+        fixture_count: 1,
+      };
+      const inputTokens = Math.floor(metrics.tokens / 2);
+      model_token_summaries[key] = {
+        input_tokens: inputTokens,
+        output_tokens: metrics.tokens - inputTokens,
+        reasoning_tokens: null,
+        total_tokens: metrics.tokens,
+      };
+    });
+  }
+
+  for (const group of groups) {
+    addMode(group.provider, group.baseModel, "text", group.text ?? []);
+    addMode(
+      group.provider,
+      group.baseModel,
+      "json_schema",
+      group.json ?? [],
+    );
+  }
+
+  return {
+    models,
+    benchmarks: [],
+    model_summaries,
+    model_runtimes,
+    model_token_summaries,
+    matrix: {},
+    fixtures: {},
+    fixture_index: {},
+    runs_meta: [],
+    base_model_groups: [],
+  };
+}
+
+test("resource chart rows sort single-mode representatives highest-first", () => {
+  const data = resourceChartData([
+    {
+      provider: "openai",
+      baseModel: "gpt-test",
+      text: [
+        { cost: 10, runtimeSeconds: 5, tokens: 5000 },
+        { cost: 10, runtimeSeconds: 5, tokens: 5000 },
+        { cost: 10, runtimeSeconds: 5, tokens: 5000 },
+        { cost: 20, runtimeSeconds: 12, tokens: 8000 },
+        { cost: 50, runtimeSeconds: 30, tokens: 12000 },
+      ],
+    },
+    {
+      provider: "anthropic",
+      baseModel: "claude-test",
+      text: [{ cost: 80, runtimeSeconds: 60, tokens: 15000 }],
+    },
+    {
+      provider: "google",
+      baseModel: "gemini-test",
+      text: [{ cost: 50, runtimeSeconds: 30, tokens: 12000 }],
+    },
+  ]);
+  const selectedGroups = [
+    "openai/gpt-test",
+    "anthropic/claude-test",
+    "google/gemini-test",
+  ];
+
+  const costRows = sortGroupedMetricRowsDescending(
+    buildGroupedMetricRows(data, selectedGroups, costMetric, "median", "text"),
+  );
+  assert.deepEqual(
+    costRows.map((row) => [row.id, row.sortValue]),
+    [
+      ["anthropic/claude-test", 80],
+      ["google/gemini-test", 50],
+      ["openai/gpt-test", 20],
+    ],
+  );
+  assert.equal(costRows[2].modes.text.representativeValue, 20);
+
+  const runtimeRows = sortGroupedMetricRowsDescending(
+    buildGroupedMetricRows(
+      data,
+      selectedGroups,
+      runtimeMetric,
+      "median",
+      "text",
+    ),
+  );
+  assert.deepEqual(
+    runtimeRows.map((row) => [row.id, row.sortValue]),
+    [
+      ["anthropic/claude-test", 60],
+      ["google/gemini-test", 30],
+      ["openai/gpt-test", 12],
+    ],
+  );
+  assert.equal(runtimeRows[2].modes.text.representativeValue, 12);
+
+  const tokenRows = sortGroupedMetricRowsDescending(
+    buildTokenUsageRows(data, selectedGroups, "text"),
+  );
+  assert.deepEqual(
+    tokenRows.map((row) => [row.id, row.sortValue]),
+    [
+      ["anthropic/claude-test", 15000],
+      ["google/gemini-test", 12000],
+      ["openai/gpt-test", 8000],
+    ],
+  );
+  assert.equal(tokenRows[2].modes.text.representativeValue, 8000);
+});
+
+test("resource chart rows sort Both-mode mean representatives highest-first", () => {
+  const data = resourceChartData([
+    {
+      provider: "openai",
+      baseModel: "gpt-test",
+      text: [{ cost: 10, runtimeSeconds: 40, tokens: 5000 }],
+      json: [{ cost: 50, runtimeSeconds: 60, tokens: 15000 }],
+    },
+    {
+      provider: "anthropic",
+      baseModel: "claude-test",
+      text: [{ cost: 20, runtimeSeconds: 45, tokens: 8000 }],
+      json: [{ cost: 30, runtimeSeconds: 50, tokens: 10000 }],
+    },
+  ]);
+  const selectedGroups = ["openai/gpt-test", "anthropic/claude-test"];
+
+  const costRows = sortGroupedMetricRowsDescending(
+    buildGroupedMetricRows(data, selectedGroups, costMetric, "median", "both"),
+  );
+  assert.deepEqual(
+    costRows.map((row) => [
+      row.id,
+      row.sortValue,
+      row.modes.text.representativeValue,
+      row.modes.json_schema.representativeValue,
+    ]),
+    [
+      ["openai/gpt-test", 30, 10, 50],
+      ["anthropic/claude-test", 25, 20, 30],
+    ],
+  );
+
+  const runtimeRows = sortGroupedMetricRowsDescending(
+    buildGroupedMetricRows(
+      data,
+      selectedGroups,
+      runtimeMetric,
+      "median",
+      "both",
+    ),
+  );
+  assert.deepEqual(
+    runtimeRows.map((row) => [
+      row.id,
+      row.sortValue,
+      row.modes.text.representativeValue,
+      row.modes.json_schema.representativeValue,
+    ]),
+    [
+      ["openai/gpt-test", 50, 40, 60],
+      ["anthropic/claude-test", 47.5, 45, 50],
+    ],
+  );
+
+  const tokenRows = sortGroupedMetricRowsDescending(
+    buildTokenUsageRows(data, selectedGroups, "both"),
+  );
+  assert.deepEqual(
+    tokenRows.map((row) => [
+      row.id,
+      row.sortValue,
+      row.modes.text.representativeValue,
+      row.modes.json_schema.representativeValue,
+    ]),
+    [
+      ["openai/gpt-test", 10000, 5000, 15000],
+      ["anthropic/claude-test", 9000, 8000, 10000],
     ],
   );
 });

@@ -4,7 +4,10 @@ import { loadTokenChart } from "@/lib/report-client";
 import ProviderIcon from "@/components/ProviderIcon";
 import ModelOutputControls from "@/components/charts/ModelOutputControls";
 import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelection";
-import { buildTokenUsageRows } from "@/components/charts/model-groups";
+import {
+  buildTokenUsageRows,
+  sortGroupedMetricRowsDescending,
+} from "@/components/charts/model-groups";
 import {
   GroupedMetricTooltipSections,
   VerticalGroupedMetricChart,
@@ -61,8 +64,8 @@ export default function TokenUsageChart({
 
   const chartData = useMemo(() => {
     if (!data) return [];
-    return buildTokenUsageRows(data, selectedGroups, outputMode).sort(
-      (a, b) => a.sortValue - b.sortValue,
+    return sortGroupedMetricRowsDescending(
+      buildTokenUsageRows(data, selectedGroups, outputMode),
     );
   }, [data, selectedGroups, outputMode]);
 

@@ -7,6 +7,7 @@ import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelec
 import {
   buildGroupedMetricRows,
   costMetric,
+  sortGroupedMetricRowsDescending,
 } from "@/components/charts/model-groups";
 import {
   GroupedMetricTooltipSections,
@@ -62,13 +63,15 @@ export default function CostValueChart({
 
   const chartData = useMemo(() => {
     if (!data) return [];
-    return buildGroupedMetricRows(
-      data,
-      selectedGroups,
-      costMetric,
-      "median",
-      outputMode
-    ).sort((a, b) => a.sortValue - b.sortValue);
+    return sortGroupedMetricRowsDescending(
+      buildGroupedMetricRows(
+        data,
+        selectedGroups,
+        costMetric,
+        "median",
+        outputMode
+      )
+    );
   }, [data, selectedGroups, outputMode]);
 
   const yDomain = useMemo(

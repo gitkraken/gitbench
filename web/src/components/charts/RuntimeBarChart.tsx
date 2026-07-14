@@ -7,6 +7,7 @@ import { useSyncedModelSelection } from "@/components/charts/useSyncedModelSelec
 import {
   buildGroupedMetricRows,
   runtimeMetric,
+  sortGroupedMetricRowsDescending,
 } from "@/components/charts/model-groups";
 import {
   GroupedMetricTooltipSections,
@@ -60,13 +61,15 @@ export default function RuntimeBarChart({
 
   const chartData = useMemo(() => {
     if (!data) return [];
-    return buildGroupedMetricRows(
-      data,
-      selectedGroups,
-      runtimeMetric,
-      "median",
-      outputMode
-    ).sort((a, b) => a.sortValue - b.sortValue);
+    return sortGroupedMetricRowsDescending(
+      buildGroupedMetricRows(
+        data,
+        selectedGroups,
+        runtimeMetric,
+        "median",
+        outputMode
+      )
+    );
   }, [data, selectedGroups, outputMode]);
 
   const yDomain = useMemo(
