@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Ref } from "react";
 import {
   CartesianGrid,
   Label,
@@ -12,10 +13,12 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import type { TooltipContentProps } from "recharts";
 import type { GitBenchData } from "@/lib/types";
 import { loadQuadrantChart } from "@/lib/report-client";
 import { modelGroupPath } from "@/lib/routes";
 import { getProviderColor } from "@/lib/provider-colors";
+import { useCampaignId } from "@/lib/use-campaign";
 import ProviderIcon from "@/components/ProviderIcon";
 import ModelSelector from "@/components/charts/ModelSelector";
 import OutputModeSelector from "@/components/charts/OutputModeSelector";
@@ -45,6 +48,9 @@ import {
 } from "@/components/charts/quadrant-data";
 
 type MetricKey = "passRate" | "cost" | "tokens" | "runtime";
+
+const TOOLTIP_MOTION_DURATION_MS = 140;
+const TOOLTIP_MOTION_RESET_DELAY_MS = 125;
 
 interface MetricDefinition {
   key: MetricKey;
@@ -206,14 +212,16 @@ function QuadrantPairTooltip({
   outputMode,
   xMetric,
   yMetric,
+  contentRef,
 }: {
   pair: QuadrantPointPair;
   outputMode: OutputMode;
   xMetric: MetricDefinition;
   yMetric: MetricDefinition;
+  contentRef?: Ref<HTMLDivElement>;
 }) {
   return (
-    <div style={tooltipStyle}>
+    <div ref={contentRef} style={tooltipStyle}>
       <div
         style={{
           color: "var(--text)",
@@ -260,6 +268,59 @@ function QuadrantPairTooltip({
         );
       })}
     </div>
+  );
+}
+
+function QuadrantMotionTooltip({
+  active,
+  payload,
+  pointPairs,
+  outputMode,
+  xMetric,
+  yMetric,
+  onActive,
+  onInactive,
+  onPosition,
+}: {
+  active?: boolean;
+  payload?: TooltipContentProps["payload"];
+  pointPairs: QuadrantPointPair[];
+  outputMode: OutputMode;
+  xMetric: MetricDefinition;
+  yMetric: MetricDefinition;
+  onActive: () => void;
+  onInactive: () => void;
+  onPosition: (transform: string) => void;
+}) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const point = payload?.[0]?.payload as QuadrantPoint | undefined;
+  const pair = point ? quadrantPairForPoint(pointPairs, point) : undefined;
+  const hasActivePair = Boolean(active && pair);
+
+  useEffect(() => {
+    if (!hasActivePair) return;
+    const transform = contentRef.current?.parentElement?.style.transform;
+    if (transform) onPosition(transform);
+  });
+
+  useEffect(() => {
+    if (hasActivePair) {
+      onActive();
+      return onInactive;
+    }
+    onInactive();
+  }, [hasActivePair, onActive, onInactive]);
+
+  if (!active || !pair) return null;
+
+  return (
+    <QuadrantPairTooltip
+      pair={pair}
+      outputMode={outputMode}
+      xMetric={xMetric}
+      yMetric={yMetric}
+      contentRef={contentRef}
+    />
   );
 }
 
@@ -342,8 +403,6 @@ function PointShape({ cx, cy, payload, onFocusPair, onBlurPair }: any) {
   );
 }
 
-import { useCampaignId } from "@/lib/use-campaign";
-
 interface ScopedChartProps {
   benchmarkName?: string;
   fixtureId?: string;
@@ -358,6 +417,15 @@ export default function QuadrantComparisonChart({
   const [xMetricKey, setXMetricKey] = useState<MetricKey>("cost");
   const [yMetricKey, setYMetricKey] = useState<MetricKey>("passRate");
   const [focusedPairId, setFocusedPairId] = useState<string | null>(null);
+  const [isTooltipMotionPrimed, setIsTooltipMotionPrimed] = useState(false);
+  const [retainedTooltipTransform, setRetainedTooltipTransform] = useState<
+    string | null
+  >(null);
+  const tooltipPrimeFrameRef = useRef<number | null>(null);
+  const tooltipLastTransformRef = useRef<string | null>(null);
+  const tooltipResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const {
     selectedGroups,
     setSelectedGroups,
@@ -371,6 +439,55 @@ export default function QuadrantComparisonChart({
       setData
     );
   }, [benchmarkName, fixtureId, campaignId]);
+
+  const clearTooltipPrimeFrame = useCallback(() => {
+    if (tooltipPrimeFrameRef.current == null) return;
+    cancelAnimationFrame(tooltipPrimeFrameRef.current);
+    tooltipPrimeFrameRef.current = null;
+  }, []);
+
+  const clearTooltipResetTimer = useCallback(() => {
+    if (tooltipResetTimerRef.current == null) return;
+    clearTimeout(tooltipResetTimerRef.current);
+    tooltipResetTimerRef.current = null;
+  }, []);
+
+  const primeTooltipMotion = useCallback(() => {
+    clearTooltipResetTimer();
+    setRetainedTooltipTransform(null);
+    if (isTooltipMotionPrimed || tooltipPrimeFrameRef.current != null) return;
+    tooltipPrimeFrameRef.current = requestAnimationFrame(() => {
+      tooltipPrimeFrameRef.current = null;
+      setIsTooltipMotionPrimed(true);
+    });
+  }, [clearTooltipResetTimer, isTooltipMotionPrimed]);
+
+  const scheduleTooltipMotionReset = useCallback(() => {
+    clearTooltipPrimeFrame();
+    if (tooltipResetTimerRef.current != null) return;
+    tooltipResetTimerRef.current = setTimeout(() => {
+      tooltipResetTimerRef.current = null;
+      tooltipLastTransformRef.current = null;
+      setRetainedTooltipTransform(null);
+      setIsTooltipMotionPrimed(false);
+    }, TOOLTIP_MOTION_RESET_DELAY_MS);
+  }, [clearTooltipPrimeFrame]);
+
+  const recordTooltipPosition = useCallback((transform: string) => {
+    tooltipLastTransformRef.current = transform;
+  }, []);
+
+  const retainTooltipPositionAndScheduleReset = useCallback(() => {
+    setRetainedTooltipTransform(tooltipLastTransformRef.current);
+    scheduleTooltipMotionReset();
+  }, [scheduleTooltipMotionReset]);
+
+  useEffect(() => {
+    return () => {
+      clearTooltipPrimeFrame();
+      clearTooltipResetTimer();
+    };
+  }, [clearTooltipPrimeFrame, clearTooltipResetTimer]);
 
   const metrics = useMemo(
     () => metricDefinitionsForScope(data, benchmarkName, fixtureId),
@@ -653,27 +770,31 @@ export default function QuadrantComparisonChart({
                 />
                 <ZAxis range={[80, 80]} />
                 <Tooltip
+                  isAnimationActive={isTooltipMotionPrimed ? "auto" : false}
+                  animationDuration={
+                    isTooltipMotionPrimed ? TOOLTIP_MOTION_DURATION_MS : 0
+                  }
+                  animationEasing="ease-out"
+                  wrapperStyle={
+                    retainedTooltipTransform
+                      ? { transform: retainedTooltipTransform }
+                      : undefined
+                  }
                   cursor={{
                     stroke: "rgba(255,255,255,0.18)",
                     strokeDasharray: "3 3",
                   }}
-                  content={({ active, payload }) => {
-                    const point = payload?.[0]?.payload as
-                      | QuadrantPoint
-                      | undefined;
-                    const pair = point
-                      ? quadrantPairForPoint(pointPairs, point)
-                      : undefined;
-                    if (!active || !pair) return null;
-                    return (
-                      <QuadrantPairTooltip
-                        pair={pair}
-                        outputMode={outputMode}
-                        xMetric={xMetric}
-                        yMetric={yMetric}
-                      />
-                    );
-                  }}
+                  content={
+                    <QuadrantMotionTooltip
+                      pointPairs={pointPairs}
+                      outputMode={outputMode}
+                      xMetric={xMetric}
+                      yMetric={yMetric}
+                      onActive={primeTooltipMotion}
+                      onInactive={retainTooltipPositionAndScheduleReset}
+                      onPosition={recordTooltipPosition}
+                    />
+                  }
                 />
                 {jsonPoints.length > 0 ? (
                   <Scatter
