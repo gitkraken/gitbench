@@ -2,6 +2,10 @@
 import Layout from "@/components/Layout.astro";
 import { loadDataSync } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import {
+  buildBenchmarkCardSummary,
+  formatBenchmarkPercent,
+} from "@/lib/benchmark-card-summary";
 
 const data = loadDataSync();
 ---
@@ -14,40 +18,60 @@ const data = loadDataSync();
   <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
     {
       data.benchmarks.map((bench) => {
-        // Collect best pass rate across models
-        let bestRate = 0;
-        for (const m of data.models) {
-          const cell = data.matrix[m.name]?.[bench];
-          if (cell && cell.pass_at_k > bestRate) bestRate = cell.pass_at_k;
-        }
-        const bestPct = Math.round(bestRate * 1000) / 10;
-
-        // Count fixtures
-        const fixtures = Object.values(data.fixture_index).filter(
-          (fi) => fi.benchmark === bench,
-        );
+        const summary = buildBenchmarkCardSummary(data, bench);
+        const cardStats =
+          summary.best && summary.worst && summary.averageScore != null
+            ? {
+                best: summary.best,
+                worst: summary.worst,
+                averageScore: summary.averageScore,
+              }
+            : null;
 
         return (
           <a href={`/benchmarks/${bench}`} class="no-underline">
             <div class="card p-6 cursor-pointer transition-colors hover:border-(--color-border-accent)">
               <div class="font-mono text-sm font-semibold text-(--color-text) mb-1.5">
                 {bench}
+                {Boolean(cardStats) && (
+                  <span class="ml-2" title="Average eligible score.">
+                    <Badge
+                      variant="outline"
+                      className="font-mono text-[0.68rem] border-(--color-border) text-(--color-text-dim) bg-(--color-surface)"
+                    >
+                      Avg: {formatBenchmarkPercent(cardStats!.averageScore)}
+                    </Badge>
+                  </span>
+                )}
               </div>
-              <div class="flex gap-2 items-center flex-wrap">
-                <span title="Best pass rate on this benchmark.">
-                  <Badge
-                    variant="outline"
-                    className="font-mono text-[0.68rem] border-pass-border text-pass bg-pass-bg"
+              {cardStats ? (
+                <div class="flex gap-2 items-center flex-wrap">
+                  <span title={`Best eligible score: ${cardStats.best.label}`}>
+                    <Badge
+                      variant="outline"
+                      className="max-w-full font-mono text-[0.68rem] border-pass-border text-pass bg-pass-bg"
+                    >
+                      Best: {cardStats.best.label} ·{" "}
+                      {formatBenchmarkPercent(cardStats.best.score)}
+                    </Badge>
+                  </span>
+                  <span
+                    title={`Worst eligible score: ${cardStats.worst.label}`}
                   >
-                    Best: {bestPct}%
-                  </Badge>
+                    <Badge
+                      variant="outline"
+                      className="max-w-full font-mono text-[0.68rem] border-(--color-fail-border) text-fail bg-fail-bg"
+                    >
+                      Worst: {cardStats.worst.label} ·{" "}
+                      {formatBenchmarkPercent(cardStats.worst.score)}
+                    </Badge>
+                  </span>
+                </div>
+              ) : (
+                <span class="font-mono text-[0.65rem] text-(--color-text-dim)">
+                  No eligible scores
                 </span>
-                <span
-                  class="font-mono text-[0.65rem] text-(--color-text-dim)"
-                >
-                  {fixtures.length} fixtures
-                </span>
-              </div>
+              )}
             </div>
           </a>
         );
