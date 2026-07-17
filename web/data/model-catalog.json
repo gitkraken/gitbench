@@ -1,0 +1,618 @@
+{
+  "schemaVersion": 1,
+  "fetchedAt": "2026-07-17T04:22:15.934Z",
+  "models": {
+    "anthropic/claude-fable-5": {
+      "canonicalId": "anthropic/claude-fable-5",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "closed",
+      "openRouterId": "anthropic/claude-fable-5",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "anthropic/claude-haiku-4.5": {
+      "canonicalId": "anthropic/claude-haiku-4.5",
+      "contextWindowTokens": 200000,
+      "weightAccess": "closed",
+      "openRouterId": "anthropic/claude-haiku-4.5",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "anthropic/claude-opus-4.6": {
+      "canonicalId": "anthropic/claude-opus-4.6",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "closed",
+      "openRouterId": "anthropic/claude-opus-4.6",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "anthropic/claude-opus-4.7": {
+      "canonicalId": "anthropic/claude-opus-4.7",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "closed",
+      "openRouterId": "anthropic/claude-opus-4.7",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "anthropic/claude-opus-4.8": {
+      "canonicalId": "anthropic/claude-opus-4.8",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "closed",
+      "openRouterId": "anthropic/claude-opus-4.8",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "anthropic/claude-sonnet-4.6": {
+      "canonicalId": "anthropic/claude-sonnet-4.6",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "closed",
+      "openRouterId": "anthropic/claude-sonnet-4.6",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "anthropic/claude-sonnet-5": {
+      "canonicalId": "anthropic/claude-sonnet-5",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "closed",
+      "openRouterId": "anthropic/claude-sonnet-5",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "arcee-ai/trinity-large-thinking": {
+      "canonicalId": "arcee-ai/trinity-large-thinking",
+      "contextWindowTokens": 262144,
+      "weightAccess": "open",
+      "openRouterId": "arcee-ai/trinity-large-thinking",
+      "huggingFaceId": "arcee-ai/Trinity-Large-Thinking",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "arcee-ai/trinity-mini": {
+      "canonicalId": "arcee-ai/trinity-mini",
+      "contextWindowTokens": null,
+      "weightAccess": "open",
+      "openRouterId": null,
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "unresolved",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "deepseek/deepseek-v4-flash": {
+      "canonicalId": "deepseek/deepseek-v4-flash",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "deepseek/deepseek-v4-flash",
+      "huggingFaceId": "deepseek-ai/DeepSeek-V4-Flash",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "deepseek/deepseek-v4-pro": {
+      "canonicalId": "deepseek/deepseek-v4-pro",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "deepseek/deepseek-v4-pro",
+      "huggingFaceId": "deepseek-ai/DeepSeek-V4-Pro",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "google/gemini-3-flash-preview": {
+      "canonicalId": "google/gemini-3-flash-preview",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "closed",
+      "openRouterId": "google/gemini-3-flash-preview",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "google/gemini-3.1-flash-lite-preview": {
+      "canonicalId": "google/gemini-3.1-flash-lite-preview",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "closed",
+      "openRouterId": "google/gemini-3.1-flash-lite-preview",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "google/gemini-3.1-pro-preview": {
+      "canonicalId": "google/gemini-3.1-pro-preview",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "closed",
+      "openRouterId": "google/gemini-3.1-pro-preview",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "google/gemini-3.5-flash": {
+      "canonicalId": "google/gemini-3.5-flash",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "closed",
+      "openRouterId": "google/gemini-3.5-flash",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "google/gemma-4-26b-a4b-it": {
+      "canonicalId": "google/gemma-4-26b-a4b-it",
+      "contextWindowTokens": 262144,
+      "weightAccess": "open",
+      "openRouterId": "google/gemma-4-26b-a4b-it",
+      "huggingFaceId": "google/gemma-4-26B-A4B-it",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "google/gemma-4-31b-it": {
+      "canonicalId": "google/gemma-4-31b-it",
+      "contextWindowTokens": 262144,
+      "weightAccess": "open",
+      "openRouterId": "google/gemma-4-31b-it",
+      "huggingFaceId": "google/gemma-4-31B-it",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "ibm-granite/granite-4.1-8b": {
+      "canonicalId": "ibm-granite/granite-4.1-8b",
+      "contextWindowTokens": 131072,
+      "weightAccess": "open",
+      "openRouterId": "ibm-granite/granite-4.1-8b",
+      "huggingFaceId": "ibm-granite/granite-4.1-8b",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "inclusionai/ling-2.6-flash": {
+      "canonicalId": "inclusionai/ling-2.6-flash",
+      "contextWindowTokens": 262144,
+      "weightAccess": "unknown",
+      "openRouterId": "inclusionai/ling-2.6-flash",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "liquid/lfm-2-24b-a2b": {
+      "canonicalId": "liquid/lfm-2-24b-a2b",
+      "contextWindowTokens": null,
+      "weightAccess": "open",
+      "openRouterId": null,
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "unresolved",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "minimax/minimax-m2.5": {
+      "canonicalId": "minimax/minimax-m2.5",
+      "contextWindowTokens": 204800,
+      "weightAccess": "open",
+      "openRouterId": "minimax/minimax-m2.5",
+      "huggingFaceId": "MiniMaxAI/MiniMax-M2.5",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "minimax/minimax-m2.7": {
+      "canonicalId": "minimax/minimax-m2.7",
+      "contextWindowTokens": 204800,
+      "weightAccess": "unknown",
+      "openRouterId": "minimax/minimax-m2.7",
+      "huggingFaceId": "MiniMaxAI/MiniMax-M2.7",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "minimax/minimax-m3": {
+      "canonicalId": "minimax/minimax-m3",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "minimax/minimax-m3",
+      "huggingFaceId": "MiniMaxAI/Minimax-M3",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "mistralai/devstral-2512": {
+      "canonicalId": "mistralai/devstral-2512",
+      "contextWindowTokens": 262144,
+      "weightAccess": "open",
+      "openRouterId": "mistralai/devstral-2512",
+      "huggingFaceId": "mistralai/Devstral-2-123B-Instruct-2512",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "mistralai/mistral-medium-3-5": {
+      "canonicalId": "mistralai/mistral-medium-3-5",
+      "contextWindowTokens": 262144,
+      "weightAccess": "closed",
+      "openRouterId": "mistralai/mistral-medium-3-5",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "moonshotai/kimi-k2.6": {
+      "canonicalId": "moonshotai/kimi-k2.6",
+      "contextWindowTokens": 262144,
+      "weightAccess": "unknown",
+      "openRouterId": "moonshotai/kimi-k2.6",
+      "huggingFaceId": "moonshotai/Kimi-K2.6",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "moonshotai/kimi-k2.7-code": {
+      "canonicalId": "moonshotai/kimi-k2.7-code",
+      "contextWindowTokens": 262144,
+      "weightAccess": "unknown",
+      "openRouterId": "moonshotai/kimi-k2.7-code",
+      "huggingFaceId": "moonshotai/Kimi-K2.7-Code",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "nvidia/nemotron-3-nano-30b-a3b": {
+      "canonicalId": "nvidia/nemotron-3-nano-30b-a3b",
+      "contextWindowTokens": 262144,
+      "weightAccess": "open",
+      "openRouterId": "nvidia/nemotron-3-nano-30b-a3b",
+      "huggingFaceId": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "nvidia/nemotron-3-super-120b-a12b": {
+      "canonicalId": "nvidia/nemotron-3-super-120b-a12b",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "open",
+      "openRouterId": "nvidia/nemotron-3-super-120b-a12b",
+      "huggingFaceId": "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-FP8",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-5.4": {
+      "canonicalId": "openai/gpt-5.4",
+      "contextWindowTokens": 1050000,
+      "weightAccess": "closed",
+      "openRouterId": "openai/gpt-5.4",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-5.4-mini": {
+      "canonicalId": "openai/gpt-5.4-mini",
+      "contextWindowTokens": 400000,
+      "weightAccess": "closed",
+      "openRouterId": "openai/gpt-5.4-mini",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-5.4-nano": {
+      "canonicalId": "openai/gpt-5.4-nano",
+      "contextWindowTokens": 400000,
+      "weightAccess": "closed",
+      "openRouterId": "openai/gpt-5.4-nano",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-5.5": {
+      "canonicalId": "openai/gpt-5.5",
+      "contextWindowTokens": 1050000,
+      "weightAccess": "closed",
+      "openRouterId": "openai/gpt-5.5",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-5.6-luna": {
+      "canonicalId": "openai/gpt-5.6-luna",
+      "contextWindowTokens": 1050000,
+      "weightAccess": "closed",
+      "openRouterId": "openai/gpt-5.6-luna",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-5.6-sol": {
+      "canonicalId": "openai/gpt-5.6-sol",
+      "contextWindowTokens": 1050000,
+      "weightAccess": "closed",
+      "openRouterId": "openai/gpt-5.6-sol",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-5.6-terra": {
+      "canonicalId": "openai/gpt-5.6-terra",
+      "contextWindowTokens": 1050000,
+      "weightAccess": "closed",
+      "openRouterId": "openai/gpt-5.6-terra",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-oss-120b": {
+      "canonicalId": "openai/gpt-oss-120b",
+      "contextWindowTokens": 131072,
+      "weightAccess": "open",
+      "openRouterId": "openai/gpt-oss-120b",
+      "huggingFaceId": "openai/gpt-oss-120b",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "openai/gpt-oss-20b": {
+      "canonicalId": "openai/gpt-oss-20b",
+      "contextWindowTokens": 131072,
+      "weightAccess": "open",
+      "openRouterId": "openai/gpt-oss-20b",
+      "huggingFaceId": "openai/gpt-oss-20b",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "poolside/laguna-m.1": {
+      "canonicalId": "poolside/laguna-m.1",
+      "contextWindowTokens": 262144,
+      "weightAccess": "unknown",
+      "openRouterId": "poolside/laguna-m.1",
+      "huggingFaceId": "poolside/Laguna-M.1",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "poolside/laguna-xs-2.1": {
+      "canonicalId": "poolside/laguna-xs-2.1",
+      "contextWindowTokens": 262144,
+      "weightAccess": "unknown",
+      "openRouterId": "poolside/laguna-xs-2.1",
+      "huggingFaceId": "poolside/Laguna-XS-2.1",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "poolside/laguna-xs.2": {
+      "canonicalId": "poolside/laguna-xs.2",
+      "contextWindowTokens": null,
+      "weightAccess": "unknown",
+      "openRouterId": null,
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "unresolved",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "qwen/qwen3.6-27b": {
+      "canonicalId": "qwen/qwen3.6-27b",
+      "contextWindowTokens": 262144,
+      "weightAccess": "open",
+      "openRouterId": "qwen/qwen3.6-27b",
+      "huggingFaceId": "Qwen/Qwen3.6-27B",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "qwen/qwen3.6-35b-a3b": {
+      "canonicalId": "qwen/qwen3.6-35b-a3b",
+      "contextWindowTokens": 262144,
+      "weightAccess": "open",
+      "openRouterId": "qwen/qwen3.6-35b-a3b",
+      "huggingFaceId": "Qwen/Qwen3.6-35B-A3B",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "qwen/qwen3.6-flash": {
+      "canonicalId": "qwen/qwen3.6-flash",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "unknown",
+      "openRouterId": "qwen/qwen3.6-flash",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "qwen/qwen3.7-max": {
+      "canonicalId": "qwen/qwen3.7-max",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "unknown",
+      "openRouterId": "qwen/qwen3.7-max",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "qwen/qwen3.7-plus": {
+      "canonicalId": "qwen/qwen3.7-plus",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "unknown",
+      "openRouterId": "qwen/qwen3.7-plus",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "tencent/hy3": {
+      "canonicalId": "tencent/hy3",
+      "contextWindowTokens": 262144,
+      "weightAccess": "unknown",
+      "openRouterId": "tencent/hy3",
+      "huggingFaceId": "tencent/Hy3",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "x-ai/grok-4.3": {
+      "canonicalId": "x-ai/grok-4.3",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "closed",
+      "openRouterId": "x-ai/grok-4.3",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "x-ai/grok-4.5": {
+      "canonicalId": "x-ai/grok-4.5",
+      "contextWindowTokens": 500000,
+      "weightAccess": "closed",
+      "openRouterId": "x-ai/grok-4.5",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "z-ai/glm-4.7-flash": {
+      "canonicalId": "z-ai/glm-4.7-flash",
+      "contextWindowTokens": 202752,
+      "weightAccess": "unknown",
+      "openRouterId": "z-ai/glm-4.7-flash",
+      "huggingFaceId": "zai-org/GLM-4.7-Flash",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    },
+    "z-ai/glm-5.2": {
+      "canonicalId": "z-ai/glm-5.2",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "z-ai/glm-5.2",
+      "huggingFaceId": "zai-org/GLM-5.2",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "override"
+      },
+      "fetchedAt": "2026-07-17T04:22:15.934Z"
+    }
+  }
+}

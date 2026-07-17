@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GitBench reviewed model metadata overrides",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "aliases", "models"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "aliases": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } },
+    "models": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "openRouterId": { "type": "string", "minLength": 1 },
+          "contextWindowTokens": { "type": ["integer", "null"], "minimum": 0 },
+          "weightAccess": { "enum": ["open", "closed", "unknown"] },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

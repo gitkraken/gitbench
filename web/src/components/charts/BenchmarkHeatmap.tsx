@@ -49,6 +49,8 @@ export default function BenchmarkHeatmap() {
       fixture_index: {},
       runs_meta: [],
       base_model_groups: data.base_model_groups,
+      model_metadata: data.model_metadata,
+      model_presets: data.model_presets,
     };
   }, [data]);
   const {

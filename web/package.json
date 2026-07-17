@@ -11,6 +11,8 @@
     "build:db": "node scripts/build-db.mjs",
     "build:og": "node scripts/build-og-images.mjs",
     "validate:artifacts": "node scripts/validate-artifacts.mjs",
+    "sync:model-catalog": "node --experimental-strip-types --experimental-transform-types scripts/sync-model-catalog.mjs",
+    "validate:model-catalog": "pnpm sync:model-catalog --check",
     "test:api": "node --experimental-strip-types --experimental-transform-types --test test/*.test.mjs",
     "build": "node scripts/build-db.mjs && astro build",
     "preview": "astro preview",

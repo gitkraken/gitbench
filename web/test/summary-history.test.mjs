@@ -128,3 +128,17 @@ test("summary API endpoint does not include full model output text", () => {
     assert.deepEqual(response.body.fixtures, {});
   });
 });
+
+test("summary API endpoint exposes serializable central model presets", () => {
+  withStore(() => {
+    const response = callHandler(summaryHandler, {});
+    assert.equal(response.statusCode, 200);
+    assert.ok(Array.isArray(response.body.model_presets));
+    assert.deepEqual(
+      response.body.model_presets.find((preset) => preset.id === "top-performers")
+        .modelGroupIds,
+      ["openai/gpt-test"],
+    );
+    assert.deepEqual(response.body.model_metadata, {});
+  });
+});

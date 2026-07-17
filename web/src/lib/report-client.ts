@@ -131,10 +131,10 @@ export function loadSummary(): Promise<CampaignAwareGitBenchData> {
 
 function loadChartData(
   chart: "pass-rate" | "cost" | "runtime" | "tokens" | "quadrant",
-  params: Record<string, string | undefined> = {}
+  params: ChartScopeParams = {}
 ): Promise<CampaignAwareGitBenchData> {
   return getJson<CampaignAwareGitBenchData>(
-    loadCampaignAwareData(`/api/charts/${chart}`, params)
+    loadCampaignAwareData(`/api/charts/${chart}`, { ...params })
   );
 }
 

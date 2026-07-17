@@ -202,6 +202,24 @@ test("dynamic chart route returns compact fixture scoped payload", () => {
   });
 });
 
+test("global, benchmark, and fixture chart endpoints retain identical central presets", () => {
+  withStore(() => {
+    const global = callHandler(chartRouteHandler, { chart: "tokens" });
+    const benchmark = callHandler(chartRouteHandler, {
+      chart: "tokens",
+      benchmark: "commit_messages",
+    });
+    const fixture = callHandler(chartRouteHandler, {
+      chart: "tokens",
+      benchmark: "commit_messages",
+      fixture: "f001",
+    });
+    assert.deepEqual(benchmark.body.model_presets, global.body.model_presets);
+    assert.deepEqual(fixture.body.model_presets, global.body.model_presets);
+    assert.deepEqual(fixture.body.model_metadata, global.body.model_metadata);
+  });
+});
+
 test("dynamic chart route rejects fixture scope without benchmark", () => {
   withStore(() => {
     const response = callHandler(chartRouteHandler, {

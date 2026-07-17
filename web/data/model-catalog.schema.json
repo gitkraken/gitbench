@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GitBench normalized model metadata catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "fetchedAt", "models"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "fetchedAt": { "type": "string", "format": "date-time" },
+    "models": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/model" }
+    }
+  },
+  "$defs": {
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalId", "contextWindowTokens", "weightAccess", "openRouterId", "huggingFaceId", "provenance", "fetchedAt"],
+      "properties": {
+        "canonicalId": { "type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$" },
+        "contextWindowTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "weightAccess": { "enum": ["open", "closed", "unknown"] },
+        "openRouterId": { "type": ["string", "null"] },
+        "huggingFaceId": { "type": ["string", "null"] },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["contextWindowTokens", "weightAccess"],
+          "properties": {
+            "contextWindowTokens": { "enum": ["openrouter", "override", "unresolved"] },
+            "weightAccess": { "enum": ["openrouter", "override", "unresolved"] }
+          }
+        },
+        "fetchedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
