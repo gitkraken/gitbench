@@ -1,5 +1,6 @@
 import { getReportStore } from "../src/lib/node-sqlite-report-store.ts";
 import { json, resolveCampaignFromQuery } from "../src/lib/report-api.ts";
+import { attachModelPresets } from "../src/lib/model-presets.ts";
 
 export default function handler(req: any, res: any) {
   const store = getReportStore();
@@ -12,7 +13,7 @@ export default function handler(req: any, res: any) {
       output_mode: req.query?.output_mode,
     },
   );
-  const summary = store.getSummary({ campaign_id });
+  const summary = attachModelPresets(store.getSummary({ campaign_id }));
   json(res, 200, {
     ...summary,
     campaign_id,

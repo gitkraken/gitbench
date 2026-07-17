@@ -11,6 +11,7 @@ import {
   resolveCampaignFromQuery,
 } from "./report-api.ts";
 import type { ChartScope } from "./types.ts";
+import { attachModelPresets } from "./model-presets.ts";
 
 const fixtureScopedCharts = new Set<ChartKey>([
   "cost",
@@ -60,7 +61,7 @@ export function chartHandler(req: any, res: any, chart: ChartKey): void {
     campaign_id: req.query?.campaign,
     benchmark,
   });
-  const summary = store.getSummary({ campaign_id });
+  const summary = attachModelPresets(store.getSummary({ campaign_id }));
   const source: ScopedChartSource = {};
   if (scope.type === "benchmark") {
     const detail = store.getBenchmark(scope.benchmark, { campaign_id });

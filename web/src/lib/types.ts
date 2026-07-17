@@ -21,6 +21,59 @@ export interface BaseModelGroup {
   levels: BaseModelGroupLevel[];
 }
 
+export type ModelWeightAccess = "open" | "closed" | "unknown";
+export type ModelMetadataSource = "openrouter" | "override" | "unresolved";
+
+export interface ModelMetadataProvenance {
+  contextWindowTokens: ModelMetadataSource;
+  weightAccess: ModelMetadataSource;
+}
+
+export interface ModelMetadata {
+  canonicalId: string;
+  contextWindowTokens: number | null;
+  weightAccess: ModelWeightAccess;
+  openRouterId: string | null;
+  huggingFaceId: string | null;
+  provenance: ModelMetadataProvenance;
+  fetchedAt: string;
+}
+
+export interface ModelMetadataCatalog {
+  schemaVersion: 1;
+  fetchedAt: string;
+  models: Record<string, ModelMetadata>;
+}
+
+export interface ModelMetadataOverride {
+  openRouterId?: string;
+  contextWindowTokens?: number | null;
+  weightAccess?: ModelWeightAccess;
+  note?: string;
+}
+
+export interface ModelMetadataOverrides {
+  schemaVersion: 1;
+  aliases: Record<string, string>;
+  models: Record<string, ModelMetadataOverride>;
+}
+
+export type ModelPresetId =
+  | "top-performers"
+  | "frontier-models"
+  | "open-weights"
+  | "context-up-to-200k"
+  | "context-200k-499k"
+  | "context-500k-999k"
+  | "context-1m-plus";
+
+export interface ModelPreset {
+  id: ModelPresetId;
+  label: string;
+  description: string;
+  modelGroupIds: string[];
+}
+
 export interface ModelSummary {
   total_runs: number;
   total_fixtures: number;
@@ -171,6 +224,8 @@ export interface GitBenchData {
   fixture_index: Record<string, FixtureInfo>;
   runs_meta: RunMeta[];
   base_model_groups: BaseModelGroup[];
+  model_metadata?: Record<string, ModelMetadata>;
+  model_presets?: ModelPreset[];
   chart_scope?: ChartScope;
   fixture_quality_metric?: FixtureQualityMetric;
 }

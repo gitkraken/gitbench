@@ -13,6 +13,7 @@ import {
   resolveReportViewState,
   writeReportViewStateToHistory,
 } from "@/lib/report-url-state";
+import { defaultModelGroupSelection } from "@/lib/model-selector-state";
 
 const EVENT_NAME = "model-selection-changed";
 const OUTPUT_MODE_EVENT_NAME = "output-mode-changed";
@@ -31,8 +32,13 @@ function reportOptions(
   data: GitBenchData,
   options: SyncedModelSelectionOptions
 ) {
+  const groups = deriveModelGroups(data);
+  const presetDefault = defaultModelGroupSelection(
+    data,
+    groups.map((group) => group.id),
+  );
   return {
-    defaultSelectedGroups: options.defaultSelectedGroups,
+    defaultSelectedGroups: options.defaultSelectedGroups ?? presetDefault,
     defaultOutputMode: options.defaultOutputMode,
     availableOutputModes: getAvailableOutputModes(data),
   };
@@ -87,9 +93,7 @@ export function useSyncedModelSelection(
     const resolved =
       typeof window === "undefined"
         ? {
-            selectedGroups: options.defaultSelectedGroups?.length
-              ? sanitizeGroupSelection(options.defaultSelectedGroups, groups)
-              : groups.map((group) => group.id),
+            selectedGroups: reportOptions(data, options).defaultSelectedGroups,
             outputMode: options.defaultOutputMode ?? "both",
             source: "default" as const,
           }

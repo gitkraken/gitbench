@@ -30,6 +30,8 @@ export interface HeatmapChartData {
   benchmarks: GitBenchData["benchmarks"];
   base_model_groups: GitBenchData["base_model_groups"];
   matrix: Record<string, ([number, number, number] | null)[]>;
+  model_metadata: GitBenchData["model_metadata"];
+  model_presets: GitBenchData["model_presets"];
 }
 
 export interface ScopedChartSource {
@@ -91,6 +93,8 @@ function emptyData(
     fixture_index: {},
     runs_meta: [],
     base_model_groups: summary.base_model_groups,
+    model_metadata: summary.model_metadata,
+    model_presets: summary.model_presets,
     chart_scope: scope,
   };
 }
@@ -558,6 +562,8 @@ export function chartData(
       benchmarks: summary.benchmarks,
       base_model_groups: summary.base_model_groups,
       matrix: compactHeatmapMatrix(summary),
+      model_metadata: summary.model_metadata,
+      model_presets: summary.model_presets,
     };
   }
 

@@ -16,6 +16,12 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import {
+  clearMultiSelectValues,
+  filterMultiSelectOptions,
+  selectAllMultiSelectValues,
+  toggleMultiSelectValue,
+} from "@/lib/multi-select-state";
 
 export interface MultiSelectOption {
   value: string;
@@ -31,6 +37,10 @@ export interface MultiSelectProps {
   searchPlaceholder?: string;
   emptyMessage?: string;
   className?: string;
+  triggerClassName?: string;
+  panelClassName?: string;
+  headerContent?: ReactNode;
+  ariaLabel?: string;
   /** Render extra content next to each item in the dropdown */
   renderItemEnd?: (option: MultiSelectOption) => ReactNode;
   /** Render content before the label in each dropdown item */
@@ -45,30 +55,24 @@ export function MultiSelect({
   searchPlaceholder = "Search...",
   emptyMessage = "No items found.",
   className,
+  triggerClassName,
+  panelClassName,
+  headerContent,
+  ariaLabel,
   renderItemEnd,
   renderItemStart,
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const selectedSet = new Set(value);
-  const normalizedSearch = search.trim().toLowerCase();
-  const filteredOptions = useMemo(() => {
-    if (!normalizedSearch) return options;
-    return options.filter((option) => {
-      const haystack = [option.value, option.label, ...(option.keywords ?? [])]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(normalizedSearch);
-    });
-  }, [normalizedSearch, options]);
+  const filteredOptions = useMemo(
+    () => filterMultiSelectOptions(options, search),
+    [search, options],
+  );
 
   const toggle = useCallback(
     (val: string) => {
-      if (selectedSet.has(val)) {
-        onChange(value.filter((v) => v !== val));
-      } else {
-        onChange([...value, val]);
-      }
+      onChange(toggleMultiSelectValue(value, val));
     },
     [value, onChange]
   );
@@ -82,12 +86,14 @@ export function MultiSelect({
           type="button"
           role="combobox"
           aria-expanded={open}
+          aria-label={ariaLabel ?? placeholder}
           className={cn(
             "brand-select flex w-full items-center justify-between gap-2 px-3 py-2 whitespace-nowrap",
             "disabled:cursor-not-allowed disabled:opacity-50",
             "h-9 min-h-9",
             "[&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-            className
+            className,
+            triggerClassName,
           )}
         >
           <span className="min-w-0 truncate">
@@ -101,7 +107,10 @@ export function MultiSelect({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-(--radix-popover-trigger-width) p-0 border-2 border-border shadow"
+        className={cn(
+          "w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] overflow-hidden p-0 border-2 border-border shadow",
+          panelClassName,
+        )}
         align="start"
       >
         <Command shouldFilter={false}>
@@ -110,11 +119,18 @@ export function MultiSelect({
             value={search}
             onValueChange={setSearch}
           />
+          {headerContent ? (
+            <>
+              <div className="shrink-0">{headerContent}</div>
+              <CommandSeparator />
+            </>
+          ) : null}
           <div className="flex items-center gap-2 px-2 py-1.5 shrink-0">
             <button
               type="button"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => onChange(filteredOptions.map((o) => o.value))}
+              onKeyDown={(event) => event.stopPropagation()}
+              onClick={() => onChange(selectAllMultiSelectValues(filteredOptions))}
             >
               Select all
             </button>
@@ -122,7 +138,8 @@ export function MultiSelect({
             <button
               type="button"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => onChange([])}
+              onKeyDown={(event) => event.stopPropagation()}
+              onClick={() => onChange(clearMultiSelectValues())}
             >
               Clear
             </button>
@@ -138,6 +155,7 @@ export function MultiSelect({
                     key={option.value}
                     value={option.value}
                     onSelect={() => toggle(option.value)}
+                    aria-label={`${option.label}${isSelected ? ", selected" : ""}`}
                   >
                     <span className="flex min-w-0 flex-1 items-center">
                       <span className="mr-2 inline-flex size-4 shrink-0 items-center justify-center rounded-[3px] border border-input">

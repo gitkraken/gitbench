@@ -9,6 +9,7 @@ import BenchmarkHeatmap from "@/components/charts/BenchmarkHeatmap";
 import EmailCta from "@/components/EmailCta";
 import { getReportStore } from "@/lib/node-sqlite-report-store";
 import { chartData } from "@/lib/chart-data";
+import { attachModelPresets } from "@/lib/model-presets";
 import { cn } from "@/lib/utils";
 
 const store = getReportStore();
@@ -16,7 +17,9 @@ const defaultCampaign = store.getDefaultCampaign();
 const passRateData = {
   ...chartData(
     "pass-rate",
-    store.getSummary({ campaign_id: defaultCampaign?.campaign_id ?? null }),
+    attachModelPresets(
+      store.getSummary({ campaign_id: defaultCampaign?.campaign_id ?? null }),
+    ),
   ),
   campaign_id: defaultCampaign?.campaign_id ?? null,
   campaign_metadata: defaultCampaign ?? null,
