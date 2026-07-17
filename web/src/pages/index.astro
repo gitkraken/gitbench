@@ -117,8 +117,12 @@ const passRateData = {
         <span>Token Usage</span>
       </div>
       <p class="info-blurb">
-        Input and Output tokens as well as Reasoning tokens for models that
-        support it.
+        Source token counts come from provider-reported usage; GitBench
+        calculates the displayed aggregates from them. Provider tokenizers and
+        accounting methods may differ. <a
+          class={cn("text-accent underline")}
+          href="/methodology#token-accounting">Learn more {"->"}</a
+        >
       </p>
     </div>
     <TokenUsageChart client:visible />

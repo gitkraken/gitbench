@@ -186,6 +186,27 @@ import Layout from "@/components/Layout.astro";
         </p>
       </section>
 
+      <section id="token-accounting">
+        <h3 class="text-base font-bold text-(--color-text) mb-2">
+          Token Accounting
+        </h3>
+        <p>
+          GitBench records source token counts from usage telemetry returned by
+          provider APIs and calculates displayed aggregates from those counts.
+          When a provider does not return a total, GitBench may derive a fallback
+          total from the available input and output counts. GitBench does not
+          independently retokenize requests or responses or verify the
+          provider-reported counts.
+        </p>
+        <p class="mt-2">
+          Providers may use different tokenizers and accounting conventions.
+          The availability and meaning of input, output, cached, and reasoning
+          token categories therefore depend on each provider's telemetry, so
+          cross-provider token comparisons are not independently normalized
+          measurements.
+        </p>
+      </section>
+
       <section>
         <h3 class="text-base font-bold text-(--color-text) mb-2">
           Legacy Evaluation Runs

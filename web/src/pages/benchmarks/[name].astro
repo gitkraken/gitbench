@@ -9,6 +9,7 @@ import FixtureComparisonTable from "@/components/charts/FixtureComparisonTable";
 import { loadDataSync } from "@/lib/data";
 import type { GitBenchData } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export function getStaticPaths() {
   const data = loadDataSync();
@@ -104,7 +105,12 @@ const benchmarkDescription = `${benchName} benchmark results across ${fixtureKey
     <div class="info-tip">
       <div class="section-label"><span>Benchmark Token Usage</span></div>
       <p class="info-blurb">
-        Token totals from fixture results in this benchmark.
+        Source token counts come from provider-reported usage; GitBench
+        calculates the displayed aggregates from them. Provider tokenizers and
+        accounting methods may differ. <a
+          class={cn("text-accent underline")}
+          href="/methodology#token-accounting">Learn more {"->"}</a
+        >
       </p>
     </div>
     <TokenUsageChart client:visible benchmarkName={benchName} />
