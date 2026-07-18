@@ -1,5 +1,74 @@
 {
   "models": {
+    "openrouter-new-07-16-2026": {
+      "model": [
+        "moonshotai/kimi-k3:low",
+        "moonshotai/kimi-k3:medium",
+        "moonshotai/kimi-k3:high",
+        "moonshotai/kimi-k3:xhigh",
+        "moonshotai/kimi-k3:max"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
+    "openrouter-new-july-2026": {
+      "model": [
+        "x-ai/grok-4.3:none",
+        "x-ai/grok-4.3:low",
+        "x-ai/grok-4.3:medium",
+        "x-ai/grok-4.3:high",
+        "x-ai/grok-4.3:xhigh",
+        "x-ai/grok-4.3:max",
+
+        "x-ai/grok-4.5:low",
+        "x-ai/grok-4.5:medium",
+        "x-ai/grok-4.5:high",
+        "x-ai/grok-4.5:xhigh",
+        "x-ai/grok-4.5:max",
+
+        "anthropic/claude-sonnet-5:none",
+        "anthropic/claude-sonnet-5:low",
+        "anthropic/claude-sonnet-5:medium",
+        "anthropic/claude-sonnet-5:high",
+        "anthropic/claude-sonnet-5:xhigh",
+
+        "openai/gpt-5.6-sol:none",
+        "openai/gpt-5.6-sol:low",
+        "openai/gpt-5.6-sol:medium",
+        "openai/gpt-5.6-sol:high",
+        "openai/gpt-5.6-sol:xhigh",
+        "openai/gpt-5.6-sol:max",
+
+        "openai/gpt-5.6-luna:none",
+        "openai/gpt-5.6-luna:low",
+        "openai/gpt-5.6-luna:medium",
+        "openai/gpt-5.6-luna:high",
+        "openai/gpt-5.6-luna:xhigh",
+        "openai/gpt-5.6-luna:max",
+
+        "openai/gpt-5.6-terra:none",
+        "openai/gpt-5.6-terra:low",
+        "openai/gpt-5.6-terra:medium",
+        "openai/gpt-5.6-terra:high",
+        "openai/gpt-5.6-terra:xhigh",
+        "openai/gpt-5.6-terra:max",
+
+        "tencent/hy3:none",
+        "tencent/hy3:low",
+        "tencent/hy3:medium",
+        "tencent/hy3:high",
+        "tencent/hy3:xhigh",
+
+        "poolside/laguna-xs-2.1:none",
+        "poolside/laguna-xs-2.1:low",
+        "poolside/laguna-xs-2.1:medium",
+        "poolside/laguna-xs-2.1:high",
+        "poolside/laguna-xs-2.1:xhigh"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
+
     "openrouter-google-expensive": {
       "model": [
         "google/gemini-3.1-pro-preview:low",
@@ -305,7 +374,7 @@
       "api_key_env": "OPENROUTER_API_KEY"
     },
     "openrouter-result-safety": {
-      "model": "minimax/minimax-m3:low",
+      "model": "openai/gpt-5.4-mini:none",
       "base_url": "https://openrouter.ai/api/v1",
       "api_key_env": "OPENROUTER_API_KEY"
     }
