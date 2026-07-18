@@ -152,7 +152,7 @@ export default function ComparePage() {
   return (
     <div>
       <div className="max-w-xs ml-auto w-full mb-6 flex items-center gap-3">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <ModelSelector
             data={data}
             value={selectedGroups}

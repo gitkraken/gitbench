@@ -612,7 +612,7 @@ export default function QuadrantComparisonChart({
           metrics={metrics}
         />
         <div className="min-w-0 flex items-center gap-3">
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <ModelSelector
               data={data}
               value={selectedGroups}

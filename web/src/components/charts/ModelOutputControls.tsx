@@ -24,7 +24,7 @@ export default function ModelOutputControls({
     <div className="mb-3 grid gap-3 lg:grid-cols-[2fr_minmax(16rem,24rem)]">
       <div />
       <div className="min-w-0 flex items-center gap-3">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <ModelSelector
             data={data}
             value={selectedGroups}
