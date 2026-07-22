@@ -419,6 +419,24 @@
         "high": "high",
         "xhigh": "xhigh"
       }
+    },
+    "gemini-3.6-flash": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "max": "max",
+        "xhigh": "xhigh"
+      }
+    },
+    "gemini-3.5-flash-lite": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
     }
   }
 }

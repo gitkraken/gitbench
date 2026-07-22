@@ -1,5 +1,22 @@
 {
   "models": {
+    "openrouter-new-07-21-2026": {
+      "model": [
+        "google/gemini-3.6-flash:low",
+        "google/gemini-3.6-flash:medium",
+        "google/gemini-3.6-flash:high",
+        "google/gemini-3.6-flash:xhigh",
+        "google/gemini-3.6-flash:max",
+
+        "google/gemini-3.5-flash-lite:low",
+        "google/gemini-3.5-flash-lite:medium",
+        "google/gemini-3.5-flash-lite:high",
+        "google/gemini-3.5-flash-lite:xhigh",
+        "google/gemini-3.5-flash-lite:max"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
     "openrouter-new-07-16-2026": {
       "model": [
         "moonshotai/kimi-k3:low",
