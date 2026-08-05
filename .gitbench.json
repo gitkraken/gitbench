@@ -1,5 +1,64 @@
 {
   "models": {
+    "openrouter-new-08-03-2026-expensive": {
+      "model": [
+        "qwen/qwen3.8-max:none",
+        "qwen/qwen3.8-max:low",
+        "qwen/qwen3.8-max:medium",
+        "qwen/qwen3.8-max:high",
+        "qwen/qwen3.8-max:xhigh",
+        "qwen/qwen3.8-max:max",
+
+        "meta/muse-spark-1.1:none",
+        "meta/muse-spark-1.1:low",
+        "meta/muse-spark-1.1:medium",
+        "meta/muse-spark-1.1:high",
+        "meta/muse-spark-1.1:xhigh",
+        "meta/muse-spark-1.1:max",
+
+        "anthropic/claude-opus-5:low",
+        "anthropic/claude-opus-5:medium",
+        "anthropic/claude-opus-5:high",
+        "anthropic/claude-opus-5:xhigh",
+        "anthropic/claude-opus-5:max"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
+    "openrouter-new-08-03-2026-cheap": {
+      "model": [
+        "qwen/qwen3.7-flash:none",
+        "qwen/qwen3.7-flash:low",
+        "qwen/qwen3.7-flash:medium",
+        "qwen/qwen3.7-flash:high",
+        "qwen/qwen3.7-flash:xhigh",
+        "qwen/qwen3.7-flash:max",
+
+        "thinkingmachines/inkling:none",
+        "thinkingmachines/inkling:low",
+        "thinkingmachines/inkling:medium",
+        "thinkingmachines/inkling:high",
+        "thinkingmachines/inkling:xhigh",
+        "thinkingmachines/inkling:max",
+
+        "deepseek/deepseek-v4-flash-0731:none",
+        "deepseek/deepseek-v4-flash-0731:low",
+        "deepseek/deepseek-v4-flash-0731:medium",
+        "deepseek/deepseek-v4-flash-0731:high",
+        "deepseek/deepseek-v4-flash-0731:xhigh",
+        "deepseek/deepseek-v4-flash-0731:max",
+
+        "thinkingmachines/inkling-small:none",
+        "thinkingmachines/inkling-small:low",
+        "thinkingmachines/inkling-small:medium",
+        "thinkingmachines/inkling-small:high",
+        "thinkingmachines/inkling-small:xhigh",
+        "thinkingmachines/inkling-small:max"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
+
     "openrouter-new-07-21-2026": {
       "model": [
         "google/gemini-3.6-flash:low",
