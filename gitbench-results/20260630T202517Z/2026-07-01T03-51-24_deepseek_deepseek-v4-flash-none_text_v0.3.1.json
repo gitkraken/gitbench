@@ -13423,9 +13423,9 @@
     "policy_version": "inappropriate-nsfw-v2",
     "reviewer": {
       "profile": "openrouter-result-safety",
-      "model": "openai/gpt-5.4-mini:none"
+      "model": "deepseek/deepseek-v4-flash:high"
     },
-    "reviewed_at": "2026-08-04T20:23:25.733728+00:00",
+    "reviewed_at": "2026-08-09T20:23:40.212978+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

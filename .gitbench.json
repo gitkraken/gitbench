@@ -2,14 +2,12 @@
   "models": {
     "openrouter-new-08-03-2026-expensive": {
       "model": [
-        "qwen/qwen3.8-max:none",
         "qwen/qwen3.8-max:low",
         "qwen/qwen3.8-max:medium",
         "qwen/qwen3.8-max:high",
         "qwen/qwen3.8-max:xhigh",
         "qwen/qwen3.8-max:max",
 
-        "meta/muse-spark-1.1:none",
         "meta/muse-spark-1.1:low",
         "meta/muse-spark-1.1:medium",
         "meta/muse-spark-1.1:high",

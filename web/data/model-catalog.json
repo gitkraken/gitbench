@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "fetchedAt": "2026-07-17T04:22:15.934Z",
+  "fetchedAt": "2026-08-09T21:00:02.410Z",
   "models": {
     "anthropic/claude-fable-5": {
       "canonicalId": "anthropic/claude-fable-5",
@@ -12,7 +12,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "anthropic/claude-haiku-4.5": {
       "canonicalId": "anthropic/claude-haiku-4.5",
@@ -24,7 +24,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "anthropic/claude-opus-4.6": {
       "canonicalId": "anthropic/claude-opus-4.6",
@@ -36,7 +36,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "anthropic/claude-opus-4.7": {
       "canonicalId": "anthropic/claude-opus-4.7",
@@ -48,7 +48,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "anthropic/claude-opus-4.8": {
       "canonicalId": "anthropic/claude-opus-4.8",
@@ -60,7 +60,19 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "anthropic/claude-opus-5": {
+      "canonicalId": "anthropic/claude-opus-5",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "unknown",
+      "openRouterId": "anthropic/claude-opus-5",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "anthropic/claude-sonnet-4.6": {
       "canonicalId": "anthropic/claude-sonnet-4.6",
@@ -72,7 +84,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "anthropic/claude-sonnet-5": {
       "canonicalId": "anthropic/claude-sonnet-5",
@@ -84,7 +96,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "arcee-ai/trinity-large-thinking": {
       "canonicalId": "arcee-ai/trinity-large-thinking",
@@ -96,7 +108,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "arcee-ai/trinity-mini": {
       "canonicalId": "arcee-ai/trinity-mini",
@@ -108,7 +120,7 @@
         "contextWindowTokens": "unresolved",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "deepseek/deepseek-v4-flash": {
       "canonicalId": "deepseek/deepseek-v4-flash",
@@ -120,7 +132,19 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "deepseek/deepseek-v4-flash-0731": {
+      "canonicalId": "deepseek/deepseek-v4-flash-0731",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "deepseek/deepseek-v4-flash-0731",
+      "huggingFaceId": "deepseek-ai/DeepSeek-V4-Flash-0731",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "deepseek/deepseek-v4-pro": {
       "canonicalId": "deepseek/deepseek-v4-pro",
@@ -132,7 +156,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "google/gemini-3-flash-preview": {
       "canonicalId": "google/gemini-3-flash-preview",
@@ -144,7 +168,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "google/gemini-3.1-flash-lite-preview": {
       "canonicalId": "google/gemini-3.1-flash-lite-preview",
@@ -156,7 +180,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "google/gemini-3.1-pro-preview": {
       "canonicalId": "google/gemini-3.1-pro-preview",
@@ -168,7 +192,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "google/gemini-3.5-flash": {
       "canonicalId": "google/gemini-3.5-flash",
@@ -180,7 +204,31 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "google/gemini-3.5-flash-lite": {
+      "canonicalId": "google/gemini-3.5-flash-lite",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "google/gemini-3.5-flash-lite",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "google/gemini-3.6-flash": {
+      "canonicalId": "google/gemini-3.6-flash",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "google/gemini-3.6-flash",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "google/gemma-4-26b-a4b-it": {
       "canonicalId": "google/gemma-4-26b-a4b-it",
@@ -192,7 +240,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "google/gemma-4-31b-it": {
       "canonicalId": "google/gemma-4-31b-it",
@@ -204,7 +252,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "ibm-granite/granite-4.1-8b": {
       "canonicalId": "ibm-granite/granite-4.1-8b",
@@ -216,7 +264,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "inclusionai/ling-2.6-flash": {
       "canonicalId": "inclusionai/ling-2.6-flash",
@@ -228,7 +276,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "liquid/lfm-2-24b-a2b": {
       "canonicalId": "liquid/lfm-2-24b-a2b",
@@ -240,7 +288,19 @@
         "contextWindowTokens": "unresolved",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "meta/muse-spark-1.1": {
+      "canonicalId": "meta/muse-spark-1.1",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "meta/muse-spark-1.1",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "minimax/minimax-m2.5": {
       "canonicalId": "minimax/minimax-m2.5",
@@ -252,7 +312,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "minimax/minimax-m2.7": {
       "canonicalId": "minimax/minimax-m2.7",
@@ -264,7 +324,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "minimax/minimax-m3": {
       "canonicalId": "minimax/minimax-m3",
@@ -276,19 +336,19 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "mistralai/devstral-2512": {
       "canonicalId": "mistralai/devstral-2512",
-      "contextWindowTokens": 262144,
+      "contextWindowTokens": null,
       "weightAccess": "open",
-      "openRouterId": "mistralai/devstral-2512",
-      "huggingFaceId": "mistralai/Devstral-2-123B-Instruct-2512",
+      "openRouterId": null,
+      "huggingFaceId": null,
       "provenance": {
-        "contextWindowTokens": "openrouter",
+        "contextWindowTokens": "unresolved",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "mistralai/mistral-medium-3-5": {
       "canonicalId": "mistralai/mistral-medium-3-5",
@@ -300,7 +360,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "moonshotai/kimi-k2.6": {
       "canonicalId": "moonshotai/kimi-k2.6",
@@ -312,7 +372,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "moonshotai/kimi-k2.7-code": {
       "canonicalId": "moonshotai/kimi-k2.7-code",
@@ -324,7 +384,19 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "moonshotai/kimi-k3": {
+      "canonicalId": "moonshotai/kimi-k3",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "moonshotai/kimi-k3",
+      "huggingFaceId": "moonshotai/Kimi-K3",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "nvidia/nemotron-3-nano-30b-a3b": {
       "canonicalId": "nvidia/nemotron-3-nano-30b-a3b",
@@ -336,7 +408,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "nvidia/nemotron-3-super-120b-a12b": {
       "canonicalId": "nvidia/nemotron-3-super-120b-a12b",
@@ -348,7 +420,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-5.4": {
       "canonicalId": "openai/gpt-5.4",
@@ -360,7 +432,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-5.4-mini": {
       "canonicalId": "openai/gpt-5.4-mini",
@@ -372,7 +444,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-5.4-nano": {
       "canonicalId": "openai/gpt-5.4-nano",
@@ -384,7 +456,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-5.5": {
       "canonicalId": "openai/gpt-5.5",
@@ -396,7 +468,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-5.6-luna": {
       "canonicalId": "openai/gpt-5.6-luna",
@@ -408,7 +480,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-5.6-sol": {
       "canonicalId": "openai/gpt-5.6-sol",
@@ -420,7 +492,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-5.6-terra": {
       "canonicalId": "openai/gpt-5.6-terra",
@@ -432,7 +504,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-oss-120b": {
       "canonicalId": "openai/gpt-oss-120b",
@@ -444,7 +516,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "openai/gpt-oss-20b": {
       "canonicalId": "openai/gpt-oss-20b",
@@ -456,19 +528,19 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "poolside/laguna-m.1": {
       "canonicalId": "poolside/laguna-m.1",
-      "contextWindowTokens": 262144,
+      "contextWindowTokens": null,
       "weightAccess": "unknown",
-      "openRouterId": "poolside/laguna-m.1",
-      "huggingFaceId": "poolside/Laguna-M.1",
+      "openRouterId": null,
+      "huggingFaceId": null,
       "provenance": {
-        "contextWindowTokens": "openrouter",
+        "contextWindowTokens": "unresolved",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "poolside/laguna-xs-2.1": {
       "canonicalId": "poolside/laguna-xs-2.1",
@@ -480,7 +552,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "poolside/laguna-xs.2": {
       "canonicalId": "poolside/laguna-xs.2",
@@ -492,7 +564,7 @@
         "contextWindowTokens": "unresolved",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "qwen/qwen3.6-27b": {
       "canonicalId": "qwen/qwen3.6-27b",
@@ -504,7 +576,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "qwen/qwen3.6-35b-a3b": {
       "canonicalId": "qwen/qwen3.6-35b-a3b",
@@ -516,7 +588,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "qwen/qwen3.6-flash": {
       "canonicalId": "qwen/qwen3.6-flash",
@@ -528,7 +600,19 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "qwen/qwen3.7-flash": {
+      "canonicalId": "qwen/qwen3.7-flash",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "unknown",
+      "openRouterId": "qwen/qwen3.7-flash",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "qwen/qwen3.7-max": {
       "canonicalId": "qwen/qwen3.7-max",
@@ -540,7 +624,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "qwen/qwen3.7-plus": {
       "canonicalId": "qwen/qwen3.7-plus",
@@ -552,7 +636,19 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "qwen/qwen3.8-max": {
+      "canonicalId": "qwen/qwen3.8-max",
+      "contextWindowTokens": 1000000,
+      "weightAccess": "unknown",
+      "openRouterId": "qwen/qwen3.8-max",
+      "huggingFaceId": null,
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "tencent/hy3": {
       "canonicalId": "tencent/hy3",
@@ -564,7 +660,31 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "thinkingmachines/inkling": {
+      "canonicalId": "thinkingmachines/inkling",
+      "contextWindowTokens": 1048576,
+      "weightAccess": "unknown",
+      "openRouterId": "thinkingmachines/inkling",
+      "huggingFaceId": "thinkingmachines/Inkling",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
+    },
+    "thinkingmachines/inkling-small": {
+      "canonicalId": "thinkingmachines/inkling-small",
+      "contextWindowTokens": 524288,
+      "weightAccess": "unknown",
+      "openRouterId": "thinkingmachines/inkling-small",
+      "huggingFaceId": "thinkingmachines/Inkling-Small",
+      "provenance": {
+        "contextWindowTokens": "openrouter",
+        "weightAccess": "unresolved"
+      },
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "x-ai/grok-4.3": {
       "canonicalId": "x-ai/grok-4.3",
@@ -576,7 +696,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "x-ai/grok-4.5": {
       "canonicalId": "x-ai/grok-4.5",
@@ -588,7 +708,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "z-ai/glm-4.7-flash": {
       "canonicalId": "z-ai/glm-4.7-flash",
@@ -600,7 +720,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     },
     "z-ai/glm-5.2": {
       "canonicalId": "z-ai/glm-5.2",
@@ -612,7 +732,7 @@
         "contextWindowTokens": "openrouter",
         "weightAccess": "override"
       },
-      "fetchedAt": "2026-07-17T04:22:15.934Z"
+      "fetchedAt": "2026-08-09T21:00:02.410Z"
     }
   }
 }
