@@ -504,6 +504,13 @@
         "xhigh": "xhigh",
         "max": "max"
       }
+    },
+    "ox-alpha": {
+      "mappings": {
+        "low": "low",
+        "high": "high",
+        "max": "max"
+      }
     }
   }
 }

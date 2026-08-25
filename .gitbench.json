@@ -1,5 +1,14 @@
 {
   "models": {
+    "openrouter-ox-alpha": {
+      "model": [
+        "stealth/ox-alpha:low",
+        "stealth/ox-alpha:high",
+        "stealth/ox-alpha:max"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
     "openrouter-new-08-03-2026-expensive": {
       "model": [
         "qwen/qwen3.8-max:low",
