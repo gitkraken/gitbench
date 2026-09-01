@@ -10,6 +10,14 @@
       "destination": "/api/charts/agent-:operation"
     },
     {
+      "source": "/api/fixtures/:benchmark/:fixture*",
+      "destination": "/api/fixtures/[benchmark]/[...fixture]"
+    },
+    {
+      "source": "/api/campaigns/:campaignId/attempts/:identity*",
+      "destination": "/api/campaigns/[campaignId]/attempts/[...identity]"
+    },
+    {
       "source": "/api/models/:model*/results",
       "destination": "/api/models/[...model]/results"
     }
