@@ -6,6 +6,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/agent/v1/:operation",
+      "destination": "/api/charts/agent-:operation"
+    },
+    {
       "source": "/api/models/:model*/results",
       "destination": "/api/models/[...model]/results"
     }

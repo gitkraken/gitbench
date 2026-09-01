@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitBench Analyze Models"
+  short_description: "Compare GitBench model quality and efficiency"
+  default_prompt: "Use $gitbench-analyze-models to compare model quality, cost, and fixture evidence for a GitBench benchmark."
