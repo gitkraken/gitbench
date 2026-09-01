@@ -3,7 +3,7 @@ import { attachModelPresets } from "./model-presets.ts";
 import { getReportStore } from "./node-sqlite-report-store.ts";
 import { ReportClientError } from "./report-client-error.ts";
 import { resolveCampaignFromQuery } from "./report-api.ts";
-import type { GitBenchToolDependencies } from "./webmcp-report-tools.ts";
+import type { GitBenchToolDependencies } from "./agent-query-service.ts";
 
 function missing(message: string): never {
   throw new ReportClientError(message, 404, "/api/agent/v1");
