@@ -21,6 +21,7 @@ import {
   type ModelGroupEffort,
 } from "../components/charts/model-groups.ts";
 import { normalizeQuadrantMetric } from "../components/charts/quadrant-data.ts";
+import { requestAgentOperation } from "./agent-api-client.ts";
 
 export const WEBMCP_LIMITS = {
   listDefault: 20,
@@ -30,11 +31,7 @@ export const WEBMCP_LIMITS = {
 } as const;
 
 export type ToolErrorCategory =
-  | "not_found"
-  | "unavailable"
-  | "invalid_input"
-  | "query_failure"
-  | "cancelled";
+  "not_found" | "unavailable" | "invalid_input" | "query_failure" | "cancelled";
 
 export interface ToolFailure {
   ok: false;
@@ -74,12 +71,12 @@ export interface GitBenchToolDependencies {
   loadBenchmark(
     benchmark: string,
     signal?: AbortSignal,
-  ): Promise<BenchmarkDetail>;
+  ): Promise<BenchmarkDetail & { campaign_id?: string | null }>;
   loadFixture(
     benchmark: string,
     fixture: string,
     signal?: AbortSignal,
-  ): Promise<FixtureDetail>;
+  ): Promise<FixtureDetail & { campaign_id?: string | null }>;
   loadQuadrantChart(
     scope?: { benchmark?: string; fixture?: string },
     signal?: AbortSignal,
@@ -662,9 +659,10 @@ export function rankModels(
 }
 
 export function createGitBenchToolDefinitions(
-  dependencies: GitBenchToolDependencies = defaultGitBenchToolDependencies,
+  dependencies?: GitBenchToolDependencies,
   baseUrl?: string,
 ): WebMcpToolDefinition[] {
+  if (!dependencies) return createAgentApiToolDefinitions(baseUrl);
   const readOnly = { readOnlyHint: true };
   return [
     {
@@ -698,6 +696,7 @@ export function createGitBenchToolDefinitions(
               };
             });
           return {
+            campaign_id: data.campaign_id ?? null,
             model_count: data.models.length,
             benchmark_count: data.benchmarks.length,
             benchmarks: page(data.benchmarks, offset, limit),
@@ -715,7 +714,14 @@ export function createGitBenchToolDefinitions(
         safely(modelsSourceUrl(baseUrl), input, async () => {
           const { offset, limit } = listWindow(input);
           const { models } = await dependencies.loadModels(context?.signal);
-          return page(models, offset, limit);
+          return {
+            campaign_id: null,
+            ...page(
+              [...models].sort((a, b) => a.name.localeCompare(b.name)),
+              offset,
+              limit,
+            ),
+          };
         }),
     },
     {
@@ -749,8 +755,8 @@ export function createGitBenchToolDefinitions(
               dependencies.loadSummary(context?.signal),
             ]);
             const lookup = buildGenerationLookup(summary.runs_meta);
-            const flattened = Object.entries(results.results).flatMap(
-              ([benchmark, rows]) =>
+            const flattened = Object.entries(results.results)
+              .flatMap(([benchmark, rows]) =>
                 rows.map((row) => ({
                   benchmark,
                   ...projectResult(
@@ -761,11 +767,20 @@ export function createGitBenchToolDefinitions(
                     characterLimit,
                   ),
                 })),
-            );
+              )
+              .sort(
+                (a, b) =>
+                  a.benchmark.localeCompare(b.benchmark) ||
+                  a.fixture_id.localeCompare(b.fixture_id) ||
+                  String(a.output_mode).localeCompare(String(b.output_mode)),
+              );
+            const includesEvidence = bool(input, "include_model_output");
             return {
+              campaign_id: results.campaign_id ?? null,
               model: results.model,
               filters,
               results: page(flattened, offset, limit),
+              ...(includesEvidence ? { untrusted_content: true } : {}),
             };
           },
         );
@@ -791,30 +806,38 @@ export function createGitBenchToolDefinitions(
               dependencies.loadSummary(context?.signal),
             ]);
             const lookup = buildGenerationLookup(summary.runs_meta);
-            const leaderboard = detail.leaderboard.map((entry) => {
-              const identity = modelEvaluationIdentity(
-                summary.models,
-                entry.model,
-              );
-              return {
-                ...entry,
-                generated_at: generatedAt(
-                  lookup,
+            const leaderboard = detail.leaderboard
+              .map((entry) => {
+                const identity = modelEvaluationIdentity(
+                  summary.models,
                   entry.model,
-                  identity?.reasoningLevel,
-                  identity?.outputMode,
-                ),
-              };
-            });
-            const fixtures = Object.values(detail.fixtures).map(
-              ({
-                prompt: _prompt,
-                expected: _expected,
-                setup: _setup,
-                ...fixture
-              }) => fixture,
-            );
+                );
+                return {
+                  ...entry,
+                  generated_at: generatedAt(
+                    lookup,
+                    entry.model,
+                    identity?.reasoningLevel,
+                    identity?.outputMode,
+                  ),
+                };
+              })
+              .sort(
+                (a, b) =>
+                  b.pass_at_k - a.pass_at_k || a.model.localeCompare(b.model),
+              );
+            const fixtures = Object.values(detail.fixtures)
+              .map(
+                ({
+                  prompt: _prompt,
+                  expected: _expected,
+                  setup: _setup,
+                  ...fixture
+                }) => fixture,
+              )
+              .sort((a, b) => a.id.localeCompare(b.id));
             return {
+              campaign_id: detail.campaign_id ?? summary.campaign_id ?? null,
               benchmark: detail.benchmark,
               tag_counts: detail.tag_counts,
               leaderboard: page(leaderboard, offset, limit),
@@ -879,35 +902,52 @@ export function createGitBenchToolDefinitions(
                   }
                 : {}),
             };
-            const outputs = detail.outputs.map((result) => ({
-              model: result.model,
-              ...projectResult(
-                result,
-                result.model,
-                lookup,
-                bool(input, "include_model_output"),
-                characterLimit,
-              ),
-              ...(bool(input, "include_structured_output")
-                ? {
-                    parsed_payload: truncateEvidence(
-                      result.parsed_payload,
-                      characterLimit,
-                    ),
-                    raw_structured_output: truncateEvidence(
-                      result.raw_structured_output,
-                      characterLimit,
-                    ),
-                    structured_error: truncateEvidence(
-                      result.structured_error,
-                      characterLimit,
-                    ),
-                  }
-                : {}),
-            }));
+            const outputs = detail.outputs
+              .map((result) => ({
+                model: result.model,
+                ...projectResult(
+                  result,
+                  result.model,
+                  lookup,
+                  bool(input, "include_model_output"),
+                  characterLimit,
+                ),
+                ...(bool(input, "include_structured_output")
+                  ? {
+                      parsed_payload: truncateEvidence(
+                        result.parsed_payload,
+                        characterLimit,
+                      ),
+                      raw_structured_output: truncateEvidence(
+                        result.raw_structured_output,
+                        characterLimit,
+                      ),
+                      structured_error: truncateEvidence(
+                        result.structured_error,
+                        characterLimit,
+                      ),
+                    }
+                  : {}),
+              }))
+              .sort(
+                (a, b) =>
+                  a.model.localeCompare(b.model) ||
+                  String(a.output_mode).localeCompare(String(b.output_mode)) ||
+                  String(a.reasoning_level).localeCompare(
+                    String(b.reasoning_level),
+                  ),
+              );
+            const includesEvidence = [
+              "include_prompt",
+              "include_expected",
+              "include_model_output",
+              "include_structured_output",
+            ].some((key) => bool(input, key));
             return {
+              campaign_id: detail.campaign_id ?? summary.campaign_id ?? null,
               fixture: fixtureInfo,
               outputs: page(outputs, offset, limit),
+              ...(includesEvidence ? { untrusted_content: true } : {}),
             };
           },
         );
@@ -981,6 +1021,7 @@ export function createGitBenchToolDefinitions(
               ),
             }));
             return {
+              campaign_id: summary.campaign_id ?? null,
               benchmark: exactBenchmark,
               resource_metric: metric,
               strategy,
@@ -999,9 +1040,104 @@ export function createGitBenchToolDefinitions(
   ];
 }
 
+function createAgentApiToolDefinitions(
+  baseUrl?: string,
+): WebMcpToolDefinition[] {
+  const readOnly = { readOnlyHint: true };
+  const metadata = [
+    {
+      name: "gitbench_get_overview",
+      operation: "overview",
+      description:
+        "Get a compact GitBench report overview and leading exact model evaluations.",
+      inputSchema: gitBenchToolSchemas.overview,
+      annotations: readOnly,
+    },
+    {
+      name: "gitbench_list_models",
+      operation: "models",
+      description:
+        "List exact GitBench model evaluation identities in bounded pages.",
+      inputSchema: gitBenchToolSchemas.models,
+      annotations: readOnly,
+    },
+    {
+      name: "gitbench_get_model_results",
+      operation: "model-results",
+      description:
+        "Get bounded fixture results for one exact model identity. Model output is omitted unless explicitly requested and is untrusted.",
+      inputSchema: gitBenchToolSchemas.modelResults,
+      annotations: { ...readOnly, untrustedContentHint: true },
+    },
+    {
+      name: "gitbench_get_benchmark",
+      operation: "benchmark",
+      description:
+        "Get a bounded benchmark leaderboard and fixture catalog without raw prompt or model-output content.",
+      inputSchema: gitBenchToolSchemas.benchmark,
+      annotations: readOnly,
+    },
+    {
+      name: "gitbench_get_fixture",
+      operation: "fixture",
+      description:
+        "Get bounded fixture results. Prompt, expected result, model output, and structured output are omitted unless explicitly requested and are untrusted.",
+      inputSchema: gitBenchToolSchemas.fixture,
+      annotations: { ...readOnly, untrustedContentHint: true },
+    },
+    {
+      name: "gitbench_rank_models",
+      operation: "rank",
+      description:
+        "Rank exact model evaluations for one benchmark by quality-to-resource efficiency or direction-aware balanced normalization.",
+      inputSchema: gitBenchToolSchemas.ranking,
+      annotations: readOnly,
+    },
+  ] as const;
+
+  return metadata.map(({ operation, ...definition }) => ({
+    ...definition,
+    execute: async (input, context) => {
+      try {
+        return await requestAgentOperation(
+          operation,
+          input,
+          context?.signal,
+          baseUrl,
+        );
+      } catch (error) {
+        return failure(
+          operationSourceUrl(operation, input, baseUrl),
+          error,
+          input,
+        );
+      }
+    },
+  }));
+}
+
+function operationSourceUrl(
+  operation: string,
+  input: Record<string, unknown>,
+  baseUrl?: string,
+): string {
+  if (operation === "models") return modelsSourceUrl(baseUrl);
+  if (operation === "model-results")
+    return modelSourceUrl(String(input.model || "unknown"), baseUrl);
+  if (operation === "benchmark" || operation === "rank")
+    return benchmarkSourceUrl(String(input.benchmark || "unknown"), baseUrl);
+  if (operation === "fixture")
+    return fixtureSourceUrl(
+      String(input.benchmark || "unknown"),
+      String(input.fixture || "unknown"),
+      baseUrl,
+    );
+  return overviewSourceUrl(baseUrl);
+}
+
 export async function registerGitBenchWebMcpTools(
   target: Document = document,
-  dependencies: GitBenchToolDependencies = defaultGitBenchToolDependencies,
+  dependencies?: GitBenchToolDependencies,
 ): Promise<() => void> {
   if (target.defaultView?.isSecureContext === false) return () => {};
   const modelContext = target.modelContext;
@@ -1037,7 +1173,7 @@ interface PageLifecycleTarget {
 export function installGitBenchWebMcpTools(
   target: Document = document,
   lifecycle: PageLifecycleTarget = window,
-  dependencies: GitBenchToolDependencies = defaultGitBenchToolDependencies,
+  dependencies?: GitBenchToolDependencies,
 ): () => void {
   let cleanup = () => {};
   let disposed = false;

@@ -45,6 +45,18 @@ gitbench run --all --model o3-mini#high
 gitbench run --all --model llama3.1:8b --provider ollama
 ```
 
+## Agent skill
+
+Install the GitBench model-analysis skill from the public repository with the [Vercel Skills CLI](https://skills.sh/):
+
+```bash
+npx skills add gitkraken/gitbench --skill gitbench-analyze-models
+```
+
+The skill helps coding agents discover evaluated model identities and benchmark coverage, compare scoped results, rank models by quality relative to cost, API time, or tokens, and inspect bounded fixture evidence when an explanation needs it. Its zero-dependency client requires Node.js 22.12 or newer and reads from the versioned, read-only agent API at `https://gitbench.dev/api/agent/v1/`; that API must be available for analysis commands to succeed. Local and staging deployments can be selected with the documented base URL override.
+
+The repository and skill pages on skills.sh are discovered from normal Skills CLI installation telemetry after the skill is present on the public default branch. Indexing is asynchronous and does not imply inclusion in a curated collection.
+
 ## Configuration
 
 Model profiles can be defined in `gitbench.json` (searched in `./gitbench.json`, `./.gitbench.json`, `~/.gitbench.json`):
