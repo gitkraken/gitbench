@@ -14,6 +14,40 @@ data/schema.sql
 data. Hydrated React islands should use `/api/*` report endpoints through the
 browser report client instead of fetching the full JSON payload.
 
+## Experimental WebMCP tools
+
+In secure contexts, browsers that implement the experimental
+`document.modelContext` imperative API discover six read-only report tools on
+every page:
+
+| Tool                         | Purpose                                   |
+| :--------------------------- | :---------------------------------------- |
+| `gitbench_get_overview`      | Compact report and leaderboard summary    |
+| `gitbench_list_models`       | Exact model evaluation catalog            |
+| `gitbench_get_model_results` | Filtered fixture results for one model    |
+| `gitbench_get_benchmark`     | Benchmark leaderboard and fixture catalog |
+| `gitbench_get_fixture`       | Fixture metadata and per-model evidence   |
+| `gitbench_rank_models`       | Benchmark-scoped quality/resource ranking |
+
+WebMCP is progressive enhancement: unsupported, insecure, disabled, duplicate,
+or rejected registration leaves the ordinary report unchanged. The tools call
+the existing `/api/*` routes and never fetch `public/results.json`.
+
+List results default to 20 entries and are hard-capped at 50. Results include
+`truncated` and `next_offset` pagination metadata. Raw prompt, expected-result,
+model-output, and structured-output evidence is excluded by default. When
+explicitly requested, each evidence field defaults to 2,000 characters and is
+hard-capped at 8,000 characters. Fixture and model-result tools declare this
+content untrusted because it may contain fixture-authored or model-generated
+instructions.
+
+To test in isolation, provide a `document.modelContext.registerTool` shim before
+the shared layout script executes, collect the six definitions, and invoke each
+definition's `execute` callback with mocked `fetch` responses. Pass an aborted
+execution signal to verify pending report fetches are cancelled; aborting the
+registration signal removes the catalog. The automated API suite includes this
+shim-based coverage and does not require an experimental browser build.
+
 ## SQLite Runtime
 
 API functions use Node's built-in `node:sqlite` module through the project
@@ -26,16 +60,16 @@ adapter can implement the same contract.
 
 Run these from top-level `web/` unless noted otherwise.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`            | Installs dependencies                            |
-| `pnpm dev`                | Starts Astro only at `localhost:4321`            |
-| `pnpm dev:api`            | Starts Astro and Vercel API routes together      |
+| Command                   | Action                                             |
+| :------------------------ | :------------------------------------------------- |
+| `pnpm install`            | Installs dependencies                              |
+| `pnpm dev`                | Starts Astro only at `localhost:4321`              |
+| `pnpm dev:api`            | Starts Astro and Vercel API routes together        |
 | `pnpm build:og`           | Regenerates OpenGraph card PNGs with agent-browser |
 | `pnpm validate:artifacts` | Validates JSON shape and SQLite freshness          |
-| `pnpm build`              | Build your production site to `./dist/`          |
-| `pnpm preview`            | Preview your build locally, before deploying     |
-| `pnpm astro ...`          | Run CLI commands like `astro add`, `astro check` |
+| `pnpm build`              | Build your production site to `./dist/`            |
+| `pnpm preview`            | Preview your build locally, before deploying       |
+| `pnpm astro ...`          | Run CLI commands like `astro add`, `astro check`   |
 
 Before running `pnpm dev:api`, generate report artifacts from the repository
 root:
