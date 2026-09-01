@@ -9,10 +9,25 @@ import type {
 import type { HeatmapChartData } from "@/lib/chart-data";
 import type { CampaignAwareGitBenchData, FixtureResult } from "@/lib/types";
 
-async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
+export class ReportClientError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly url: string,
+  ) {
+    super(message);
+    this.name = "ReportClientError";
+  }
+}
+
+async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(url, { signal });
   if (!response.ok) {
-    throw new Error(`Failed to load ${url}: ${response.status}`);
+    throw new ReportClientError(
+      `Failed to load ${url}: ${response.status}`,
+      response.status,
+      url,
+    );
   }
   return response.json() as Promise<T>;
 }
@@ -45,7 +60,7 @@ export type CampaignAwareHeatmapChartData = HeatmapChartData &
   CampaignAwareResponse;
 
 export function loadCampaigns(
-  filters: Record<string, string> = {}
+  filters: Record<string, string> = {},
 ): Promise<CampaignsResponse> {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
@@ -57,7 +72,7 @@ export function loadCampaigns(
 
 export function loadCampaign(campaignId: string): Promise<CampaignResponse> {
   return getJson<CampaignResponse>(
-    `/api/campaigns/${encodeURIComponent(campaignId)}`
+    `/api/campaigns/${encodeURIComponent(campaignId)}`,
   );
 }
 
@@ -68,7 +83,7 @@ export function loadRawAttempts(
     limit?: number;
     offset?: number;
     include_output?: boolean;
-  } = {}
+  } = {},
 ): Promise<RawAttemptsResponse> {
   const params = new URLSearchParams();
   if (options.fixture_id) params.set("fixture_id", options.fixture_id);
@@ -78,7 +93,7 @@ export function loadRawAttempts(
   if (options.include_output) params.set("include_output", "true");
   const suffix = params.size ? `?${params}` : "";
   return getJson<RawAttemptsResponse>(
-    `/api/campaigns/${encodeURIComponent(campaignId)}/raw-attempts${suffix}`
+    `/api/campaigns/${encodeURIComponent(campaignId)}/raw-attempts${suffix}`,
   );
 }
 
@@ -90,7 +105,7 @@ export function loadRawAttemptByIdentity(
     output_mode: string;
     fixture_id: string;
   },
-  options: { include_output?: boolean } = {}
+  options: { include_output?: boolean } = {},
 ): Promise<{ campaign_id: string; attempt: RawAttempt }> {
   const params = new URLSearchParams();
   if (options.include_output) params.set("include_output", "true");
@@ -102,7 +117,7 @@ export function loadRawAttemptByIdentity(
     encodeURIComponent(identity.fixture_id),
   ].join("/");
   return getJson<{ campaign_id: string; attempt: RawAttempt }>(
-    `/api/campaigns/${encodeURIComponent(campaignId)}/attempts/${path}${suffix}`
+    `/api/campaigns/${encodeURIComponent(campaignId)}/attempts/${path}${suffix}`,
   );
 }
 
@@ -113,7 +128,7 @@ export function getSelectedCampaignId(): string | null {
 
 function loadCampaignAwareData(
   path: string,
-  params: Record<string, string | undefined> = {}
+  params: Record<string, string | undefined> = {},
 ): string {
   const campaignId = getSelectedCampaignId();
   const query = new URLSearchParams();
@@ -125,21 +140,28 @@ function loadCampaignAwareData(
   return `${path}${suffix}`;
 }
 
-export function loadSummary(): Promise<CampaignAwareGitBenchData> {
-  return getJson<CampaignAwareGitBenchData>(loadCampaignAwareData("/api/summary"));
+export function loadSummary(
+  signal?: AbortSignal,
+): Promise<CampaignAwareGitBenchData> {
+  return getJson<CampaignAwareGitBenchData>(
+    loadCampaignAwareData("/api/summary"),
+    signal,
+  );
 }
 
 function loadChartData(
   chart: "pass-rate" | "cost" | "runtime" | "tokens" | "quadrant",
-  params: ChartScopeParams = {}
+  params: ChartScopeParams = {},
+  signal?: AbortSignal,
 ): Promise<CampaignAwareGitBenchData> {
   return getJson<CampaignAwareGitBenchData>(
-    loadCampaignAwareData(`/api/charts/${chart}`, { ...params })
+    loadCampaignAwareData(`/api/charts/${chart}`, { ...params }),
+    signal,
   );
 }
 
 export function loadPassRateChart(
-  benchmark?: string
+  benchmark?: string,
 ): Promise<CampaignAwareGitBenchData> {
   return loadChartData("pass-rate", { benchmark });
 }
@@ -150,44 +172,50 @@ export interface ChartScopeParams {
 }
 
 export function loadCostChart(
-  scope: ChartScopeParams = {}
+  scope: ChartScopeParams = {},
 ): Promise<CampaignAwareGitBenchData> {
   return loadChartData("cost", scope);
 }
 
 export function loadRuntimeChart(
-  scope: ChartScopeParams = {}
+  scope: ChartScopeParams = {},
 ): Promise<CampaignAwareGitBenchData> {
   return loadChartData("runtime", scope);
 }
 
 export function loadTokenChart(
-  scope: ChartScopeParams = {}
+  scope: ChartScopeParams = {},
 ): Promise<CampaignAwareGitBenchData> {
   return loadChartData("tokens", scope);
 }
 
 export function loadQuadrantChart(
-  scope: ChartScopeParams = {}
+  scope: ChartScopeParams = {},
+  signal?: AbortSignal,
 ): Promise<CampaignAwareGitBenchData> {
-  return loadChartData("quadrant", scope);
+  return loadChartData("quadrant", scope, signal);
 }
 
 export function loadHeatmapChart(): Promise<CampaignAwareHeatmapChartData> {
   return getJson<CampaignAwareHeatmapChartData>(
-    loadCampaignAwareData("/api/charts/heatmap")
+    loadCampaignAwareData("/api/charts/heatmap"),
   );
 }
 
-export function loadBenchmark(benchmark: string): Promise<BenchmarkDetail> {
+export function loadBenchmark(
+  benchmark: string,
+  signal?: AbortSignal,
+): Promise<BenchmarkDetail> {
   return getJson<BenchmarkDetail>(
-    loadCampaignAwareData(`/api/benchmarks/${encodeURIComponent(benchmark)}`)
+    loadCampaignAwareData(`/api/benchmarks/${encodeURIComponent(benchmark)}`),
+    signal,
   );
 }
 
 export function loadModelResults(
   model: string,
-  filters: ModelResultsFilters = {}
+  filters: ModelResultsFilters = {},
+  signal?: AbortSignal,
 ): Promise<ModelResultsResponse> {
   const params: Record<string, string> = {};
   for (const [key, value] of Object.entries(filters)) {
@@ -195,32 +223,44 @@ export function loadModelResults(
   }
   const path = model.split("/").map(encodeURIComponent).join("/");
   return getJson<ModelResultsResponse>(
-    loadCampaignAwareData(`/api/models/${path}/results`, params)
+    loadCampaignAwareData(`/api/models/${path}/results`, params),
+    signal,
   );
 }
 
 export function loadFixture(
   benchmark: string,
-  fixture: string
+  fixture: string,
+  signal?: AbortSignal,
 ): Promise<FixtureDetail> {
   return getJson<FixtureDetail>(
     loadCampaignAwareData(
       `/api/fixtures/${encodeURIComponent(benchmark)}/${encodeURIComponent(
-        fixture
-      )}`
-    )
+        fixture,
+      )}`,
+    ),
+    signal,
+  );
+}
+
+export function loadModels(
+  signal?: AbortSignal,
+): Promise<{ models: CampaignAwareGitBenchData["models"] }> {
+  return getJson<{ models: CampaignAwareGitBenchData["models"] }>(
+    "/api/models",
+    signal,
   );
 }
 
 export function loadFixtureAttempts(
   benchmark: string,
-  fixture: string
+  fixture: string,
 ): Promise<FixtureAttempts> {
   return getJson<FixtureAttempts>(
     loadCampaignAwareData(
       `/api/fixtures/${encodeURIComponent(benchmark)}/${encodeURIComponent(
-        fixture
-      )}/attempts`
-    )
+        fixture,
+      )}/attempts`,
+    ),
   );
 }

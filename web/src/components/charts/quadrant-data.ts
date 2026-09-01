@@ -39,11 +39,11 @@ export interface QuadrantPointPair {
   coincident: boolean;
 }
 
-function normalize(
+export function normalizeQuadrantMetric(
   value: number,
   min: number,
   max: number,
-  better: QuadrantMetricDefinition["better"]
+  better: QuadrantMetricDefinition["better"],
 ) {
   if (max === min) return 0.5;
   const ratio = (value - min) / (max - min);
@@ -52,13 +52,13 @@ function normalize(
 
 export function areQuadrantPointsCoincident(
   text: QuadrantPoint | undefined,
-  json: QuadrantPoint | undefined
+  json: QuadrantPoint | undefined,
 ): boolean {
   return text != null && json != null && text.x === json.x && text.y === json.y;
 }
 
 export function pairQuadrantPoints(
-  points: QuadrantPoint[]
+  points: QuadrantPoint[],
 ): QuadrantPointPair[] {
   const pairs = new Map<string, QuadrantPointPair>();
   for (const point of points) {
@@ -81,21 +81,21 @@ export function pairQuadrantPoints(
 
 export function quadrantPairForPoint(
   pairs: QuadrantPointPair[],
-  point: Pick<QuadrantPoint, "pairId">
+  point: Pick<QuadrantPoint, "pairId">,
 ): QuadrantPointPair | undefined {
   return pairs.find((pair) => pair.id === point.pairId);
 }
 
 export function rankQuadrantPoints(
   points: QuadrantPoint[],
-  limit = 6
+  limit = 6,
 ): QuadrantPoint[] {
   return [...points]
     .sort(
       (a, b) =>
         b.compositeScore - a.compositeScore ||
         a.pairId.localeCompare(b.pairId) ||
-        a.outputMode.localeCompare(b.outputMode)
+        a.outputMode.localeCompare(b.outputMode),
     )
     .slice(0, limit);
 }
@@ -105,7 +105,7 @@ export function buildQuadrantPoints(
   selectedGroups: string[],
   xMetric: QuadrantMetricDefinition,
   yMetric: QuadrantMetricDefinition,
-  outputMode: OutputMode
+  outputMode: OutputMode,
 ): QuadrantPoint[] {
   const groups = deriveModelGroups(data);
   const selected = new Set(sanitizeGroupSelection(selectedGroups, groups));
@@ -115,7 +115,7 @@ export function buildQuadrantPoints(
     .flatMap((group) =>
       group.efforts
         .filter((effort) =>
-          visibleModes.has(effort.outputMode as ConcreteOutputMode)
+          visibleModes.has(effort.outputMode as ConcreteOutputMode),
         )
         .map((effort) => {
           const x = xMetric.extractor(effort, data);
@@ -134,12 +134,12 @@ export function buildQuadrantPoints(
         })
         .filter(
           (
-            point
+            point,
           ): point is Omit<
             QuadrantPoint,
             "id" | "x" | "y" | "xScore" | "yScore" | "compositeScore"
-          > => point !== null
-        )
+          > => point !== null,
+        ),
     );
 
   if (candidates.length === 0) return [];
@@ -153,8 +153,18 @@ export function buildQuadrantPoints(
   const bestByPairAndMode = new Map<string, QuadrantPoint>();
 
   for (const candidate of candidates) {
-    const xScore = normalize(candidate.xRaw, xMin, xMax, xMetric.better);
-    const yScore = normalize(candidate.yRaw, yMin, yMax, yMetric.better);
+    const xScore = normalizeQuadrantMetric(
+      candidate.xRaw,
+      xMin,
+      xMax,
+      xMetric.better,
+    );
+    const yScore = normalizeQuadrantMetric(
+      candidate.yRaw,
+      yMin,
+      yMax,
+      yMetric.better,
+    );
     const point: QuadrantPoint = {
       ...candidate,
       id: `${candidate.pairId}::${candidate.outputMode}`,

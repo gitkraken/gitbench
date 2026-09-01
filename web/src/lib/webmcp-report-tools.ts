@@ -1,0 +1,1062 @@
+import {
+  ReportClientError,
+  loadBenchmark,
+  loadFixture,
+  loadModelResults,
+  loadModels,
+  loadQuadrantChart,
+  loadSummary,
+  type ModelResultsResponse,
+} from "./report-client.ts";
+import type { BenchmarkDetail, FixtureDetail } from "./report-store.ts";
+import type {
+  CampaignAwareGitBenchData,
+  FixtureResult,
+  ModelInfo,
+  RunMeta,
+} from "./types.ts";
+import {
+  deriveModelGroups,
+  splitModelVariantKey,
+  type ModelGroupEffort,
+} from "../components/charts/model-groups.ts";
+import { normalizeQuadrantMetric } from "../components/charts/quadrant-data.ts";
+
+export const WEBMCP_LIMITS = {
+  listDefault: 20,
+  listMaximum: 50,
+  evidenceCharactersDefault: 2_000,
+  evidenceCharactersMaximum: 8_000,
+} as const;
+
+export type ToolErrorCategory =
+  | "not_found"
+  | "unavailable"
+  | "invalid_input"
+  | "query_failure"
+  | "cancelled";
+
+export interface ToolFailure {
+  ok: false;
+  source_url: string;
+  error: {
+    category: ToolErrorCategory;
+    message: string;
+    input?: Record<string, unknown>;
+  };
+}
+
+export interface ToolSuccess<T> {
+  ok: true;
+  source_url: string;
+  data: T;
+}
+
+export type ToolResult<T> = ToolSuccess<T> | ToolFailure;
+
+export interface ToolPage<T> {
+  items: T[];
+  offset: number;
+  limit: number;
+  total: number;
+  truncated: boolean;
+  next_offset: number | null;
+}
+
+export interface GitBenchToolDependencies {
+  loadSummary(signal?: AbortSignal): Promise<CampaignAwareGitBenchData>;
+  loadModels(signal?: AbortSignal): Promise<{ models: ModelInfo[] }>;
+  loadModelResults(
+    model: string,
+    filters?: Record<string, string>,
+    signal?: AbortSignal,
+  ): Promise<ModelResultsResponse>;
+  loadBenchmark(
+    benchmark: string,
+    signal?: AbortSignal,
+  ): Promise<BenchmarkDetail>;
+  loadFixture(
+    benchmark: string,
+    fixture: string,
+    signal?: AbortSignal,
+  ): Promise<FixtureDetail>;
+  loadQuadrantChart(
+    scope?: { benchmark?: string; fixture?: string },
+    signal?: AbortSignal,
+  ): Promise<CampaignAwareGitBenchData>;
+}
+
+export const defaultGitBenchToolDependencies: GitBenchToolDependencies = {
+  loadSummary,
+  loadModels,
+  loadModelResults,
+  loadBenchmark,
+  loadFixture,
+  loadQuadrantChart,
+};
+
+class InvalidToolInput extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidToolInput";
+  }
+}
+
+function origin(): string {
+  return typeof window === "undefined"
+    ? "https://gitbench.dev"
+    : window.location.origin;
+}
+
+export function gitBenchSourceUrl(path: string, base = origin()): string {
+  return new URL(path, `${base.replace(/\/$/, "")}/`).toString();
+}
+
+export function overviewSourceUrl(base?: string): string {
+  return gitBenchSourceUrl("/", base);
+}
+
+export function modelsSourceUrl(base?: string): string {
+  return gitBenchSourceUrl("/models", base);
+}
+
+export function modelSourceUrl(model: string, base?: string): string {
+  const canonical = splitModelVariantKey(model).canonicalModelName;
+  const [provider, ...rest] = canonical.split("/");
+  const modelAndLevel = rest.join("/");
+  const colon = modelAndLevel.lastIndexOf(":");
+  const modelName =
+    colon === -1 ? modelAndLevel : modelAndLevel.slice(0, colon);
+  const level = colon === -1 ? null : modelAndLevel.slice(colon + 1);
+  const parts = ["models", provider, modelName, ...(level ? [level] : [])];
+  return gitBenchSourceUrl(`/${parts.map(encodeURIComponent).join("/")}`, base);
+}
+
+export function benchmarkSourceUrl(benchmark: string, base?: string): string {
+  return gitBenchSourceUrl(
+    `/benchmarks/${encodeURIComponent(benchmark)}`,
+    base,
+  );
+}
+
+export function fixtureSourceUrl(
+  benchmark: string,
+  fixture: string,
+  base?: string,
+): string {
+  return gitBenchSourceUrl(
+    `/fixtures/${encodeURIComponent(benchmark)}/${encodeURIComponent(fixture)}`,
+    base,
+  );
+}
+
+function text(
+  input: Record<string, unknown>,
+  key: string,
+  required = false,
+): string | undefined {
+  const value = input[key];
+  if (value == null || value === "") {
+    if (required) throw new InvalidToolInput(`${key} is required`);
+    return undefined;
+  }
+  if (typeof value !== "string")
+    throw new InvalidToolInput(`${key} must be a string`);
+  return value;
+}
+
+function bool(input: Record<string, unknown>, key: string): boolean {
+  const value = input[key];
+  if (value == null) return false;
+  if (typeof value !== "boolean")
+    throw new InvalidToolInput(`${key} must be a boolean`);
+  return value;
+}
+
+function boundedInteger(
+  input: Record<string, unknown>,
+  key: string,
+  fallback: number,
+  maximum: number,
+): number {
+  const value = input[key] ?? fallback;
+  if (!Number.isInteger(value) || Number(value) < 0) {
+    throw new InvalidToolInput(`${key} must be a non-negative integer`);
+  }
+  return Math.min(Number(value), maximum);
+}
+
+function listWindow(input: Record<string, unknown>): {
+  offset: number;
+  limit: number;
+} {
+  if (
+    input.limit !== undefined &&
+    (!Number.isInteger(input.limit) || Number(input.limit) < 1)
+  ) {
+    throw new InvalidToolInput("limit must be a positive integer");
+  }
+  return {
+    offset: boundedInteger(input, "offset", 0, Number.MAX_SAFE_INTEGER),
+    limit: boundedInteger(
+      input,
+      "limit",
+      WEBMCP_LIMITS.listDefault,
+      WEBMCP_LIMITS.listMaximum,
+    ),
+  };
+}
+
+function page<T>(items: T[], offset: number, limit: number): ToolPage<T> {
+  const sliced = items.slice(offset, offset + limit);
+  const next = offset + sliced.length;
+  return {
+    items: sliced,
+    offset,
+    limit,
+    total: items.length,
+    truncated: next < items.length,
+    next_offset: next < items.length ? next : null,
+  };
+}
+
+function truncateEvidence(
+  value: string | null | undefined,
+  limit: number,
+): string | null {
+  if (value == null) return null;
+  return value.length <= limit ? value : `${value.slice(0, limit - 1)}…`;
+}
+
+export function evaluationIdentityKey(
+  model: string,
+  reasoningLevel: string | null | undefined,
+  outputMode: string | null | undefined,
+): string {
+  const variant = splitModelVariantKey(model);
+  const mode = outputMode ?? variant.outputMode;
+  return JSON.stringify([
+    variant.canonicalModelName.trim(),
+    reasoningLevel == null || reasoningLevel === ""
+      ? null
+      : reasoningLevel.trim(),
+    mode === "json" ? "json_schema" : mode,
+  ]);
+}
+
+export function buildGenerationLookup(
+  runs: RunMeta[],
+): Map<string, string | null> {
+  const timestamps = new Map<string, Set<string>>();
+  for (const run of runs) {
+    const key = evaluationIdentityKey(
+      run.model,
+      run.reasoning_level,
+      run.output_mode,
+    );
+    const values = timestamps.get(key) ?? new Set<string>();
+    if (run.timestamp) values.add(run.timestamp);
+    timestamps.set(key, values);
+  }
+  return new Map(
+    Array.from(timestamps, ([key, values]) => [
+      key,
+      values.size === 1 ? Array.from(values)[0] : null,
+    ]),
+  );
+}
+
+export function generatedAt(
+  lookup: Map<string, string | null>,
+  model: string,
+  reasoningLevel: string | null | undefined,
+  outputMode: string | null | undefined,
+): string | null {
+  return (
+    lookup.get(evaluationIdentityKey(model, reasoningLevel, outputMode)) ?? null
+  );
+}
+
+function modelEvaluationIdentity(
+  models: ModelInfo[],
+  model: string,
+): { reasoningLevel: string | null; outputMode: string } | undefined {
+  const requested = splitModelVariantKey(model);
+  const match = models.find((candidate) => {
+    const candidateVariant = splitModelVariantKey(candidate.name);
+    const candidateOutputMode =
+      candidate.output_mode || candidateVariant.outputMode;
+    return (
+      candidateVariant.canonicalModelName === requested.canonicalModelName &&
+      candidateOutputMode === requested.outputMode
+    );
+  });
+  return match
+    ? {
+        reasoningLevel: match.reasoningLevel,
+        outputMode: match.output_mode || requested.outputMode,
+      }
+    : undefined;
+}
+
+function failure(
+  source_url: string,
+  error: unknown,
+  input: Record<string, unknown>,
+): ToolFailure {
+  if (error instanceof InvalidToolInput) {
+    return {
+      ok: false,
+      source_url,
+      error: { category: "invalid_input", message: error.message, input },
+    };
+  }
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return {
+      ok: false,
+      source_url,
+      error: {
+        category: "cancelled",
+        message: "The report query was cancelled.",
+      },
+    };
+  }
+  if (error instanceof ReportClientError) {
+    const category: ToolErrorCategory =
+      error.status === 404
+        ? "not_found"
+        : error.status >= 500
+          ? "unavailable"
+          : "query_failure";
+    return {
+      ok: false,
+      source_url,
+      error: { category, message: error.message, input },
+    };
+  }
+  if (error instanceof TypeError) {
+    return {
+      ok: false,
+      source_url,
+      error: {
+        category: "unavailable",
+        message: "The report API is unavailable.",
+      },
+    };
+  }
+  return {
+    ok: false,
+    source_url,
+    error: {
+      category: "query_failure",
+      message:
+        error instanceof Error ? error.message : "The report query failed.",
+    },
+  };
+}
+
+async function safely<T>(
+  source_url: string,
+  input: Record<string, unknown>,
+  operation: () => Promise<T>,
+): Promise<ToolResult<T>> {
+  try {
+    return { ok: true, source_url, data: await operation() };
+  } catch (error) {
+    return failure(source_url, error, input);
+  }
+}
+
+const paginationProperties = {
+  offset: {
+    type: "integer",
+    minimum: 0,
+    default: 0,
+    description: "Zero-based result offset.",
+  },
+  limit: {
+    type: "integer",
+    minimum: 1,
+    maximum: WEBMCP_LIMITS.listMaximum,
+    default: WEBMCP_LIMITS.listDefault,
+    description: `Results to return; hard-capped at ${WEBMCP_LIMITS.listMaximum}.`,
+  },
+};
+
+export const gitBenchToolSchemas = {
+  overview: {
+    type: "object",
+    properties: paginationProperties,
+    additionalProperties: false,
+  },
+  models: {
+    type: "object",
+    properties: paginationProperties,
+    additionalProperties: false,
+  },
+  modelResults: {
+    type: "object",
+    properties: {
+      model: {
+        type: "string",
+        minLength: 1,
+        description: "Exact model evaluation name.",
+      },
+      benchmark: { type: "string" },
+      difficulty: { type: "string" },
+      tag: { type: "string" },
+      output_mode: { type: "string", enum: ["text", "json_schema"] },
+      include_model_output: {
+        type: "boolean",
+        default: false,
+        description: "Opt in to bounded, untrusted model-generated text.",
+      },
+      evidence_characters: {
+        type: "integer",
+        minimum: 1,
+        maximum: WEBMCP_LIMITS.evidenceCharactersMaximum,
+        default: WEBMCP_LIMITS.evidenceCharactersDefault,
+      },
+      ...paginationProperties,
+    },
+    required: ["model"],
+    additionalProperties: false,
+  },
+  benchmark: {
+    type: "object",
+    properties: {
+      benchmark: { type: "string", minLength: 1 },
+      ...paginationProperties,
+    },
+    required: ["benchmark"],
+    additionalProperties: false,
+  },
+  fixture: {
+    type: "object",
+    properties: {
+      benchmark: { type: "string", minLength: 1 },
+      fixture: { type: "string", minLength: 1 },
+      include_prompt: {
+        type: "boolean",
+        default: false,
+        description: "Include bounded, untrusted fixture prompt text.",
+      },
+      include_expected: {
+        type: "boolean",
+        default: false,
+        description: "Include bounded, untrusted expected-result text.",
+      },
+      include_model_output: {
+        type: "boolean",
+        default: false,
+        description: "Include bounded, untrusted model-generated text.",
+      },
+      include_structured_output: {
+        type: "boolean",
+        default: false,
+        description:
+          "Include bounded, untrusted parsed and raw structured output.",
+      },
+      evidence_characters: {
+        type: "integer",
+        minimum: 1,
+        maximum: WEBMCP_LIMITS.evidenceCharactersMaximum,
+        default: WEBMCP_LIMITS.evidenceCharactersDefault,
+      },
+      ...paginationProperties,
+    },
+    required: ["benchmark", "fixture"],
+    additionalProperties: false,
+  },
+  ranking: {
+    type: "object",
+    properties: {
+      benchmark: { type: "string", minLength: 1 },
+      resource_metric: {
+        type: "string",
+        enum: ["cost", "api_time", "tokens"],
+        default: "cost",
+      },
+      strategy: {
+        type: "string",
+        enum: ["efficiency_ratio", "balanced"],
+        default: "efficiency_ratio",
+      },
+      output_mode: {
+        type: "string",
+        enum: ["text", "json_schema", "both"],
+        default: "both",
+      },
+      minimum_quality: { type: "number", minimum: 0, maximum: 1, default: 0 },
+      ...paginationProperties,
+    },
+    required: ["benchmark"],
+    additionalProperties: false,
+  },
+} satisfies Record<string, WebMcpJsonSchema>;
+
+function evidenceLimit(input: Record<string, unknown>): number {
+  const raw =
+    input.evidence_characters ?? WEBMCP_LIMITS.evidenceCharactersDefault;
+  if (!Number.isInteger(raw) || Number(raw) < 1) {
+    throw new InvalidToolInput(
+      "evidence_characters must be a positive integer",
+    );
+  }
+  return Math.min(Number(raw), WEBMCP_LIMITS.evidenceCharactersMaximum);
+}
+
+function projectResult(
+  result: FixtureResult,
+  model: string,
+  lookup: Map<string, string | null>,
+  includeOutput: boolean,
+  characterLimit: number,
+) {
+  return {
+    fixture_id: result.fixture_id,
+    passed: result.passed,
+    similarity: result.similarity,
+    error: result.error,
+    reasoning_level: result.reasoning_level,
+    output_mode: result.output_mode,
+    cost_usd: result.cost_usd,
+    api_duration_ms: result.api_duration_ms,
+    total_tokens: result.total_tokens,
+    generated_at: generatedAt(
+      lookup,
+      model,
+      result.reasoning_level,
+      result.output_mode,
+    ),
+    ...(includeOutput
+      ? { model_output: truncateEvidence(result.model_output, characterLimit) }
+      : {}),
+  };
+}
+
+type ResourceMetric = "cost" | "api_time" | "tokens";
+type RankingStrategy = "efficiency_ratio" | "balanced";
+
+interface RankingCandidate {
+  pair_id: string;
+  model: string;
+  reasoning_level: string | null;
+  output_mode: string;
+  quality: number;
+  resource: number;
+  resource_unit: string;
+  quality_score?: number;
+  resource_score?: number;
+  ranking_score: number;
+}
+
+function resourceFor(
+  effort: ModelGroupEffort,
+  data: CampaignAwareGitBenchData,
+  metric: ResourceMetric,
+): { value: number; unit: string } | null {
+  if (metric === "cost") {
+    return effort.totalCostUsd == null
+      ? null
+      : { value: effort.totalCostUsd, unit: "USD" };
+  }
+  if (metric === "api_time") {
+    const runtime = data.model_runtimes[effort.modelName];
+    return runtime
+      ? { value: runtime.total_ms / 1000, unit: "api_call_seconds" }
+      : null;
+  }
+  const tokens = data.model_token_summaries[effort.modelName];
+  return tokens ? { value: tokens.total_tokens, unit: "tokens" } : null;
+}
+
+export function rankModels(
+  data: CampaignAwareGitBenchData,
+  benchmark: string,
+  metric: ResourceMetric,
+  strategy: RankingStrategy,
+  outputMode: string,
+  minimumQuality: number,
+): {
+  entries: RankingCandidate[];
+  candidate_count: number;
+  excluded_below_quality: number;
+  excluded_unusable_resource: number;
+} {
+  const raw = deriveModelGroups(data).flatMap((group) =>
+    group.efforts
+      .filter(
+        (effort) => outputMode === "both" || effort.outputMode === outputMode,
+      )
+      .map((effort) => ({ group, effort })),
+  );
+  let excludedBelowQuality = 0;
+  let excludedUnusableResource = 0;
+  const eligible: RankingCandidate[] = [];
+  for (const { group, effort } of raw) {
+    const quality = data.matrix[effort.modelName]?.[benchmark]?.pass_at_k;
+    if (quality == null || quality < minimumQuality) {
+      excludedBelowQuality += 1;
+      continue;
+    }
+    const resource = resourceFor(effort, data, metric);
+    if (!resource || !Number.isFinite(resource.value) || resource.value <= 0) {
+      excludedUnusableResource += 1;
+      continue;
+    }
+    eligible.push({
+      pair_id: group.id,
+      model: splitModelVariantKey(effort.modelName).canonicalModelName,
+      reasoning_level: effort.reasoningLevel,
+      output_mode: effort.outputMode,
+      quality,
+      resource: resource.value,
+      resource_unit: resource.unit,
+      ranking_score: quality / resource.value,
+    });
+  }
+  if (strategy === "balanced" && eligible.length) {
+    const qualities = eligible.map((entry) => entry.quality);
+    const resources = eligible.map((entry) => entry.resource);
+    for (const entry of eligible) {
+      entry.quality_score = normalizeQuadrantMetric(
+        entry.quality,
+        Math.min(...qualities),
+        Math.max(...qualities),
+        "higher",
+      );
+      entry.resource_score = normalizeQuadrantMetric(
+        entry.resource,
+        Math.min(...resources),
+        Math.max(...resources),
+        "lower",
+      );
+      entry.ranking_score = (entry.quality_score + entry.resource_score) / 2;
+    }
+  }
+  const best = new Map<string, RankingCandidate>();
+  for (const entry of eligible) {
+    const key = `${entry.pair_id}\u0000${entry.output_mode}`;
+    const previous = best.get(key);
+    if (
+      !previous ||
+      entry.ranking_score > previous.ranking_score ||
+      (entry.ranking_score === previous.ranking_score &&
+        entry.model.localeCompare(previous.model) < 0)
+    )
+      best.set(key, entry);
+  }
+  const entries = Array.from(best.values()).sort(
+    (a, b) =>
+      b.ranking_score - a.ranking_score ||
+      a.model.localeCompare(b.model) ||
+      a.output_mode.localeCompare(b.output_mode),
+  );
+  return {
+    entries,
+    candidate_count: raw.length,
+    excluded_below_quality: excludedBelowQuality,
+    excluded_unusable_resource: excludedUnusableResource,
+  };
+}
+
+export function createGitBenchToolDefinitions(
+  dependencies: GitBenchToolDependencies = defaultGitBenchToolDependencies,
+  baseUrl?: string,
+): WebMcpToolDefinition[] {
+  const readOnly = { readOnlyHint: true };
+  return [
+    {
+      name: "gitbench_get_overview",
+      description:
+        "Get a compact GitBench report overview and leading exact model evaluations.",
+      inputSchema: gitBenchToolSchemas.overview,
+      annotations: readOnly,
+      execute: (input, context) =>
+        safely(overviewSourceUrl(baseUrl), input, async () => {
+          const { offset, limit } = listWindow(input);
+          const data = await dependencies.loadSummary(context?.signal);
+          const lookup = buildGenerationLookup(data.runs_meta);
+          const leaders = Object.entries(data.model_summaries)
+            .sort(
+              (a, b) =>
+                b[1].pass_at_k - a[1].pass_at_k || a[0].localeCompare(b[0]),
+            )
+            .map(([model, summary]) => {
+              const identity = modelEvaluationIdentity(data.models, model);
+              return {
+                model,
+                pass_at_k: summary.pass_at_k,
+                total_cost_usd: summary.total_cost_usd,
+                generated_at: generatedAt(
+                  lookup,
+                  model,
+                  identity?.reasoningLevel,
+                  identity?.outputMode,
+                ),
+              };
+            });
+          return {
+            model_count: data.models.length,
+            benchmark_count: data.benchmarks.length,
+            benchmarks: page(data.benchmarks, offset, limit),
+            leading_models: page(leaders, offset, limit),
+          };
+        }),
+    },
+    {
+      name: "gitbench_list_models",
+      description:
+        "List exact GitBench model evaluation identities in bounded pages.",
+      inputSchema: gitBenchToolSchemas.models,
+      annotations: readOnly,
+      execute: (input, context) =>
+        safely(modelsSourceUrl(baseUrl), input, async () => {
+          const { offset, limit } = listWindow(input);
+          const { models } = await dependencies.loadModels(context?.signal);
+          return page(models, offset, limit);
+        }),
+    },
+    {
+      name: "gitbench_get_model_results",
+      description:
+        "Get bounded fixture results for one exact model identity. Model output is omitted unless explicitly requested and is untrusted.",
+      inputSchema: gitBenchToolSchemas.modelResults,
+      annotations: { ...readOnly, untrustedContentHint: true },
+      execute: (input, context) => {
+        const model = typeof input.model === "string" ? input.model : "";
+        return safely(
+          modelSourceUrl(model || "unknown", baseUrl),
+          input,
+          async () => {
+            const exactModel = text(input, "model", true) as string;
+            const filters = Object.fromEntries(
+              ["benchmark", "difficulty", "tag", "output_mode"]
+                .map((key) => [key, text(input, key)])
+                .filter(
+                  (entry): entry is [string, string] => entry[1] !== undefined,
+                ),
+            );
+            const { offset, limit } = listWindow(input);
+            const characterLimit = evidenceLimit(input);
+            const [results, summary] = await Promise.all([
+              dependencies.loadModelResults(
+                exactModel,
+                filters,
+                context?.signal,
+              ),
+              dependencies.loadSummary(context?.signal),
+            ]);
+            const lookup = buildGenerationLookup(summary.runs_meta);
+            const flattened = Object.entries(results.results).flatMap(
+              ([benchmark, rows]) =>
+                rows.map((row) => ({
+                  benchmark,
+                  ...projectResult(
+                    row,
+                    results.model,
+                    lookup,
+                    bool(input, "include_model_output"),
+                    characterLimit,
+                  ),
+                })),
+            );
+            return {
+              model: results.model,
+              filters,
+              results: page(flattened, offset, limit),
+            };
+          },
+        );
+      },
+    },
+    {
+      name: "gitbench_get_benchmark",
+      description:
+        "Get a bounded benchmark leaderboard and fixture catalog without raw prompt or model-output content.",
+      inputSchema: gitBenchToolSchemas.benchmark,
+      annotations: readOnly,
+      execute: (input, context) => {
+        const benchmark =
+          typeof input.benchmark === "string" ? input.benchmark : "";
+        return safely(
+          benchmarkSourceUrl(benchmark || "unknown", baseUrl),
+          input,
+          async () => {
+            const exactBenchmark = text(input, "benchmark", true) as string;
+            const { offset, limit } = listWindow(input);
+            const [detail, summary] = await Promise.all([
+              dependencies.loadBenchmark(exactBenchmark, context?.signal),
+              dependencies.loadSummary(context?.signal),
+            ]);
+            const lookup = buildGenerationLookup(summary.runs_meta);
+            const leaderboard = detail.leaderboard.map((entry) => {
+              const identity = modelEvaluationIdentity(
+                summary.models,
+                entry.model,
+              );
+              return {
+                ...entry,
+                generated_at: generatedAt(
+                  lookup,
+                  entry.model,
+                  identity?.reasoningLevel,
+                  identity?.outputMode,
+                ),
+              };
+            });
+            const fixtures = Object.values(detail.fixtures).map(
+              ({
+                prompt: _prompt,
+                expected: _expected,
+                setup: _setup,
+                ...fixture
+              }) => fixture,
+            );
+            return {
+              benchmark: detail.benchmark,
+              tag_counts: detail.tag_counts,
+              leaderboard: page(leaderboard, offset, limit),
+              fixtures: page(fixtures, offset, limit),
+            };
+          },
+        );
+      },
+    },
+    {
+      name: "gitbench_get_fixture",
+      description:
+        "Get bounded fixture results. Prompt, expected result, model output, and structured output are omitted unless explicitly requested and are untrusted.",
+      inputSchema: gitBenchToolSchemas.fixture,
+      annotations: { ...readOnly, untrustedContentHint: true },
+      execute: (input, context) => {
+        const benchmark =
+          typeof input.benchmark === "string" ? input.benchmark : "";
+        const fixture = typeof input.fixture === "string" ? input.fixture : "";
+        return safely(
+          fixtureSourceUrl(
+            benchmark || "unknown",
+            fixture || "unknown",
+            baseUrl,
+          ),
+          input,
+          async () => {
+            const exactBenchmark = text(input, "benchmark", true) as string;
+            const exactFixture = text(input, "fixture", true) as string;
+            const { offset, limit } = listWindow(input);
+            const characterLimit = evidenceLimit(input);
+            const [detail, summary] = await Promise.all([
+              dependencies.loadFixture(
+                exactBenchmark,
+                exactFixture,
+                context?.signal,
+              ),
+              dependencies.loadSummary(context?.signal),
+            ]);
+            const lookup = buildGenerationLookup(summary.runs_meta);
+            const fixtureInfo = {
+              id: detail.fixture.id,
+              benchmark: detail.fixture.benchmark,
+              description: detail.fixture.description,
+              purpose: detail.fixture.purpose,
+              difficulty: detail.fixture.difficulty,
+              tags: detail.fixture.tags,
+              ...(bool(input, "include_prompt")
+                ? {
+                    prompt: truncateEvidence(
+                      detail.fixture.prompt,
+                      characterLimit,
+                    ),
+                  }
+                : {}),
+              ...(bool(input, "include_expected")
+                ? {
+                    expected: truncateEvidence(
+                      detail.fixture.expected,
+                      characterLimit,
+                    ),
+                  }
+                : {}),
+            };
+            const outputs = detail.outputs.map((result) => ({
+              model: result.model,
+              ...projectResult(
+                result,
+                result.model,
+                lookup,
+                bool(input, "include_model_output"),
+                characterLimit,
+              ),
+              ...(bool(input, "include_structured_output")
+                ? {
+                    parsed_payload: truncateEvidence(
+                      result.parsed_payload,
+                      characterLimit,
+                    ),
+                    raw_structured_output: truncateEvidence(
+                      result.raw_structured_output,
+                      characterLimit,
+                    ),
+                    structured_error: truncateEvidence(
+                      result.structured_error,
+                      characterLimit,
+                    ),
+                  }
+                : {}),
+            }));
+            return {
+              fixture: fixtureInfo,
+              outputs: page(outputs, offset, limit),
+            };
+          },
+        );
+      },
+    },
+    {
+      name: "gitbench_rank_models",
+      description:
+        "Rank exact model evaluations for one benchmark by quality-to-resource efficiency or direction-aware balanced normalization.",
+      inputSchema: gitBenchToolSchemas.ranking,
+      annotations: readOnly,
+      execute: (input, context) => {
+        const benchmark =
+          typeof input.benchmark === "string" ? input.benchmark : "";
+        return safely(
+          benchmarkSourceUrl(benchmark || "unknown", baseUrl),
+          input,
+          async () => {
+            const exactBenchmark = text(input, "benchmark", true) as string;
+            const metric = (text(input, "resource_metric") ??
+              "cost") as ResourceMetric;
+            const strategy = (text(input, "strategy") ??
+              "efficiency_ratio") as RankingStrategy;
+            const outputMode = text(input, "output_mode") ?? "both";
+            if (!["cost", "api_time", "tokens"].includes(metric))
+              throw new InvalidToolInput(
+                "resource_metric must be cost, api_time, or tokens",
+              );
+            if (!["efficiency_ratio", "balanced"].includes(strategy))
+              throw new InvalidToolInput(
+                "strategy must be efficiency_ratio or balanced",
+              );
+            if (!["text", "json_schema", "both"].includes(outputMode))
+              throw new InvalidToolInput(
+                "output_mode must be text, json_schema, or both",
+              );
+            const minimumQuality =
+              input.minimum_quality == null ? 0 : Number(input.minimum_quality);
+            if (
+              !Number.isFinite(minimumQuality) ||
+              minimumQuality < 0 ||
+              minimumQuality > 1
+            )
+              throw new InvalidToolInput(
+                "minimum_quality must be between 0 and 1",
+              );
+            const { offset, limit } = listWindow(input);
+            const [data, summary] = await Promise.all([
+              dependencies.loadQuadrantChart(
+                { benchmark: exactBenchmark },
+                context?.signal,
+              ),
+              dependencies.loadSummary(context?.signal),
+            ]);
+            const ranked = rankModels(
+              data,
+              exactBenchmark,
+              metric,
+              strategy,
+              outputMode,
+              minimumQuality,
+            );
+            const lookup = buildGenerationLookup(summary.runs_meta);
+            const entries = ranked.entries.map((entry) => ({
+              ...entry,
+              generated_at: generatedAt(
+                lookup,
+                entry.model,
+                entry.reasoning_level,
+                entry.output_mode,
+              ),
+            }));
+            return {
+              benchmark: exactBenchmark,
+              resource_metric: metric,
+              strategy,
+              output_mode: outputMode,
+              minimum_quality: minimumQuality,
+              candidate_count: ranked.candidate_count,
+              selected_candidate_count: entries.length,
+              excluded_below_quality: ranked.excluded_below_quality,
+              excluded_unusable_resource: ranked.excluded_unusable_resource,
+              ranking: page(entries, offset, limit),
+            };
+          },
+        );
+      },
+    },
+  ];
+}
+
+export async function registerGitBenchWebMcpTools(
+  target: Document = document,
+  dependencies: GitBenchToolDependencies = defaultGitBenchToolDependencies,
+): Promise<() => void> {
+  if (target.defaultView?.isSecureContext === false) return () => {};
+  const modelContext = target.modelContext;
+  if (!modelContext || typeof modelContext.registerTool !== "function")
+    return () => {};
+  const controller = new AbortController();
+  try {
+    await Promise.all(
+      createGitBenchToolDefinitions(dependencies).map((tool) =>
+        Promise.resolve(
+          modelContext.registerTool(tool, { signal: controller.signal }),
+        ),
+      ),
+    );
+  } catch (error) {
+    controller.abort();
+    console.debug("GitBench WebMCP tools were not registered.", error);
+  }
+  return () => controller.abort();
+}
+
+interface PageLifecycleTarget {
+  addEventListener(
+    type: "pagehide",
+    listener: (event: PageTransitionEvent) => void,
+  ): void;
+  removeEventListener(
+    type: "pagehide",
+    listener: (event: PageTransitionEvent) => void,
+  ): void;
+}
+
+export function installGitBenchWebMcpTools(
+  target: Document = document,
+  lifecycle: PageLifecycleTarget = window,
+  dependencies: GitBenchToolDependencies = defaultGitBenchToolDependencies,
+): () => void {
+  let cleanup = () => {};
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    lifecycle.removeEventListener("pagehide", onPageHide);
+    cleanup();
+  };
+  const onPageHide = (event: PageTransitionEvent) => {
+    if (!event.persisted) dispose();
+  };
+
+  lifecycle.addEventListener("pagehide", onPageHide);
+  void registerGitBenchWebMcpTools(target, dependencies).then(
+    (registrationCleanup) => {
+      if (disposed) registrationCleanup();
+      else cleanup = registrationCleanup;
+    },
+  );
+  return dispose;
+}

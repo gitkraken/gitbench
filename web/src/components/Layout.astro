@@ -107,6 +107,10 @@ const generated = new Date().toISOString().split("T")[0];
       </div>
     </div>
     <script>
+      import { installGitBenchWebMcpTools } from "@/lib/webmcp-report-tools";
+
+      installGitBenchWebMcpTools();
+
       document
         .querySelectorAll<HTMLInputElement>(
           ".sidebar-collapse-toggle, .menu-toggle",

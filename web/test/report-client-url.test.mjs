@@ -44,6 +44,25 @@ test("loadModelResults combines filters and selected campaign in one query strin
 
   assert.equal(
     requestedUrl,
-    "/api/models/openai/gpt-test%3Ahigh/results?output_mode=text&benchmark=commit_messages&campaign=campaign-123"
+    "/api/models/openai/gpt-test%3Ahigh/results?output_mode=text&benchmark=commit_messages&campaign=campaign-123",
   );
+});
+
+test("loadModelResults passes an optional cancellation signal to fetch", async () => {
+  const previousFetch = globalThis.fetch;
+  const controller = new AbortController();
+  let receivedSignal;
+  globalThis.fetch = async (_url, options) => {
+    receivedSignal = options.signal;
+    return {
+      ok: true,
+      json: async () => ({ model: "openai/gpt-test:high", results: {} }),
+    };
+  };
+  try {
+    await loadModelResults("openai/gpt-test:high", {}, controller.signal);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+  assert.equal(receivedSignal, controller.signal);
 });
