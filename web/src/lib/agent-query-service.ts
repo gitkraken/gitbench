@@ -7,13 +7,6 @@ import type {
   ModelInfo,
   RunMeta,
 } from "./types.ts";
-import {
-  deriveModelGroups,
-  splitModelVariantKey,
-  type ModelGroupEffort,
-} from "../components/charts/model-groups.ts";
-import { normalizeQuadrantMetric } from "../components/charts/quadrant-data.ts";
-
 export const AGENT_OPERATIONS = [
   "overview",
   "models",
@@ -76,6 +69,84 @@ const LIMITS = {
 } as const;
 
 class InvalidAgentInput extends Error {}
+
+interface ModelGroupEffort {
+  modelName: string;
+  reasoningLevel: string | null;
+  outputMode: string;
+  totalCostUsd: number | null;
+}
+
+interface ModelGroup {
+  id: string;
+  efforts: ModelGroupEffort[];
+}
+
+function splitModelVariantKey(modelName: string): {
+  canonicalModelName: string;
+  outputMode: "text" | "json_schema";
+} {
+  const suffix = "__json_schema";
+  return modelName.endsWith(suffix)
+    ? {
+        canonicalModelName: modelName.slice(0, -suffix.length),
+        outputMode: "json_schema",
+      }
+    : { canonicalModelName: modelName, outputMode: "text" };
+}
+
+function deriveModelGroups(data: CampaignAwareGitBenchData): ModelGroup[] {
+  if (data.base_model_groups?.length) {
+    return data.base_model_groups.map((group) => ({
+      id: `${group.provider}/${group.baseModel}`,
+      efforts: group.levels.map((level) => {
+        const variant = splitModelVariantKey(level.modelName);
+        const model = data.models.find(
+          (candidate) =>
+            candidate.name === variant.canonicalModelName &&
+            (candidate.output_mode ?? "text") === variant.outputMode,
+        );
+        return {
+          modelName: level.modelName,
+          reasoningLevel: model?.reasoningLevel ?? level.level,
+          outputMode: variant.outputMode,
+          totalCostUsd:
+            data.model_summaries[level.modelName]?.total_cost_usd ??
+            level.total_cost_usd ??
+            null,
+        };
+      }),
+    }));
+  }
+
+  const groups = new Map<string, ModelGroup>();
+  for (const model of data.models) {
+    const outputMode = model.output_mode ?? "text";
+    const modelName =
+      outputMode === "text" ? model.name : `${model.name}__${outputMode}`;
+    const id = `${model.provider}/${model.baseModel}`;
+    const group = groups.get(id) ?? { id, efforts: [] };
+    group.efforts.push({
+      modelName,
+      reasoningLevel: model.reasoningLevel,
+      outputMode,
+      totalCostUsd: data.model_summaries[modelName]?.total_cost_usd ?? null,
+    });
+    groups.set(id, group);
+  }
+  return Array.from(groups.values());
+}
+
+function normalizeMetric(
+  value: number,
+  min: number,
+  max: number,
+  better: "higher" | "lower",
+) {
+  if (max === min) return 0.5;
+  const ratio = (value - min) / (max - min);
+  return better === "higher" ? ratio : 1 - ratio;
+}
 
 export function isAgentOperation(value: string): value is AgentOperation {
   return (AGENT_OPERATIONS as readonly string[]).includes(value);
@@ -385,13 +456,13 @@ function rankModels(
     const qualities = eligible.map((entry) => entry.quality);
     const resources = eligible.map((entry) => entry.resource);
     for (const entry of eligible) {
-      entry.quality_score = normalizeQuadrantMetric(
+      entry.quality_score = normalizeMetric(
         entry.quality,
         Math.min(...qualities),
         Math.max(...qualities),
         "higher",
       );
-      entry.resource_score = normalizeQuadrantMetric(
+      entry.resource_score = normalizeMetric(
         entry.resource,
         Math.min(...resources),
         Math.max(...resources),

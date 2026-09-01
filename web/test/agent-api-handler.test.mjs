@@ -181,7 +181,7 @@ test("public catch-all routes rewrite to their Vercel function files", () => {
   ]);
 });
 
-test("the agent server graph stays independent of the browser WebMCP module", () => {
+test("the agent server graph stays within server-safe library modules", () => {
   for (const path of [
     "../src/lib/agent-api-handler.ts",
     "../src/lib/agent-query-service.ts",
@@ -189,6 +189,7 @@ test("the agent server graph stays independent of the browser WebMCP module", ()
   ]) {
     const source = readFileSync(new URL(path, import.meta.url), "utf8");
     assert.doesNotMatch(source, /webmcp-report-tools/);
+    assert.doesNotMatch(source, /components\//);
   }
 });
 
