@@ -1,7 +1,7 @@
 import { chartData } from "./chart-data.ts";
 import { attachModelPresets } from "./model-presets.ts";
 import { getReportStore } from "./node-sqlite-report-store.ts";
-import { ReportClientError } from "./report-client.ts";
+import { ReportClientError } from "./report-client-error.ts";
 import { resolveCampaignFromQuery } from "./report-api.ts";
 import type { GitBenchToolDependencies } from "./webmcp-report-tools.ts";
 

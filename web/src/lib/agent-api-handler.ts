@@ -219,7 +219,7 @@ export function createAgentApiHandler(
 
     const service = createAgentQueryService(
       dependenciesFactory(),
-      "https://gitbench.dev",
+      "https://gitbench.gitkraken.com",
     );
     const result = await service.execute(operation, input, req.signal);
     res.setHeader(

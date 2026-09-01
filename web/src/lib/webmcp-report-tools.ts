@@ -1,13 +1,5 @@
-import {
-  ReportClientError,
-  loadBenchmark,
-  loadFixture,
-  loadModelResults,
-  loadModels,
-  loadQuadrantChart,
-  loadSummary,
-  type ModelResultsResponse,
-} from "./report-client.ts";
+import type { ModelResultsResponse } from "./report-client.ts";
+import { ReportClientError } from "./report-client-error.ts";
 import type { BenchmarkDetail, FixtureDetail } from "./report-store.ts";
 import type {
   CampaignAwareGitBenchData,
@@ -84,12 +76,38 @@ export interface GitBenchToolDependencies {
 }
 
 export const defaultGitBenchToolDependencies: GitBenchToolDependencies = {
-  loadSummary,
-  loadModels,
-  loadModelResults,
-  loadBenchmark,
-  loadFixture,
-  loadQuadrantChart,
+  async loadSummary(signal) {
+    return (await import("./report-client.ts")).loadSummary(signal);
+  },
+  async loadModels(signal) {
+    return (await import("./report-client.ts")).loadModels(signal);
+  },
+  async loadModelResults(model, filters, signal) {
+    return (await import("./report-client.ts")).loadModelResults(
+      model,
+      filters,
+      signal,
+    );
+  },
+  async loadBenchmark(benchmark, signal) {
+    return (await import("./report-client.ts")).loadBenchmark(
+      benchmark,
+      signal,
+    );
+  },
+  async loadFixture(benchmark, fixture, signal) {
+    return (await import("./report-client.ts")).loadFixture(
+      benchmark,
+      fixture,
+      signal,
+    );
+  },
+  async loadQuadrantChart(scope, signal) {
+    return (await import("./report-client.ts")).loadQuadrantChart(
+      scope,
+      signal,
+    );
+  },
 };
 
 class InvalidToolInput extends Error {
@@ -101,7 +119,7 @@ class InvalidToolInput extends Error {
 
 function origin(): string {
   return typeof window === "undefined"
-    ? "https://gitbench.dev"
+    ? "https://gitbench.gitkraken.com"
     : window.location.origin;
 }
 

@@ -1,4 +1,4 @@
-import { ReportClientError } from "./report-client.ts";
+import { ReportClientError } from "./report-client-error.ts";
 
 export async function requestAgentOperation(
   operation: string,
