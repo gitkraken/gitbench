@@ -161,6 +161,26 @@ test("the public rewrite reaches one bounded handler without adding a function",
   });
 });
 
+test("public catch-all routes rewrite to their Vercel function files", () => {
+  const config = JSON.parse(
+    readFileSync(new URL("../vercel.json", import.meta.url), "utf8"),
+  );
+  assert.deepEqual(config.rewrites.slice(1), [
+    {
+      source: "/api/fixtures/:benchmark/:fixture*",
+      destination: "/api/fixtures/[benchmark]/[...fixture]",
+    },
+    {
+      source: "/api/campaigns/:campaignId/attempts/:identity*",
+      destination: "/api/campaigns/[campaignId]/attempts/[...identity]",
+    },
+    {
+      source: "/api/models/:model*/results",
+      destination: "/api/models/[...model]/results",
+    },
+  ]);
+});
+
 test("all six GET operations return the versioned envelope and success cache policy", async () => {
   let reads = 0;
   const deps = dependencies();
