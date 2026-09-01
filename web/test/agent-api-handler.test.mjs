@@ -181,6 +181,17 @@ test("public catch-all routes rewrite to their Vercel function files", () => {
   ]);
 });
 
+test("the agent server graph stays independent of the browser WebMCP module", () => {
+  for (const path of [
+    "../src/lib/agent-api-handler.ts",
+    "../src/lib/agent-query-service.ts",
+    "../src/lib/agent-query-server.ts",
+  ]) {
+    const source = readFileSync(new URL(path, import.meta.url), "utf8");
+    assert.doesNotMatch(source, /webmcp-report-tools/);
+  }
+});
+
 test("all six GET operations return the versioned envelope and success cache policy", async () => {
   let reads = 0;
   const deps = dependencies();

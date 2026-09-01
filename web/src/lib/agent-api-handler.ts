@@ -1,20 +1,18 @@
 import {
-  createAgentQueryService,
-  isAgentOperation,
-  type AgentOperation,
-} from "./agent-query-service.ts";
-import { createServerAgentQueryDependencies } from "./agent-query-server.ts";
-import { json, queryString } from "./report-api.ts";
-import {
   benchmarkSourceUrl,
+  createAgentQueryService,
   fixtureSourceUrl,
+  isAgentOperation,
   modelSourceUrl,
   modelsSourceUrl,
   overviewSourceUrl,
+  type AgentOperation,
   type GitBenchToolDependencies,
   type ToolErrorCategory,
   type ToolFailure,
-} from "./webmcp-report-tools.ts";
+} from "./agent-query-service.ts";
+import { createServerAgentQueryDependencies } from "./agent-query-server.ts";
+import { json, queryString } from "./report-api.ts";
 
 export const AGENT_SUCCESS_CACHE =
   "public, max-age=0, s-maxage=300, stale-while-revalidate=3600";
