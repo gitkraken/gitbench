@@ -1,6 +1,6 @@
 # GitBench agent API client
 
-The bundled client requires Node.js 22.12 or newer and calls only GET endpoints under `/api/agent/v1/`. It defaults to `https://gitbench.dev`.
+The bundled client requires Node.js 22.12 or newer and calls only GET endpoints under `/api/agent/v1/`. It defaults to `https://gitbench.gitkraken.com`.
 
 ## Common behavior
 

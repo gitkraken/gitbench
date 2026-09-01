@@ -8,18 +8,9 @@ import type {
 } from "@/lib/report-store";
 import type { HeatmapChartData } from "@/lib/chart-data";
 import type { CampaignAwareGitBenchData, FixtureResult } from "@/lib/types";
+import { ReportClientError } from "./report-client-error.ts";
 
-export class ReportClientError extends Error {
-  readonly status: number;
-  readonly url: string;
-
-  constructor(message: string, status: number, url: string) {
-    super(message);
-    this.name = "ReportClientError";
-    this.status = status;
-    this.url = url;
-  }
-}
+export { ReportClientError } from "./report-client-error.ts";
 
 async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(url, { signal });

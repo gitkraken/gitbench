@@ -132,7 +132,7 @@ test("WebMCP results match the v1 API for all equivalent inputs", async () => {
   const handler = createAgentApiHandler(() => deps);
   const previousFetch = globalThis.fetch;
   globalThis.fetch = async (rawUrl, options) => {
-    const url = new URL(rawUrl, "https://gitbench.dev");
+    const url = new URL(rawUrl, "https://gitbench.gitkraken.com");
     const operation = url.pathname.split("/").at(-1);
     const res = responseRecorder();
     await handler(
@@ -153,7 +153,10 @@ test("WebMCP results match the v1 API for all equivalent inputs", async () => {
   };
 
   try {
-    const local = createGitBenchToolDefinitions(deps, "https://gitbench.dev");
+    const local = createGitBenchToolDefinitions(
+      deps,
+      "https://gitbench.gitkraken.com",
+    );
     const browser = createGitBenchToolDefinitions();
     const inputs = [
       ["gitbench_get_overview", { limit: 1 }],

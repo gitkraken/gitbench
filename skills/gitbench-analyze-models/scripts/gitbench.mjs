@@ -3,7 +3,7 @@
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
-const DEFAULT_BASE_URL = "https://gitbench.dev";
+const DEFAULT_BASE_URL = "https://gitbench.gitkraken.com";
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 const commandOptions = {

@@ -18,7 +18,7 @@ function successFetch(requests) {
     return new Response(
       JSON.stringify({
         ok: true,
-        source_url: "https://gitbench.dev/",
+        source_url: "https://gitbench.gitkraken.com/",
         data: { campaign_id: null },
       }),
       { status: 200, headers: { "content-type": "application/json" } },
@@ -95,7 +95,7 @@ test("base URL flag overrides environment and environment overrides production",
       { GITBENCH_BASE_URL: "https://env.example" },
       "https://env.example",
     ],
-    [["overview"], {}, "https://gitbench.dev"],
+    [["overview"], {}, "https://gitbench.gitkraken.com"],
   ]) {
     const requests = [];
     const result = await invoke(argv, {
@@ -166,7 +166,7 @@ test("invalid arguments and unsafe base URLs fail before transport", async () =>
 test("API failures preserve JSON stdout and add a nonzero diagnostic", async () => {
   const envelope = {
     ok: false,
-    source_url: "https://gitbench.dev/benchmarks/missing",
+    source_url: "https://gitbench.gitkraken.com/benchmarks/missing",
     error: { category: "not_found", message: "Benchmark not found" },
   };
   const result = await invoke(["benchmark", "--benchmark", "missing"], {
