@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from contextlib import nullcontext
@@ -489,16 +490,22 @@ def _call_responses_api(
     try:
         with urllib.request.urlopen(request, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        try:
+            body = json.loads(exc.read().decode("utf-8"))
+        except (ValueError, UnicodeError):
+            return None
+        return body if isinstance(body, dict) and body.get("error") else None
     except Exception:
         return None
 
 
-def _check_reasoning_evidence(body: dict) -> tuple[bool, int, bool]:
+def _check_reasoning_evidence(body: dict) -> tuple[bool, int | float | None, bool]:
     """Return (has_evidence, reasoning_tokens, has_reasoning_output)."""
     output = body.get("output") or []
     usage = body.get("usage") or {}
     output_details = usage.get("output_tokens_details") or {}
-    reasoning_tokens = output_details.get("reasoning_tokens") or 0
+    reasoning_tokens = output_details.get("reasoning_tokens")
     has_reasoning_output = any(
         item.get("type") == "reasoning" for item in output
     )
@@ -513,13 +520,11 @@ def _run_effort_preflights(
 ) -> None:
     """Query the Responses API to discover effective effort for each target.
 
-    Verifies actual reasoning occurred by checking for reasoning output
-    items and reasoning token counts.  Runs every target before reporting
-    failures so the matrix cache is populated for passing models.
+    Records reported effort separately from observed reasoning evidence.
+    Missing evidence warns without blocking the benchmark. Runs every target
+    before reporting explicit API failures.
     """
     failures: list[str] = []
-    # Load matrix to check whether model supports reasoning at OTHER levels
-    matrix = load_effort_matrix()
     first = True
 
     logger.info(
@@ -541,8 +546,10 @@ def _run_effort_preflights(
 
         effective_effort = None
         has_evidence = False
-        reasoning_tokens = 0
+        reasoning_tokens = None
         has_reasoning_output = False
+        last_success = None
+        last_error = None
 
         for prompt_index, prompt in enumerate(EFFORT_PREFLIGHT_PROMPTS):
             body = _call_responses_api(
@@ -556,23 +563,27 @@ def _run_effort_preflights(
             if body is None:
                 continue
             if body.get("error"):
+                last_error = body
                 continue
 
+            last_success = body
             effective_effort = (body.get("reasoning") or {}).get("effort")
             has_evidence, reasoning_tokens, has_reasoning_output = _check_reasoning_evidence(body)
 
             if target.requested_effort == "none" or has_evidence:
                 break  # got what we need
 
-            # Not reasoning yet — pause before next retry
+            # No reasoning observed yet — pause before the next probe.
             if prompt_index < len(EFFORT_PREFLIGHT_PROMPTS) - 1:
                 time.sleep(0.5)
 
+        body = last_success or last_error
         if body is None or body.get("error"):
             api_msg = "API error"
             if body and body.get("error"):
                 api_err = body["error"]
                 api_msg = f"API error: {api_err.get('message', str(api_err)) if isinstance(api_err, dict) else str(api_err)}"
+                failures.append(f"'{target.model}': {api_msg}")
             click.echo(f" {api_msg}", err=True)
             continue
 
@@ -581,13 +592,6 @@ def _run_effort_preflights(
             continue
 
         if target.requested_effort != "none" and not has_evidence:
-            normalized = (
-                target.base_model.split("/", 1)[1]
-                if "/" in target.base_model
-                else target.base_model
-            )
-            model_supports_reasoning = bool(matrix.get(normalized))
-
             # Log the raw response details for diagnosis
             output = body.get("output") or []
             logger.warning(
@@ -602,37 +606,13 @@ def _run_effort_preflights(
                 [item.get("type") for item in output],
             )
 
-            if model_supports_reasoning:
-                click.echo(
-                    f" effort '{target.requested_effort}' not honored",
-                    err=True,
-                )
-                failures.append(
-                    f"'{target.model}': requested effort "
-                    f"'{target.requested_effort}' produced no reasoning, "
-                    f"but lower effort levels are supported. "
-                    f"This model may not support high effort levels."
-                )
-            else:
-                click.echo(" model does not support reasoning", err=True)
-                failures.append(
-                    f"'{target.model}': requested effort "
-                    f"'{target.requested_effort}' but the model produced "
-                    f"no reasoning output or tokens."
-                )
-            continue
-
-        if effective_effort is None:
-            click.echo(" no reasoning.effort in response", err=True)
-            logger.warning(
-                "Effort preflight for '%s' (requested effort=%s): "
-                "Responses API did not return reasoning.effort",
-                target.model,
-                target.requested_effort,
+            click.echo(
+                f" warning: effort reported as {effective_effort}; "
+                "reasoning not observed (unverified); continuing",
+                err=True,
             )
-            continue
 
-        if effective_effort != target.requested_effort:
+        elif effective_effort != target.requested_effort:
             click.echo(
                 f" mapped to {effective_effort}",
                 err=True,
@@ -662,7 +642,7 @@ def _run_effort_preflights(
                 effective_effort,
             )
 
-        # Persist the verified mapping
+        # Keep reported mappings distinct from observed reasoning evidence.
         normalized = (
             target.base_model.split("/", 1)[1]
             if "/" in target.base_model
@@ -672,6 +652,10 @@ def _run_effort_preflights(
             model_id=normalized,
             requested=target.requested_effort,
             effective=effective_effort,
+            verification=(
+                "verified" if has_evidence or target.requested_effort == "none"
+                else "unverified"
+            ),
         )
 
     if failures:

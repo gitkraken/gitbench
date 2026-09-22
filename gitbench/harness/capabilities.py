@@ -144,7 +144,13 @@ def load_effort_matrix() -> dict[str, dict[str, str]]:
     matrix: dict[str, dict[str, str]] = {}
     for model_id, entry in data.get("models", {}).items():
         if isinstance(entry, dict) and "mappings" in entry:
-            matrix[model_id] = entry["mappings"]
+            verified = {
+                requested: effective
+                for requested, effective in entry["mappings"].items()
+                if entry.get("verification", {}).get(requested, "verified") == "verified"
+            }
+            if verified:
+                matrix[model_id] = verified
     return matrix
 
 
@@ -152,8 +158,16 @@ def save_effort_mapping(
     model_id: str,
     requested: str,
     effective: str,
+    *,
+    verification: str = "verified",
 ) -> None:
-    """Persist a verified effort mapping to the matrix file."""
+    """Persist a reported effort mapping and its evidence status.
+
+    Unverified mappings are retained for diagnosis but are not returned by
+    load_effort_matrix or used to bypass later preflights.
+    """
+    if verification not in {"verified", "unverified"}:
+        raise ValueError(f"Invalid effort verification status: {verification}")
     matrix_path = Path(_EFFORT_MATRIX_PATH)
     try:
         with open(matrix_path, "r") as f:
@@ -170,6 +184,7 @@ def save_effort_mapping(
     if model_id not in models:
         models[model_id] = {"mappings": {}}
     models[model_id]["mappings"][requested] = effective
+    models[model_id].setdefault("verification", {})[requested] = verification
     data["models"] = models
 
     matrix_path.parent.mkdir(parents=True, exist_ok=True)

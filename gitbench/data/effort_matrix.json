@@ -511,6 +511,152 @@
         "high": "high",
         "max": "max"
       }
+    },
+    "qwen3.8-flash": {
+      "mappings": {
+        "low": "low",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "mimo-v2.6-flash": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "mimo-v2.6-pro": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "grok-4.7": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "xhigh"
+      }
+    },
+    "ternary-bonsai-2-27b": {
+      "mappings": {
+        "none": "none",
+        "low": "medium",
+        "medium": "medium",
+        "high": "medium",
+        "xhigh": "xhigh",
+        "max": "xhigh"
+      }
+    },
+    "gpt-6-astra": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "fugu-max": {
+      "mappings": {
+        "low": "high",
+        "medium": "high",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "fugu-ultra-v2": {
+      "mappings": {
+        "low": "high",
+        "medium": "high",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "deepseek-v4.1-flash": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "low",
+        "high": "high",
+        "xhigh": "high",
+        "max": "max"
+      }
+    },
+    "mercury-2.5": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "high",
+        "max": "high"
+      }
+    },
+    "muse-spark-1.3-contributor": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh"
+      }
+    },
+    "gemini-3.8-flash": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "high",
+        "max": "high"
+      }
+    },
+    "claude-fable-5.1": {
+      "mappings": {
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "granite-4.2-8b": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "low",
+        "high": "high",
+        "xhigh": "high",
+        "max": "high"
+      }
+    },
+    "hy4-preview": {
+      "mappings": {
+        "none": "none",
+        "low": "low",
+        "medium": "low",
+        "high": "high",
+        "xhigh": "high",
+        "max": "high"
+      }
+    },
+    "glm-5.3-flash": {
+      "mappings": {
+        "low": "low",
+        "medium": "low",
+        "high": "high",
+        "xhigh": "high",
+        "max": "max"
+      }
     }
   }
 }
