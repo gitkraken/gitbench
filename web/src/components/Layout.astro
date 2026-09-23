@@ -82,7 +82,7 @@ const generated = new Date().toISOString().split("T")[0];
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-5SDMWDGT2G"></script>
-    <script>
+    <script is:inline>
       const analyticsWindow = window as typeof window & { dataLayer: unknown[][] };
       analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
       function gtag(...args: unknown[]){analyticsWindow.dataLayer.push(args);}
