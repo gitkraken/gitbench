@@ -85,7 +85,7 @@ const generated = new Date().toISOString().split("T")[0];
     <script is:inline>
       const analyticsWindow = window;
       analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
-      function gtag(args){analyticsWindow.dataLayer.push(args);}
+      function gtag(){analyticsWindow.dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-5SDMWDGT2G');
     </script>
