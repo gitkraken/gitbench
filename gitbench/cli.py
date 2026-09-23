@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -931,7 +932,19 @@ def write_output_dir(envelope: dict, output_dir: str) -> Path:
         candidate = dir_path / f"{base}_{counter}.json"
         counter += 1
 
-    candidate.write_text(json.dumps(envelope, indent=2, allow_nan=False))
+    # Readers must never observe a partially written checkpoint.
+    payload = json.dumps(envelope, indent=2, allow_nan=False)
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", dir=dir_path, suffix=".tmp", delete=False) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(payload)
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_path, candidate)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
     return candidate
 
 
@@ -2279,8 +2292,6 @@ def run(
             )
         return
 
-    # Collect all run envelopes for combined aggregation when running "both"
-    all_mode_envelopes: list[dict] = []
     safety_failures: list[str] = []
     pending_safety_paths: list[Path] = []
 
@@ -2303,7 +2314,7 @@ def run(
         try:
             # Run each (profile, models) entry
             all_profile_results: list[dict] = []
-            pending_outputs: list[tuple[str, dict]] = []
+            checkpoint_paths: list[Path] = []
             mode_safety_error: str | None = None
             progress_model_names_by_run = _progress_model_names_for_runs(runs)
             all_models_flat = [name for names in progress_model_names_by_run for name in names]
@@ -2338,14 +2349,55 @@ def run(
                     summary["total_fixtures"],
                 )
 
-            def append_pending_output(profile_name: str, model_result: dict) -> None:
+            def checkpoint_model_result(profile_name: str, model_result: dict) -> None:
+                nonlocal mode_safety_error
                 envelope = build_run_envelope(
                     model=model_result["model"],
                     profile=profile_name,
                     results=model_result["results"],
                     output_mode=output_mode,
                 )
-                pending_outputs.append((profile_name, envelope))
+                if result_safety_processor is not None:
+                    if mode_safety_error is None:
+                        try:
+                            reviewed = result_safety_processor.review_payload(envelope)
+                        except SafetyReviewError as exc:
+                            mode_safety_error = str(exc)
+                            safety_failures.append(
+                                f"{output_mode} mode {profile_name}/{envelope['model']}: {exc}"
+                            )
+                        else:
+                            if reviewed.redacted_scores:
+                                try:
+                                    write_new_run_backup(copy.deepcopy(envelope))
+                                except OSError as exc:
+                                    raise ResultSafetyError(
+                                        f"Could not write required result-safety backup: {exc}"
+                                    ) from exc
+                            _replace_envelope_results_in_place(envelope, reviewed.payload)
+                    if mode_safety_error is not None:
+                        _mark_payload_safety_pending(
+                            envelope, result_safety_processor, mode_safety_error
+                        )
+
+                pending = _payload_has_pending_safety(envelope)
+                if output_dir or not jsonl_path or pending:
+                    destination = output_dir or str(Path(resolved_json_output).parent)
+                    written = write_output_dir(envelope, destination)
+                    checkpoint_paths.append(written)
+                    click.echo(f"  Saved: {written}", err=True)
+                    if pending:
+                        pending_safety_paths.append(written)
+                if jsonl_path:
+                    if pending:
+                        click.echo(
+                            "  Skipped JSONL append because result-safety review "
+                            "failed; repair the saved JSON artifact with "
+                            "`gitbench safety-doctor` first.", err=True,
+                        )
+                    else:
+                        written = write_jsonl(envelope, jsonl_path)
+                        click.echo(f"  Appended: {written}", err=True)
 
             def append_profile_result(profile_name: str, all_model_results: list[dict]) -> None:
                 profile_fixtures = sum(r["summary"]["total_fixtures"] for r in all_model_results)
@@ -2464,14 +2516,15 @@ def run(
                             run_index = future_to_run_index.pop(future)
                             capacity_info = capacity_by_target[(run_index, 0)]
                             active_group_counts[capacity_info.capacity_key] -= 1
-                            ordered_results[run_index] = future.result()
+                            model_result = future.result()
+                            ordered_results[run_index] = model_result
+                            finish_model_result(model_result)
+                            checkpoint_model_result(runs[run_index][0], model_result)
 
                 for run_index, model_result in enumerate(ordered_results):
                     if model_result is None:
                         continue
                     profile_name, _profile_conf, _models_to_run = runs[run_index]
-                    finish_model_result(model_result)
-                    append_pending_output(profile_name, model_result)
                     append_profile_result(profile_name, [model_result])
 
                 all_model_results = [mr for mr in ordered_results if mr is not None]
@@ -2585,12 +2638,14 @@ def run(
                                     index = future_to_index.pop(future)
                                     capacity_info = capacity_by_target[(run_index, index)]
                                     active_group_counts[capacity_info.capacity_key] -= 1
-                                    ordered_results[index] = future.result()
+                                    model_result = future.result()
+                                    ordered_results[index] = model_result
+                                    finish_model_result(model_result)
+                                    checkpoint_model_result(profile_name, model_result)
 
                         for model_result in ordered_results:
                             if model_result is not None:
                                 all_model_results.append(model_result)
-                                finish_model_result(model_result)
                     else:
                         for index, current_model in enumerate(models_to_run):
                             capacity_info = capacity_by_target[(run_index, index)]
@@ -2631,9 +2686,7 @@ def run(
                             )
                             all_model_results.append(model_result)
                             finish_model_result(model_result)
-
-                    for model_result in all_model_results:
-                        append_pending_output(profile_name, model_result)
+                            checkpoint_model_result(profile_name, model_result)
 
                     # Build per-profile output
                     if len(runs) == 1:
@@ -2682,78 +2735,6 @@ def run(
             for model_result in all_model_results:
                 for r in model_result.get("results", []):
                     all_results.append(r)
-
-            if result_safety_processor is not None:
-                reviewed_outputs: list[
-                    tuple[dict[str, Any], dict[str, Any], int, bool]
-                ] = []
-                for _profile_name, envelope in pending_outputs:
-                    if mode_safety_error is not None:
-                        _mark_payload_safety_pending(
-                            envelope,
-                            result_safety_processor,
-                            mode_safety_error,
-                        )
-                        reviewed_outputs.append((envelope, envelope, 0, True))
-                        continue
-
-                    try:
-                        reviewed = result_safety_processor.review_payload(envelope)
-                    except SafetyReviewError as exc:
-                        mode_safety_error = str(exc)
-                        safety_failures.append(
-                            f"{output_mode} mode {_profile_name}/{envelope.get('model', 'unknown')}: {exc}"
-                        )
-                        _mark_payload_safety_pending(
-                            envelope,
-                            result_safety_processor,
-                            mode_safety_error,
-                        )
-                        reviewed_outputs.append((envelope, envelope, 0, True))
-                        continue
-
-                    reviewed_outputs.append(
-                        (envelope, reviewed.payload, reviewed.redacted_scores, False)
-                    )
-
-                # Required original backups complete before any normal writer runs.
-                for envelope, _sanitized, redacted_scores, pending in reviewed_outputs:
-                    if pending:
-                        continue
-                    if redacted_scores:
-                        try:
-                            write_new_run_backup(copy.deepcopy(envelope))
-                        except OSError as exc:
-                            raise ResultSafetyError(
-                                f"Could not write required result-safety backup: {exc}"
-                            ) from exc
-
-                for envelope, sanitized, _redacted_scores, pending in reviewed_outputs:
-                    if pending:
-                        continue
-                    _replace_envelope_results_in_place(envelope, sanitized)
-
-            for _profile_name, envelope in pending_outputs:
-                if output_dir:
-                    written = write_output_dir(envelope, output_dir)
-                    click.echo(f"  Saved: {written}", err=True)
-                    if _payload_has_pending_safety(envelope):
-                        pending_safety_paths.append(written)
-
-                if jsonl_path:
-                    if _payload_has_pending_safety(envelope):
-                        click.echo(
-                            "  Skipped JSONL append because result-safety review "
-                            "failed; repair the saved JSON artifact with "
-                            "`gitbench safety-doctor` first.",
-                            err=True,
-                        )
-                    else:
-                        written = write_jsonl(envelope, jsonl_path)
-                        click.echo(f"  Appended: {written}", err=True)
-
-                # Collect for cross-mode aggregation when running "both"
-                all_mode_envelopes.append(envelope)
 
             if len(runs) > 1:
                 grand_fixtures = sum(p["summary"]["total_fixtures"] for p in all_profile_results)
@@ -2886,6 +2867,9 @@ def run(
             if len(modes_to_run) == 1:
                 output_json = json.dumps(combined, indent=2, allow_nan=False)
                 written = write_text_file(mode_json_output, output_json)
+                if not output_dir and not safety_failures:
+                    for checkpoint_path in checkpoint_paths:
+                        checkpoint_path.unlink()
                 click.echo(f"\nJSON results written to: {mode_json_output}", err=True)
                 if _payload_has_pending_safety(combined):
                     pending_safety_paths.append(written)
@@ -2914,17 +2898,6 @@ def run(
         finally:
             if progress_display is not None:
                 progress_display.close()
-
-    # For explicit "both" mode, --output-dir/--jsonl already received one raw
-    # run envelope per model/mode.  Keep the default results-v*.json path raw as
-    # well so `gitbench report` can ingest newly produced artifacts directly.
-    if len(modes_to_run) > 1 and all_mode_envelopes:
-        if not output_dir and (not jsonl_path or safety_failures):
-            for envelope in all_mode_envelopes:
-                written = write_output_dir(envelope, str(Path(resolved_json_output).parent))
-                click.echo(f"  Saved: {written}", err=True)
-                if _payload_has_pending_safety(envelope):
-                    pending_safety_paths.append(written)
 
     if safety_failures:
         unique_pending_paths = list(dict.fromkeys(str(path) for path in pending_safety_paths))

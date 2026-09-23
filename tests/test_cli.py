@@ -1203,6 +1203,65 @@ class TestRunCommand:
         assert {line["output_mode"] for line in lines} == {"text", "json_schema"}
         assert all("results" in line and line["model"] == "mock" for line in lines)
 
+    @pytest.mark.parametrize("output_mode", ["text", "both"])
+    @pytest.mark.parametrize("workers", [1, 2])
+    @pytest.mark.parametrize("all_models", [False, True])
+    @pytest.mark.parametrize("destination", ["default", "directory", "jsonl"])
+    def test_completed_model_checkpoint_survives_interrupt(
+        self, runner, tmp_path, workers, all_models, destination, output_mode
+    ):
+        """A later model can be interrupted without losing a completed model."""
+        import gitbench.cli as cli_module
+
+        saved = threading.Event()
+        writer_name = "write_jsonl" if destination == "jsonl" else "write_output_dir"
+        original_writer = getattr(cli_module, writer_name)
+
+        def record_write(*args, **kwargs):
+            path = original_writer(*args, **kwargs)
+            saved.set()
+            return path
+
+        def fake_run_all(self, benchmark_names, *, model_name="", **kwargs):
+            if model_name == "mock:high":
+                assert saved.wait(5), "Completed model was not checkpointed during execution"
+                raise KeyboardInterrupt()
+            return {
+                "model": model_name,
+                "summary": {"total_benchmarks": 1, "total_fixtures": 1,
+                            "total_passed": 1, "overall_pass_at_k": 1.0},
+                "results": [{"benchmark": "commit_messages", "total": 1,
+                             "passed": 1, "pass_at_k": 1.0, "scores": [], "errors": 0}],
+            }
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            profiles = ({"first": {"model": "mock:low"}, "second": {"model": "mock:high"}}
+                        if all_models else {"parallel": {"models": ["mock:low", "mock:high"]}})
+            Path("gitbench.json").write_text(json.dumps({"models": profiles}))
+            args = ["run", "--benchmark", "commit_messages", "--output-mode", output_mode,
+                    "--model-workers", str(workers)]
+            args += ["--all-models"] if all_models else ["--profile", "parallel"]
+            if destination == "directory":
+                args += ["--output-dir", "checkpoints"]
+            elif destination == "jsonl":
+                args += ["--jsonl", "checkpoints.jsonl"]
+            with (
+                patch("gitbench.cli.check_git_availability", return_value=True),
+                patch("gitbench.cli.BenchmarkRunner.run_all", autospec=True, side_effect=fake_run_all),
+                patch(f"gitbench.cli.{writer_name}", side_effect=record_write),
+            ):
+                result = runner.invoke(cli, args)
+            assert result.exit_code != 0
+            assert saved.is_set(), result.output
+            if destination == "jsonl":
+                records = [json.loads(line) for line in Path("checkpoints.jsonl").read_text().splitlines()]
+            else:
+                root = Path("checkpoints" if destination == "directory" else "gitbench-results")
+                records = [json.loads(path.read_text()) for path in root.rglob("*.json")]
+            assert len(records) == 1
+            assert records[0]["model"] == "mock:low"
+            assert records[0]["output_mode"] == "text"
+
     def test_run_output_mode_both_model_workers_schedule_each_mode(self, runner, tmp_path):
         """Both mode runs every model once per output mode when model workers are used."""
         output_dir = tmp_path / "both-worker-results"
@@ -3430,6 +3489,16 @@ class TestBuildRunEnvelope:
 
 class TestWriteOutputDir:
     """Tests for write_output_dir helper."""
+
+    def test_failed_atomic_publish_leaves_no_partial_checkpoint(self, tmp_path):
+        from gitbench.cli import write_output_dir
+
+        envelope = {"timestamp": "2026-09-22T12:00:00+00:00", "model": "mock",
+                    "results": []}
+        with patch("gitbench.cli.os.replace", side_effect=OSError("disk failure")):
+            with pytest.raises(OSError, match="disk failure"):
+                write_output_dir(envelope, str(tmp_path))
+        assert list(tmp_path.iterdir()) == []
 
     def test_creates_directory_and_file(self, tmp_path):
         """Test that write_output_dir creates the directory and writes a file."""
