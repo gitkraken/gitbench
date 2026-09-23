@@ -2633,7 +2633,7 @@
             {
               "role": "assistant",
               "content": "Rename total to subtotal",
-              "reasoning_content": "Blame shows line 2 from 013d17c, but bug introduced when `total` was renamed to subtotal \u2014 c7c52e0. The blame shows 013d17c for the buggy line, but the rename commit introduced it by not renaming inside discount line? Blame says 013d17c touched that line... but \"Apply coding standards\" wouldn't introduce variable misuse; the rename commit did, and blame may have been reset. The intended answer: \"Rename total to subtotal\"."
+              "reasoning_content": "Blame shows line 2 from 013d17c, but bug introduced when `total` was renamed to subtotal — c7c52e0. The blame shows 013d17c for the buggy line, but the rename commit introduced it by not renaming inside discount line? Blame says 013d17c touched that line... but \"Apply coding standards\" wouldn't introduce variable misuse; the rename commit did, and blame may have been reset. The intended answer: \"Rename total to subtotal\"."
             }
           ],
           "purpose": "Tests ability to trace a variable-name bug (total vs subtotal mismatch) across multiple refactoring commits. Requires understanding that a later commit partially reverted the rename.",
@@ -2699,7 +2699,7 @@
             {
               "role": "assistant",
               "content": "Fix boundary conditions",
-              "reasoning_content": "The blame shows b4653f6 introduced the range line \u2014 but that's \"Fix boundary conditions\" which is the current state. The bug skips first and last: the commit that introduced it... blame shows b4653f6 for the buggy line. But \"Fix boundary conditions\" fixing? The message says fix, but the code is still buggy. Blame points to b4653f6."
+              "reasoning_content": "The blame shows b4653f6 introduced the range line — but that's \"Fix boundary conditions\" which is the current state. The bug skips first and last: the commit that introduced it... blame shows b4653f6 for the buggy line. But \"Fix boundary conditions\" fixing? The message says fix, but the code is still buggy. Blame points to b4653f6."
             }
           ],
           "purpose": "Tests ability to identify which commit introduced an off-by-one error in a loop boundary. Requires distinguishing between intentional boundary changes and accidental ones in git history.",
@@ -3262,7 +3262,7 @@
           "fixture_id": "f003",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The original commit hash is:\n\n**`53b06766fe3f5531ac15c0d7f62d0139d2fcb3e5`**\n\nYou can find it in the reflog at `HEAD@{1}`, which shows the commit before the amendment was made \u2014 it has the original message \"Update hello function v2\". The entry at `HEAD@{0}` is the amended commit with its new hash.\n\nIf you ever need to restore it, you can use:\n```bash\ngit reset --hard 53b0676\n```\n(Note: only do this if you actually want to discard the amendment.)",
+          "model_output": "The original commit hash is:\n\n**`53b06766fe3f5531ac15c0d7f62d0139d2fcb3e5`**\n\nYou can find it in the reflog at `HEAD@{1}`, which shows the commit before the amendment was made — it has the original message \"Update hello function v2\". The entry at `HEAD@{0}` is the amended commit with its new hash.\n\nIf you ever need to restore it, you can use:\n```bash\ngit reset --hard 53b0676\n```\n(Note: only do this if you actually want to discard the amendment.)",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 273,
@@ -3278,7 +3278,7 @@
             },
             {
               "role": "assistant",
-              "content": "The original commit hash is:\n\n**`53b06766fe3f5531ac15c0d7f62d0139d2fcb3e5`**\n\nYou can find it in the reflog at `HEAD@{1}`, which shows the commit before the amendment was made \u2014 it has the original message \"Update hello function v2\". The entry at `HEAD@{0}` is the amended commit with its new hash.\n\nIf you ever need to restore it, you can use:\n```bash\ngit reset --hard 53b0676\n```\n(Note: only do this if you actually want to discard the amendment.)"
+              "content": "The original commit hash is:\n\n**`53b06766fe3f5531ac15c0d7f62d0139d2fcb3e5`**\n\nYou can find it in the reflog at `HEAD@{1}`, which shows the commit before the amendment was made — it has the original message \"Update hello function v2\". The entry at `HEAD@{0}` is the amended commit with its new hash.\n\nIf you ever need to restore it, you can use:\n```bash\ngit reset --hard 53b0676\n```\n(Note: only do this if you actually want to discard the amendment.)"
             }
           ],
           "prompt": "You amended a commit with 'git commit --amend' and need to find the original commit hash before the amendment. The commit message was changed from 'Update hello function v2' to 'Update hello function - revised'. Use git reflog to find the old commit hash.",
@@ -3318,7 +3318,7 @@
           "fixture_id": "f004",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "# Recovering the Commit\n\nThe commit you need is visible in the reflog:\n\n```\nda9ac1b0e6239cfe255a1f46afa3663920f7766d HEAD@{2}: commit: Add login function - critical feature\n```\n\n## Recovery Steps\n\n**Option 1: Create a new branch pointing to that commit**\n```bash\ngit branch feature-login-recovered da9ac1b\n```\n\n**Option 2: Cherry-pick the commit onto main**\n```bash\ngit cherry-pick da9ac1b\n```\n\n**Option 3: Reset main back to that commit** (only if you haven't pushed/shared the merge)\n```bash\ngit reset --hard da9ac1b\n```\n\n## Why This Works\n\nEven though `feature-login` was deleted, Git doesn't immediately garbage-collect unreachable commits \u2014 they remain accessible via the reflog (typically for ~30\u201390 days). The reflog shows:\n\n- `HEAD@{2}` is where the \"critical feature\" commit was made on the deleted branch.\n- Note it's the **same hash** as `HEAD@{0}` (`da9ac1b`) because the merge was a **fast-forward**, meaning `main` already points at that commit.\n\n\ud83d\udca1 Since the fast-forward merge already brought the commit into `main`, you may not actually need recovery \u2014 just verify with:\n```bash\ngit log --oneline -3   # or git show da9ac1b\n```",
+          "model_output": "# Recovering the Commit\n\nThe commit you need is visible in the reflog:\n\n```\nda9ac1b0e6239cfe255a1f46afa3663920f7766d HEAD@{2}: commit: Add login function - critical feature\n```\n\n## Recovery Steps\n\n**Option 1: Create a new branch pointing to that commit**\n```bash\ngit branch feature-login-recovered da9ac1b\n```\n\n**Option 2: Cherry-pick the commit onto main**\n```bash\ngit cherry-pick da9ac1b\n```\n\n**Option 3: Reset main back to that commit** (only if you haven't pushed/shared the merge)\n```bash\ngit reset --hard da9ac1b\n```\n\n## Why This Works\n\nEven though `feature-login` was deleted, Git doesn't immediately garbage-collect unreachable commits — they remain accessible via the reflog (typically for ~30–90 days). The reflog shows:\n\n- `HEAD@{2}` is where the \"critical feature\" commit was made on the deleted branch.\n- Note it's the **same hash** as `HEAD@{0}` (`da9ac1b`) because the merge was a **fast-forward**, meaning `main` already points at that commit.\n\n💡 Since the fast-forward merge already brought the commit into `main`, you may not actually need recovery — just verify with:\n```bash\ngit log --oneline -3   # or git show da9ac1b\n```",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 380,
@@ -3334,7 +3334,7 @@
             },
             {
               "role": "assistant",
-              "content": "# Recovering the Commit\n\nThe commit you need is visible in the reflog:\n\n```\nda9ac1b0e6239cfe255a1f46afa3663920f7766d HEAD@{2}: commit: Add login function - critical feature\n```\n\n## Recovery Steps\n\n**Option 1: Create a new branch pointing to that commit**\n```bash\ngit branch feature-login-recovered da9ac1b\n```\n\n**Option 2: Cherry-pick the commit onto main**\n```bash\ngit cherry-pick da9ac1b\n```\n\n**Option 3: Reset main back to that commit** (only if you haven't pushed/shared the merge)\n```bash\ngit reset --hard da9ac1b\n```\n\n## Why This Works\n\nEven though `feature-login` was deleted, Git doesn't immediately garbage-collect unreachable commits \u2014 they remain accessible via the reflog (typically for ~30\u201390 days). The reflog shows:\n\n- `HEAD@{2}` is where the \"critical feature\" commit was made on the deleted branch.\n- Note it's the **same hash** as `HEAD@{0}` (`da9ac1b`) because the merge was a **fast-forward**, meaning `main` already points at that commit.\n\n\ud83d\udca1 Since the fast-forward merge already brought the commit into `main`, you may not actually need recovery \u2014 just verify with:\n```bash\ngit log --oneline -3   # or git show da9ac1b\n```"
+              "content": "# Recovering the Commit\n\nThe commit you need is visible in the reflog:\n\n```\nda9ac1b0e6239cfe255a1f46afa3663920f7766d HEAD@{2}: commit: Add login function - critical feature\n```\n\n## Recovery Steps\n\n**Option 1: Create a new branch pointing to that commit**\n```bash\ngit branch feature-login-recovered da9ac1b\n```\n\n**Option 2: Cherry-pick the commit onto main**\n```bash\ngit cherry-pick da9ac1b\n```\n\n**Option 3: Reset main back to that commit** (only if you haven't pushed/shared the merge)\n```bash\ngit reset --hard da9ac1b\n```\n\n## Why This Works\n\nEven though `feature-login` was deleted, Git doesn't immediately garbage-collect unreachable commits — they remain accessible via the reflog (typically for ~30–90 days). The reflog shows:\n\n- `HEAD@{2}` is where the \"critical feature\" commit was made on the deleted branch.\n- Note it's the **same hash** as `HEAD@{0}` (`da9ac1b`) because the merge was a **fast-forward**, meaning `main` already points at that commit.\n\n💡 Since the fast-forward merge already brought the commit into `main`, you may not actually need recovery — just verify with:\n```bash\ngit log --oneline -3   # or git show da9ac1b\n```"
             }
           ],
           "prompt": "You merged and deleted a feature branch 'feature-login' but need to recover the last commit that was added on that branch. The last feature commit message contained 'critical feature'. Use git reflog to identify what you need to run to recover that commit.",
@@ -3712,7 +3712,7 @@
           "fixture_id": "f011",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "## Identifying the commit from the reflog\n\nFrom the reflog, the commit you need is:\n\n```\n17640317a8e821694a839c79355df8ba4a359a23 HEAD@{2}: commit: Add env export B - enables feature X\n```\n\nThis is also the commit that `feature-x` pointed to when it was fast-forward merged into main (`HEAD@{0}`), so its hash can be found in two reflog entries.\n\n## Command to run\n\nTo recover the deleted branch at that commit:\n\n```bash\ngit checkout -b feature-x 17640317a8e821694a839c79355df8ba4a359a23\n```\n\nor equivalently:\n\n```bash\ngit branch feature-x 17640317a8e821694a839c79355df8ba4a359a23\n```\n\n**Note:** Since the merge was a *fast-forward* (`HEAD@{0}` shows `merge feature-x: Fast-forward`), this commit is actually already reachable from your current branch (main) \u2014 so if your goal were only to keep the changes, nothing would need recovering. But the command above restores the deleted `feature-x` branch pointing exactly at that commit.",
+          "model_output": "## Identifying the commit from the reflog\n\nFrom the reflog, the commit you need is:\n\n```\n17640317a8e821694a839c79355df8ba4a359a23 HEAD@{2}: commit: Add env export B - enables feature X\n```\n\nThis is also the commit that `feature-x` pointed to when it was fast-forward merged into main (`HEAD@{0}`), so its hash can be found in two reflog entries.\n\n## Command to run\n\nTo recover the deleted branch at that commit:\n\n```bash\ngit checkout -b feature-x 17640317a8e821694a839c79355df8ba4a359a23\n```\n\nor equivalently:\n\n```bash\ngit branch feature-x 17640317a8e821694a839c79355df8ba4a359a23\n```\n\n**Note:** Since the merge was a *fast-forward* (`HEAD@{0}` shows `merge feature-x: Fast-forward`), this commit is actually already reachable from your current branch (main) — so if your goal were only to keep the changes, nothing would need recovering. But the command above restores the deleted `feature-x` branch pointing exactly at that commit.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 379,
@@ -3728,8 +3728,8 @@
             },
             {
               "role": "assistant",
-              "content": "## Identifying the commit from the reflog\n\nFrom the reflog, the commit you need is:\n\n```\n17640317a8e821694a839c79355df8ba4a359a23 HEAD@{2}: commit: Add env export B - enables feature X\n```\n\nThis is also the commit that `feature-x` pointed to when it was fast-forward merged into main (`HEAD@{0}`), so its hash can be found in two reflog entries.\n\n## Command to run\n\nTo recover the deleted branch at that commit:\n\n```bash\ngit checkout -b feature-x 17640317a8e821694a839c79355df8ba4a359a23\n```\n\nor equivalently:\n\n```bash\ngit branch feature-x 17640317a8e821694a839c79355df8ba4a359a23\n```\n\n**Note:** Since the merge was a *fast-forward* (`HEAD@{0}` shows `merge feature-x: Fast-forward`), this commit is actually already reachable from your current branch (main) \u2014 so if your goal were only to keep the changes, nothing would need recovering. But the command above restores the deleted `feature-x` branch pointing exactly at that commit.",
-              "reasoning_content": "The commit is already merged (fast-forward), so main contains it. But question asks to recover it \u2014 command: git merge 17640317 or git branch feature-x 17640317... Likely answer: `git checkout -b feature-x 1764031` or since merged, nothing needed. Provide the recovery command."
+              "content": "## Identifying the commit from the reflog\n\nFrom the reflog, the commit you need is:\n\n```\n17640317a8e821694a839c79355df8ba4a359a23 HEAD@{2}: commit: Add env export B - enables feature X\n```\n\nThis is also the commit that `feature-x` pointed to when it was fast-forward merged into main (`HEAD@{0}`), so its hash can be found in two reflog entries.\n\n## Command to run\n\nTo recover the deleted branch at that commit:\n\n```bash\ngit checkout -b feature-x 17640317a8e821694a839c79355df8ba4a359a23\n```\n\nor equivalently:\n\n```bash\ngit branch feature-x 17640317a8e821694a839c79355df8ba4a359a23\n```\n\n**Note:** Since the merge was a *fast-forward* (`HEAD@{0}` shows `merge feature-x: Fast-forward`), this commit is actually already reachable from your current branch (main) — so if your goal were only to keep the changes, nothing would need recovering. But the command above restores the deleted `feature-x` branch pointing exactly at that commit.",
+              "reasoning_content": "The commit is already merged (fast-forward), so main contains it. But question asks to recover it — command: git merge 17640317 or git branch feature-x 17640317... Likely answer: `git checkout -b feature-x 1764031` or since merged, nothing needed. Provide the recovery command."
             }
           ],
           "prompt": "After merging and deleting 'feature-x', you need to recover the commit 'Add env export B - enables feature X' which was the last commit on that branch. Use git reflog to identify what git command to run.",
@@ -3769,7 +3769,7 @@
           "fixture_id": "f012",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "## Recovery Steps\n\nThe critical commit is `fd30268` \u2014 visible at `HEAD@{4}` (\"Production database config - critical\").\n\n**1. Switch back to main (you're on backup):**\n```bash\ngit checkout main\n```\n\n**2. Recover the commit using reflog:**\n```bash\ngit reset --hard fd30268f48647bf98fe52abe2b93cea9aa1a1d85\n```\n\nOr equivalently:\n```bash\ngit reset --hard HEAD@{4}\n```\n\n## Why this works\n\n- The reset to `HEAD~1` didn't delete the commit \u2014 it only moved the `main` branch pointer back to `c70bb22`. The commit still exists in the object database.\n- The reflog records every movement of HEAD, so `fd30268` is still reachable via `HEAD@{4}`.\n- `git reset --hard` moves `main` back to point at `fd30268`, restoring the production config as the latest commit.\n\n\u26a0\ufe0f **Note:** Since you committed this on main before switching to backup, resetting main to `fd30268` also keeps everything in order. Verify with:\n\n```bash\ngit log --oneline -3\n```\n\nYou should see:\n```\nfd30268 Production database config - critical\nc70bb22 Local database config\n```",
+          "model_output": "## Recovery Steps\n\nThe critical commit is `fd30268` — visible at `HEAD@{4}` (\"Production database config - critical\").\n\n**1. Switch back to main (you're on backup):**\n```bash\ngit checkout main\n```\n\n**2. Recover the commit using reflog:**\n```bash\ngit reset --hard fd30268f48647bf98fe52abe2b93cea9aa1a1d85\n```\n\nOr equivalently:\n```bash\ngit reset --hard HEAD@{4}\n```\n\n## Why this works\n\n- The reset to `HEAD~1` didn't delete the commit — it only moved the `main` branch pointer back to `c70bb22`. The commit still exists in the object database.\n- The reflog records every movement of HEAD, so `fd30268` is still reachable via `HEAD@{4}`.\n- `git reset --hard` moves `main` back to point at `fd30268`, restoring the production config as the latest commit.\n\n⚠️ **Note:** Since you committed this on main before switching to backup, resetting main to `fd30268` also keeps everything in order. Verify with:\n\n```bash\ngit log --oneline -3\n```\n\nYou should see:\n```\nfd30268 Production database config - critical\nc70bb22 Local database config\n```",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 362,
@@ -3785,7 +3785,7 @@
             },
             {
               "role": "assistant",
-              "content": "## Recovery Steps\n\nThe critical commit is `fd30268` \u2014 visible at `HEAD@{4}` (\"Production database config - critical\").\n\n**1. Switch back to main (you're on backup):**\n```bash\ngit checkout main\n```\n\n**2. Recover the commit using reflog:**\n```bash\ngit reset --hard fd30268f48647bf98fe52abe2b93cea9aa1a1d85\n```\n\nOr equivalently:\n```bash\ngit reset --hard HEAD@{4}\n```\n\n## Why this works\n\n- The reset to `HEAD~1` didn't delete the commit \u2014 it only moved the `main` branch pointer back to `c70bb22`. The commit still exists in the object database.\n- The reflog records every movement of HEAD, so `fd30268` is still reachable via `HEAD@{4}`.\n- `git reset --hard` moves `main` back to point at `fd30268`, restoring the production config as the latest commit.\n\n\u26a0\ufe0f **Note:** Since you committed this on main before switching to backup, resetting main to `fd30268` also keeps everything in order. Verify with:\n\n```bash\ngit log --oneline -3\n```\n\nYou should see:\n```\nfd30268 Production database config - critical\nc70bb22 Local database config\n```",
+              "content": "## Recovery Steps\n\nThe critical commit is `fd30268` — visible at `HEAD@{4}` (\"Production database config - critical\").\n\n**1. Switch back to main (you're on backup):**\n```bash\ngit checkout main\n```\n\n**2. Recover the commit using reflog:**\n```bash\ngit reset --hard fd30268f48647bf98fe52abe2b93cea9aa1a1d85\n```\n\nOr equivalently:\n```bash\ngit reset --hard HEAD@{4}\n```\n\n## Why this works\n\n- The reset to `HEAD~1` didn't delete the commit — it only moved the `main` branch pointer back to `c70bb22`. The commit still exists in the object database.\n- The reflog records every movement of HEAD, so `fd30268` is still reachable via `HEAD@{4}`.\n- `git reset --hard` moves `main` back to point at `fd30268`, restoring the production config as the latest commit.\n\n⚠️ **Note:** Since you committed this on main before switching to backup, resetting main to `fd30268` also keeps everything in order. Verify with:\n\n```bash\ngit log --oneline -3\n```\n\nYou should see:\n```\nfd30268 Production database config - critical\nc70bb22 Local database config\n```",
               "reasoning_content": "Recover fd30268."
             }
           ],
@@ -3917,7 +3917,7 @@
             {
               "role": "assistant",
               "content": "VERSION=2.0.0",
-              "reasoning_content": "Ambiguous\u2014pick release version? Likely resolve to 2.0.0 (release branch takes precedence)."
+              "reasoning_content": "Ambiguous—pick release version? Likely resolve to 2.0.0 (release branch takes precedence)."
             }
           ],
           "purpose": "Tests ability to resolve a version number merge conflict. Evaluates semantic versioning awareness in conflict resolution.",
@@ -4431,7 +4431,7 @@
             {
               "role": "assistant",
               "content": "--- main.py\ndef main():\n    print(\"Running enterprise\")\n\n--- utils.py\nDEBUG = True\nPORT = 9000",
-              "reasoning_content": "main.py: prefer more descriptive = \"Running enterprise\". utils.py: DEBUG=True, PORT? Safer DEBUG=True \u2014 keep PORT=9000 (from same side)."
+              "reasoning_content": "main.py: prefer more descriptive = \"Running enterprise\". utils.py: DEBUG=True, PORT? Safer DEBUG=True — keep PORT=9000 (from same side)."
             }
           ],
           "purpose": "Tests ability to resolve simultaneous conflicts in two files with different strategies per file. Evaluates multi-file conflict juggling.",
@@ -5464,7 +5464,7 @@
             {
               "role": "assistant",
               "content": "fix-a\nfix-b",
-              "reasoning_content": "fix-a merged; fix-b points to same commit as main \u2014 fully merged too. Delete both."
+              "reasoning_content": "fix-a merged; fix-b points to same commit as main — fully merged too. Delete both."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -5862,7 +5862,7 @@
             {
               "role": "assistant",
               "content": "none",
-              "reasoning_content": "feature-experimental not listed as merged \u2192 none."
+              "reasoning_content": "feature-experimental not listed as merged → none."
             }
           ],
           "prompt": "Look at the branches in this repository. Which branches should be deleted because they are fully merged into main? List ONLY the branch names to delete, one per line. If none, respond with 'none'.",
@@ -6136,7 +6136,7 @@
           "fixture_id": "f002",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**stash@{2}**\n\nGit stashes are stacked like a LIFO (last-in, first-out): the most recent stash gets index 0. Since Work A was stashed first, it's pushed furthest down the stack \u2014 at `stash@{2}`.\n\nTo retrieve it: `git stash pop stash@{2}` or `git stash apply stash@{2}`",
+          "model_output": "**stash@{2}**\n\nGit stashes are stacked like a LIFO (last-in, first-out): the most recent stash gets index 0. Since Work A was stashed first, it's pushed furthest down the stack — at `stash@{2}`.\n\nTo retrieve it: `git stash pop stash@{2}` or `git stash apply stash@{2}`",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 359,
@@ -6152,7 +6152,7 @@
             },
             {
               "role": "assistant",
-              "content": "**stash@{2}**\n\nGit stashes are stacked like a LIFO (last-in, first-out): the most recent stash gets index 0. Since Work A was stashed first, it's pushed furthest down the stack \u2014 at `stash@{2}`.\n\nTo retrieve it: `git stash pop stash@{2}` or `git stash apply stash@{2}`"
+              "content": "**stash@{2}**\n\nGit stashes are stacked like a LIFO (last-in, first-out): the most recent stash gets index 0. Since Work A was stashed first, it's pushed furthest down the stack — at `stash@{2}`.\n\nTo retrieve it: `git stash pop stash@{2}` or `git stash apply stash@{2}`"
             }
           ],
           "prompt": "You stashed 'Work A' first, then 'Work B', then 'Work C'. Which stash entry contains 'Work A'? Provide the stash reference.",
@@ -6192,7 +6192,7 @@
           "fixture_id": "f003",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash reference is **`stash@{0}`** \u2014 it's the entry labeled \"On feature-branch: feature-work\", containing your stashed changes to `file.txt`.",
+          "model_output": "The stash reference is **`stash@{0}`** — it's the entry labeled \"On feature-branch: feature-work\", containing your stashed changes to `file.txt`.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 196,
@@ -6208,7 +6208,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash reference is **`stash@{0}`** \u2014 it's the entry labeled \"On feature-branch: feature-work\", containing your stashed changes to `file.txt`."
+              "content": "The stash reference is **`stash@{0}`** — it's the entry labeled \"On feature-branch: feature-work\", containing your stashed changes to `file.txt`."
             }
           ],
           "prompt": "You stashed work on 'feature-branch' with message 'feature-work'. Which stash entry contains this stashed work? Provide the stash reference.",
@@ -6248,7 +6248,7 @@
           "fixture_id": "f004",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "Your 'Main change' is stored in **stash@{0}** \u2014 the entry labeled `On main: main-changes`.\n\nYou can restore it with:\n```bash\ngit stash pop stash@{0}\n```\nor apply it without removing:\n```bash\ngit stash apply stash@{0}\n```",
+          "model_output": "Your 'Main change' is stored in **stash@{0}** — the entry labeled `On main: main-changes`.\n\nYou can restore it with:\n```bash\ngit stash pop stash@{0}\n```\nor apply it without removing:\n```bash\ngit stash apply stash@{0}\n```",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 192,
@@ -6264,7 +6264,7 @@
             },
             {
               "role": "assistant",
-              "content": "Your 'Main change' is stored in **stash@{0}** \u2014 the entry labeled `On main: main-changes`.\n\nYou can restore it with:\n```bash\ngit stash pop stash@{0}\n```\nor apply it without removing:\n```bash\ngit stash apply stash@{0}\n```"
+              "content": "Your 'Main change' is stored in **stash@{0}** — the entry labeled `On main: main-changes`.\n\nYou can restore it with:\n```bash\ngit stash pop stash@{0}\n```\nor apply it without removing:\n```bash\ngit stash apply stash@{0}\n```"
             }
           ],
           "prompt": "You stashed 'Main change' before merging feature into main. Which stash entry contains your 'main-changes'? Provide the stash reference.",
@@ -6304,7 +6304,7 @@
           "fixture_id": "f005",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash reference is **stash@{0}**.\n\nIts diff shows `file.txt` being changed from \"Initial\" to \"Stashed content\", which matches the content you're looking for. The pop failed because your working tree also has conflicting changes to `file.txt` \u2014 resolve those (or use `git checkout -- file.txt` to discard local changes) and then run `git stash pop` again.",
+          "model_output": "The stash reference is **stash@{0}**.\n\nIts diff shows `file.txt` being changed from \"Initial\" to \"Stashed content\", which matches the content you're looking for. The pop failed because your working tree also has conflicting changes to `file.txt` — resolve those (or use `git checkout -- file.txt` to discard local changes) and then run `git stash pop` again.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 200,
@@ -6320,7 +6320,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash reference is **stash@{0}**.\n\nIts diff shows `file.txt` being changed from \"Initial\" to \"Stashed content\", which matches the content you're looking for. The pop failed because your working tree also has conflicting changes to `file.txt` \u2014 resolve those (or use `git checkout -- file.txt` to discard local changes) and then run `git stash pop` again."
+              "content": "The stash reference is **stash@{0}**.\n\nIts diff shows `file.txt` being changed from \"Initial\" to \"Stashed content\", which matches the content you're looking for. The pop failed because your working tree also has conflicting changes to `file.txt` — resolve those (or use `git checkout -- file.txt` to discard local changes) and then run `git stash pop` again."
             }
           ],
           "prompt": "You stashed 'Stashed content' but git stash pop failed due to conflicting changes. Which stash entry contains 'Stashed content'? Provide the stash reference.",
@@ -6360,7 +6360,7 @@
           "fixture_id": "f006",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The work is in **stash@{0}** \u2014 the entry labeled \"On main: important-work\", which contains the changes to both file1.txt (\"Work A\") and file2.txt (\"Work B\").",
+          "model_output": "The work is in **stash@{0}** — the entry labeled \"On main: important-work\", which contains the changes to both file1.txt (\"Work A\") and file2.txt (\"Work B\").",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 249,
@@ -6376,7 +6376,7 @@
             },
             {
               "role": "assistant",
-              "content": "The work is in **stash@{0}** \u2014 the entry labeled \"On main: important-work\", which contains the changes to both file1.txt (\"Work A\") and file2.txt (\"Work B\")."
+              "content": "The work is in **stash@{0}** — the entry labeled \"On main: important-work\", which contains the changes to both file1.txt (\"Work A\") and file2.txt (\"Work B\")."
             }
           ],
           "prompt": "You stashed 'important-work' containing changes to file1.txt and file2.txt. Which stash entry contains this work? Provide the stash reference.",
@@ -6416,7 +6416,7 @@
           "fixture_id": "f007",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash containing 'Stashed' is **stash@{1}** \u2014 the older stash, since `git stash list` orders entries newest-first (stash@{0} is the most recent).",
+          "model_output": "The stash containing 'Stashed' is **stash@{1}** — the older stash, since `git stash list` orders entries newest-first (stash@{0} is the most recent).",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 277,
@@ -6432,7 +6432,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash containing 'Stashed' is **stash@{1}** \u2014 the older stash, since `git stash list` orders entries newest-first (stash@{0} is the most recent)."
+              "content": "The stash containing 'Stashed' is **stash@{1}** — the older stash, since `git stash list` orders entries newest-first (stash@{0} is the most recent)."
             }
           ],
           "prompt": "You have two stashes: one with 'Other work' (newer) and one with 'Stashed' (older). Which stash contains 'Stashed'? Provide the stash reference.",
@@ -6472,7 +6472,7 @@
           "fixture_id": "f008",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash reference is **`stash@{0}`** \u2014 it contains both the tracked change (`file.txt`) and the untracked file (`new.txt`).",
+          "model_output": "The stash reference is **`stash@{0}`** — it contains both the tracked change (`file.txt`) and the untracked file (`new.txt`).",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 244,
@@ -6488,7 +6488,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash reference is **`stash@{0}`** \u2014 it contains both the tracked change (`file.txt`) and the untracked file (`new.txt`)."
+              "content": "The stash reference is **`stash@{0}`** — it contains both the tracked change (`file.txt`) and the untracked file (`new.txt`)."
             }
           ],
           "prompt": "You stashed both tracked and untracked files with message 'all-my-changes'. Which stash entry contains this work? Provide the stash reference.",
@@ -6640,7 +6640,7 @@
           "fixture_id": "f011",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The stash reference is **stash@{0}**.\n\nIts diff shows the change `-Base` \u2192 `+Stashed`, confirming this entry contains the \"Stashed\" work you stashed before rebasing.",
+          "model_output": "The stash reference is **stash@{0}**.\n\nIts diff shows the change `-Base` → `+Stashed`, confirming this entry contains the \"Stashed\" work you stashed before rebasing.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 192,
@@ -6656,7 +6656,7 @@
             },
             {
               "role": "assistant",
-              "content": "The stash reference is **stash@{0}**.\n\nIts diff shows the change `-Base` \u2192 `+Stashed`, confirming this entry contains the \"Stashed\" work you stashed before rebasing."
+              "content": "The stash reference is **stash@{0}**.\n\nIts diff shows the change `-Base` → `+Stashed`, confirming this entry contains the \"Stashed\" work you stashed before rebasing."
             }
           ],
           "prompt": "You stashed 'Stashed' then rebased. Which stash entry contains your stashed work? Provide the stash reference.",
@@ -6696,7 +6696,7 @@
           "fixture_id": "f012",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The work is in **stash@{0}** \u2014 it matches both the branch (`On my-feature-branch`) and the stash message (`feature-on-my-feature-branch`).\n\nYou can restore it with:\n```bash\ngit stash pop stash@{0}\n```",
+          "model_output": "The work is in **stash@{0}** — it matches both the branch (`On my-feature-branch`) and the stash message (`feature-on-my-feature-branch`).\n\nYou can restore it with:\n```bash\ngit stash pop stash@{0}\n```",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 206,
@@ -6712,7 +6712,7 @@
             },
             {
               "role": "assistant",
-              "content": "The work is in **stash@{0}** \u2014 it matches both the branch (`On my-feature-branch`) and the stash message (`feature-on-my-feature-branch`).\n\nYou can restore it with:\n```bash\ngit stash pop stash@{0}\n```"
+              "content": "The work is in **stash@{0}** — it matches both the branch (`On my-feature-branch`) and the stash message (`feature-on-my-feature-branch`).\n\nYou can restore it with:\n```bash\ngit stash pop stash@{0}\n```"
             }
           ],
           "prompt": "You were on 'my-feature-branch' and stashed 'Feature work' with message 'feature-on-my-feature-branch'. Which stash entry contains this work? Provide the stash reference.",
@@ -7533,7 +7533,7 @@
           "fixture_id": "f001",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **093ef5d** (\"change add operation\") \u2014 it's the first commit where the test failed (exit code 1), while its parent b856f51 passed.",
+          "model_output": "The bad commit is **093ef5d** (\"change add operation\") — it's the first commit where the test failed (exit code 1), while its parent b856f51 passed.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 255,
@@ -7549,7 +7549,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **093ef5d** (\"change add operation\") \u2014 it's the first commit where the test failed (exit code 1), while its parent b856f51 passed."
+              "content": "The bad commit is **093ef5d** (\"change add operation\") — it's the first commit where the test failed (exit code 1), while its parent b856f51 passed."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -7589,7 +7589,7 @@
           "fixture_id": "f002",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **2251fc7** (\"reset config to zero\") \u2014 it's the first commit where the tests fail, and the failure persists in all subsequent commits.",
+          "model_output": "The bad commit is **2251fc7** (\"reset config to zero\") — it's the first commit where the tests fail, and the failure persists in all subsequent commits.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 274,
@@ -7605,7 +7605,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **2251fc7** (\"reset config to zero\") \u2014 it's the first commit where the tests fail, and the failure persists in all subsequent commits."
+              "content": "The bad commit is **2251fc7** (\"reset config to zero\") — it's the first commit where the tests fail, and the failure persists in all subsequent commits."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -7645,7 +7645,7 @@
           "fixture_id": "f003",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **f90b340** (\"disable feature\") \u2014 it's the first commit where tests fail (exit code 1), while c47b42c still passed.",
+          "model_output": "The bad commit is **f90b340** (\"disable feature\") — it's the first commit where tests fail (exit code 1), while c47b42c still passed.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 274,
@@ -7661,7 +7661,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **f90b340** (\"disable feature\") \u2014 it's the first commit where tests fail (exit code 1), while c47b42c still passed."
+              "content": "The bad commit is **f90b340** (\"disable feature\") — it's the first commit where tests fail (exit code 1), while c47b42c still passed."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -7701,7 +7701,7 @@
           "fixture_id": "f004",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **fcc020e** (\"remove setup todo\") \u2014 it's the first commit where tests fail; everything after inherits the breakage.",
+          "model_output": "The bad commit is **fcc020e** (\"remove setup todo\") — it's the first commit where tests fail; everything after inherits the breakage.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 278,
@@ -7717,7 +7717,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **fcc020e** (\"remove setup todo\") \u2014 it's the first commit where tests fail; everything after inherits the breakage."
+              "content": "The bad commit is **fcc020e** (\"remove setup todo\") — it's the first commit where tests fail; everything after inherits the breakage."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -7757,7 +7757,7 @@
           "fixture_id": "f005",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **3f0743e** (\"setup pytest\").\n\nReasoning: the initial commit (f69a168) passes, and the failure first appears at 3f0743e, persisting through all later commits \u2014 so that's where the bug was introduced.",
+          "model_output": "The bad commit is **3f0743e** (\"setup pytest\").\n\nReasoning: the initial commit (f69a168) passes, and the failure first appears at 3f0743e, persisting through all later commits — so that's where the bug was introduced.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 276,
@@ -7773,7 +7773,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **3f0743e** (\"setup pytest\").\n\nReasoning: the initial commit (f69a168) passes, and the failure first appears at 3f0743e, persisting through all later commits \u2014 so that's where the bug was introduced."
+              "content": "The bad commit is **3f0743e** (\"setup pytest\").\n\nReasoning: the initial commit (f69a168) passes, and the failure first appears at 3f0743e, persisting through all later commits — so that's where the bug was introduced."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -7813,7 +7813,7 @@
           "fixture_id": "f006",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **9bf5b96** (\"change port\") \u2014 it's the first commit where tests fail; all earlier commits pass.",
+          "model_output": "The bad commit is **9bf5b96** (\"change port\") — it's the first commit where tests fail; all earlier commits pass.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 297,
@@ -7829,7 +7829,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **9bf5b96** (\"change port\") \u2014 it's the first commit where tests fail; all earlier commits pass."
+              "content": "The bad commit is **9bf5b96** (\"change port\") — it's the first commit where tests fail; all earlier commits pass."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -7869,7 +7869,7 @@
           "fixture_id": "f007",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "**7322df3** (\"switch to dev\") is the bad commit \u2014 it's the first commit where the test suite fails, meaning the bug was introduced there.",
+          "model_output": "**7322df3** (\"switch to dev\") is the bad commit — it's the first commit where the test suite fails, meaning the bug was introduced there.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 272,
@@ -7885,7 +7885,7 @@
             },
             {
               "role": "assistant",
-              "content": "**7322df3** (\"switch to dev\") is the bad commit \u2014 it's the first commit where the test suite fails, meaning the bug was introduced there."
+              "content": "**7322df3** (\"switch to dev\") is the bad commit — it's the first commit where the test suite fails, meaning the bug was introduced there."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -8037,7 +8037,7 @@
           "fixture_id": "f010",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **3b8cbc5** (\"enable debug mode\").\n\nReasoning: The build passed at `fc8b3ef`, then first failed at `3b8cbc5` and continued failing afterward \u2014 so `3b8cbc5` is the commit that introduced the bug.",
+          "model_output": "The bad commit is **3b8cbc5** (\"enable debug mode\").\n\nReasoning: The build passed at `fc8b3ef`, then first failed at `3b8cbc5` and continued failing afterward — so `3b8cbc5` is the commit that introduced the bug.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 276,
@@ -8053,7 +8053,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **3b8cbc5** (\"enable debug mode\").\n\nReasoning: The build passed at `fc8b3ef`, then first failed at `3b8cbc5` and continued failing afterward \u2014 so `3b8cbc5` is the commit that introduced the bug."
+              "content": "The bad commit is **3b8cbc5** (\"enable debug mode\").\n\nReasoning: The build passed at `fc8b3ef`, then first failed at `3b8cbc5` and continued failing afterward — so `3b8cbc5` is the commit that introduced the bug."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -8093,7 +8093,7 @@
           "fixture_id": "f011",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **a14c4ca** (\"change to red\") \u2014 it's the first commit where the tests failed, meaning it introduced the bug.",
+          "model_output": "The bad commit is **a14c4ca** (\"change to red\") — it's the first commit where the tests failed, meaning it introduced the bug.",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 274,
@@ -8109,7 +8109,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **a14c4ca** (\"change to red\") \u2014 it's the first commit where the tests failed, meaning it introduced the bug."
+              "content": "The bad commit is **a14c4ca** (\"change to red\") — it's the first commit where the tests failed, meaning it introduced the bug."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -8149,7 +8149,7 @@
           "fixture_id": "f012",
           "passed": true,
           "similarity": 1.0,
-          "model_output": "The bad commit is **3513c25** (\"switch to prod\").\n\nIt's the first commit in history where the test fails \u2014 everything before it (32f5fe8, 4500e06) passes, so the bug was introduced by \"switch to prod\".",
+          "model_output": "The bad commit is **3513c25** (\"switch to prod\").\n\nIt's the first commit in history where the test fails — everything before it (32f5fe8, 4500e06) passes, so the bug was introduced by \"switch to prod\".",
           "error": null,
           "reasoning_level": "low",
           "input_tokens": 303,
@@ -8165,7 +8165,7 @@
             },
             {
               "role": "assistant",
-              "content": "The bad commit is **3513c25** (\"switch to prod\").\n\nIt's the first commit in history where the test fails \u2014 everything before it (32f5fe8, 4500e06) passes, so the bug was introduced by \"switch to prod\"."
+              "content": "The bad commit is **3513c25** (\"switch to prod\").\n\nIt's the first commit in history where the test fails — everything before it (32f5fe8, 4500e06) passes, so the bug was introduced by \"switch to prod\"."
             }
           ],
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -10869,7 +10869,7 @@
             {
               "role": "assistant",
               "content": "no",
-              "reasoning_content": "No output shown\u2014likely no matches."
+              "reasoning_content": "No output shown—likely no matches."
             }
           ],
           "purpose": "Tests ability to handle searches with no results (empty output). Evaluates edge-case handling in search operations.",
@@ -11956,7 +11956,7 @@
           "transcript": [
             {
               "role": "user",
-              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 3e06c4d524fe08343f4d00e8d896241286cc4591\nAuthor: Test User <test@test.com>\nDate:   Tue Aug 25 13:39:37 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n \u0089PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
+              "content": "Using git show --stat, which file was changed in the 'Update binary image' commit? Output ONLY the filename, nothing else.\n\nAll commits:\ncommit 3e06c4d524fe08343f4d00e8d896241286cc4591\nAuthor: Test User <test@test.com>\nDate:   Tue Aug 25 13:39:37 2026 -0700\n\n    Update binary image\n---\n image.png | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\ndiff --git a/image.png b/image.png\nindex 85fbf0a..c19a664 100644\n--- a/image.png\n+++ b/image.png\n@@ -1,3 +1,3 @@\n PNG\n \u001a\n-binary\n\\ No newline at end of file\n+updated\n\\ No newline at end of file\n"
             },
             {
               "role": "assistant",
@@ -13545,7 +13545,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-08-25T21:46:42.897001+00:00",
+    "reviewed_at": "2026-09-23T00:13:56.025086+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

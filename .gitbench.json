@@ -1,5 +1,112 @@
 {
   "models": {
+    "openrouter-new-09-21-2026": {
+      "model": [
+        "qwen/qwen3.8-flash:low",
+        "qwen/qwen3.8-flash:medium",
+        "qwen/qwen3.8-flash:high",
+        "qwen/qwen3.8-flash:xhigh",
+        "qwen/qwen3.8-flash:max",
+
+        "xiaomi/mimo-v2.6-flash:none",
+        "xiaomi/mimo-v2.6-flash:low",
+        "xiaomi/mimo-v2.6-flash:medium",
+        "xiaomi/mimo-v2.6-flash:high",
+        "xiaomi/mimo-v2.6-flash:xhigh",
+        "xiaomi/mimo-v2.6-flash:max",
+
+        "xiaomi/mimo-v2.6-pro:none",
+        "xiaomi/mimo-v2.6-pro:low",
+        "xiaomi/mimo-v2.6-pro:medium",
+        "xiaomi/mimo-v2.6-pro:high",
+        "xiaomi/mimo-v2.6-pro:xhigh",
+        "xiaomi/mimo-v2.6-pro:max",
+
+        "x-ai/grok-4.7:low",
+        "x-ai/grok-4.7:medium",
+        "x-ai/grok-4.7:high",
+        "x-ai/grok-4.7:xhigh",
+        "x-ai/grok-4.7:max",
+
+        "prism-ml/ternary-bonsai-2-27b:none",
+        "prism-ml/ternary-bonsai-2-27b:low",
+        "prism-ml/ternary-bonsai-2-27b:medium",
+        "prism-ml/ternary-bonsai-2-27b:high",
+        "prism-ml/ternary-bonsai-2-27b:xhigh",
+        "prism-ml/ternary-bonsai-2-27b:max",
+
+        "openai/gpt-6-astra:low",
+        "openai/gpt-6-astra:medium",
+        "openai/gpt-6-astra:high",
+        "openai/gpt-6-astra:xhigh",
+        "openai/gpt-6-astra:max",
+
+        "sakana/fugu-max:low",
+        "sakana/fugu-max:medium",
+        "sakana/fugu-max:high",
+        "sakana/fugu-max:xhigh",
+        "sakana/fugu-max:max",
+
+        "sakana/fugu-ultra-v2:low",
+        "sakana/fugu-ultra-v2:medium",
+        "sakana/fugu-ultra-v2:high",
+        "sakana/fugu-ultra-v2:xhigh",
+        "sakana/fugu-ultra-v2:max",
+
+        "deepseek/deepseek-v4.1-flash:none",
+        "deepseek/deepseek-v4.1-flash:low",
+        "deepseek/deepseek-v4.1-flash:medium",
+        "deepseek/deepseek-v4.1-flash:high",
+        "deepseek/deepseek-v4.1-flash:xhigh",
+        "deepseek/deepseek-v4.1-flash:max",
+
+        "inception/mercury-2.5:none",
+        "inception/mercury-2.5:low",
+        "inception/mercury-2.5:medium",
+        "inception/mercury-2.5:high",
+        "inception/mercury-2.5:xhigh",
+        "inception/mercury-2.5:max",
+
+        "meta/muse-spark-1.3-contributor:low",
+        "meta/muse-spark-1.3-contributor:medium",
+        "meta/muse-spark-1.3-contributor:high",
+        "meta/muse-spark-1.3-contributor:xhigh",
+
+        "google/gemini-3.8-flash:low",
+        "google/gemini-3.8-flash:medium",
+        "google/gemini-3.8-flash:high",
+        "google/gemini-3.8-flash:xhigh",
+        "google/gemini-3.8-flash:max",
+
+        "anthropic/claude-fable-5.1:low",
+        "anthropic/claude-fable-5.1:medium",
+        "anthropic/claude-fable-5.1:high",
+        "anthropic/claude-fable-5.1:xhigh",
+        "anthropic/claude-fable-5.1:max",
+
+        "ibm-granite/granite-4.2-8b:none",
+        "ibm-granite/granite-4.2-8b:low",
+        "ibm-granite/granite-4.2-8b:medium",
+        "ibm-granite/granite-4.2-8b:high",
+        "ibm-granite/granite-4.2-8b:xhigh",
+        "ibm-granite/granite-4.2-8b:max",
+
+        "tencent/hy4-preview:none",
+        "tencent/hy4-preview:low",
+        "tencent/hy4-preview:medium",
+        "tencent/hy4-preview:high",
+        "tencent/hy4-preview:xhigh",
+        "tencent/hy4-preview:max",
+
+        "z-ai/glm-5.3-flash:low",
+        "z-ai/glm-5.3-flash:medium",
+        "z-ai/glm-5.3-flash:high",
+        "z-ai/glm-5.3-flash:xhigh",
+        "z-ai/glm-5.3-flash:max"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
     "openrouter-ox-alpha": {
       "model": [
         "stealth/ox-alpha:low",

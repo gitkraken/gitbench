@@ -2024,7 +2024,7 @@
           "fixture_id": "f002",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "Recover to **f2dd43f6aee3a976416d84ff014cb668b984d5eb** \u2014 that's the \"Third note - contains bug fix\" commit that was lost in the reset.\n\nCommand:\n```bash\ngit reset --hard f2dd43f\n```\n\n(You can also use `git reset --hard HEAD@{1}`, since the reflog entry points to the same commit.)",
+          "model_output": "Recover to **f2dd43f6aee3a976416d84ff014cb668b984d5eb** — that's the \"Third note - contains bug fix\" commit that was lost in the reset.\n\nCommand:\n```bash\ngit reset --hard f2dd43f\n```\n\n(You can also use `git reset --hard HEAD@{1}`, since the reflog entry points to the same commit.)",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You accidentally ran 'git reset --hard HEAD~1' and lost the last commit. Looking at git reflog, what is the commit hash you need to recover to get back to 'Third note - contains bug fix'?",
@@ -2046,7 +2046,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "Recover to **f2dd43f6aee3a976416d84ff014cb668b984d5eb** \u2014 that's the \"Third note - contains bug fix\" commit that was lost in the reset.\n\nCommand:\n```bash\ngit reset --hard f2dd43f\n```\n\n(You can also use `git reset --hard HEAD@{1}`, since the reflog entry points to the same commit.)",
+          "raw_structured_output": "Recover to **f2dd43f6aee3a976416d84ff014cb668b984d5eb** — that's the \"Third note - contains bug fix\" commit that was lost in the reset.\n\nCommand:\n```bash\ngit reset --hard f2dd43f\n```\n\n(You can also use `git reset --hard HEAD@{1}`, since the reflog entry points to the same commit.)",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -2104,7 +2104,7 @@
           "fixture_id": "f004",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The commit with message \"Add login function - critical feature\" is `242fc852bf36c3b9d3b1b2c0d965cd447e947786` (HEAD@{2}).\n\nTo recover it:\n\n**Recreate the branch pointing to that commit:**\n```bash\ngit checkout -b feature-login 242fc85\n```\n\nor equivalently:\n```bash\ngit branch feature-login HEAD@{2}\n```\n\nAlternatively, if you just want the commit on your current branch (main):\n```bash\ngit cherry-pick 242fc85\n```\n\nNote: since this was a fast-forward merge, the commit is actually already part of main's history \u2014 but if the branch deletion somehow orphaned it (e.g., a reset happened), the reflog entry lets you restore it as shown above.",
+          "model_output": "The commit with message \"Add login function - critical feature\" is `242fc852bf36c3b9d3b1b2c0d965cd447e947786` (HEAD@{2}).\n\nTo recover it:\n\n**Recreate the branch pointing to that commit:**\n```bash\ngit checkout -b feature-login 242fc85\n```\n\nor equivalently:\n```bash\ngit branch feature-login HEAD@{2}\n```\n\nAlternatively, if you just want the commit on your current branch (main):\n```bash\ngit cherry-pick 242fc85\n```\n\nNote: since this was a fast-forward merge, the commit is actually already part of main's history — but if the branch deletion somehow orphaned it (e.g., a reset happened), the reflog entry lets you restore it as shown above.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You merged and deleted a feature branch 'feature-login' but need to recover the last commit that was added on that branch. The last feature commit message contained 'critical feature'. Use git reflog to identify what you need to run to recover that commit.",
@@ -2126,7 +2126,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The commit with message \"Add login function - critical feature\" is `242fc852bf36c3b9d3b1b2c0d965cd447e947786` (HEAD@{2}).\n\nTo recover it:\n\n**Recreate the branch pointing to that commit:**\n```bash\ngit checkout -b feature-login 242fc85\n```\n\nor equivalently:\n```bash\ngit branch feature-login HEAD@{2}\n```\n\nAlternatively, if you just want the commit on your current branch (main):\n```bash\ngit cherry-pick 242fc85\n```\n\nNote: since this was a fast-forward merge, the commit is actually already part of main's history \u2014 but if the branch deletion somehow orphaned it (e.g., a reset happened), the reflog entry lets you restore it as shown above.",
+          "raw_structured_output": "The commit with message \"Add login function - critical feature\" is `242fc852bf36c3b9d3b1b2c0d965cd447e947786` (HEAD@{2}).\n\nTo recover it:\n\n**Recreate the branch pointing to that commit:**\n```bash\ngit checkout -b feature-login 242fc85\n```\n\nor equivalently:\n```bash\ngit branch feature-login HEAD@{2}\n```\n\nAlternatively, if you just want the commit on your current branch (main):\n```bash\ngit cherry-pick 242fc85\n```\n\nNote: since this was a fast-forward merge, the commit is actually already part of main's history — but if the branch deletion somehow orphaned it (e.g., a reset happened), the reflog entry lets you restore it as shown above.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -2224,7 +2224,7 @@
           "fixture_id": "f007",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The lost commit is:\n\n**`ffebc762c3f413a7e0836ad41b42de58bbfc55d0`** (Commit C - hotfix for login)\n\nTo recover it, you can either reset back to it:\n\n```bash\ngit reset --hard ffebc762c3f413a7e0836ad41b42de58bbfc55d0\n```\n\nOr cherry-pick just that commit onto your current position:\n\n```bash\ngit cherry-pick ffebc762c3f413a7e0836ad41b42de58bbfc55d0\n```\n\nNote: Commit D (`54fda2d...`) was also lost in the reset \u2014 the `reset --hard` approach above would restore both commits, while cherry-picking lets you recover only the hotfix commit.",
+          "model_output": "The lost commit is:\n\n**`ffebc762c3f413a7e0836ad41b42de58bbfc55d0`** (Commit C - hotfix for login)\n\nTo recover it, you can either reset back to it:\n\n```bash\ngit reset --hard ffebc762c3f413a7e0836ad41b42de58bbfc55d0\n```\n\nOr cherry-pick just that commit onto your current position:\n\n```bash\ngit cherry-pick ffebc762c3f413a7e0836ad41b42de58bbfc55d0\n```\n\nNote: Commit D (`54fda2d...`) was also lost in the reset — the `reset --hard` approach above would restore both commits, while cherry-picking lets you recover only the hotfix commit.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You ran 'git reset --hard HEAD~2' which moved HEAD back two commits. You now want to recover the most recent commit that was lost, which had 'hotfix for login' in its message. Use git reflog to find the full commit hash you need.",
@@ -2246,7 +2246,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The lost commit is:\n\n**`ffebc762c3f413a7e0836ad41b42de58bbfc55d0`** (Commit C - hotfix for login)\n\nTo recover it, you can either reset back to it:\n\n```bash\ngit reset --hard ffebc762c3f413a7e0836ad41b42de58bbfc55d0\n```\n\nOr cherry-pick just that commit onto your current position:\n\n```bash\ngit cherry-pick ffebc762c3f413a7e0836ad41b42de58bbfc55d0\n```\n\nNote: Commit D (`54fda2d...`) was also lost in the reset \u2014 the `reset --hard` approach above would restore both commits, while cherry-picking lets you recover only the hotfix commit.",
+          "raw_structured_output": "The lost commit is:\n\n**`ffebc762c3f413a7e0836ad41b42de58bbfc55d0`** (Commit C - hotfix for login)\n\nTo recover it, you can either reset back to it:\n\n```bash\ngit reset --hard ffebc762c3f413a7e0836ad41b42de58bbfc55d0\n```\n\nOr cherry-pick just that commit onto your current position:\n\n```bash\ngit cherry-pick ffebc762c3f413a7e0836ad41b42de58bbfc55d0\n```\n\nNote: Commit D (`54fda2d...`) was also lost in the reset — the `reset --hard` approach above would restore both commits, while cherry-picking lets you recover only the hotfix commit.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -2264,7 +2264,7 @@
           "fixture_id": "f008",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The original main HEAD before the rebase was **c2fd3adf9886f07a949511e1c78952c0c1a57ac3** \u2014 that's `HEAD@{1}`, the \"Custom config\" commit made on main right before the rebase started.\n\nTo restore it:\n\n```bash\ngit reset --hard c2fd3adf9886f07a949511e1c78952c0c1a57ac3\n```\n\nor equivalently:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis moves main back to the pre-rebase state, discarding the incorrect rebase result.",
+          "model_output": "The original main HEAD before the rebase was **c2fd3adf9886f07a949511e1c78952c0c1a57ac3** — that's `HEAD@{1}`, the \"Custom config\" commit made on main right before the rebase started.\n\nTo restore it:\n\n```bash\ngit reset --hard c2fd3adf9886f07a949511e1c78952c0c1a57ac3\n```\n\nor equivalently:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis moves main back to the pre-rebase state, discarding the incorrect rebase result.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You rebased your main branch onto 'fix-branch' but the result is incorrect. You want to go back to the original 'Custom config' commit on main. Use git reflog to find the original main branch HEAD commit hash.",
@@ -2286,7 +2286,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The original main HEAD before the rebase was **c2fd3adf9886f07a949511e1c78952c0c1a57ac3** \u2014 that's `HEAD@{1}`, the \"Custom config\" commit made on main right before the rebase started.\n\nTo restore it:\n\n```bash\ngit reset --hard c2fd3adf9886f07a949511e1c78952c0c1a57ac3\n```\n\nor equivalently:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis moves main back to the pre-rebase state, discarding the incorrect rebase result.",
+          "raw_structured_output": "The original main HEAD before the rebase was **c2fd3adf9886f07a949511e1c78952c0c1a57ac3** — that's `HEAD@{1}`, the \"Custom config\" commit made on main right before the rebase started.\n\nTo restore it:\n\n```bash\ngit reset --hard c2fd3adf9886f07a949511e1c78952c0c1a57ac3\n```\n\nor equivalently:\n\n```bash\ngit reset --hard HEAD@{1}\n```\n\nThis moves main back to the pre-rebase state, discarding the incorrect rebase result.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -2344,7 +2344,7 @@
           "fixture_id": "f010",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The commit to recover is:\n\n**`d51c37923e4ba5b7f199038b063aa2404f7118cc` \u2014 \"Add Controller class - completes MVC\"**\n\nYou can see it at `HEAD@{2}` in the reflog, right before the reset moved HEAD back to `HEAD~1`.\n\nTo recover it, you could run:\n```bash\ngit cherry-pick d51c379\n# or, if you want to undo the new commit and restore it instead:\ngit reset --hard d51c379\n```\n\nNote: if you use `reset --hard`, you'd discard the \"Re-add Controller\" commit (`179632b`) \u2014 so `cherry-pick` is usually the safer choice since your new commit already exists on top.",
+          "model_output": "The commit to recover is:\n\n**`d51c37923e4ba5b7f199038b063aa2404f7118cc` — \"Add Controller class - completes MVC\"**\n\nYou can see it at `HEAD@{2}` in the reflog, right before the reset moved HEAD back to `HEAD~1`.\n\nTo recover it, you could run:\n```bash\ngit cherry-pick d51c379\n# or, if you want to undo the new commit and restore it instead:\ngit reset --hard d51c379\n```\n\nNote: if you use `reset --hard`, you'd discard the \"Re-add Controller\" commit (`179632b`) — so `cherry-pick` is usually the safer choice since your new commit already exists on top.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You ran 'git reset --mixed HEAD~1', then made a new commit. The original 'Add Controller class - completes MVC' commit is now orphaned. Use git reflog to find the commit message you need to recover.",
@@ -2366,7 +2366,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The commit to recover is:\n\n**`d51c37923e4ba5b7f199038b063aa2404f7118cc` \u2014 \"Add Controller class - completes MVC\"**\n\nYou can see it at `HEAD@{2}` in the reflog, right before the reset moved HEAD back to `HEAD~1`.\n\nTo recover it, you could run:\n```bash\ngit cherry-pick d51c379\n# or, if you want to undo the new commit and restore it instead:\ngit reset --hard d51c379\n```\n\nNote: if you use `reset --hard`, you'd discard the \"Re-add Controller\" commit (`179632b`) \u2014 so `cherry-pick` is usually the safer choice since your new commit already exists on top.",
+          "raw_structured_output": "The commit to recover is:\n\n**`d51c37923e4ba5b7f199038b063aa2404f7118cc` — \"Add Controller class - completes MVC\"**\n\nYou can see it at `HEAD@{2}` in the reflog, right before the reset moved HEAD back to `HEAD~1`.\n\nTo recover it, you could run:\n```bash\ngit cherry-pick d51c379\n# or, if you want to undo the new commit and restore it instead:\ngit reset --hard d51c379\n```\n\nNote: if you use `reset --hard`, you'd discard the \"Re-add Controller\" commit (`179632b`) — so `cherry-pick` is usually the safer choice since your new commit already exists on top.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -2384,7 +2384,7 @@
           "fixture_id": "f011",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "Looking at the reflog, the commit you want is:\n\n```\n0bcb7eddb3fabc550ac0c9cee165937f484abdc6 HEAD@{2}: commit: Add env export B - enables feature X\n```\n\nSince the branch was deleted, you can recover it by pointing a new branch at that hash:\n\n```bash\ngit branch feature-x 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```\n\nOr check out that commit directly:\n\n```bash\ngit checkout 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```\n\n**Note:** The reflog shows the merge was a *fast-forward* (`HEAD@{0}: merge feature-x: Fast-forward`), which means this commit is actually already part of `main`'s history \u2014 nothing was lost. If you just need the changes on your current branch (e.g., you reset main afterward), you could instead apply the single commit with:\n\n```bash\ngit cherry-pick 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```",
+          "model_output": "Looking at the reflog, the commit you want is:\n\n```\n0bcb7eddb3fabc550ac0c9cee165937f484abdc6 HEAD@{2}: commit: Add env export B - enables feature X\n```\n\nSince the branch was deleted, you can recover it by pointing a new branch at that hash:\n\n```bash\ngit branch feature-x 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```\n\nOr check out that commit directly:\n\n```bash\ngit checkout 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```\n\n**Note:** The reflog shows the merge was a *fast-forward* (`HEAD@{0}: merge feature-x: Fast-forward`), which means this commit is actually already part of `main`'s history — nothing was lost. If you just need the changes on your current branch (e.g., you reset main afterward), you could instead apply the single commit with:\n\n```bash\ngit cherry-pick 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "After merging and deleting 'feature-x', you need to recover the commit 'Add env export B - enables feature X' which was the last commit on that branch. Use git reflog to identify what git command to run.",
@@ -2406,7 +2406,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "Looking at the reflog, the commit you want is:\n\n```\n0bcb7eddb3fabc550ac0c9cee165937f484abdc6 HEAD@{2}: commit: Add env export B - enables feature X\n```\n\nSince the branch was deleted, you can recover it by pointing a new branch at that hash:\n\n```bash\ngit branch feature-x 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```\n\nOr check out that commit directly:\n\n```bash\ngit checkout 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```\n\n**Note:** The reflog shows the merge was a *fast-forward* (`HEAD@{0}: merge feature-x: Fast-forward`), which means this commit is actually already part of `main`'s history \u2014 nothing was lost. If you just need the changes on your current branch (e.g., you reset main afterward), you could instead apply the single commit with:\n\n```bash\ngit cherry-pick 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```",
+          "raw_structured_output": "Looking at the reflog, the commit you want is:\n\n```\n0bcb7eddb3fabc550ac0c9cee165937f484abdc6 HEAD@{2}: commit: Add env export B - enables feature X\n```\n\nSince the branch was deleted, you can recover it by pointing a new branch at that hash:\n\n```bash\ngit branch feature-x 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```\n\nOr check out that commit directly:\n\n```bash\ngit checkout 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```\n\n**Note:** The reflog shows the merge was a *fast-forward* (`HEAD@{0}: merge feature-x: Fast-forward`), which means this commit is actually already part of `main`'s history — nothing was lost. If you just need the changes on your current branch (e.g., you reset main afterward), you could instead apply the single commit with:\n\n```bash\ngit cherry-pick 0bcb7eddb3fabc550ac0c9cee165937f484abdc6\n```",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -2424,7 +2424,7 @@
           "fixture_id": "f012",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The critical commit is at **HEAD@{4}** (or HEAD@{1}), hash `438dea27fe36cb48e6a19593d4f9b754f01a536d` \u2014 \"Production database config - critical\".\n\nTo recover it, first switch back to `main`, then reset main to that commit:\n\n```bash\ngit checkout main\ngit reset --hard 438dea27fe36cb48e6a19593d4f9b754f01a536d\n```\n\nAlternatively, using the reflog entry directly:\n\n```bash\ngit checkout main\ngit reset --hard main@{1}\n```\n\nNow `main` points to the critical production config commit again. You can verify with:\n\n```bash\ngit log --oneline\n```\n\nwhich should show:\n\n```\n438dea2 Production database config - critical\n4a2bef8 Local database config\n```",
+          "model_output": "The critical commit is at **HEAD@{4}** (or HEAD@{1}), hash `438dea27fe36cb48e6a19593d4f9b754f01a536d` — \"Production database config - critical\".\n\nTo recover it, first switch back to `main`, then reset main to that commit:\n\n```bash\ngit checkout main\ngit reset --hard 438dea27fe36cb48e6a19593d4f9b754f01a536d\n```\n\nAlternatively, using the reflog entry directly:\n\n```bash\ngit checkout main\ngit reset --hard main@{1}\n```\n\nNow `main` points to the critical production config commit again. You can verify with:\n\n```bash\ngit log --oneline\n```\n\nwhich should show:\n\n```\n438dea2 Production database config - critical\n4a2bef8 Local database config\n```",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You reset main back to 'Local database config' and lost the 'Production database config - critical' commit. You then switched to 'backup' branch. Use git reflog on the main branch to find and recover the critical production config commit.",
@@ -2446,7 +2446,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The critical commit is at **HEAD@{4}** (or HEAD@{1}), hash `438dea27fe36cb48e6a19593d4f9b754f01a536d` \u2014 \"Production database config - critical\".\n\nTo recover it, first switch back to `main`, then reset main to that commit:\n\n```bash\ngit checkout main\ngit reset --hard 438dea27fe36cb48e6a19593d4f9b754f01a536d\n```\n\nAlternatively, using the reflog entry directly:\n\n```bash\ngit checkout main\ngit reset --hard main@{1}\n```\n\nNow `main` points to the critical production config commit again. You can verify with:\n\n```bash\ngit log --oneline\n```\n\nwhich should show:\n\n```\n438dea2 Production database config - critical\n4a2bef8 Local database config\n```",
+          "raw_structured_output": "The critical commit is at **HEAD@{4}** (or HEAD@{1}), hash `438dea27fe36cb48e6a19593d4f9b754f01a536d` — \"Production database config - critical\".\n\nTo recover it, first switch back to `main`, then reset main to that commit:\n\n```bash\ngit checkout main\ngit reset --hard 438dea27fe36cb48e6a19593d4f9b754f01a536d\n```\n\nAlternatively, using the reflog entry directly:\n\n```bash\ngit checkout main\ngit reset --hard main@{1}\n```\n\nNow `main` points to the critical production config commit again. You can verify with:\n\n```bash\ngit log --oneline\n```\n\nwhich should show:\n\n```\n438dea2 Production database config - critical\n4a2bef8 Local database config\n```",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -4064,7 +4064,7 @@
           "fixture_id": "f004",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "Your 'Main change' is stored in **stash@{0}** \u2014 the entry labeled \"On main: main-changes\".\n\nThe diff confirms it: file.txt was changed from `Base` to `Main change`.\n\nTo retrieve it:\n```bash\ngit stash pop stash@{0}\n# or\ngit stash apply stash@{0}\n```\n\n(`pop` removes the stash after applying; `apply` keeps it in the list.)",
+          "model_output": "Your 'Main change' is stored in **stash@{0}** — the entry labeled \"On main: main-changes\".\n\nThe diff confirms it: file.txt was changed from `Base` to `Main change`.\n\nTo retrieve it:\n```bash\ngit stash pop stash@{0}\n# or\ngit stash apply stash@{0}\n```\n\n(`pop` removes the stash after applying; `apply` keeps it in the list.)",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You stashed 'Main change' before merging feature into main. Which stash entry contains your 'main-changes'? Provide the stash reference.",
@@ -4086,7 +4086,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "Your 'Main change' is stored in **stash@{0}** \u2014 the entry labeled \"On main: main-changes\".\n\nThe diff confirms it: file.txt was changed from `Base` to `Main change`.\n\nTo retrieve it:\n```bash\ngit stash pop stash@{0}\n# or\ngit stash apply stash@{0}\n```\n\n(`pop` removes the stash after applying; `apply` keeps it in the list.)",
+          "raw_structured_output": "Your 'Main change' is stored in **stash@{0}** — the entry labeled \"On main: main-changes\".\n\nThe diff confirms it: file.txt was changed from `Base` to `Main change`.\n\nTo retrieve it:\n```bash\ngit stash pop stash@{0}\n# or\ngit stash apply stash@{0}\n```\n\n(`pop` removes the stash after applying; `apply` keeps it in the list.)",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -4144,7 +4144,7 @@
           "fixture_id": "f006",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The stash reference is **`stash@{0}`** \u2014 the entry labeled \"On main: important-work\", which contains changes to both file1.txt (Work A) and file2.txt (Work B).",
+          "model_output": "The stash reference is **`stash@{0}`** — the entry labeled \"On main: important-work\", which contains changes to both file1.txt (Work A) and file2.txt (Work B).",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You stashed 'important-work' containing changes to file1.txt and file2.txt. Which stash entry contains this work? Provide the stash reference.",
@@ -4166,7 +4166,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The stash reference is **`stash@{0}`** \u2014 the entry labeled \"On main: important-work\", which contains changes to both file1.txt (Work A) and file2.txt (Work B).",
+          "raw_structured_output": "The stash reference is **`stash@{0}`** — the entry labeled \"On main: important-work\", which contains changes to both file1.txt (Work A) and file2.txt (Work B).",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -4184,7 +4184,7 @@
           "fixture_id": "f007",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "stash@{1} contains 'Stashed' \u2014 it's the older stash (lower index = older).",
+          "model_output": "stash@{1} contains 'Stashed' — it's the older stash (lower index = older).",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You have two stashes: one with 'Other work' (newer) and one with 'Stashed' (older). Which stash contains 'Stashed'? Provide the stash reference.",
@@ -4206,7 +4206,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "stash@{1} contains 'Stashed' \u2014 it's the older stash (lower index = older).",
+          "raw_structured_output": "stash@{1} contains 'Stashed' — it's the older stash (lower index = older).",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -4224,7 +4224,7 @@
           "fixture_id": "f008",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The stash entry containing your work is **stash@{0}** \u2014 \"On main: all-my-changes\".\n\nSince you stashed both tracked and untracked files (i.e., used `git stash -u`), this single stash actually contains the work in **three commits**:\n\n- `stash@{0}` \u2013 the tracked changes (`file.txt`)\n- `stash@{0}^1` \u2013 the commit HEAD pointed to when the stash was created\n- `stash@{0}^2` \u2013 the untracked files (`new.txt`), stored in a third parent commit\n\nTo restore everything, including the untracked file:\n\n```bash\ngit stash pop --index stash@{0}\n```\n\nor simply:\n\n```bash\ngit stash apply stash@{0}   # untracked files are restored too\n```",
+          "model_output": "The stash entry containing your work is **stash@{0}** — \"On main: all-my-changes\".\n\nSince you stashed both tracked and untracked files (i.e., used `git stash -u`), this single stash actually contains the work in **three commits**:\n\n- `stash@{0}` – the tracked changes (`file.txt`)\n- `stash@{0}^1` – the commit HEAD pointed to when the stash was created\n- `stash@{0}^2` – the untracked files (`new.txt`), stored in a third parent commit\n\nTo restore everything, including the untracked file:\n\n```bash\ngit stash pop --index stash@{0}\n```\n\nor simply:\n\n```bash\ngit stash apply stash@{0}   # untracked files are restored too\n```",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You stashed both tracked and untracked files with message 'all-my-changes'. Which stash entry contains this work? Provide the stash reference.",
@@ -4246,7 +4246,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The stash entry containing your work is **stash@{0}** \u2014 \"On main: all-my-changes\".\n\nSince you stashed both tracked and untracked files (i.e., used `git stash -u`), this single stash actually contains the work in **three commits**:\n\n- `stash@{0}` \u2013 the tracked changes (`file.txt`)\n- `stash@{0}^1` \u2013 the commit HEAD pointed to when the stash was created\n- `stash@{0}^2` \u2013 the untracked files (`new.txt`), stored in a third parent commit\n\nTo restore everything, including the untracked file:\n\n```bash\ngit stash pop --index stash@{0}\n```\n\nor simply:\n\n```bash\ngit stash apply stash@{0}   # untracked files are restored too\n```",
+          "raw_structured_output": "The stash entry containing your work is **stash@{0}** — \"On main: all-my-changes\".\n\nSince you stashed both tracked and untracked files (i.e., used `git stash -u`), this single stash actually contains the work in **three commits**:\n\n- `stash@{0}` – the tracked changes (`file.txt`)\n- `stash@{0}^1` – the commit HEAD pointed to when the stash was created\n- `stash@{0}^2` – the untracked files (`new.txt`), stored in a third parent commit\n\nTo restore everything, including the untracked file:\n\n```bash\ngit stash pop --index stash@{0}\n```\n\nor simply:\n\n```bash\ngit stash apply stash@{0}   # untracked files are restored too\n```",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -4344,7 +4344,7 @@
           "fixture_id": "f011",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The stashed work is in **stash@{0}**.\n\nAfter rebasing, the stash list isn't reordered \u2014 stash entries are independent of commits, so your \"Stashed\" change remains the most recent (and only) entry:\n\n```\nstash@{0}: WIP on main: 872eafb Base\n```\n\nYou can confirm by its diff showing `-Base` \u2192 `+Stashed`, and restore it with:\n\n```bash\ngit stash pop   # or git stash apply stash@{0}\n```\n\nNote: if you had multiple stashes, a rebase still wouldn't touch them \u2014 they'd keep their original order, with `stash@{0}` being the newest.",
+          "model_output": "The stashed work is in **stash@{0}**.\n\nAfter rebasing, the stash list isn't reordered — stash entries are independent of commits, so your \"Stashed\" change remains the most recent (and only) entry:\n\n```\nstash@{0}: WIP on main: 872eafb Base\n```\n\nYou can confirm by its diff showing `-Base` → `+Stashed`, and restore it with:\n\n```bash\ngit stash pop   # or git stash apply stash@{0}\n```\n\nNote: if you had multiple stashes, a rebase still wouldn't touch them — they'd keep their original order, with `stash@{0}` being the newest.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You stashed 'Stashed' then rebased. Which stash entry contains your stashed work? Provide the stash reference.",
@@ -4366,7 +4366,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The stashed work is in **stash@{0}**.\n\nAfter rebasing, the stash list isn't reordered \u2014 stash entries are independent of commits, so your \"Stashed\" change remains the most recent (and only) entry:\n\n```\nstash@{0}: WIP on main: 872eafb Base\n```\n\nYou can confirm by its diff showing `-Base` \u2192 `+Stashed`, and restore it with:\n\n```bash\ngit stash pop   # or git stash apply stash@{0}\n```\n\nNote: if you had multiple stashes, a rebase still wouldn't touch them \u2014 they'd keep their original order, with `stash@{0}` being the newest.",
+          "raw_structured_output": "The stashed work is in **stash@{0}**.\n\nAfter rebasing, the stash list isn't reordered — stash entries are independent of commits, so your \"Stashed\" change remains the most recent (and only) entry:\n\n```\nstash@{0}: WIP on main: 872eafb Base\n```\n\nYou can confirm by its diff showing `-Base` → `+Stashed`, and restore it with:\n\n```bash\ngit stash pop   # or git stash apply stash@{0}\n```\n\nNote: if you had multiple stashes, a rebase still wouldn't touch them — they'd keep their original order, with `stash@{0}` being the newest.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -4924,7 +4924,7 @@
           "fixture_id": "f001",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The bad commit is **cdee468** (\"change add operation\") \u2014 it's the first commit where tests fail (exit code 1), while its parent f6ab57a passes.",
+          "model_output": "The bad commit is **cdee468** (\"change add operation\") — it's the first commit where tests fail (exit code 1), while its parent f6ab57a passes.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -4946,7 +4946,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The bad commit is **cdee468** (\"change add operation\") \u2014 it's the first commit where tests fail (exit code 1), while its parent f6ab57a passes.",
+          "raw_structured_output": "The bad commit is **cdee468** (\"change add operation\") — it's the first commit where tests fail (exit code 1), while its parent f6ab57a passes.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -4964,7 +4964,7 @@
           "fixture_id": "f002",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The bad commit is **c1c7fb6** (\"reset config to zero\") \u2014 it's the first commit where the test fails, so it introduced the bug.",
+          "model_output": "The bad commit is **c1c7fb6** (\"reset config to zero\") — it's the first commit where the test fails, so it introduced the bug.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -4986,7 +4986,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The bad commit is **c1c7fb6** (\"reset config to zero\") \u2014 it's the first commit where the test fails, so it introduced the bug.",
+          "raw_structured_output": "The bad commit is **c1c7fb6** (\"reset config to zero\") — it's the first commit where the test fails, so it introduced the bug.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5004,7 +5004,7 @@
           "fixture_id": "f003",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "**f61e632** (\"disable feature\") is the bad commit \u2014 it's the first commit where the test failed, meaning it introduced the bug.",
+          "model_output": "**f61e632** (\"disable feature\") is the bad commit — it's the first commit where the test failed, meaning it introduced the bug.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5026,7 +5026,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "**f61e632** (\"disable feature\") is the bad commit \u2014 it's the first commit where the test failed, meaning it introduced the bug.",
+          "raw_structured_output": "**f61e632** (\"disable feature\") is the bad commit — it's the first commit where the test failed, meaning it introduced the bug.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5044,7 +5044,7 @@
           "fixture_id": "f004",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The bad commit is **353db86** (\"remove setup todo\") \u2014 it's the first commit where the test fails, meaning the bug was introduced there.",
+          "model_output": "The bad commit is **353db86** (\"remove setup todo\") — it's the first commit where the test fails, meaning the bug was introduced there.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5066,7 +5066,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The bad commit is **353db86** (\"remove setup todo\") \u2014 it's the first commit where the test fails, meaning the bug was introduced there.",
+          "raw_structured_output": "The bad commit is **353db86** (\"remove setup todo\") — it's the first commit where the test fails, meaning the bug was introduced there.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5084,7 +5084,7 @@
           "fixture_id": "f005",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "**8c05edd** (\"setup pytest\") is the bad commit \u2014 it's the first commit where tests fail (exit code 1), while the initial commit passed.",
+          "model_output": "**8c05edd** (\"setup pytest\") is the bad commit — it's the first commit where tests fail (exit code 1), while the initial commit passed.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5106,7 +5106,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "**8c05edd** (\"setup pytest\") is the bad commit \u2014 it's the first commit where tests fail (exit code 1), while the initial commit passed.",
+          "raw_structured_output": "**8c05edd** (\"setup pytest\") is the bad commit — it's the first commit where tests fail (exit code 1), while the initial commit passed.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5124,7 +5124,7 @@
           "fixture_id": "f006",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The bad commit is **0f61a18** (\"change port\") \u2014 the first commit where tests fail, after both prior commits passed.",
+          "model_output": "The bad commit is **0f61a18** (\"change port\") — the first commit where tests fail, after both prior commits passed.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5146,7 +5146,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The bad commit is **0f61a18** (\"change port\") \u2014 the first commit where tests fail, after both prior commits passed.",
+          "raw_structured_output": "The bad commit is **0f61a18** (\"change port\") — the first commit where tests fail, after both prior commits passed.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5164,7 +5164,7 @@
           "fixture_id": "f007",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The bad commit is **c5eabb4** (\"switch to dev\") \u2014 it's the first commit where the test fails; all earlier commits pass.",
+          "model_output": "The bad commit is **c5eabb4** (\"switch to dev\") — it's the first commit where the test fails; all earlier commits pass.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5186,7 +5186,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The bad commit is **c5eabb4** (\"switch to dev\") \u2014 it's the first commit where the test fails; all earlier commits pass.",
+          "raw_structured_output": "The bad commit is **c5eabb4** (\"switch to dev\") — it's the first commit where the test fails; all earlier commits pass.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5204,7 +5204,7 @@
           "fixture_id": "f008",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The bad commit is **7fc9cc8** (\"remove validation logic\") \u2014 it's the first commit where tests fail (exit code 1), and subsequent commits inherit the failure.",
+          "model_output": "The bad commit is **7fc9cc8** (\"remove validation logic\") — it's the first commit where tests fail (exit code 1), and subsequent commits inherit the failure.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5226,7 +5226,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The bad commit is **7fc9cc8** (\"remove validation logic\") \u2014 it's the first commit where tests fail (exit code 1), and subsequent commits inherit the failure.",
+          "raw_structured_output": "The bad commit is **7fc9cc8** (\"remove validation logic\") — it's the first commit where tests fail (exit code 1), and subsequent commits inherit the failure.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5244,7 +5244,7 @@
           "fixture_id": "f009",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The bad commit is **3c5b9c1** (\"replace helper import\").\n\nIt's the first commit in history where the test fails \u2014 the previous commit (b2096d1) passes, and the failure persists through dec4296, indicating 3c5b9c1 introduced the bug.",
+          "model_output": "The bad commit is **3c5b9c1** (\"replace helper import\").\n\nIt's the first commit in history where the test fails — the previous commit (b2096d1) passes, and the failure persists through dec4296, indicating 3c5b9c1 introduced the bug.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5266,7 +5266,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The bad commit is **3c5b9c1** (\"replace helper import\").\n\nIt's the first commit in history where the test fails \u2014 the previous commit (b2096d1) passes, and the failure persists through dec4296, indicating 3c5b9c1 introduced the bug.",
+          "raw_structured_output": "The bad commit is **3c5b9c1** (\"replace helper import\").\n\nIt's the first commit in history where the test fails — the previous commit (b2096d1) passes, and the failure persists through dec4296, indicating 3c5b9c1 introduced the bug.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5324,7 +5324,7 @@
           "fixture_id": "f011",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "The bad commit is **ef376db** (\"change to red\").\n\nIt's the first commit in history where tests fail \u2014 4f2f72d passes, but ef376db fails, so the bug was introduced there. (afde2b7 also fails, but only because it inherits the broken change.)",
+          "model_output": "The bad commit is **ef376db** (\"change to red\").\n\nIt's the first commit in history where tests fail — 4f2f72d passes, but ef376db fails, so the bug was introduced there. (afde2b7 also fails, but only because it inherits the broken change.)",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5346,7 +5346,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "The bad commit is **ef376db** (\"change to red\").\n\nIt's the first commit in history where tests fail \u2014 4f2f72d passes, but ef376db fails, so the bug was introduced there. (afde2b7 also fails, but only because it inherits the broken change.)",
+          "raw_structured_output": "The bad commit is **ef376db** (\"change to red\").\n\nIt's the first commit in history where tests fail — 4f2f72d passes, but ef376db fails, so the bug was introduced there. (afde2b7 also fails, but only because it inherits the broken change.)",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -5364,7 +5364,7 @@
           "fixture_id": "f012",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "**a6c007b** (\"switch to prod\") is the bad commit \u2014 it's the first commit where tests fail.",
+          "model_output": "**a6c007b** (\"switch to prod\") is the bad commit — it's the first commit where tests fail.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "You are debugging a git repository. The following commit history has one bad commit that broke the build. Identify the bad commit hash (first 7 characters) or commit subject line that introduced the bug. Use the git log and test output to determine which commit is bad.\n\nYour answer should be the commit hash (e.g., 'abc1234') or the commit subject line.",
@@ -5386,7 +5386,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "**a6c007b** (\"switch to prod\") is the bad commit \u2014 it's the first commit where tests fail.",
+          "raw_structured_output": "**a6c007b** (\"switch to prod\") is the bad commit — it's the first commit where tests fail.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -6924,7 +6924,7 @@
           "fixture_id": "f002",
           "passed": false,
           "similarity": 0.0,
-          "model_output": "No commit with the message 'Modify only a.txt' appears in the provided git log \u2014 only a commit with message \"Modify only b.txt\" (modifying b.txt) is shown, so I cannot determine a filename for that commit.",
+          "model_output": "No commit with the message 'Modify only a.txt' appears in the provided git log — only a commit with message \"Modify only b.txt\" (modifying b.txt) is shown, so I cannot determine a filename for that commit.",
           "error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "reasoning_level": "low",
           "prompt": "Using git show --stat, which file was modified in the commit with message 'Modify only a.txt'? Output ONLY the filename, nothing else.",
@@ -6946,7 +6946,7 @@
             }
           },
           "output_mode": "json_schema",
-          "raw_structured_output": "No commit with the message 'Modify only a.txt' appears in the provided git log \u2014 only a commit with message \"Modify only b.txt\" (modifying b.txt) is shown, so I cannot determine a filename for that commit.",
+          "raw_structured_output": "No commit with the message 'Modify only a.txt' appears in the provided git log — only a commit with message \"Modify only b.txt\" (modifying b.txt) is shown, so I cannot determine a filename for that commit.",
           "structured_error": "Failed to parse structured JSON response: Expecting value: line 1 column 1 (char 0)",
           "safety_review": {
             "status": "allow",
@@ -8352,7 +8352,7 @@
       "profile": "openrouter-result-safety",
       "model": "openai/gpt-5.4-mini:none"
     },
-    "reviewed_at": "2026-08-25T22:47:25.724957+00:00",
+    "reviewed_at": "2026-09-23T00:13:56.076012+00:00",
     "reviewed_score_count": 204,
     "redacted_score_count": 0
   }

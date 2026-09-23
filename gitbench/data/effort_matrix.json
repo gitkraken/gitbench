@@ -516,7 +516,13 @@
       "mappings": {
         "low": "low",
         "xhigh": "xhigh",
-        "max": "max"
+        "max": "max",
+        "medium": "medium",
+        "high": "high"
+      },
+      "verification": {
+        "medium": "verified",
+        "high": "verified"
       }
     },
     "mimo-v2.6-flash": {
@@ -626,7 +632,13 @@
       "mappings": {
         "high": "high",
         "xhigh": "xhigh",
-        "max": "max"
+        "max": "max",
+        "low": "low",
+        "medium": "medium"
+      },
+      "verification": {
+        "low": "unverified",
+        "medium": "unverified"
       }
     },
     "granite-4.2-8b": {
