@@ -669,6 +669,54 @@
         "xhigh": "high",
         "max": "max"
       }
+    },
+    "claude-opus-5.5": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      },
+      "verification": {
+        "low": "verified",
+        "medium": "verified",
+        "high": "verified",
+        "xhigh": "verified",
+        "max": "verified"
+      }
+    },
+    "gpt-6-luna": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      },
+      "verification": {
+        "low": "verified",
+        "medium": "verified",
+        "high": "verified",
+        "xhigh": "verified",
+        "max": "verified"
+      }
+    },
+    "gpt-6-sol": {
+      "mappings": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high",
+        "xhigh": "xhigh",
+        "max": "max"
+      },
+      "verification": {
+        "low": "verified",
+        "medium": "verified",
+        "high": "verified",
+        "xhigh": "verified",
+        "max": "verified"
+      }
     }
   }
 }
