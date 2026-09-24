@@ -1,0 +1,48 @@
+name: Production analytics monitor
+
+on:
+  schedule:
+    - cron: '17 */4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    name: Verify production GA4 event generation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        working-directory: web
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Check production analytics
+        working-directory: web
+        run: pnpm monitor:production-analytics
+
+      - name: Upload failed-attempt diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-analytics-diagnostics
+          path: ${{ runner.temp }}/production-analytics-diagnostics/*.json
+          if-no-files-found: ignore
+          retention-days: 7

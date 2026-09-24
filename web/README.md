@@ -70,6 +70,8 @@ Run these from top-level `web/` unless noted otherwise.
 | `pnpm build`              | Build your production site to `./dist/`            |
 | `pnpm preview`            | Preview your build locally, before deploying       |
 | `pnpm astro ...`          | Run CLI commands like `astro add`, `astro check`   |
+| `pnpm monitor:production-analytics` | Check production GA4 page-view generation |
+| `pnpm test:analytics-monitor` | Run the controlled browser fixtures             |
 
 Before running `pnpm dev:api`, generate report artifacts from the repository
 root:
@@ -106,3 +108,45 @@ The command reads `scripts/og-cards.json`, renders
 `.card` element, verifies every PNG is `1200x630`, and writes the files to
 `public/og/`. By default it uses `npx --yes agent-browser@0.27.0`; set
 `AGENT_BROWSER_BIN=agent-browser` to use an installed binary instead.
+
+## Production analytics monitor
+
+The monitor opens `https://gitbench.gitkraken.com/` in headless Chromium and
+waits up to 30 seconds for the site's normal GA4 initialization to produce a
+`page_view` for `G-5SDMWDGT2G`. It allows the real Google tag script to load and
+intercepts `/g/collect` requests before they leave the browser. This verifies
+event generation; it does not verify that Google received the event or that it
+appears in GA reports.
+
+Run it locally after installing Chromium:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm exec playwright install chromium
+pnpm monitor:production-analytics
+```
+
+GitHub Actions runs the same check on manual dispatch and on the UTC schedule
+`17 */4 * * *`. To run it manually, open **Actions → Production analytics
+monitor → Run workflow** and select the default branch. Scheduled runs only
+start from the repository's default branch.
+GitHub may delay scheduled workflows during busy periods, and public-repository
+schedules can be disabled after 60 days without repository activity, so the
+four-hour cadence is best effort rather than a detection-time guarantee. After
+the workflow is merged to the default branch, manually dispatch it once to
+confirm hosted-runner access to production. Diagnostics are uploaded whenever
+an attempt fails, including when the retry later succeeds.
+
+The monitor retries once in a fresh browser context. Its Actions summary reports
+both attempts and the retry result. If either attempt fails, the workflow
+uploads sanitized diagnostics for seven days, including when the retry passes.
+Open the workflow run's **Artifacts** section and download
+`production-analytics-diagnostics` to inspect them. The diagnostics include
+page errors, document and tag status, relevant network failures, and concise
+collection event summaries; they omit cookies, client identifiers, and full
+request payloads.
+
+The workflow uses standard GitHub Actions failure status and sends no external
+alert. Maintainers should enable failed-workflow notifications in their GitHub
+notification preferences and choose the repository watch settings that match
+their team's needs.
