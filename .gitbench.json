@@ -15,7 +15,6 @@
         "xiaomi/mimo-v2.6-flash:xhigh",
         "xiaomi/mimo-v2.6-flash:max",
 
-        "xiaomi/mimo-v2.6-pro:none",
         "xiaomi/mimo-v2.6-pro:low",
         "xiaomi/mimo-v2.6-pro:medium",
         "xiaomi/mimo-v2.6-pro:high",
@@ -46,12 +45,6 @@
         "sakana/fugu-max:high",
         "sakana/fugu-max:xhigh",
         "sakana/fugu-max:max",
-
-        "sakana/fugu-ultra-v2:low",
-        "sakana/fugu-ultra-v2:medium",
-        "sakana/fugu-ultra-v2:high",
-        "sakana/fugu-ultra-v2:xhigh",
-        "sakana/fugu-ultra-v2:max",
 
         "deepseek/deepseek-v4.1-flash:none",
         "deepseek/deepseek-v4.1-flash:low",
@@ -84,6 +77,12 @@
         "anthropic/claude-fable-5.1:xhigh",
         "anthropic/claude-fable-5.1:max",
 
+        "anthropic/claude-opus-5.5:low",
+        "anthropic/claude-opus-5.5:medium",
+        "anthropic/claude-opus-5.5:high",
+        "anthropic/claude-opus-5.5:xhigh",
+        "anthropic/claude-opus-5.5:max",
+
         "ibm-granite/granite-4.2-8b:none",
         "ibm-granite/granite-4.2-8b:low",
         "ibm-granite/granite-4.2-8b:medium",
@@ -91,12 +90,17 @@
         "ibm-granite/granite-4.2-8b:xhigh",
         "ibm-granite/granite-4.2-8b:max",
 
-        "tencent/hy4-preview:none",
-        "tencent/hy4-preview:low",
-        "tencent/hy4-preview:medium",
-        "tencent/hy4-preview:high",
-        "tencent/hy4-preview:xhigh",
-        "tencent/hy4-preview:max",
+        "openai/gpt-6-luna:low",
+        "openai/gpt-6-luna:medium",
+        "openai/gpt-6-luna:high",
+        "openai/gpt-6-luna:xhigh",
+        "openai/gpt-6-luna:max",
+
+        "openai/gpt-6-sol:low",
+        "openai/gpt-6-sol:medium",
+        "openai/gpt-6-sol:high",
+        "openai/gpt-6-sol:xhigh",
+        "openai/gpt-6-sol:max",
 
         "z-ai/glm-5.3-flash:low",
         "z-ai/glm-5.3-flash:medium",
