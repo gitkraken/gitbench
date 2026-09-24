@@ -2,6 +2,7 @@
   "name": "gitbench-web",
   "type": "module",
   "version": "0.0.1",
+  "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -14,6 +15,8 @@
     "sync:model-catalog": "node --strip-types scripts/sync-model-catalog.mjs",
     "validate:model-catalog": "pnpm sync:model-catalog --check",
     "test:api": "node --strip-types --test test/*.test.mjs",
+    "test:analytics-monitor": "node --test analytics-monitor/*.test.mjs",
+    "monitor:production-analytics": "node scripts/production-analytics-monitor.mjs",
     "build": "node scripts/build-db.mjs && astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -42,6 +45,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@types/node": "^22.20.0",
+    "playwright": "^1.63.0",
     "typescript": "^6.0.3",
     "vercel": "^54.5.0"
   }
